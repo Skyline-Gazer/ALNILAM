@@ -6,6 +6,15 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-10-25
+
+### Added
+- **Comments + Bangumi modules shipped on the release line** (PR #24/#27): feature-flagged via `[comments]` / `[bangumi]`; module route gating (disabled = nothing shipped).
+- **GitHub Pages deployment pipeline live**: https://skyline-gazer.github.io/ALNILAM/ (contract-gated workflow).
+
+### Fixed
+- Deploy trigger moved from tag refs to main pushes (github-pages environment policy rejects tag refs at job startup); manual dispatch retained.
+
 ## [0.1.2] — 2026-10-25
 
 ### Added
