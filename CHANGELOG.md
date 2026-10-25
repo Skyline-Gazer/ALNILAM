@@ -6,6 +6,13 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-10-25
+
+### Added
+- **GitHub Pages deployment**: tag-triggered workflow (contract tests gate the deploy); Pages `build_type=workflow`.
+- **Base-path aware builds**: `ALNILAM_SITE_URL` deployment override; Astro `base` derives from the URL path; `withBase` helper prefixes internal links, assets, pagefind runtime and site-authored covers (external URLs untouched). Root-hosted Sites unchanged (regression-verified).
+- Docs: optional-modules usage section (comments/Bangumi) in Site onboarding.
+
 ## [0.1.1] — 2026-10-25
 
 ### Added
