@@ -9,6 +9,12 @@
 - ADS is a **private repository**; the public CI checkout intentionally omits recursive submodule cloning (no cross-repo credentials). Maintainers with ADS access can materialize it and verify the full rule set.\n- ADS release `v0.3` gitlink: `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`, located at `.ads`.
 - Do **not** infer latest bootstrap branch HEAD, CI result or Project item status from this document. Query GitHub at start of task.
 
+## Owner authorization executed: PR merge chain (2026-10-25)
+- Owner approved the review findings; merge chain executed in dependency order: PR #2 (`7cbcef0`) → `dev` as `d2f973c`; PR #9 (`7174eaa`) → `dev` as `4fd99ec`; PR #10 (`6611cb4`) → `dev` as `9a31573`. All GitHub-verified MERGED.
+- `dev` HEAD `9a31573` push CI: runs 40170907120 + 40170864650 — **success**, all 11 steps including two-version upgrade/rollback. Rulesets enforced throughout (PR-only merges, required `verify`).
+- Project #17 read back: #1/#2/#4/#9/#10 = **Done**, #8 In Progress (branch governance: rulesets verified active, closure deferred), #3/#5/#6/#7 Todo. 0 open PRs, 5 open issues.
+- `dev` now contains the full platform baseline + upgrade/rollback acceptance + P1 Editorial UI. `main` remains `282459a`; a release PR `dev` → `main` requires separate owner authorization.
+
 ## Continuation 2: P0 hardening + P1 Editorial UI (2026-10-25)
 - State verified at session start: `dev`/`main` still `282459a`; PR #2 (`7cbcef0`) and PR #9 (`ffed1ae`→`7174eaa`) open with green CI; Rulesets `alnilam-dev` (25809723) and `alnilam-main` (25809753) **active**: deletion + non_fast_forward + pull_request + required `verify` check (strict) on both branches.
 - **PR review (Phase 1A)**: PR #9's merge-base with `dev` is `282459a`, so GitHub shows 43 files, but the actual delta **over PR #2 is 4 files / +167 lines**. Merging #2 then #9 yields exactly the intended change; no double-merge risk. Order #2 → #9 confirmed.
