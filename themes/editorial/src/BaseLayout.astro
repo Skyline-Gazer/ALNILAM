@@ -1,0 +1,98 @@
+---
+import "./editorial.css";
+import Search from "@alnilam/ui/Search.svelte";
+interface Props {
+  title: string;
+  description?: string;
+  canonical?: string;
+  siteTitle: string;
+  appearance: "dark" | "light";
+  locale: string;
+  ogType?: "website" | "article";
+  publishedTime?: string;
+  tags?: string[];
+  /** Map of lang -> absolute URL for hreflang alternates (i18n translations). */
+  alternates?: Map<string, string>;
+  htmlLang?: string;
+}
+const { title, description = "", canonical, siteTitle, appearance, locale, ogType = "website", publishedTime, tags, alternates, htmlLang } = Astro.props;
+const year = new Date().getFullYear();
+const ogImage = canonical ? new URL("/site-assets/orion.svg", canonical).toString() : undefined;
+---
+<!doctype html>
+<html lang={htmlLang ?? locale} data-theme={appearance}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    {canonical && <link rel="canonical" href={canonical} />}
+    {alternates && [...alternates.entries()].map(([lang, path]) => (
+      <link rel="alternate" hreflang={lang} href={new URL(path + "/", canonical).toString()} />
+    ))}
+    {alternates && <link rel="alternate" hreflang="x-default" href={new URL((alternates.get(locale) ?? canonical) as string, canonical).toString()} />}
+    <link rel="alternate" type="application/rss+xml" title={siteTitle} href="/rss.xml" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <!-- Open Graph -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={siteTitle} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {canonical && <meta property="og:url" content={canonical} />}
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+    {(tags ?? []).map((t) => <meta property="article:tag" content={t} />)}
+    <!-- Twitter -->
+    <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <!-- JSON-LD structured data -->
+    {canonical && (
+      <script type="application/ld+json" set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": ogType === "article" ? "BlogPosting" : "WebSite",
+        headline: title,
+        name: ogType === "article" ? undefined : siteTitle,
+        description,
+        url: canonical,
+        inLanguage: locale,
+        ...(ogType === "article" ? { datePublished: publishedTime, keywords: tags?.join(", "), blogPost: undefined } : {}),
+      })} />
+    )}
+    <title>{title} · {siteTitle}</title>
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <a href="#content" class="skip-link">跳至正文</a>
+    <div class="mx-auto w-full max-w-5xl flex-1 px-4 sm:px-7">
+      <header class="site-header sticky top-3 z-20 mt-3 flex items-center justify-between rounded-2xl px-5 py-3">
+        <a href="/" class="flex items-center gap-2.5 font-semibold tracking-[.2em]" style="color: var(--fg)" aria-label={siteTitle + " home"}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M3 18 8.5 12.5 12 15.5 16.5 9 21 5" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="8.5" cy="12.5" r="1.6" fill="var(--accent)" />
+            <circle cx="16.5" cy="9" r="1.6" fill="var(--accent)" />
+            <circle cx="21" cy="5" r="1.2" fill="var(--accent)" opacity=".7" />
+          </svg>
+          <span>{siteTitle}</span>
+        </a>
+        <nav aria-label="主导航" class="flex items-center gap-5 text-sm" style="color: var(--fg-muted)">
+          <a href="/" class="transition-colors hover:[color:var(--accent)]">首页</a>
+          <a href="/posts/" class="transition-colors hover:[color:var(--accent)]">文章</a>
+          <a href="/archives/" class="transition-colors hover:[color:var(--accent)]">归档</a>
+          <a href="/tags/" class="transition-colors hover:[color:var(--accent)]">标签</a>
+          <Search client:idle />
+        </nav>
+      </header>
+      <main id="content" class="py-10"><slot /></main>
+    </div>
+    <footer class="border-t py-8 text-center text-sm" style="border-color: var(--border); color: var(--fg-muted)">
+      <p>Powered by <a href="https://github.com/Skyline-Gazer/ALNILAM" class="hover:[color:var(--accent)]" style="color: var(--fg-soft)">ALNILAM</a> · Apache-2.0 · © {year}</p>
+      <p class="mt-1">
+        <a href="/rss.xml" class="hover:[color:var(--accent)]">RSS</a>
+        <span aria-hidden="true"> · </span>
+        <a href="/archives/" class="hover:[color:var(--accent)]">归档</a>
+        <span aria-hidden="true"> · </span>
+        <a href="/tags/" class="hover:[color:var(--accent)]">标签</a>
+      </p>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,63 @@
+name: CI
+on:
+  push:
+    branches: [dev, "chore/**", "feat/**", "fix/**"]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Contract tests
+        run: pnpm test
+      - name: Astro type and content checks
+        run: pnpm check
+      - name: Compose demo Site
+        run: pnpm build
+      - name: Verify generated output
+        run: |
+          test -s dist/site/index.html
+          test -s dist/site/posts/hello-alnilam/index.html
+          test -s dist/site/site-assets/orion.svg
+      - name: Verify external Site composition and isolation
+        run: |
+          cp -a sites/demo "$RUNNER_TEMP/alnilam-site"
+          site_before="$(find "$RUNNER_TEMP/alnilam-site" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)"
+          node scripts/compose.mjs --site "$RUNNER_TEMP/alnilam-site" --out dist/external-site
+          site_after="$(find "$RUNNER_TEMP/alnilam-site" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)"
+          test "$site_before" = "$site_after"
+          test -s dist/external-site/posts/hello-alnilam/index.html
+      - name: Two-version Core upgrade / rollback against unchanged Site
+        run: |
+          # "Old Core" = last revision with a buildable Core (previous bootstrap
+          # state). Override via repository variable when a prior release tag exists.
+          old="${{ vars.ALNILAM_OLD_CORE_SHA }}"
+          if [ -z "$old" ]; then
+            git fetch --no-tags --depth=1 origin ee97d1f175ac905dd3a7e2f79762415888b99b76
+            old="$(git rev-parse FETCH_HEAD)"
+          fi
+          echo "old Core revision: $old"
+          node scripts/upgrade-check.mjs --old "$old"
+      - name: Confirm ADS version pin
+        run: |
+          test "$(git rev-parse HEAD:.ads)" = "1e07d6c4bbd296b7d37dcd31934cfc70426f73ac"
+

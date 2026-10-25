@@ -1,0 +1,47 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  href: string;
+  published: Date;
+  tags: string[];
+  cover?: string;
+}
+const { title, description, href, published, tags, cover } = Astro.props;
+const dateIso = published.toISOString();
+const dateText = dateIso.slice(0, 10);
+---
+<!-- Fuwari-style composition: exactly ONE post per row. Desktop: text left,
+     cover right (~28%). Mobile: cover above text (flex-col-reverse), full width. -->
+<article class="post-card group flex w-full flex-col-reverse gap-5 rounded-2xl p-5 md:min-h-48 md:flex-row md:items-center md:justify-between md:p-7">
+  <div class="min-w-0 flex-1">
+    <p class="mb-3 text-xs tracking-wide" style="color: var(--fg-muted)">
+      <time datetime={dateIso}>{dateText}</time>
+    </p>
+    <h2 class="text-xl font-semibold leading-snug md:text-2xl" style="color: var(--fg)">
+      <a href={href} class="transition-colors group-hover:[color:var(--accent)]">{title}</a>
+    </h2>
+    <p class="mt-3 line-clamp-2 text-sm leading-relaxed" style="color: var(--fg-muted)">{description}</p>
+    {tags.length > 0 && (
+      <div class="mt-4 flex flex-wrap gap-2" aria-label="文章标签">
+        {tags.map((tag) => (
+          <span class="rounded-full px-2.5 py-1 text-xs" style="background: var(--accent-soft); color: var(--accent)">#{tag}</span>
+        ))}
+      </div>
+    )}
+  </div>
+  {cover && (
+    <a href={href} aria-label={"阅读文章：" + title} tabindex={-1} class="block h-44 shrink-0 overflow-hidden rounded-xl md:h-40 md:w-[28%]">
+      <img
+        src={cover}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        width="640"
+        height="360"
+        class="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+        style="background: var(--bg-card)"
+      />
+    </a>
+  )}
+</article>

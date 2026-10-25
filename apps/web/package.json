@@ -1,0 +1,28 @@
+{
+  "name": "@alnilam/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@alnilam/core": "workspace:*",
+    "@alnilam/theme-editorial": "workspace:*",
+    "@alnilam/ui": "workspace:*",
+    "@astrojs/mdx": "^8.0.2",
+    "@astrojs/svelte": "^9.0.1",
+    "@tailwindcss/vite": "^4.3.1",
+    "astro": "^7.3.5",
+    "pagefind": "^1.5.2",
+    "smol-toml": "^1.9.0",
+    "svelte": "^5.56.3",
+    "tailwindcss": "^4.3.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "typescript": "^5.9.3"
+  }
+}

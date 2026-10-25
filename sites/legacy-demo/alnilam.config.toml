@@ -1,0 +1,8 @@
+# Legacy Site: predates schemaVersion (absent = 1). No i18n fields anywhere.
+[site]
+title = "Legacy Site"
+description = "A Site written before schema v1 was announced."
+url = "https://legacy.example.com"
+
+[theme]
+appearance = "light"

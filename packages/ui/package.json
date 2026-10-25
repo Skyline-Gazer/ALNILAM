@@ -1,0 +1,16 @@
+{
+  "name": "@alnilam/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./Status.svelte": "./src/Status.svelte",
+    "./Search.svelte": "./src/Search.svelte"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  },
+  "devDependencies": {
+    "svelte": "^5.57.2"
+  }
+}
