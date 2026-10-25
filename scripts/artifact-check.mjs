@@ -2,11 +2,14 @@
 // Artifact budget + regression guards over a composed output directory.
 // Fails the build when a deliverable regresses. Run after `pnpm build`.
 //
-// Budgets (Issue #4 acceptance: measured client JS, CLS protection):
+// Budgets (Issue #4/#7 acceptance: measured client JS, CLS, a11y floor):
 //   - posts pages: ZERO runtime <script> from ALNILAM (static content only)
-//   - any page:    at most ONE Astro island loader bundle reference
+//   - any page:    at most TWO Astro islands (homepage ships Status + Search)
 //   - every <img> carries explicit width/height (CLS guard)
+//   - every page: <html lang>, <title>, <main> landmark, exactly one <h1>
+//   - every page: skip link target present
 //   - alnilam-provenance.json exists and binds a 64-hex Site digest
+//   - page weight budget: rendered HTML ≤ 64 KiB/page (excl. lazy pagefind)
 import fs from "node:fs";
 import path from "node:path";
 
@@ -46,6 +49,16 @@ function checkPage(file) {
       failures.push(`${rel}: <img> without explicit width/height (CLS risk): ${tag.slice(0, 80)}`);
     }
   }
+  // Accessibility floor (static analysis of rendered HTML).
+  if (!/<html[^>]*\blang=/.test(html)) failures.push(`${rel}: <html> missing lang attribute`);
+  if (!/<title>[^<]+<\/title>/.test(html)) failures.push(`${rel}: missing <title>`);
+  if (!/<main[\s>]/.test(html)) failures.push(`${rel}: missing <main> landmark`);
+  const h1s = (html.match(/<h1[\s>]/g) || []).length;
+  if (h1s !== 1) failures.push(`${rel}: expected exactly one <h1>, found ${h1s}`);
+  if (!/class="skip-link"/.test(html)) failures.push(`${rel}: missing skip link`);
+  // Page weight budget: HTML document ≤ 64 KiB (lazy assets excluded).
+  const kib = Buffer.byteLength(html) / 1024;
+  if (kib > 64) failures.push(`${rel}: HTML ${kib.toFixed(1)} KiB exceeds 64 KiB budget`);
 }
 walk(outDir);
 
