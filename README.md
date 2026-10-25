@@ -9,14 +9,14 @@ Apache-2.0 licensed, static-first Astro 7 / Svelte 5 / Tailwind CSS 4 blogging p
 ## Development
 Requires Node.js >=22.12 and pnpm 10.19 (via Corepack).
 ```bash
-git clone --recurse-submodules https://github.com/Skyline-Gazer/ALNILAM.git
+git clone https://github.com/Skyline-Gazer/ALNILAM.git
 cd ALNILAM
 git switch dev  # once bootstrap PR is accepted
 corepack enable
 pnpm install --no-frozen-lockfile
 pnpm dev
 ```
-The default site data lives in `sites/demo`; it is **never a user-owned production content repository**.
+ADS is a **private repository**. Its pinned `.ads` submodule is optional for public users; maintainers with authorized access can run `git submodule update --init --recursive`. CI does not use privileged credentials to clone ADS. The root `AGENTS.md` is the readable public entrypoint.\n\nThe default site data lives in `sites/demo`; it is **never a user-owned production content repository**.
 
 ## Build Core with a user Site
 ```bash

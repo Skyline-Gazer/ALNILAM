@@ -6,7 +6,7 @@
 - Initial `main` SHA (before bootstrap): `282459adb69f903a0eea4ded35ebf619c7387a31`.
 - Development baseline: `dev` created from initial `main`.
 - Bootstrap branch: `chore/initial-platform-bootstrap` (PR into `dev`, pending review).
-- ADS release `v0.3` gitlink: `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`, located at `.ads`.
+- ADS is a **private repository**; the public CI checkout intentionally omits recursive submodule cloning (no cross-repo credentials). Maintainers with ADS access can materialize it and verify the full rule set.\n- ADS release `v0.3` gitlink: `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`, located at `.ads`.
 - Do **not** infer latest bootstrap branch HEAD, CI result or Project item status from this document. Query GitHub at start of task.
 
 ## First task for next agent
@@ -31,7 +31,7 @@
 
 ## Validation commands
 ```bash
-git submodule update --init --recursive
+git submodule update --init --recursive  # authorized ADS access required
 corepack enable
 pnpm install --no-frozen-lockfile
 pnpm test

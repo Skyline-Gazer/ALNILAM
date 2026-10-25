@@ -19,7 +19,7 @@ packages/ui/           # Svelte UI islands
 themes/editorial/      # visual layout + Fuwari-style single-row Post card
 sites/demo/            # Core-repo Site fixture (only for tests & preview)
 scripts/compose.mjs    # non-mutating external Site builder
-.ads/                  # pinned ADS v0.3 Git Submodule
+.ads/                  # optional private ADS v0.3 gitlink; not cloned by public CI
 ```
 
 ## Build algorithm

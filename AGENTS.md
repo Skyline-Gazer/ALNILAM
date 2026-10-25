@@ -1,6 +1,6 @@
 # ALNILAM — Agent Entry Point
 
-This file is the binding repository-level operating entrypoint. ADS is pinned as a Git Submodule at `.ads` to commit `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac` (release v0.3). Materialize via `git submodule update --init --recursive`. Read `.ads/AGENTS.md`, `.ads/STANDARD.md`, `.ads/SAFETY.md`, `.ads/QUALITY.md`, and `.ads/profiles/astro-typescript.md` before structural changes. Do not assume ADS files are automatically discovered by the host agent.
+This file is the binding repository-level operating entrypoint. ADS is pinned as a Git Submodule at `.ads` to commit `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac` (release v0.3). ADS is **private**. Only authorized maintainers may materialize it via `git submodule update --init --recursive`. This public repository and GitHub Actions must not require secret cross-repo tokens. If `.ads` is unavailable, this root file remains the public operational baseline and ADS details are **not independently verified**. With ADS available, read `.ads/AGENTS.md`, `.ads/STANDARD.md`, `.ads/SAFETY.md`, `.ads/QUALITY.md`, and `.ads/profiles/astro-typescript.md` before structural changes. Do not assume ADS files are automatically discovered by the host agent.
 
 ## Product invariants
 - Product: ALNILAM, generic open-source blogging platform (Apache-2.0).
