@@ -7,7 +7,7 @@ Apache-2.0 licensed, static-first Astro 7 / Svelte 5 / Tailwind CSS 4 blogging p
 > **Status: v0.1 bootstrap proposal.** This repository contains a runnable baseline, not a feature-complete theme. Changes are pending review on `chore/initial-platform-bootstrap` → `dev`.
 
 ## Development
-Requires Node.js >=22.12 and pnpm 10.19 (via Corepack).
+Requires Node.js >=22.23.4 (or Node.js 24) and pnpm 10.19 (via Corepack).
 ```bash
 git clone https://github.com/Skyline-Gazer/ALNILAM.git
 cd ALNILAM
