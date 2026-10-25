@@ -1,0 +1,11 @@
+schemaVersion = 1
+
+[site]
+title = "ALNILAM"
+description = "An open blogging platform inspired by the stars."
+url = "https://example.com"
+locale = "zh-CN"
+
+[theme]
+appearance = "dark"
+

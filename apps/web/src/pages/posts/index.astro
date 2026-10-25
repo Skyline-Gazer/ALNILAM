@@ -1,0 +1,16 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "@alnilam/theme-editorial/BaseLayout.astro";
+import PostCard from "@alnilam/theme-editorial/PostCard.astro";
+import { loadSite } from "../../lib/site-source.mjs";
+const { config } = loadSite();
+const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale };
+const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+<BaseLayout title="文章" {...layout} description="全部文章" canonical={new URL("/posts/", config.site.url).toString()}>
+  <h1 class="mb-8 text-4xl font-bold text-white">全部文章</h1>
+  <div class="space-y-4">
+    {posts.map((post) => <PostCard title={post.data.title} description={post.data.description} href={"/posts/" + post.id + "/"} published={post.data.pubDate} tags={post.data.tags} cover={post.data.cover} />)}
+  </div>
+</BaseLayout>
+

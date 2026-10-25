@@ -1,0 +1,27 @@
+name: Implementation task
+description: Issue-driven development with acceptance evidence
+title: "[Task] "
+labels: []
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: Scope and expected user impact.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Testable results, including Core/Site compatibility where applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: Actions checks, preview/e2e evidence, manual verification boundaries.
+    validations:
+      required: false
+
