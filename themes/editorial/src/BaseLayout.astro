@@ -19,6 +19,8 @@ interface Props {
 const { title, description = "", canonical, siteTitle, appearance, locale, ogType = "website", publishedTime, tags, alternates, htmlLang, showBangumi = false } = Astro.props;
 const year = new Date().getFullYear();
 const ogImage = canonical ? new URL("/site-assets/orion.svg", canonical).toString() : undefined;
+// Base-path aware internal links (GitHub Pages sub-path deployments).
+const withBase = (p) => import.meta.env.BASE_URL.replace(/\/$/, "") + (p.startsWith("/") ? p : "/" + p);
 ---
 <!doctype html>
 <html lang={htmlLang ?? locale} data-theme={appearance}>
@@ -32,8 +34,8 @@ const ogImage = canonical ? new URL("/site-assets/orion.svg", canonical).toStrin
       <link rel="alternate" hreflang={lang} href={new URL(path + "/", canonical).toString()} />
     ))}
     {alternates && <link rel="alternate" hreflang="x-default" href={new URL((alternates.get(locale) ?? canonical) as string, canonical).toString()} />}
-    <link rel="alternate" type="application/rss+xml" title={siteTitle} href="/rss.xml" />
-    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <link rel="alternate" type="application/rss+xml" title={siteTitle} href={withBase("/rss.xml")} />
+    <link rel="sitemap" type="application/xml" href={withBase("/sitemap.xml")} />
     <!-- Open Graph -->
     <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content={siteTitle} />
@@ -66,7 +68,7 @@ const ogImage = canonical ? new URL("/site-assets/orion.svg", canonical).toStrin
     <a href="#content" class="skip-link">跳至正文</a>
     <div class="mx-auto w-full max-w-5xl flex-1 px-4 sm:px-7">
       <header class="site-header sticky top-3 z-20 mt-3 flex items-center justify-between rounded-2xl px-5 py-3">
-        <a href="/" class="flex items-center gap-2.5 font-semibold tracking-[.2em]" style="color: var(--fg)" aria-label={siteTitle + " home"}>
+        <a href={withBase("/")} class="flex items-center gap-2.5 font-semibold tracking-[.2em]" style="color: var(--fg)" aria-label={siteTitle + " home"}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M3 18 8.5 12.5 12 15.5 16.5 9 21 5" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
             <circle cx="8.5" cy="12.5" r="1.6" fill="var(--accent)" />
@@ -76,11 +78,11 @@ const ogImage = canonical ? new URL("/site-assets/orion.svg", canonical).toStrin
           <span>{siteTitle}</span>
         </a>
         <nav aria-label="主导航" class="flex items-center gap-5 text-sm" style="color: var(--fg-muted)">
-          <a href="/" class="transition-colors hover:[color:var(--accent)]">首页</a>
-          <a href="/posts/" class="transition-colors hover:[color:var(--accent)]">文章</a>
-          <a href="/archives/" class="transition-colors hover:[color:var(--accent)]">归档</a>
-          <a href="/tags/" class="transition-colors hover:[color:var(--accent)]">标签</a>
-          {showBangumi && <a href="/bangumi/" class="transition-colors hover:[color:var(--accent)]">番组</a>}
+          <a href={withBase("/")} class="transition-colors hover:[color:var(--accent)]">首页</a>
+          <a href={withBase("/posts/")} class="transition-colors hover:[color:var(--accent)]">文章</a>
+          <a href={withBase("/archives/")} class="transition-colors hover:[color:var(--accent)]">归档</a>
+          <a href={withBase("/tags/")} class="transition-colors hover:[color:var(--accent)]">标签</a>
+          {showBangumi && <a href={withBase("/bangumi/")} class="transition-colors hover:[color:var(--accent)]">番组</a>}
           <Search client:idle />
         </nav>
       </header>
@@ -89,13 +91,13 @@ const ogImage = canonical ? new URL("/site-assets/orion.svg", canonical).toStrin
     <footer class="border-t py-8 text-center text-sm" style="border-color: var(--border); color: var(--fg-muted)">
       <p>Powered by <a href="https://github.com/Skyline-Gazer/ALNILAM" class="hover:[color:var(--accent)]" style="color: var(--fg-soft)">ALNILAM</a> · Apache-2.0 · © {year}</p>
       <p class="mt-1">
-        <a href="/rss.xml" class="hover:[color:var(--accent)]">RSS</a>
+        <a href={withBase("/rss.xml")} class="hover:[color:var(--accent)]">RSS</a>
         <span aria-hidden="true"> · </span>
-        <a href="/archives/" class="hover:[color:var(--accent)]">归档</a>
+        <a href={withBase("/archives/")} class="hover:[color:var(--accent)]">归档</a>
         <span aria-hidden="true"> · </span>
-        <a href="/tags/" class="hover:[color:var(--accent)]">标签</a>
+        <a href={withBase("/tags/")} class="hover:[color:var(--accent)]">标签</a>
         {showBangumi && <span aria-hidden="true"> · </span>}
-        {showBangumi && <a href="/bangumi/" class="hover:[color:var(--accent)]">番组</a>}
+        {showBangumi && <a href={withBase("/bangumi/")} class="hover:[color:var(--accent)]">番组</a>}
       </p>
     </footer>
   </body>

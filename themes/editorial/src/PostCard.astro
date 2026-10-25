@@ -8,6 +8,8 @@ interface Props {
   cover?: string;
 }
 const { title, description, href, published, tags, cover } = Astro.props;
+// Base-path aware (external URLs pass through).
+const coverSrc = cover && (/^https?:\/\//.test(cover) ? cover : import.meta.env.BASE_URL.replace(/\/$/, "") + cover);
 const dateIso = published.toISOString();
 const dateText = dateIso.slice(0, 10);
 ---
@@ -33,7 +35,7 @@ const dateText = dateIso.slice(0, 10);
   {cover && (
     <a href={href} aria-label={"阅读文章：" + title} tabindex={-1} class="block h-44 shrink-0 overflow-hidden rounded-xl md:h-40 md:w-[28%]">
       <img
-        src={cover}
+        src={coverSrc}
         alt=""
         loading="lazy"
         decoding="async"
