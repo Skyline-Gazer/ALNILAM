@@ -33,7 +33,12 @@
 | BLOG-03 | MUST | Pagefind local search is lazy and returns valid navigable results. | Search with actual fixture corpus on root domain and `/ALNILAM/` subpath; no index requests before feature is used when lazy policy applies. |
 | BLOG-04 | MUST | SEO URLs, hreflang, RSS, sitemap, robots, canonical/OG/JSON-LD and internal links honor the deployment base path. | Crawl *generated output*, parse each URL, browser-click real pages under both `/` and `/ALNILAM/`; regress old #34 issues. |
 | BLOG-05 | MUST | Local and remote image behavior does not break Site immutability or violate licenses. | Correct paths, responsive dimension/CLS, alt, no unintended third-party fetch or embed; image generation only in isolated staging. |
-| BLOG-06 | SHOULD | i18n UI and translated content have one routing model and fallbacks. | zh-CN/en fixtures, x-default and alternate metadata, missing translation behavior documented. |
+| BLOG-06 | MUST | i18n UI, translated content, locale-aware taxonomies and feeds use **one canonical route registry**, including default-locale unprefixed / other-locale prefixed rules. | Route examples and missing-translation behavior specified in 04; zh-CN/en/ja fixtures; only real equivalent hreflang, localized taxonomy pages and Pagefind language separation. |
+| BLOG-07 | MUST (opt-in feature) | Support **llms.txt v2** locale/subpath indexes, source-backed Markdown page views and HTML discovery when enabled. | /llms.txt, /en/llms.txt, article index.md, alternate/describedby, disabled=absent, root and /ALNILAM/ tests; optional full aggregation separately configured. |
+
+### Route/SEO/AI content normative annex
+
+[04-ROUTING-SEO-LLMS-V2.md](04-ROUTING-SEO-LLMS-V2.md) is the detailed reviewable contract for **ROUTE-01–07, TAX-01–06, SEARCH-01–03, SEO-01–09 and LLM-01–08**. This annex overrides ambiguous high-level wording in this table. In particular URL basePath, locale prefixes, category/tag IDs, canonical/hreflang, search isolation and llmstxt.org v2 are not optional guesses left to implementers.
 
 ## Optional modules and privacy
 
@@ -87,6 +92,16 @@ Then no third-party SDK/script/iframe or empty placeholder module is loaded; dis
 Given one chosen Firefly or Mizuki implementation imported into Shirone-based Core
 When the integration PR is reviewed
 Then it identifies the source commit/files, why Shirone's existing capability was insufficient, source notices, and a specific regression test.
+
+### S7 — Localized taxonomy + SEO
+Given zh-CN/en/ja fixture articles and stable taxonomy IDs
+When generated for root hosting and /ALNILAM/ Pages subpath
+Then only available locale taxonomy pages are emitted, they display local language posts, self-canonical URLs, accurate mutual hreflang, correct pagination and no broken links.
+
+### S8 — llms.txt v2 discovery
+Given LLM publishing is enabled and an article with code/math/images has locale-specific source Markdown
+When the static site is built under /ALNILAM/
+Then an exact path- and locale-aware llms.txt index links to a source-backed index.md, page head alternate/describedby point to real output files, nonpublic content is absent, and disabling the feature removes all outputs/discovery.
 
 ## Definition of Ready for an implementable Issue
 - [ ] Linked Plan and frozen Spec requirement IDs.
