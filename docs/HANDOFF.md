@@ -9,6 +9,17 @@
 - ADS is a **private repository**; the public CI checkout intentionally omits recursive submodule cloning (no cross-repo credentials). Maintainers with ADS access can materialize it and verify the full rule set.\n- ADS release `v0.3` gitlink: `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`, located at `.ads`.
 - Do **not** infer latest bootstrap branch HEAD, CI result or Project item status from this document. Query GitHub at start of task.
 
+## Continuation 5: Issue #5 closed — search, i18n, pagination, image policy (2026-10-25)
+- **PR #17** (merged `b5e5a2c`, head `0b605b2`, CI runs 40179002245/40178997441 + dev run 40179126452 success). Owner approved all four items.
+- **Pagefind local search** (npm dep 1.5.2, no global install): compose indexes the staged output; index failure fails the build. `pagefind-entry.json` language keys sorted post-index — found via repeat-build digest diff (nondeterministic worker completion order). Search island uses the vanilla `search()` API + ~40-line custom UI; `@pagefind/default-ui` was replaced (webpack-era bundle breaks under rolldown). Index loads lazily from `/pagefind/` only on interaction — no posts content in page bundles.
+- **Browser-verified bug chain** (each caught by real-browser evidence, not tests): ① event handler case mismatch `{oninput}` vs `function onInput` compiles to an undefined identifier (silent no-op); ② Pagefind `r.data()` is a method — awaiting it as a property yields functions; ③ `each_key_duplicate` crash when sub-results share URLs; ④ Pagefind module namespace must never be wrapped in a Svelte `$state` proxy (breaks internals — kept as plain ref, documented); ⑤ a stale `.astro`/vite cache silently served an old broken island compile across multiple "successful" rebuilds — `rm -rf apps/web/.astro` cleared it. **Lesson: when a fix doesn't change behavior, clear build caches before re-theorizing.**
+- **i18n**: frontmatter `lang` (BCP-47) + `translationKey`; default locale keeps `/posts/<slug>/`, translations live at `/posts/<lang>/<slug>/` via the `content/posts/<lang>/` directory convention (glob-loader ids slugify dots — filename-suffix encoding like `post.en.md` does NOT survive; directory encoding does, verified via a debug route). hreflang + x-default on pages, `xhtml:link` in sitemap, per-post `<html lang>`, RSS per-item `<language>`. Standard fixtures: zh-CN + en + ja translations of two articles.
+- **Pagination**: `/posts/[...page]`, pageSize 5, prev/next, per-page canonicals; fixture-tested with 7 posts → `/posts/2/`.
+- **Image pipeline**: decision = none. Site-owned images served as-is (deterministic offline builds, no sharp); CLS-safe dimensions enforced by artifact-check. Documented in SITE_ONBOARDING.md.
+- Determinism re-proven after Pagefind: repeat builds byte-identical with pinned epoch; same-revision upgrade-check byte-identical.
+- Board read-back: #5 **Done** (all acceptance items shipped). Remaining open: #6 (P3 optional), #7 (P4 release), #8 (In Progress).
+- `dev` HEAD: merge of PR #17. `main` still `282459a` — release PR requires owner authorization.
+
 ## Continuation 4: P2 slice 1 — feeds, SEO, archives, tags (2026-10-25)
 - **PR #15** (merged as `defad23`, head `6f9da26`, CI runs 40174387510/40174190477 + dev run 40174473626 success): zero new dependencies.
   - Routes: `/rss.xml` (RSS 2.0, escaping, atom:self), `/sitemap.xml` (static routes + posts with lastmod), `/robots.txt`, `/archives/` (year-grouped), `/tags/` + `/tags/[tag]/` (PostCard one-per-row).
