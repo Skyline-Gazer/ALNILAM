@@ -1,0 +1,44 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import BaseLayout from "@alnilam/theme-editorial/BaseLayout.astro";
+import PostCard from "@alnilam/theme-editorial/PostCard.astro";
+import { loadSite } from "../../lib/site-source.mjs";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("posts", ({ data }) => !data.draft);
+  const byTag = new Map<string, CollectionEntry<"posts">[]>();
+  for (const post of posts) {
+    for (const tag of post.data.tags) {
+      if (!byTag.has(tag)) byTag.set(tag, []);
+      byTag.get(tag)!.push(post);
+    }
+  }
+  return [...byTag.entries()].map(([tag, list]) => ({
+    params: { tag },
+    props: { list: list.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()) },
+  }));
+}
+const { tag } = Astro.params;
+const { list } = Astro.props as { list: CollectionEntry<"posts">[] };
+const { config } = loadSite();
+const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale };
+---
+<BaseLayout title={`#${tag}`} {...layout} description={`标签 ${tag} 下的全部文章`} canonical={new URL(`/tags/${tag}/`, config.site.url).toString()}>
+  <header class="mb-8">
+    <p class="text-sm" style="color: var(--fg-muted)"><a href="/tags/" class="hover:[color:var(--accent)]">← 全部标签</a></p>
+    <h1 class="mt-2 text-3xl font-bold tracking-tight" style="color: var(--fg)">#{tag}</h1>
+    <p class="mt-2 text-sm" style="color: var(--fg-muted)">{list.length} 篇文章</p>
+  </header>
+  <div class="space-y-4">
+    {list.map((post) => (
+      <PostCard
+        title={post.data.title}
+        description={post.data.description}
+        href={`/posts/${post.id}/`}
+        published={post.data.pubDate}
+        tags={post.data.tags}
+        cover={post.data.cover}
+      />
+    ))}
+  </div>
+</BaseLayout>

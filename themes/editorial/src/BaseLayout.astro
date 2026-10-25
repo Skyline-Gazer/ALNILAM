@@ -7,9 +7,13 @@ interface Props {
   siteTitle: string;
   appearance: "dark" | "light";
   locale: string;
+  ogType?: "website" | "article";
+  publishedTime?: string;
+  tags?: string[];
 }
-const { title, description = "", canonical, siteTitle, appearance, locale } = Astro.props;
+const { title, description = "", canonical, siteTitle, appearance, locale, ogType = "website", publishedTime, tags } = Astro.props;
 const year = new Date().getFullYear();
+const ogImage = canonical ? new URL("/site-assets/orion.svg", canonical).toString() : undefined;
 ---
 <!doctype html>
 <html lang={locale} data-theme={appearance}>
@@ -19,6 +23,34 @@ const year = new Date().getFullYear();
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
     {canonical && <link rel="canonical" href={canonical} />}
+    <link rel="alternate" type="application/rss+xml" title={siteTitle} href="/rss.xml" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <!-- Open Graph -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={siteTitle} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {canonical && <meta property="og:url" content={canonical} />}
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+    {(tags ?? []).map((t) => <meta property="article:tag" content={t} />)}
+    <!-- Twitter -->
+    <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <!-- JSON-LD structured data -->
+    {canonical && (
+      <script type="application/ld+json" set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": ogType === "article" ? "BlogPosting" : "WebSite",
+        headline: title,
+        name: ogType === "article" ? undefined : siteTitle,
+        description,
+        url: canonical,
+        inLanguage: locale,
+        ...(ogType === "article" ? { datePublished: publishedTime, keywords: tags?.join(", "), blogPost: undefined } : {}),
+      })} />
+    )}
     <title>{title} · {siteTitle}</title>
   </head>
   <body class="flex min-h-screen flex-col">
@@ -43,6 +75,13 @@ const year = new Date().getFullYear();
     </div>
     <footer class="border-t py-8 text-center text-sm" style="border-color: var(--border); color: var(--fg-muted)">
       <p>Powered by <a href="https://github.com/Skyline-Gazer/ALNILAM" class="hover:[color:var(--accent)]" style="color: var(--fg-soft)">ALNILAM</a> · Apache-2.0 · © {year}</p>
+      <p class="mt-1">
+        <a href="/rss.xml" class="hover:[color:var(--accent)]">RSS</a>
+        <span aria-hidden="true"> · </span>
+        <a href="/archives/" class="hover:[color:var(--accent)]">归档</a>
+        <span aria-hidden="true"> · </span>
+        <a href="/tags/" class="hover:[color:var(--accent)]">标签</a>
+      </p>
     </footer>
   </body>
 </html>

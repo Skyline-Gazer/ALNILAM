@@ -13,7 +13,15 @@ const layout = { siteTitle: config.site.title, appearance: config.theme.appearan
 const dateIso = post.data.pubDate.toISOString();
 const tags = post.data.tags;
 ---
-<BaseLayout title={post.data.title} {...layout} description={post.data.description} canonical={new URL("/posts/" + post.id + "/", config.site.url).toString()}>
+<BaseLayout
+  title={post.data.title}
+  {...layout}
+  description={post.data.description}
+  canonical={new URL("/posts/" + post.id + "/", config.site.url).toString()}
+  ogType="article"
+  publishedTime={dateIso}
+  tags={tags}
+>
   <article class="mx-auto max-w-3xl">
     <header class="mb-10">
       <p class="mb-3 text-sm" style="color: var(--fg-muted)">
