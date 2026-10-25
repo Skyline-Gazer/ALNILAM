@@ -9,6 +9,14 @@
 - ADS is a **private repository**; the public CI checkout intentionally omits recursive submodule cloning (no cross-repo credentials). Maintainers with ADS access can materialize it and verify the full rule set.\n- ADS release `v0.3` gitlink: `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`, located at `.ads`.
 - Do **not** infer latest bootstrap branch HEAD, CI result or Project item status from this document. Query GitHub at start of task.
 
+## Continuation 6: v0.1.0 released (2026-10-25) — Issues #7, #8 closed
+- **PR #19** (merged to `dev`, head `2fccecb`, CI 40181608439/40181511458 success): secret-pattern sweep clean; `pnpm audit` clean; unused `@pagefind/default-ui` removed; npm dependency license table in THIRD_PARTY_NOTICES; legacy-Site fixture `sites/legacy-demo` (no schemaVersion/no i18n) verified building against current + P0 (7cbcef0) + P1 (cbf16ab) cores with Site digest preserved; a11y floor + 64KiB page-weight budgets added to artifact-check (negative-tested); README quickstart rewrite; `docs/MAINTAINERS.md` (release procedure, tagging rules, CI inventory); `CHANGELOG.md`.
+- **Release PR #20** (`dev` → `main`, owner-authorized): merged `52a5d13`. Ruleset `alnilam-main` enforced (PR-only + `verify` strict — PR checks SUCCESS). Dispatch-run CI on main: [40182055037](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40182055037) **success**.
+- **Tag `v0.1.0`** annotated on main merge commit; GitHub Release published; `ALNILAM_OLD_CORE_SHA` repo variable set to `52a5d13f…` per docs/MAINTAINERS.md — CI upgrade/rollback now targets the real previous release going forward.
+- **Issues #7 and #8 closed** (with evidence comments). Board read-back: #1–#5, #7–#10, #12, #13, #15, #17, #19, #20 all **Done**; only #6 (P3 optional modules) remains Todo — 17 items total, zero discrepancies.
+- No production deployment was performed (static hosting cutover remains owner-run). No new recurring infrastructure.
+- Repo state: `main` = `52a5d13` (v0.1.0), `dev` = `1815284`; both protected.
+
 ## Continuation 5: Issue #5 closed — search, i18n, pagination, image policy (2026-10-25)
 - **PR #17** (merged `b5e5a2c`, head `0b605b2`, CI runs 40179002245/40178997441 + dev run 40179126452 success). Owner approved all four items.
 - **Pagefind local search** (npm dep 1.5.2, no global install): compose indexes the staged output; index failure fails the build. `pagefind-entry.json` language keys sorted post-index — found via repeat-build digest diff (nondeterministic worker completion order). Search island uses the vanilla `search()` API + ~40-line custom UI; `@pagefind/default-ui` was replaced (webpack-era bundle breaks under rolldown). Index loads lazily from `/pagefind/` only on interaction — no posts content in page bundles.
