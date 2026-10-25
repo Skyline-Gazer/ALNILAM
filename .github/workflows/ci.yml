@@ -48,9 +48,17 @@ jobs:
           test -s dist/external-site/posts/hello-alnilam/index.html
       - name: Two-version Core upgrade / rollback against unchanged Site
         run: |
-          # "Old Core" = last revision with a buildable Core (previous bootstrap
-          # state). Override via repository variable when a prior release tag exists.
+          # "Old Core" = previous release (ALNILAM_OLD_CORE_SHA repo variable).
+          # Fallback chain: variable SHA → v0.1.0 tag → ee97d1f1 (last buildable
+          # bootstrap state). A SHA living only on main can be rejected by
+          # upload-pack from a PR checkout, so fall through on fetch failure.
           old="${{ vars.ALNILAM_OLD_CORE_SHA }}"
+          if [ -n "$old" ]; then
+            git fetch --no-tags --depth=1 origin "$old" 2>/dev/null && old="$(git rev-parse FETCH_HEAD)" || old=""
+          fi
+          if [ -z "$old" ]; then
+            git fetch --no-tags --depth=1 origin "refs/tags/v0.1.0" 2>/dev/null && old="$(git rev-parse FETCH_HEAD^{commit})" || old=""
+          fi
           if [ -z "$old" ]; then
             git fetch --no-tags --depth=1 origin ee97d1f175ac905dd3a7e2f79762415888b99b76
             old="$(git rev-parse FETCH_HEAD)"
