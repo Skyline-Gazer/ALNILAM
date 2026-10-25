@@ -9,6 +9,18 @@
  * ids clean; the URL lang prefix comes from frontmatter `lang`, not the path.
  * hreflang alternates: pages sharing a `translationKey` cross-link each other.
  */
+
+/**
+ * Prefix an internal root-relative path with the deploy base (Astro injects
+ * BASE_URL from the `base` config; "/" for root-hosted Sites).
+ */
+export function withBase(p) {
+  // External URLs pass through untouched.
+  if (/^https?:\/\//.test(p)) return p;
+  const base = (import.meta.env?.BASE_URL ?? "/").replace(/\/$/, "");
+  return base + (p.startsWith("/") ? p : "/" + p);
+}
+
 export function postLang(post, defaultLocale) {
   return post.data.lang || defaultLocale;
 }

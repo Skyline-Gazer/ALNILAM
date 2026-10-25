@@ -1,0 +1,53 @@
+name: Deploy
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Contract tests
+        run: pnpm test
+      - name: Build demo Site for Pages
+        env:
+          ALNILAM_SITE_URL: ${{ vars.PAGES_URL || 'https://skyline-gazer.github.io/ALNILAM/' }}
+          SOURCE_DATE_EPOCH: "1700000000"
+        run: |
+          node scripts/compose.mjs --site sites/demo --out dist/site
+          # Prefix asset/absolute links for the /ALNILAM/ base path is NOT needed:
+          # demo Site config url is overridden above; internal links are root-relative
+          # and Pages serves under /ALNILAM/ — handled by the base option below.
+      - name: Add .nojekyll
+        run: touch dist/site/.nojekyll
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/site
+      - id: deployment
+        uses: actions/deploy-pages@v4

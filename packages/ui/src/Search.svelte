@@ -26,7 +26,8 @@
   async function initSearch() {
     try {
       // Location-derived URL is computed at runtime so no bundler can resolve it.
-      const pagefindUrl = new URL("/pagefind/pagefind.js", location.origin).href;
+      // Base-aware (sub-path deploys like GitHub Pages); BASE_URL ends with "/".
+      const pagefindUrl = new URL("pagefind/pagefind.js", new URL(import.meta.env.BASE_URL, location.origin)).href;
       searchApi = await import(/* @vite-ignore */ pagefindUrl);
       await searchApi.init();
       await searchApi.options({ baseUrl: "/" });

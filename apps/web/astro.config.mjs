@@ -13,6 +13,10 @@ const { config } = loadSite();
 
 export default defineConfig({
   site: config.site.url,
+  // Sites hosted under a sub-path (e.g. GitHub Pages /ALNILAM/) need Astro's
+  // base so internal links and assets are prefixed correctly. Root-hosted
+  // Sites (custom domains) get "/".
+  base: new URL(config.site.url).pathname.replace(/\/$/, ""),
   output: "static",
   outDir: process.env.ALNILAM_OUTPUT_DIR || "./dist",
   integrations: [
