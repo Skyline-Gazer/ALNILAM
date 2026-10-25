@@ -16,6 +16,13 @@ ALNILAM v0.1.3 has been published, but successful Issues, CI, and release tags d
 - **Static-first:** no mandatory runtime database, CMS backend, identity layer or paid always-on service.
 - **Scope control:** gallery, moments and music appear in historical docs as owner-declined, but original proof is not established in this review. Treat them as *candidates pending decision*, not automatically mandatory or permanently cancelled. Comments/Bangumi are also to be tested as optional Site-configured modules.
 
+## 2A. Content discovery and multilingual URL decisions (candidate)
+- Initial URL design: Site-configured default locale is unprefixed; other enabled locales use a single prefix. A stable route registry generates both root and /ALNILAM/ links and canonical URLs. Existing legacy article paths need explicit compatible aliases or a recorded no-breaking-change decision.
+- Taxonomy identifiers stay stable across languages; Category and Tag labels localize, with locale-scoped listings, pagination, Search/Pagefind results and feeds. Untranslated pages cannot fabricate hreflang.
+- SEO is a concrete build artifact contract (canonical, reciprocal hreflang, OG/JSON-LD, sitemap, RSS, indexing/exclusions) rather than only a meta-tag checkbox.
+- Include opt-in **llmstxt.org v2** support (subpath and locale indexes, source-backed Markdown views, HTML alternate/describedby); optional llms-full is a distinct policy. This is LLM discoverability support, **not** a verified search ranking improvement.
+- Detailed acceptance: [04-ROUTING-SEO-LLMS-V2.md](04-ROUTING-SEO-LLMS-V2.md). This is a proposed contract awaiting G0 review, not a deployed capability.
+
 ## 3. Explicit non-goals
 - Replacing GitHub repository, erasing history, force pushing, rewriting tags, auto-deploying new production code.
 - Rebuilding Firefly, Mizuki and Shirone as three separate themes in ALNILAM.
