@@ -4,7 +4,7 @@
 
 Traceability rule: requirement → selected source/implementation → atomic Issue → PR + changed files → CI/browser evidence → owner decision. Scope changes must revise Spec and keep the former decision/link.
 
-## Proposed work-item traceability (all 34 existing atomic Issues)
+## Proposed work-item traceability (all 35 existing atomic Issues)
 
 | Phase | Candidate Issue | Spec requirement IDs | Planning status |
 | --- | --- | --- | --- |
@@ -27,18 +27,19 @@ Traceability rule: requirement → selected source/implementation → atomic Iss
 | P3 | #59 | PRD-05, PRD-06 | Pending Spec freeze |
 | P3 | #60 | NFR-05, MOD-01 | Pending Spec freeze |
 | P3 | #61 | PRD-03, PRD-04, NFR-05 | Pending Spec freeze |
-| P4 | #62 | BLOG-01, BLOG-02 | Pending Spec freeze |
-| P4 | #63 | BLOG-02, BLOG-03 | Pending Spec freeze |
-| P4 | #64 | BLOG-04 | Pending Spec freeze |
-| P4 | #65 | BLOG-06 | Pending Spec freeze |
-| P4 | #66 | BLOG-05, NFR-05 | Pending Spec freeze |
+| P4 | #62 | BLOG-01, BLOG-02; TAX-01–06; ROUTE-04 | Pending Spec freeze |
+| P4 | #63 | BLOG-02, BLOG-03; SEARCH-01–03 | Pending Spec freeze |
+| P4 | #64 | BLOG-04; ROUTE-02–07; SEO-01–09 | Pending Spec freeze |
+| P4 | #65 | BLOG-06; ROUTE-01–06; SEO-02, SEO-06 | Pending Spec freeze |
+| P4 | #66 | BLOG-05, NFR-05 |
+| P4 | **#78** | **BLOG-07; LLM-01–08** | Pending Spec freeze | Pending Spec freeze |
 | P5 | #67 | MOD-03, MOD-04 | Pending product scope decision |
 | P5 | #68 | MOD-03, MOD-04 | Pending product scope decision |
 | P5 | #69 | MOD-03, MOD-04 | Pending product scope decision |
 | P5 | #70 | MOD-02, MOD-04 | Pending product scope decision |
 | P5 | #71 | MOD-02, MOD-04 | Pending product scope decision |
 | P6 | #72 | MOD-01, NFR-04 | Pending Spec freeze |
-| P6 | #73 | BLOG-04, NFR-05 | Pending Spec freeze |
+| P6 | #73 | BLOG-04, BLOG-06, BLOG-07, NFR-05; ROUTE/TAX/SEARCH/SEO/LLM E2E | Pending Spec freeze |
 | P6 | #74 | NFR-05, NFR-06 | Pending Spec freeze |
 | P6 | #75 | NFR-03, NFR-04 | Pending Spec freeze |
 | P6 | #76 | PRD-01, NFR-02, NFR-07 | Pending Spec freeze |
