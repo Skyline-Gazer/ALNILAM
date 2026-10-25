@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import BaseLayout from "@alnilam/theme-editorial/BaseLayout.astro";
 import { loadSite } from "../../lib/site-source.mjs";
+import { withBase } from "../../lib/i18n.mjs";
 const { config } = loadSite();
 const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale, showBangumi: config.bangumi?.enabled ?? false };
 const posts = await getCollection("posts", ({ data }) => !data.draft);
@@ -23,7 +24,7 @@ const tags = [...byTag.entries()].sort((a, b) => b[1].length - a[1].length || a[
     <div class="flex flex-wrap gap-3">
       {tags.map(([tag, list]) => (
         <a
-          href={`/tags/${tag}/`}
+          href={withBase(`/tags/${tag}/`)}
           class="rounded-full px-4 py-2 text-sm font-medium transition-colors hover:[color:var(--accent)]"
           style="background: var(--accent-soft); color: var(--accent)"
         >
