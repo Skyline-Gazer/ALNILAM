@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.astro/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+*.tsbuildinfo
+.temp/
+.tmp/
+.site-cache/
+.codegraph/
+.rtk/
+

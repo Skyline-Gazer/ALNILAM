@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@source "../../../apps/web/src";
+@source "../../../packages/ui/src";
+:root { color-scheme: dark; background: #070d1b; }
+html { scroll-behavior: smooth; }
+body {
+  background: radial-gradient(ellipse at 70% -15%, #1c4060 0%, transparent 46%),
+    linear-gradient(180deg, #080e20, #050911);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.skip-link { position: absolute; top: -100px; left: 1rem; z-index: 100; padding: .6rem 1rem; background: white; color: black; }
+.skip-link:focus { top: 1rem; }
+.prose-post h1, .prose-post h2 { font-weight: 700; color: #fff; }
+.prose-post h2 { margin-top: 2.5rem; font-size: 1.5rem; }
+.prose-post p { margin: 1.3rem 0; line-height: 1.85; }
+.prose-post a { text-decoration: underline; color: #93c5fd; }
+.prose-post pre { overflow-x: auto; padding: 1rem; border-radius: .75rem; background: #101b32; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+

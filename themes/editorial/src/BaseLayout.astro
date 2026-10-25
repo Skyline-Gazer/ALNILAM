@@ -1,0 +1,37 @@
+---
+import "./editorial.css";
+interface Props {
+  title: string;
+  description?: string;
+  canonical?: string;
+  siteTitle: string;
+  appearance: "dark" | "light";
+  locale: string;
+}
+const { title, description = "", canonical, siteTitle, appearance, locale } = Astro.props;
+---
+<!doctype html>
+<html lang={locale} data-theme={appearance}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content={description} />
+    {canonical && <link rel="canonical" href={canonical} />}
+    <title>{title} · {siteTitle}</title>
+  </head>
+  <body class="min-h-screen text-slate-100">
+    <a href="#content" class="skip-link">跳至正文</a>
+    <div class="mx-auto max-w-5xl px-4 sm:px-7">
+      <header class="sticky top-3 z-20 mt-3 flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/75 px-5 py-3 backdrop-blur-xl">
+        <a href="/" class="font-semibold tracking-[.2em] text-white" aria-label={siteTitle + " home"}>✦ ALNILAM</a>
+        <nav aria-label="主导航" class="flex gap-5 text-sm text-slate-300">
+          <a href="/">首页</a>
+          <a href="/posts/">文章</a>
+        </nav>
+      </header>
+      <main id="content" class="py-10"><slot /></main>
+      <footer class="border-t border-white/10 py-8 text-sm text-slate-400">Powered by ALNILAM · Apache-2.0</footer>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,21 @@
+---
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import BaseLayout from "@alnilam/theme-editorial/BaseLayout.astro";
+import { loadSite } from "../../lib/site-source.mjs";
+export async function getStaticPaths() {
+  const posts = await getCollection("posts", ({ data }) => !data.draft);
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+const { post } = Astro.props as { post: CollectionEntry<"posts"> };
+const { Content } = await render(post);
+const { config } = loadSite();
+const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale };
+---
+<BaseLayout title={post.data.title} {...layout} description={post.data.description} canonical={new URL("/posts/" + post.id + "/", config.site.url).toString()}>
+  <article class="mx-auto max-w-3xl">
+    <p class="mb-3 text-sm text-slate-400"><time datetime={post.data.pubDate.toISOString()}>{post.data.pubDate.toISOString().slice(0, 10)}</time></p>
+    <h1 class="mb-9 text-4xl font-bold leading-tight text-white sm:text-5xl">{post.data.title}</h1>
+    <div class="prose-post text-slate-200"><Content /></div>
+  </article>
+</BaseLayout>
+

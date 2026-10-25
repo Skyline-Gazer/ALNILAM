@@ -1,0 +1,17 @@
+{
+  "name": "alnilam",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.19.0",
+  "engines": { "node": ">=22.12.0" },
+  "scripts": {
+    "dev": "pnpm --filter @alnilam/web dev",
+    "build": "node scripts/compose.mjs --site sites/demo --out dist/site",
+    "compose": "node scripts/compose.mjs",
+    "check": "pnpm --filter @alnilam/web check",
+    "test": "node --test scripts/tests/*.test.mjs",
+    "verify": "pnpm test && pnpm check && pnpm build"
+  }
+}
+

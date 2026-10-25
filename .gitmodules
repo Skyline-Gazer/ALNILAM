@@ -1,0 +1,4 @@
+[submodule ".ads"]
+	path = .ads
+	url = https://github.com/Skyline-Gazer/ADS.git
+

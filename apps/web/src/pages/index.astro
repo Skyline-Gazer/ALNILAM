@@ -1,0 +1,25 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "@alnilam/theme-editorial/BaseLayout.astro";
+import PostCard from "@alnilam/theme-editorial/PostCard.astro";
+import Status from "@alnilam/ui/Status.svelte";
+import { loadSite } from "../lib/site-source.mjs";
+const { config } = loadSite();
+const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale };
+const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+<BaseLayout title="首页" {...layout} description={config.site.description} canonical={new URL("/", config.site.url).toString()}>
+  <section class="mb-14 flex min-h-72 flex-col justify-center rounded-3xl border border-white/10 bg-gradient-to-br from-sky-400/15 to-transparent px-7 py-12 sm:px-12">
+    <p class="mb-4 text-xs font-semibold uppercase tracking-[.3em] text-sky-300">An extensible blogging platform</p>
+    <h1 class="text-5xl font-black tracking-tight text-white sm:text-7xl">{config.site.title}</h1>
+    <p class="mt-5 max-w-lg leading-7 text-slate-300">{config.site.description}</p>
+    <div class="mt-8"><Status client:visible /></div>
+  </section>
+  <section aria-labelledby="latest-posts">
+    <h2 id="latest-posts" class="mb-6 text-2xl font-bold tracking-tight text-white">最近文章</h2>
+    <div class="space-y-4">
+      {posts.length ? posts.map((post) => <PostCard title={post.data.title} description={post.data.description} href={"/posts/" + post.id + "/"} published={post.data.pubDate} tags={post.data.tags} cover={post.data.cover} />) : <p class="text-slate-400">暂无文章。</p>}
+    </div>
+  </section>
+</BaseLayout>
+

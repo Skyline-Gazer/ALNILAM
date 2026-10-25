@@ -1,0 +1,35 @@
+# ALNILAM — Agent Entry Point
+
+This file is the binding repository-level operating entrypoint. ADS is pinned as a Git Submodule at `.ads` to commit `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac` (release v0.3). Materialize via `git submodule update --init --recursive`. Read `.ads/AGENTS.md`, `.ads/STANDARD.md`, `.ads/SAFETY.md`, `.ads/QUALITY.md`, and `.ads/profiles/astro-typescript.md` before structural changes. Do not assume ADS files are automatically discovered by the host agent.
+
+## Product invariants
+- Product: ALNILAM, generic open-source blogging platform (Apache-2.0).
+- **Core owns program; Site owns content, configuration and assets.** No production operation may mutate Site.
+- Core is a pnpm Monorepo; `sites/demo` is a fixture, not a user's real Site.
+- Astro 7 + Svelte 5 + Tailwind CSS 4; SSR/backend/database are not baseline dependencies.
+- Editorial visual direction: SHBlog Next; Post list layout: Fuwari single-column, one Post per row, text left and cover right on desktop.
+- Reference project code must not be copied without auditing source licenses, notices, and assets; record reused code in THIRD_PARTY_NOTICES.md.
+- Core/Site external composition must remain functional independent of the demo profile.
+
+## Git and delivery
+- Default work target is `dev`; create `feat/*`, `fix/*`, or `chore/*` branches from `dev`.
+- All work lands via Issue-linked PR; never commit direct to `main`. `main` is release only.
+- This initialization is an unmerged PR. Do not merge or deploy production without explicit authorization.
+- Project tracking target: https://github.com/orgs/Skyline-Gazer/projects/17/. Verify actual Project state before claiming status updates; do not substitute Issues for board membership.
+- Prefer GitHub Actions and ephemeral Preview for integration evidence; no new paid or persistent infrastructure.
+- RTK and CodeGraph: check availability and initialize task-scoped tools when supported. Keep local tool configs/indexes/artifacts out of `main` and published deliverables; never auto-install without owner authorization.
+
+## Commands
+```bash
+corepack enable
+pnpm install --no-frozen-lockfile
+pnpm test
+pnpm check
+pnpm build
+node scripts/compose.mjs --site /absolute/path/to/site --out /absolute/path/to/output
+```
+A frozen `pnpm-lock.yaml` must be generated and committed after CI resolves the initial dependency set; until then, repeatable dependency resolution is NOT claimed.
+
+## Handoff
+Read `docs/HANDOFF.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md` and the assigned Issue. The current bootstrap is intentionally minimal. Never infer implemented features from planned roadmap entries. End each task with exact commit SHA, CI run URL/results, PR, verified functionality, and unresolved blockers.
+
