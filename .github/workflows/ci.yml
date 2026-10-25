@@ -46,6 +46,17 @@ jobs:
           site_after="$(find "$RUNNER_TEMP/alnilam-site" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)"
           test "$site_before" = "$site_after"
           test -s dist/external-site/posts/hello-alnilam/index.html
+      - name: Two-version Core upgrade / rollback against unchanged Site
+        run: |
+          # "Old Core" = last revision with a buildable Core (previous bootstrap
+          # state). Override via repository variable when a prior release tag exists.
+          old="${{ vars.ALNILAM_OLD_CORE_SHA }}"
+          if [ -z "$old" ]; then
+            git fetch --no-tags --depth=1 origin ee97d1f175ac905dd3a7e2f79762415888b99b76
+            old="$(git rev-parse FETCH_HEAD)"
+          fi
+          echo "old Core revision: $old"
+          node scripts/upgrade-check.mjs --old "$old"
       - name: Confirm ADS version pin
         run: |
           test "$(git rev-parse HEAD:.ads)" = "1e07d6c4bbd296b7d37dcd31934cfc70426f73ac"
