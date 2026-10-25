@@ -9,6 +9,7 @@ interface Props {
   locale: string;
 }
 const { title, description = "", canonical, siteTitle, appearance, locale } = Astro.props;
+const year = new Date().getFullYear();
 ---
 <!doctype html>
 <html lang={locale} data-theme={appearance}>
@@ -16,22 +17,32 @@ const { title, description = "", canonical, siteTitle, appearance, locale } = As
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
     {canonical && <link rel="canonical" href={canonical} />}
     <title>{title} · {siteTitle}</title>
   </head>
-  <body class="min-h-screen text-slate-100">
+  <body class="flex min-h-screen flex-col">
     <a href="#content" class="skip-link">跳至正文</a>
-    <div class="mx-auto max-w-5xl px-4 sm:px-7">
-      <header class="sticky top-3 z-20 mt-3 flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/75 px-5 py-3 backdrop-blur-xl">
-        <a href="/" class="font-semibold tracking-[.2em] text-white" aria-label={siteTitle + " home"}>✦ ALNILAM</a>
-        <nav aria-label="主导航" class="flex gap-5 text-sm text-slate-300">
-          <a href="/">首页</a>
-          <a href="/posts/">文章</a>
+    <div class="mx-auto w-full max-w-5xl flex-1 px-4 sm:px-7">
+      <header class="site-header sticky top-3 z-20 mt-3 flex items-center justify-between rounded-2xl px-5 py-3">
+        <a href="/" class="flex items-center gap-2.5 font-semibold tracking-[.2em]" style="color: var(--fg)" aria-label={siteTitle + " home"}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M3 18 8.5 12.5 12 15.5 16.5 9 21 5" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="8.5" cy="12.5" r="1.6" fill="var(--accent)" />
+            <circle cx="16.5" cy="9" r="1.6" fill="var(--accent)" />
+            <circle cx="21" cy="5" r="1.2" fill="var(--accent)" opacity=".7" />
+          </svg>
+          <span>{siteTitle}</span>
+        </a>
+        <nav aria-label="主导航" class="flex gap-5 text-sm" style="color: var(--fg-muted)">
+          <a href="/" class="transition-colors hover:[color:var(--accent)]">首页</a>
+          <a href="/posts/" class="transition-colors hover:[color:var(--accent)]">文章</a>
         </nav>
       </header>
       <main id="content" class="py-10"><slot /></main>
-      <footer class="border-t border-white/10 py-8 text-sm text-slate-400">Powered by ALNILAM · Apache-2.0</footer>
     </div>
+    <footer class="border-t py-8 text-center text-sm" style="border-color: var(--border); color: var(--fg-muted)">
+      <p>Powered by <a href="https://github.com/Skyline-Gazer/ALNILAM" class="hover:[color:var(--accent)]" style="color: var(--fg-soft)">ALNILAM</a> · Apache-2.0 · © {year}</p>
+    </footer>
   </body>
 </html>
-

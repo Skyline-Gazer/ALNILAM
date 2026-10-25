@@ -10,12 +10,38 @@ const { post } = Astro.props as { post: CollectionEntry<"posts"> };
 const { Content } = await render(post);
 const { config } = loadSite();
 const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale };
+const dateIso = post.data.pubDate.toISOString();
+const tags = post.data.tags;
 ---
 <BaseLayout title={post.data.title} {...layout} description={post.data.description} canonical={new URL("/posts/" + post.id + "/", config.site.url).toString()}>
   <article class="mx-auto max-w-3xl">
-    <p class="mb-3 text-sm text-slate-400"><time datetime={post.data.pubDate.toISOString()}>{post.data.pubDate.toISOString().slice(0, 10)}</time></p>
-    <h1 class="mb-9 text-4xl font-bold leading-tight text-white sm:text-5xl">{post.data.title}</h1>
-    <div class="prose-post text-slate-200"><Content /></div>
+    <header class="mb-10">
+      <p class="mb-3 text-sm" style="color: var(--fg-muted)">
+        <time datetime={dateIso}>{dateIso.slice(0, 10)}</time>
+        {post.data.updatedDate && <span aria-label="更新于"> · 更新于 <time datetime={post.data.updatedDate.toISOString()}>{post.data.updatedDate.toISOString().slice(0, 10)}</time></span>}
+      </p>
+      <h1 class="text-4xl font-bold leading-tight sm:text-5xl" style="color: var(--fg)">{post.data.title}</h1>
+      {tags.length > 0 && (
+        <div class="mt-5 flex flex-wrap gap-2" aria-label="文章标签">
+          {tags.map((tag) => (
+            <span class="rounded-full px-2.5 py-1 text-xs" style="background: var(--accent-soft); color: var(--accent)">#{tag}</span>
+          ))}
+        </div>
+      )}
+    </header>
+    {post.data.cover && (
+      <img
+        src={post.data.cover}
+        alt=""
+        loading="eager"
+        decoding="async"
+        class="mb-10 h-auto w-full rounded-2xl"
+        style="border: 1px solid var(--border); background: var(--bg-card)"
+      />
+    )}
+    <div class="prose-post"><Content /></div>
+    <nav class="mt-14 border-t pt-6 text-sm" aria-label="返回" style="border-color: var(--border)">
+      <a href="/posts/" class="transition-colors hover:[color:var(--accent)]" style="color: var(--fg-muted)">← 返回全部文章</a>
+    </nav>
   </article>
 </BaseLayout>
-
