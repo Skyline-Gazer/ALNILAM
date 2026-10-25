@@ -19,6 +19,15 @@ test("reject malformed site and URL schemes", () => {
   assert.throws(() => normalizeSiteConfig({ site: { title: "", url: "https://example.com" } }));
   assert.throws(() => normalizeSiteConfig({ site: { title: "hi", url: "file:///x" } }));
 });
+test("schema v1 is the only supported version and fails closed on unknown versions", () => {
+  // Absent and explicit 1 are accepted and normalized to 1.
+  assert.equal(normalizeSiteConfig({ site: { title: "t", url: "https://e.com" } }).schemaVersion, 1);
+  assert.equal(normalizeSiteConfig({ schemaVersion: 1, site: { title: "t", url: "https://e.com" } }).schemaVersion, 1);
+  // Future/unknown versions must be rejected, not silently mis-rendered.
+  for (const bad of [2, 0, -1, 1.5, "1", null, true]) {
+    assert.throws(() => normalizeSiteConfig({ schemaVersion: bad, site: { title: "t", url: "https://e.com" } }), /schemaVersion/);
+  }
+});
 test("demo Site is valid and the read-only digest is stable", () => {
   const a = validateSiteRoot("sites/demo");
   const b = validateSiteRoot("sites/demo");
@@ -28,6 +37,19 @@ test("demo Site is valid and the read-only digest is stable", () => {
 test("output paths cannot overlap the Site source", () => {
   assert.throws(() => assertExternalOutput("sites/demo", "sites/demo/dist"));
   assert.throws(() => assertExternalOutput("sites/demo", "sites"));
+});
+test("compose writes deterministic provenance binding Core rev and Site digest", (t) => {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-prov-"));
+  t.after(() => fs.rmSync(out, { recursive: true, force: true }));
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", "sites/demo", "--out", path.join(out, "site")], {
+    env: { ...process.env, ALNILAM_CORE_REV: "test-core-rev-1234" },
+  });
+  assert.equal(result.status, 0, "compose failed: " + result.stderr);
+  const prov = JSON.parse(fs.readFileSync(path.join(out, "site", "alnilam-provenance.json"), "utf8"));
+  assert.equal(prov.core.revision, "test-core-rev-1234");
+  assert.equal(prov.site.digest, validateSiteRoot("sites/demo").digest);
+  assert.equal(prov.schema, 1);
+  assert.match(prov.generatedAt, /^\d{4}-\d{2}-\d{2}T/);
 });
 test("symlinks in Site inputs are rejected", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-contract-"));
