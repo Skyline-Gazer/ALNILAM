@@ -66,7 +66,7 @@ Discover *real* Project fields before writing anything, reuse instead of duplica
 ## Safe migration sequence after G0
 
 1. **Read before write**: `gh project view 17 --owner Skyline-Gazer`, `gh project item-list 17 --owner Skyline-Gazer --format json`, `gh project field-list 17 --owner Skyline-Gazer --format json`; inspect native repo milestones, Issue type and actual Issue IDs. This requires an authenticated principal with `project` read/write permission; do not assume token access.
-2. Reuse existing same-named milestones or create **exactly M1/M2/M3** once. No parallel Board or 41 duplicate Issues.
+2. Reuse existing same-named milestones or create **exactly M1/M2/M3** once. No parallel Board or 42 duplicate Issues.
 3. Use native GitHub Sub-issues API/UI to attach existing #43–#76 and #78 as children of #36–#42. **Plain Markdown checkboxes are not a substitute.** Preserve each Issue number, history and comments.
 4. Assign the milestone corresponding to each Phase to the parent and relevant sub-issue; add the missing Issues to the *existing* Project #17 idempotently after reading the current membership.
 5. Add/validate required fields and views. Configure the review gate; keep existing v0.1.x closed work as history, not a new false green milestone.
