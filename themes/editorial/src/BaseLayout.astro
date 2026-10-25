@@ -14,8 +14,9 @@ interface Props {
   /** Map of lang -> absolute URL for hreflang alternates (i18n translations). */
   alternates?: Map<string, string>;
   htmlLang?: string;
+  showBangumi?: boolean;
 }
-const { title, description = "", canonical, siteTitle, appearance, locale, ogType = "website", publishedTime, tags, alternates, htmlLang } = Astro.props;
+const { title, description = "", canonical, siteTitle, appearance, locale, ogType = "website", publishedTime, tags, alternates, htmlLang, showBangumi = false } = Astro.props;
 const year = new Date().getFullYear();
 const ogImage = canonical ? new URL("/site-assets/orion.svg", canonical).toString() : undefined;
 ---
@@ -79,6 +80,7 @@ const ogImage = canonical ? new URL("/site-assets/orion.svg", canonical).toStrin
           <a href="/posts/" class="transition-colors hover:[color:var(--accent)]">文章</a>
           <a href="/archives/" class="transition-colors hover:[color:var(--accent)]">归档</a>
           <a href="/tags/" class="transition-colors hover:[color:var(--accent)]">标签</a>
+          {showBangumi && <a href="/bangumi/" class="transition-colors hover:[color:var(--accent)]">番组</a>}
           <Search client:idle />
         </nav>
       </header>
@@ -92,6 +94,8 @@ const ogImage = canonical ? new URL("/site-assets/orion.svg", canonical).toStrin
         <a href="/archives/" class="hover:[color:var(--accent)]">归档</a>
         <span aria-hidden="true"> · </span>
         <a href="/tags/" class="hover:[color:var(--accent)]">标签</a>
+        {showBangumi && <span aria-hidden="true"> · </span>}
+        {showBangumi && <a href="/bangumi/" class="hover:[color:var(--accent)]">番组</a>}
       </p>
     </footer>
   </body>

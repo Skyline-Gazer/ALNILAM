@@ -6,7 +6,7 @@ import Status from "@alnilam/ui/Status.svelte";
 import { loadSite } from "../lib/site-source.mjs";
 import { postPath } from "../lib/i18n.mjs";
 const { config } = loadSite();
-const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale };
+const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale, showBangumi: config.bangumi?.enabled ?? false };
 const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 const latest = posts.slice(0, 5);
 const rest = posts.slice(5);
