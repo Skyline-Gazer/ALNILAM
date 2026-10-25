@@ -39,7 +39,13 @@ export function parseOldRevision(args = argv) {
 }
 
 function run(cmd, args, cwd) {
-  const result = spawnSync(cmd, args, { cwd, stdio: "inherit" });
+  const result = spawnSync(cmd, args, {
+    cwd,
+    stdio: "inherit",
+    // Pin the provenance timestamp so same-input builds are byte-identical
+    // (compose falls back to wall-clock generatedAt without SOURCE_DATE_EPOCH).
+    env: { ...process.env, SOURCE_DATE_EPOCH: process.env.SOURCE_DATE_EPOCH || "1700000000" },
+  });
   if (result.error) throw result.error;
   if (result.status !== 0) throw new Error(`${cmd} ${args.join(" ")} failed with exit ${result.status}`);
 }
