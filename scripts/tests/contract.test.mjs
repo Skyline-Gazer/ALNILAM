@@ -28,6 +28,33 @@ test("schema v1 is the only supported version and fails closed on unknown versio
     assert.throws(() => normalizeSiteConfig({ schemaVersion: bad, site: { title: "t", url: "https://e.com" } }), /schemaVersion/);
   }
 });
+test("comments module: disabled by default, giscus fields validated when enabled", () => {
+  // Disabled by default — no fields required, no behavior.
+  const off = normalizeSiteConfig({ site: { title: "t", url: "https://e.com" } });
+  assert.equal(off.comments.enabled, false);
+  assert.equal(off.comments.provider, "giscus");
+  // Enabled requires all four giscus identifiers.
+  assert.throws(() => normalizeSiteConfig({ site: { title: "t", url: "https://e.com" }, comments: { enabled: true } }), /comments\.repo/);
+  assert.throws(() => normalizeSiteConfig({
+    site: { title: "t", url: "https://e.com" },
+    comments: { enabled: true, repo: "o/r", repoId: "R", category: "C" },
+  }), /comments\.categoryId/);
+  const on = normalizeSiteConfig({
+    site: { title: "t", url: "https://e.com" },
+    comments: { enabled: true, repo: "o/r", repoId: "R_1", category: "Announcements", categoryId: "DIC_1" },
+  });
+  assert.equal(on.comments.enabled, true);
+  assert.equal(on.comments.mapping, "pathname");
+  // Unknown providers and bad mapping rejected.
+  assert.throws(() => normalizeSiteConfig({
+    site: { title: "t", url: "https://e.com" },
+    comments: { enabled: true, provider: "disqus", repo: "o/r", repoId: "R", category: "C", categoryId: "D" },
+  }), /giscus/);
+  assert.throws(() => normalizeSiteConfig({
+    site: { title: "t", url: "https://e.com" },
+    comments: { enabled: true, repo: "o/r", repoId: "R", category: "C", categoryId: "D", mapping: "bogus" },
+  }), /mapping/);
+});
 test("demo Site is valid and the read-only digest is stable", () => {
   const a = validateSiteRoot("sites/demo");
   const b = validateSiteRoot("sites/demo");

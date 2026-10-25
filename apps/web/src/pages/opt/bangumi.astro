@@ -1,0 +1,61 @@
+---
+import BaseLayout from "@alnilam/theme-editorial/BaseLayout.astro";
+import { loadSite } from "../../lib/site-source.mjs";
+import { fetchBangumiCollections } from "../../lib/bangumi.mjs";
+
+// Injected via astro.config.mjs only when [bangumi] enabled = true — the page
+// never ships for disabled modules.
+const { config } = loadSite();
+let collections: { name: string; nameCn: string; cover: string; href: string; summary: string; comment: string; updatedAt: string }[] = [];
+let error: string | null = null;
+try {
+  collections = await fetchBangumiCollections(config.bangumi);
+} catch (e: unknown) {
+  error = String((e as Error).message ?? e);
+}
+const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale, showBangumi: config.bangumi?.enabled ?? false };
+---
+<BaseLayout title="番组计划" {...layout} description={`${config.bangumi.userId} 的 ${config.bangumi.subjectType} 收藏`} canonical={new URL("/bangumi/", config.site.url).toString()}>
+  <header class="mb-10">
+    <h1 class="text-4xl font-bold tracking-tight" style="color: var(--fg)">Bangumi 收藏</h1>
+    <p class="mt-2 text-sm" style="color: var(--fg-muted)">
+      <a href={`https://bgm.tv/user/${config.bangumi.userId}`} rel="noopener noreferrer" class="hover:[color:var(--accent)]">@{config.bangumi.userId}</a>
+      · {config.bangumi.subjectType} · 数据在构建时获取
+    </p>
+  </header>
+  {error && (
+    <p class="rounded-2xl p-4 text-sm" role="alert" style="background: var(--accent-soft); color: var(--accent)">
+      Bangumi 数据获取失败（构建时）：{error}。页面其余部分不受影响。
+    </p>
+  )}
+  {collections.length ? (
+    <ul class="space-y-4">
+      {collections.map((c) => (
+        <li class="post-card flex w-full gap-5 rounded-2xl p-5 md:min-h-40 md:p-6">
+          {c.cover && (
+            <img
+              src={c.cover}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              width="200"
+              height="280"
+              referrerpolicy="no-referrer"
+              class="h-40 w-auto shrink-0 rounded-xl object-cover"
+              style="background: var(--bg-card)"
+            />
+          )}
+          <div class="min-w-0 flex-1">
+            <h2 class="text-lg font-semibold leading-snug" style="color: var(--fg)">
+              {c.href ? <a href={c.href} rel="noopener noreferrer" class="transition-colors hover:[color:var(--accent)]">{c.nameCn}</a> : c.nameCn}
+            </h2>
+            {c.nameCn !== c.name && <p class="mt-1 text-xs" style="color: var(--fg-muted)">{c.name}</p>}
+            <p class="mt-2 line-clamp-3 text-sm leading-relaxed" style="color: var(--fg-muted)">{c.summary}</p>
+          </div>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    !error && <p style="color: var(--fg-muted)">暂无收藏。</p>
+  )}
+</BaseLayout>

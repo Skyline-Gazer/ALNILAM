@@ -56,6 +56,37 @@ rendered as plain `<img>` without any build-time download. Authors should ship
 appropriately sized images; the platform guarantees CLS-safe markup by always
 emitting explicit `width`/`height` on generated cover `<img>` tags.
 
+## Optional modules (opt-in via config)
+
+Both modules are feature-flagged: **disabled modules ship nothing** — no page, no 404 stub, no client JS, no third-party requests.
+
+### Comments (`[comments]`)
+
+```toml
+[comments]
+enabled = true
+provider = "giscus"            # only provider
+repo = "you/your-repo"         # public GitHub repo hosting Discussions
+repoId = "R_..."               # from giscus.app
+category = "Announcements"
+categoryId = "DIC_..."
+# mapping = "pathname"         # optional: pathname | specific | number
+```
+
+Renders on post pages as a lazy `client:visible` island; the giscus script loads only after the section scrolls into view. Requires GitHub Discussions on the repo. Theme (dark/light) and language follow your Site config.
+
+### Bangumi (`[bangumi]`)
+
+```toml
+[bangumi]
+enabled = true
+userId = "your-bgm-name"
+subjectType = "anime"          # anime | book | music | game
+limit = 10                     # 1–50
+```
+
+Adds `/bangumi/` (nav + footer links appear automatically). Data is fetched **once at build time** from `api.bgm.tv` and embedded as static HTML — visitors make **zero** third-party data requests. Cover images hotlink `lain.bgm.tv` with `referrerpolicy="no-referrer"` (fetching covers into your output would redistribute upstream artwork). If the API is unreachable at build time the page renders an inline warning; the rest of the Site is unaffected.
+
 ## Building
 
 ```bash

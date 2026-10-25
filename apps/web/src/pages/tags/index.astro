@@ -3,7 +3,7 @@ import { getCollection } from "astro:content";
 import BaseLayout from "@alnilam/theme-editorial/BaseLayout.astro";
 import { loadSite } from "../../lib/site-source.mjs";
 const { config } = loadSite();
-const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale };
+const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale, showBangumi: config.bangumi?.enabled ?? false };
 const posts = await getCollection("posts", ({ data }) => !data.draft);
 const byTag = new Map();
 for (const post of posts) {

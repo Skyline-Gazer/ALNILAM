@@ -11,7 +11,7 @@ export async function getStaticPaths({ paginate }: { paginate: (items: Collectio
     .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
   return paginate(posts, {
     pageSize: 5,
-    props: { layout: { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale } },
+    props: { layout: { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale, showBangumi: config.bangumi?.enabled ?? false } },
   });
 }
 const { page, layout } = Astro.props as {

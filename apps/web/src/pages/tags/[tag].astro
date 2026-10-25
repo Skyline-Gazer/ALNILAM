@@ -22,7 +22,7 @@ export async function getStaticPaths() {
 const { tag } = Astro.params;
 const { list } = Astro.props as { list: CollectionEntry<"posts">[] };
 const { config } = loadSite();
-const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale };
+const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale, showBangumi: config.bangumi?.enabled ?? false };
 ---
 <BaseLayout title={`#${tag}`} {...layout} description={`标签 ${tag} 下的全部文章`} canonical={new URL(`/tags/${tag}/`, config.site.url).toString()}>
   <header class="mb-8">
