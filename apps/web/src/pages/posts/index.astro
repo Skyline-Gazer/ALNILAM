@@ -8,9 +8,22 @@ const layout = { siteTitle: config.site.title, appearance: config.theme.appearan
 const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 ---
 <BaseLayout title="文章" {...layout} description="全部文章" canonical={new URL("/posts/", config.site.url).toString()}>
-  <h1 class="mb-8 text-4xl font-bold text-white">全部文章</h1>
+  <header class="mb-8">
+    <h1 class="text-4xl font-bold tracking-tight" style="color: var(--fg)">全部文章</h1>
+    <p class="mt-2 text-sm" style="color: var(--fg-muted)">共 {posts.length} 篇</p>
+  </header>
   <div class="space-y-4">
-    {posts.map((post) => <PostCard title={post.data.title} description={post.data.description} href={"/posts/" + post.id + "/"} published={post.data.pubDate} tags={post.data.tags} cover={post.data.cover} />)}
+    {posts.length
+      ? posts.map((post) => (
+          <PostCard
+            title={post.data.title}
+            description={post.data.description}
+            href={"/posts/" + post.id + "/"}
+            published={post.data.pubDate}
+            tags={post.data.tags}
+            cover={post.data.cover}
+          />
+        ))
+      : <p style="color: var(--fg-muted)">暂无文章。</p>}
   </div>
 </BaseLayout>
-
