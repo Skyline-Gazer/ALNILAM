@@ -22,7 +22,7 @@ This file is the binding repository-level operating entrypoint. ADS is pinned as
 ## Commands
 ```bash
 corepack enable
-pnpm install --no-frozen-lockfile
+pnpm install --no-frozen-lockfile  # bootstrap only; freeze after lock commit
 pnpm test
 pnpm check
 pnpm build
