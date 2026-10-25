@@ -9,6 +9,14 @@
 - ADS is a **private repository**; the public CI checkout intentionally omits recursive submodule cloning (no cross-repo credentials). Maintainers with ADS access can materialize it and verify the full rule set.\n- ADS release `v0.3` gitlink: `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`, located at `.ads`.
 - Do **not** infer latest bootstrap branch HEAD, CI result or Project item status from this document. Query GitHub at start of task.
 
+## First remote CI acceptance (2026-10-25)
+- Verified source SHA: `ee97d1f175ac905dd3a7e2f79762415888b99b76`.
+- PR workflow: https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40159850665 — **success**.
+- Push workflow: https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40159847633 — **success**.
+- Actual checks: pnpm frozen dependency install, Node contract tests, Astro type/content check, demo static build, output assertions, independent external Site build, immutable source check, ADS gitlink pin.
+- CI deliberately does not clone the private ADS repository. ADS behavioral compliance beyond root AGENTS.md is not evidenced by this build.
+- This entry records a tested revision; review the current PR HEAD and fresh CI on every continuation.
+
 ## First task for next agent
 1. Read `AGENTS.md`, `.ads/{AGENTS,STANDARD,SAFETY,QUALITY}.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`.
 2. Open the current bootstrap PR and relevant P0 Issue. Confirm exact SHA and CI logs.
@@ -44,8 +52,8 @@ node scripts/compose.mjs --site /absolute/path/to/site --out dist/external-site
 `dist/site/index.html`, `dist/site/posts/hello-alnilam/index.html`, `dist/site/site-assets/orion.svg`.
 
 ## Explicit unverified matters
-- A complete clean Astro build and Svelte/Tailwind E2E must be confirmed from remote CI; this authoring environment cannot access npm registry.
-- A pnpm lockfile is committed from the actual GitHub Runner resolver; frozen install acceptance remains pending remote CI.
+- Clean Astro check and static build passed on remote CI; interactive browser E2E, visual fidelity and performance have **not** been verified.
+- Frozen dependency installation **passed** for tested SHA `ee97d1f`. Re-check current HEAD before release.
 - Branch protection/ruleset enforcement is not enabled unless verifiably applied.
 - Project #17 membership/status changes are not verified unless an authenticated Projects v2 read/write occurs.
 - No preview or production deployment was performed during bootstrap.
