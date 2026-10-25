@@ -2,25 +2,41 @@
 import { getCollection, render, type CollectionEntry } from "astro:content";
 import BaseLayout from "@alnilam/theme-editorial/BaseLayout.astro";
 import { loadSite } from "../../lib/site-source.mjs";
+import { postLang, postPath, translationAlternates } from "../../lib/i18n.mjs";
+
 export async function getStaticPaths() {
-  const posts = await getCollection("posts", ({ data }) => !data.draft);
-  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+  const allPosts = await getCollection("posts", ({ data }) => !data.draft);
+  const { config } = loadSite();
+  return allPosts.map((post) => {
+    const lang = postLang(post, config.site.locale);
+    return {
+      // [...slug] rest param: id already contains "<lang>/" when the file lives
+      // in a locale directory; otherwise prefix explicitly.
+      params: { slug: lang === config.site.locale || post.id.startsWith(lang + "/") ? post.id : `${lang}/${post.id}` },
+      props: { post, allPosts },
+    };
+  });
 }
-const { post } = Astro.props as { post: CollectionEntry<"posts"> };
+const { post, allPosts } = Astro.props as { post: CollectionEntry<"posts">; allPosts: CollectionEntry<"posts">[] };
 const { Content } = await render(post);
 const { config } = loadSite();
 const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale };
 const dateIso = post.data.pubDate.toISOString();
 const tags = post.data.tags;
+const lang = postLang(post, config.site.locale);
+const path = postPath(post, config.site.locale);
+const alternates = (translationAlternates(post, allPosts, config.site.locale) ?? undefined) as Map<string, string> | undefined;
 ---
 <BaseLayout
   title={post.data.title}
   {...layout}
   description={post.data.description}
-  canonical={new URL("/posts/" + post.id + "/", config.site.url).toString()}
+  canonical={new URL(path + "/", config.site.url).toString()}
   ogType="article"
   publishedTime={dateIso}
   tags={tags}
+  alternates={alternates}
+  htmlLang={lang}
 >
   <article class="mx-auto max-w-3xl">
     <header class="mb-10">

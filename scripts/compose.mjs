@@ -64,6 +64,15 @@ try {
   if (fs.existsSync(assetSrc)) {
     fs.cpSync(assetSrc, path.join(stage, "site-assets"), { recursive: true, force: false, errorOnExist: true });
   }
+  // Local search index (Pagefind). Runs over the staged static output; failure
+  // fails the compose so CI never ships a stale or missing index.
+  const pf = spawnSync(
+    process.platform === "win32" ? "pnpm.cmd" : "pnpm",
+    ["--filter", "@alnilam/web", "exec", "pagefind", "--site", stage],
+    { cwd: repoRoot, stdio: "inherit", env: { ...process.env, SOURCE_DATE_EPOCH: process.env.SOURCE_DATE_EPOCH } },
+  );
+  if (pf.error) throw pf.error;
+  if (pf.status !== 0) throw new Error("Pagefind indexing failed: exit " + pf.status);
   const after = validateSiteRoot(site).digest;
   if (after !== before) throw new Error("Site source changed during build; refusing to publish");
   if (provenance.site.digest !== before) throw new Error("Provenance digest mismatch; refusing to publish");

@@ -1,5 +1,6 @@
 import { getCollection } from "astro:content";
 import { loadSite } from "../lib/site-source.mjs";
+import { postPath } from "../lib/i18n.mjs";
 
 export async function GET() {
   const { config } = loadSite();
@@ -10,13 +11,15 @@ export async function GET() {
     .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;").replaceAll("'", "&#39;");
   const items = posts.map((post) => {
-    const url = `${base}/posts/${post.id}/`;
+    const url = base + postPath(post, config.site.locale) + "/";
+    const lang = post.data.lang || config.site.locale;
     return `    <item>
       <title>${escape(post.data.title)}</title>
       <link>${url}</link>
       <guid isPermaLink="true">${url}</guid>
       <pubDate>${post.data.pubDate.toUTCString()}</pubDate>
       <description>${escape(post.data.description || "")}</description>
+      <language>${lang}</language>
       ${post.data.tags.map((t) => `<category>${escape(t)}</category>`).join("\n      ")}
     </item>`;
   }).join("\n");
