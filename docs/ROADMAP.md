@@ -20,9 +20,9 @@
 - Upgrade tests using fixed old Site fixtures, deployment guides for static hosts.
 
 ## P3 · Optional advanced features
-- Music, gallery/album, moments/dynamics, Bangumi, comments and content enhancements.
-- Each feature independently budgeted; disabled features must not ship unused runtime JS.
-- License and provenance audits for any code adapted from references.
+- **Shipped (v0.1.x)**: comments (giscus, feature-flagged), Bangumi collections (build-time fetch, static output).
+- **Declined by owner decision (2026-10-25)**: gallery/album, moments/dynamics, music player — will not be built unless the owner reopens them.
+- Standing discipline: no disabled-module network calls or unused runtime bundles (enforced); per-file upstream provenance audit before any copied code/assets are accepted.
 
 ## P4 · Release readiness
 - Deterministic locked CI build, test matrix, security audit, end-to-end mobile desktop checks.
