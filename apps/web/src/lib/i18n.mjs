@@ -22,6 +22,16 @@ export function postPath(post, defaultLocale) {
   return post.id.startsWith(lang + "/") ? `/posts/${post.id}` : `/posts/${lang}/${post.id}`;
 }
 
+/** Layout props shared by every page; reflects optional-module feature flags. */
+export function layoutProps(config) {
+  return {
+    siteTitle: config.site.title,
+    appearance: config.theme.appearance,
+    locale: config.site.locale,
+    showBangumi: config.bangumi.enabled,
+  };
+}
+
 /**
  * hreflang alternate map for one post: { lang: path } across all translations
  * sharing its translationKey (including itself). Null when untranslatable.

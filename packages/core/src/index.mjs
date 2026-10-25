@@ -54,6 +54,44 @@ export function normalizeSiteConfig(input) {
   if (!["dark", "light"].includes(appearance)) {
     throw new Error("ALNILAM: theme.appearance must be dark or light");
   }
+  // Optional comments module (schema v1 additive). Disabled by default; when
+  // enabled, giscus requires repo/category identifiers from the Site config.
+  // Site-owned public identifiers only — Core never embeds secrets.
+  const comments = input.comments ?? {};
+  if (typeof comments !== "object" || Array.isArray(comments)) {
+    throw new Error("ALNILAM: [comments] must be a TOML table");
+  }
+  if (comments.enabled === true) {
+    if (comments.provider !== undefined && comments.provider !== "giscus") {
+      throw new Error("ALNILAM: comments.provider must be \"giscus\"");
+    }
+    for (const field of ["repo", "repoId", "category", "categoryId"]) {
+      if (typeof comments[field] !== "string" || !comments[field].trim()) {
+        throw new Error(`ALNILAM: comments.${field} is required when comments.enabled = true`);
+      }
+    }
+  }
+  if (comments.mapping !== undefined && !["pathname", "specific", "number"].includes(comments.mapping)) {
+    throw new Error("ALNILAM: comments.mapping must be pathname, specific or number");
+  }
+  // Optional bangumi module (schema v1 additive). Build-time fetch from
+  // api.bgm.tv; output is static — no client-side third-party calls.
+  const bangumi = input.bangumi ?? {};
+  if (typeof bangumi !== "object" || Array.isArray(bangumi)) {
+    throw new Error("ALNILAM: [bangumi] must be a TOML table");
+  }
+  if (bangumi.enabled === true) {
+    if (typeof bangumi.userId !== "string" || !bangumi.userId.trim()) {
+      throw new Error("ALNILAM: bangumi.userId is required when bangumi.enabled = true");
+    }
+    if (bangumi.subjectType !== undefined && !["anime", "book", "music", "game"].includes(bangumi.subjectType)) {
+      throw new Error("ALNILAM: bangumi.subjectType must be anime, book, music or game");
+    }
+    const limit = bangumi.limit ?? 10;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 50) {
+      throw new Error("ALNILAM: bangumi.limit must be an integer between 1 and 50");
+    }
+  }
   return Object.freeze({
     schemaVersion,
     site: Object.freeze({
@@ -63,6 +101,21 @@ export function normalizeSiteConfig(input) {
       locale: site.locale || "zh-CN",
     }),
     theme: Object.freeze({ appearance }),
+    comments: Object.freeze({
+      enabled: comments.enabled === true,
+      provider: "giscus",
+      repo: typeof comments.repo === "string" ? comments.repo : "",
+      repoId: typeof comments.repoId === "string" ? comments.repoId : "",
+      category: typeof comments.category === "string" ? comments.category : "",
+      categoryId: typeof comments.categoryId === "string" ? comments.categoryId : "",
+      mapping: comments.mapping === "specific" || comments.mapping === "number" ? comments.mapping : "pathname",
+    }),
+    bangumi: Object.freeze({
+      enabled: bangumi.enabled === true,
+      userId: typeof bangumi.userId === "string" ? bangumi.userId : "",
+      subjectType: bangumi.subjectType || "anime",
+      limit: bangumi.limit ?? 10,
+    }),
   });
 }
 
