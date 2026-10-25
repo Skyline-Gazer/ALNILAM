@@ -31,8 +31,8 @@ Traceability rule: requirement → selected source/implementation → atomic Iss
 | P4 | #63 | BLOG-02, BLOG-03; SEARCH-01–03 | Pending Spec freeze |
 | P4 | #64 | BLOG-04; ROUTE-02–07; SEO-01–09 | Pending Spec freeze |
 | P4 | #65 | BLOG-06; ROUTE-01–06; SEO-02, SEO-06 | Pending Spec freeze |
-| P4 | #66 | BLOG-05, NFR-05 |
-| P4 | **#78** | **BLOG-07; LLM-01–08** | Pending Spec freeze | Pending Spec freeze |
+| P4 | #66 | BLOG-05, NFR-05 | Pending Spec freeze |
+| P4 | **#78** | **BLOG-07; LLM-01–08** | Pending Spec freeze |
 | P5 | #67 | MOD-03, MOD-04 | Pending product scope decision |
 | P5 | #68 | MOD-03, MOD-04 | Pending product scope decision |
 | P5 | #69 | MOD-03, MOD-04 | Pending product scope decision |
