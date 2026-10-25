@@ -57,10 +57,6 @@ importers:
   packages/core: {}
 
   packages/ui:
-    dependencies:
-      '@pagefind/default-ui':
-        specifier: ^1.5.2
-        version: 1.5.2
     devDependencies:
       svelte:
         specifier: ^5.57.2

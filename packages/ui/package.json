@@ -12,8 +12,5 @@
   },
   "devDependencies": {
     "svelte": "^5.57.2"
-  },
-  "dependencies": {
-    "@pagefind/default-ui": "^1.5.2"
   }
 }
