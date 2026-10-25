@@ -6,6 +6,8 @@
   "exports": {
     "./BaseLayout.astro": "./src/BaseLayout.astro",
     "./PostCard.astro": "./src/PostCard.astro"
+  },
+  "dependencies": {
+    "@alnilam/ui": "workspace:*"
   }
 }
-

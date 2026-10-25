@@ -1,5 +1,6 @@
 ---
 import "./editorial.css";
+import Search from "@alnilam/ui/Search.svelte";
 interface Props {
   title: string;
   description?: string;
@@ -10,19 +11,26 @@ interface Props {
   ogType?: "website" | "article";
   publishedTime?: string;
   tags?: string[];
+  /** Map of lang -> absolute URL for hreflang alternates (i18n translations). */
+  alternates?: Map<string, string>;
+  htmlLang?: string;
 }
-const { title, description = "", canonical, siteTitle, appearance, locale, ogType = "website", publishedTime, tags } = Astro.props;
+const { title, description = "", canonical, siteTitle, appearance, locale, ogType = "website", publishedTime, tags, alternates, htmlLang } = Astro.props;
 const year = new Date().getFullYear();
 const ogImage = canonical ? new URL("/site-assets/orion.svg", canonical).toString() : undefined;
 ---
 <!doctype html>
-<html lang={locale} data-theme={appearance}>
+<html lang={htmlLang ?? locale} data-theme={appearance}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
     {canonical && <link rel="canonical" href={canonical} />}
+    {alternates && [...alternates.entries()].map(([lang, path]) => (
+      <link rel="alternate" hreflang={lang} href={new URL(path + "/", canonical).toString()} />
+    ))}
+    {alternates && <link rel="alternate" hreflang="x-default" href={new URL((alternates.get(locale) ?? canonical) as string, canonical).toString()} />}
     <link rel="alternate" type="application/rss+xml" title={siteTitle} href="/rss.xml" />
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
     <!-- Open Graph -->
@@ -66,9 +74,12 @@ const ogImage = canonical ? new URL("/site-assets/orion.svg", canonical).toStrin
           </svg>
           <span>{siteTitle}</span>
         </a>
-        <nav aria-label="主导航" class="flex gap-5 text-sm" style="color: var(--fg-muted)">
+        <nav aria-label="主导航" class="flex items-center gap-5 text-sm" style="color: var(--fg-muted)">
           <a href="/" class="transition-colors hover:[color:var(--accent)]">首页</a>
           <a href="/posts/" class="transition-colors hover:[color:var(--accent)]">文章</a>
+          <a href="/archives/" class="transition-colors hover:[color:var(--accent)]">归档</a>
+          <a href="/tags/" class="transition-colors hover:[color:var(--accent)]">标签</a>
+          <Search client:idle />
         </nav>
       </header>
       <main id="content" class="py-10"><slot /></main>

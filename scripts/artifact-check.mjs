@@ -38,7 +38,8 @@ function checkPage(file) {
   }
   const pageIslands = (html.match(/<astro-island/g) || []).length;
   islands += pageIslands;
-  if (pageIslands > 1) failures.push(`${rel}: more than one island on a page (${pageIslands})`);
+  // Budget: ≤2 islands per page (homepage legitimately ships Status + Search).
+  if (pageIslands > 2) failures.push(`${rel}: more than two islands on a page (${pageIslands})`);
   for (const img of html.matchAll(/<img[^>]*>/g)) {
     const tag = img[0];
     if (!/\bwidth=/.test(tag) || !/\bheight=/.test(tag)) {

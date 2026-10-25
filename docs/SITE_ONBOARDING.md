@@ -33,11 +33,28 @@ appearance = "dark"          # "dark" | "light", default dark
 
 - Place posts under `content/posts/*.md` (or `.mdx`). Frontmatter schema:
   `title` (required), `description`, `pubDate` (required date), `updatedDate`,
-  `cover` (path), `tags`, `draft`.
+  `cover` (path), `tags`, `draft`, `lang` (optional BCP-47),
+  `translationKey` (optional, groups translations for hreflang).
 - **The slug is the file path** under `content/posts` (without extension). A post at
   `content/posts/2026/hello.md` is served at `/posts/2026/hello/`. Renaming or moving a
   file changes its public URL — treat paths as stable identifiers.
+- **i18n layout (recommended)**: put non-default-locale posts in
+  `content/posts/<lang>/` (e.g. `content/posts/en/hello.md` → `/posts/en/hello/`) and
+  set frontmatter `lang` + `translationKey` on every member of a translation group.
+  Pages sharing a `translationKey` get automatic `hreflang` alternates (and
+  sitemap `xhtml:link` entries). Default-locale posts live directly under
+  `content/posts/`.
 - `draft = true` posts are excluded from all builds.
+
+### Images policy
+
+Covers and in-post images are **Site-owned and served as-is** — ALNILAM does not
+re-encode, resize, or fetch them at build time. This keeps the build deterministic
+and offline: an image referenced with an absolute path (`/site-assets/...`) must
+exist under your Site's `assets/` directory; remote `http(s)` image URLs are
+rendered as plain `<img>` without any build-time download. Authors should ship
+appropriately sized images; the platform guarantees CLS-safe markup by always
+emitting explicit `width`/`height` on generated cover `<img>` tags.
 
 ## Building
 
