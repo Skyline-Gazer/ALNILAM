@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import BaseLayout from "@alnilam/theme-editorial/BaseLayout.astro";
 import PostCard from "@alnilam/theme-editorial/PostCard.astro";
+import Status from "@alnilam/ui/Status.svelte";
 import { loadSite } from "../lib/site-source.mjs";
 const { config } = loadSite();
 const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale };
@@ -38,6 +39,7 @@ const rest = posts.slice(5);
       <p class="mb-4 text-xs font-semibold uppercase tracking-[.3em]" style="color: var(--accent)">An extensible blogging platform</p>
       <h1 id="hero-title" class="text-5xl font-black tracking-tight sm:text-7xl" style="color: var(--fg)">{config.site.title}</h1>
       <p class="mt-5 max-w-lg leading-7" style="color: var(--fg-muted)">{config.site.description}</p>
+      <div class="mt-8"><Status client:visible /></div>
     </div>
   </section>
   <section aria-labelledby="latest-posts">
