@@ -6,6 +6,19 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-10-25
+
+### Added
+- **Comments module** (opt-in): giscus provider, feature-flagged via `[comments]`; lazy `client:visible` island; disabled = zero JS / zero third-party requests. Fail-closed config validation.
+- **Bangumi module** (opt-in): `/bangumi/` page built from a single build-time `api.bgm.tv` fetch — fully static output, zero client third-party calls; covers hotlinked with `referrerpolicy="no-referrer"`; API failure degrades to an inline warning.
+- **Module route gating**: optional-module pages (`src/pages/opt/`) are injected via an Astro integration only when enabled — a disabled module ships no page, no 404 stub, no JS.
+- Owner declined (recorded): gallery/album, moments/dynamics, music player.
+
+### Fixed
+- CI old-core fetch chain (variable SHA → `v0.1.0` tag → bootstrap state) after `upload-pack` "not our ref" rejections from PR checkouts.
+
+---
+
 ## [0.1.0] — 2026-10-25
 
 First tagged release: Core/Site platform baseline through P2 essentials.
@@ -26,5 +39,3 @@ First tagged release: Core/Site platform baseline through P2 essentials.
 - Astro 7, Svelte 5 (runes), Tailwind CSS 4, pnpm 10.19 workspace; Node ≥22.23.4.
 - Rulesets `alnilam-dev` / `alnilam-main`: PR-only merges, required `verify` check, force-push/deletion protection.
 
-[Unreleased]: https://github.com/Skyline-Gazer/ALNILAM/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/Skyline-Gazer/ALNILAM/releases/tag/v0.1.0
