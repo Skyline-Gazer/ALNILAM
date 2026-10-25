@@ -38,7 +38,9 @@ try {
   const provenance = {
     schema: 1,
     core: { revision: coreRev },
-    site: { digest: before, source: sitePath },
+    site: { digest: before },
+    // NOTE: no absolute source path — it leaks local filesystem layout and
+    // breaks reproducibility across checkouts. The digest is the identity.
     generatedAt: process.env.SOURCE_DATE_EPOCH
       ? new Date(Number(process.env.SOURCE_DATE_EPOCH) * 1000).toISOString()
       : new Date().toISOString(),
