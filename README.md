@@ -13,7 +13,7 @@ git clone https://github.com/Skyline-Gazer/ALNILAM.git
 cd ALNILAM
 git switch dev  # once bootstrap PR is accepted
 corepack enable
-pnpm install --no-frozen-lockfile
+pnpm install --frozen-lockfile
 pnpm dev
 ```
 ADS is a **private repository**. Its pinned `.ads` submodule is optional for public users; maintainers with authorized access can run `git submodule update --init --recursive`. CI does not use privileged credentials to clone ADS. The root `AGENTS.md` is the readable public entrypoint.\n\nThe default site data lives in `sites/demo`; it is **never a user-owned production content repository**.
@@ -33,7 +33,7 @@ my-site/
 ```
 The Site source is validated and hashed before and after building, with no writes into the source tree. The output is staged before replacing the prior target. The Site format is currently v1, not yet a public stable content schema.
 
-**Important:** The first dependency lockfile is not yet frozen until the bootstrap CI resolves dependencies and a committed `pnpm-lock.yaml` passes `--frozen-lockfile`. Read `docs/HANDOFF.md` for all acceptance gaps.
+**Important:** Dependencies are locked by the committed pnpm-lock.yaml. Use frozen install. Read `docs/HANDOFF.md` for acceptance status.
 
 ## Development and governance
 - Primary development: `dev` with Issue-linked PRs; `main` is release-only.

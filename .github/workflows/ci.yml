@@ -26,13 +26,7 @@ jobs:
         with:
           node-version: "24"
       - name: Install workspace dependencies
-        run: pnpm install --no-frozen-lockfile
-      - name: Export initial dependency lock (no secrets)
-        run: |
-          echo ALNILAM_LOCK_BEGIN
-          base64 -w0 pnpm-lock.yaml
-          echo
-          echo ALNILAM_LOCK_END
+        run: pnpm install --frozen-lockfile
       - name: Contract tests
         run: pnpm test
       - name: Astro type and content checks
@@ -55,7 +49,4 @@ jobs:
       - name: Confirm ADS version pin
         run: |
           test "$(git rev-parse HEAD:.ads)" = "1e07d6c4bbd296b7d37dcd31934cfc70426f73ac"
-      - name: Note missing immutable lockfile
-        if: hashFiles('pnpm-lock.yaml') == ''
-        run: echo "::warning::pnpm-lock.yaml must be generated and committed before freeze/release."
 

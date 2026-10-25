@@ -13,7 +13,7 @@
 1. Read `AGENTS.md`, `.ads/{AGENTS,STANDARD,SAFETY,QUALITY}.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`.
 2. Open the current bootstrap PR and relevant P0 Issue. Confirm exact SHA and CI logs.
 3. Resolve any bootstrap CI errors without modifying Site inputs or moving work to `main`.
-4. **Generate and commit a real `pnpm-lock.yaml`; change CI to `pnpm install --frozen-lockfile`.** Do not claim deterministic builds before this passes.
+4. **Validate the generated pnpm-lock.yaml with `pnpm install --frozen-lockfile` and CI.** Do not claim deterministic builds before this passes.
 5. Validate packaged theme imports, Astro 7 integration, Svelte 5 island hydration, Tailwind 4 CSS scanning, Markdown/MDX rendering, and external Site assembly in real CI.
 6. Confirm two-version Core upgrade / same-Site acceptance, reject symlinks and unsafe output paths.
 7. Add browser-based smoke tests when a live build/Preview is available. Keep production deployment unmodified.
@@ -33,7 +33,7 @@
 ```bash
 git submodule update --init --recursive  # authorized ADS access required
 corepack enable
-pnpm install --no-frozen-lockfile
+pnpm install --frozen-lockfile
 pnpm test
 pnpm check
 pnpm build
@@ -45,7 +45,7 @@ node scripts/compose.mjs --site /absolute/path/to/site --out dist/external-site
 
 ## Explicit unverified matters
 - A complete clean Astro build and Svelte/Tailwind E2E must be confirmed from remote CI; this authoring environment cannot access npm registry.
-- A frozen lockfile is not yet part of bootstrap.
+- A pnpm lockfile is committed from the actual GitHub Runner resolver; frozen install acceptance remains pending remote CI.
 - Branch protection/ruleset enforcement is not enabled unless verifiably applied.
 - Project #17 membership/status changes are not verified unless an authenticated Projects v2 read/write occurs.
 - No preview or production deployment was performed during bootstrap.
