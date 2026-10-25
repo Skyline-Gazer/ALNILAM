@@ -51,8 +51,11 @@ test("upgrade-check hashTree is content-addressed and filename-insensitive to or
   fs.writeFileSync(path.join(root, "nested/b.txt"), "beta");
   const base = hashTree(root);
   assert.match(base, /^[a-f0-9]{64}$/);
-  // Same bytes in a differently-named tree root must hash identically.
-  const copy = path.join(path.dirname(root), path.basename(root) + "-2");
+  // Same bytes in a differently-named tree must hash identically; the copy
+  // lives in a separate temp dir (fs.cpSync refuses to copy into itself).
+  const copyRoot = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-hash-copy-"));
+  t.after(() => fs.rmSync(copyRoot, { recursive: true, force: true }));
+  const copy = path.join(copyRoot, "renamed-tree");
   fs.cpSync(root, copy, { recursive: true });
   assert.equal(hashTree(copy), base);
   // A single byte flip must change the digest.
@@ -64,5 +67,16 @@ test("upgrade-check rejects missing or malformed --old revision", () => {
     const result = spawnSync(process.execPath, ["scripts/upgrade-check.mjs", ...args]);
     assert.equal(result.status, 2, "expected exit 2 for args: " + args.join(" "));
   }
+});
+test("upgrade-check resolveRevision verifies known local commits", async (t) => {
+  const { execFileSync } = await import("node:child_process");
+  const repoTop = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
+  const { resolveRevision } = await import("../upgrade-check.mjs");
+  const short = execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8" }).trim();
+  const full = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+  assert.equal(resolveRevision(short, repoTop), full);
+  assert.equal(resolveRevision(full, repoTop), full);
+  // Unresolvable revision throws; no worktree side effects.
+  assert.throws(() => resolveRevision("zzzzzzz", repoTop), /fetch/);
 });
 

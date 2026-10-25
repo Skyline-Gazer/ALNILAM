@@ -44,6 +44,24 @@ function run(cmd, args, cwd) {
   if (result.status !== 0) throw new Error(`${cmd} ${args.join(" ")} failed with exit ${result.status}`);
 }
 
+/**
+ * Fetch (if needed) and verify the old revision exists locally before any
+ * worktree is created. Returns the full 40-char resolved commit SHA.
+ * Never touches anything inside the Site directory.
+ */
+export function resolveRevision(input, cwd = repoRoot) {
+  const rev = /^\d+$/.test(input) ? input : input + "^{commit}";
+  const show = spawnSync("git", ["rev-parse", "--verify", "--quiet", rev], { cwd, encoding: "utf8" });
+  if (show.status === 0 && show.stdout) return show.stdout.trim();
+  // Not a local object: try one shallow fetch of exactly that ref, then re-verify.
+  run("git", ["fetch", "--no-tags", "--depth=1", "origin", input], cwd);
+  const fetched = spawnSync("git", ["rev-parse", "--verify", "--quiet", "FETCH_HEAD^{commit}"], { cwd, encoding: "utf8" });
+  if (fetched.status !== 0 || !fetched.stdout) {
+    throw new Error("Old Core revision not found locally and not fetchable from origin: " + input);
+  }
+  return fetched.stdout.trim();
+}
+
 /** sha256 over sorted (relative path, size, content hash) rows of a file tree. */
 export function hashTree(dir) {
   const sha = crypto.createHash("sha256");
@@ -66,11 +84,28 @@ if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith
 }
 
 function main() {
-  const oldSha = parseOldRevision();
-  if (!oldSha) process.exit(2);
+  const oldInput = parseOldRevision();
+  if (!oldInput) process.exit(2);
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-upgrade-"));
   let oldWorktree = null;
+  let oldSha = null;
+  const cleanup = () => {
+    if (oldWorktree && oldSha) {
+      spawnSync("git", ["worktree", "remove", "--force", oldWorktree], { cwd: repoRoot });
+      spawnSync("git", ["worktree", "prune"], { cwd: repoRoot });
+    }
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  };
+  // Hard guarantee: temp worktree/artifacts never survive the process, even on
+  // signals or unexpected exit paths.
+  process.on("exit", cleanup);
+  for (const signal of ["SIGINT", "SIGTERM"]) {
+    process.on(signal, () => process.exit(1));
+  }
   try {
+  // 0. Resolve and verify the old revision BEFORE creating any worktree.
+  oldSha = resolveRevision(oldInput);
+  console.log("old Core revision (resolved): " + oldSha);
   // 1. Resolve the external Site. Default: external copy of the demo fixture.
   let site;
   const siteArg = option("--site");
@@ -111,10 +146,6 @@ function main() {
     console.log("UPGRADE/ROLLBACK OK: Site unchanged, outputs byte-identical.");
   }
   } finally {
-    if (oldWorktree) {
-      spawnSync("git", ["worktree", "remove", "--force", oldWorktree], { cwd: repoRoot });
-      spawnSync("git", ["worktree", "prune"], { cwd: repoRoot });
-    }
-    fs.rmSync(tempRoot, { recursive: true, force: true });
+    cleanup();
   }
 }
