@@ -64,6 +64,26 @@ test("symlinks in Site inputs are rejected", (t) => {
   }
   assert.throws(() => validateSiteRoot(root), /symlinks/);
 });
+test("legacy Site (no schemaVersion, no i18n fields) builds and gets provenance", (t) => {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-legacy-"));
+  t.after(() => fs.rmSync(out, { recursive: true, force: true }));
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", "sites/legacy-demo", "--out", path.join(out, "site")], {
+    env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" },
+  });
+  assert.equal(result.status, 0, "legacy Site compose failed: " + result.stderr);
+  // Light theme config must actually render.
+  const html = fs.readFileSync(path.join(out, "site", "index.html"), "utf8");
+  assert.match(html, /data-theme="light"/);
+  assert.match(html, /Legacy Site/);
+  const prov = JSON.parse(fs.readFileSync(path.join(out, "site", "alnilam-provenance.json"), "utf8"));
+  assert.equal(prov.schema, 1);
+  assert.equal(prov.site.digest, validateSiteRoot("sites/legacy-demo").digest);
+});
+test("legacy Site digest is stable across reads", () => {
+  const a = validateSiteRoot("sites/legacy-demo");
+  const b = validateSiteRoot("sites/legacy-demo");
+  assert.equal(a.digest, b.digest);
+});
 test("upgrade-check hashTree is content-addressed and filename-insensitive to order", async (t) => {
   const { hashTree } = await import("../upgrade-check.mjs");
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-hash-"));

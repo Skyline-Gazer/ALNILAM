@@ -14,3 +14,23 @@ Upstream license summaries (not substitutes for their actual license texts):
 - Mizuki: Apache-2.0 with separate original MIT/third-party notices.
 - ADS is pinned by Git Submodule; its guidance files are read in-place, not relicensed or copied.
 
+## Runtime and build dependencies (npm)
+
+All dependencies are consumed as unmodified npm packages under their own licenses;
+no vendor code is copied into this repository. Summary at v0.1.0 (see
+`pnpm-lock.yaml` for exact resolved versions):
+
+| Package | License | Role |
+|---|---|---|
+| astro, @astrojs/mdx, @astrojs/svelte, @astrojs/check | MIT | static site framework + integrations |
+| svelte | MIT | island runtime (search, status) |
+| tailwindcss, @tailwindcss/vite | MIT | styling engine |
+| pagefind | MIT | local search indexer + lazy runtime |
+| smol-toml | MIT | Site config parsing |
+| typescript | Apache-2.0 | type checking |
+
+The composed static output embeds: the Svelte island runtime (client JS),
+Pagefind's lazy-loaded index and UI assets under `/pagefind/`, and theme CSS.
+Static HTML pages themselves carry no third-party content beyond the above.
+
+
