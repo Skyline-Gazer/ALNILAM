@@ -9,6 +9,13 @@
 - ADS is a **private repository**; the public CI checkout intentionally omits recursive submodule cloning (no cross-repo credentials). Maintainers with ADS access can materialize it and verify the full rule set.\n- ADS release `v0.3` gitlink: `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`, located at `.ads`.
 - Do **not** infer latest bootstrap branch HEAD, CI result or Project item status from this document. Query GitHub at start of task.
 
+## Continuation 3: Issue #3 closed + artifact budgets (2026-10-25)
+- **PR #12** (merged `564d3f1`, head `5c6587b`, CI runs 40172044941/40171978532 success): Site **schema v1 frozen** — `schemaVersion` validated against `[1]`, absent = 1, `null`/`2`/`"1"` fail closed (10 contract tests incl. version matrix); **deterministic provenance** — output gains `alnilam-provenance.json` binding Core revision + Site SHA-256 digest, `SOURCE_DATE_EPOCH`-pinnable, digest mismatch refuses to publish; `docs/SITE_ONBOARDING.md` (schema contract, slug-as-path stability, private-Site two-checkout CI strategy with provenance gating). Reproducibility proven: repo-vs-worktree same-revision builds byte-identical (caught & removed an absolute-path leak from provenance).
+- **PR #13** (merged `5b75aea`, head `a6387eb`, CI runs 40172457608/40172439110 + dev run 40172587261 success): `scripts/artifact-check.mjs` wired into `pnpm build` — posts pages zero runtime scripts, ≤1 island/page, all `<img>` with explicit dimensions (CLS), provenance integrity. **Immediately caught two regressions**: P1 rewrite had silently dropped the Status island (restored, PRODUCT.md v0.1 requires the hydration demo) and the article cover `<img>` lacked dimensions (fixed). Negative-tested (injected script → build fails).
+- Issue #3: **all acceptance items now evidenced** (schema freeze + provenance this PR; git-Site immutability, symlink/path rejection, no-mutation across upgrade/rollback from PR #9 chain). Board: #1/#2/#3/#4/#9/#10/#12/#13 Done, #8 In Progress, #5/#6/#7 Todo.
+- `dev` HEAD `5b75aea`; `main` still `282459a` (release PR needs owner authorization; first tag then enables real `ALNILAM_OLD_CORE_SHA`).
+- Remaining: automated visual regression baselines (manual screenshots currently), #5/#6/#7 features, #8 closure.
+
 ## Owner authorization executed: PR merge chain (2026-10-25)
 - Owner approved the review findings; merge chain executed in dependency order: PR #2 (`7cbcef0`) → `dev` as `d2f973c`; PR #9 (`7174eaa`) → `dev` as `4fd99ec`; PR #10 (`6611cb4`) → `dev` as `9a31573`. All GitHub-verified MERGED.
 - `dev` HEAD `9a31573` push CI: runs 40170907120 + 40170864650 — **success**, all 11 steps including two-version upgrade/rollback. Rulesets enforced throughout (PR-only merges, required `verify`).
