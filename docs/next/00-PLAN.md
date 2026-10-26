@@ -37,7 +37,7 @@ Before implementing any core capability, choose the lowest-maintenance valid sou
 - Treating untrusted user-submitted MDX as a sandbox (trusted author content only).
 
 ## 4. Migration strategy
-1. **Decision + preservation baseline:** reconcile owner intent with docs and real GitHub SHA; record **KEEP / ADAPT / WRAP / REPLACE / RETIRE** for each existing ALNILAM source/CI/test/schema; freeze a proven v0.1.3 source and Site fixture. #80 is mandatory before any frontend migration that could delete working assets.
+1. **Pre-freeze evidence preflight (G0-R), then decision + preservation baseline:** reconcile owner intent with docs and real GitHub SHA; record **KEEP / ADAPT / WRAP / REPLACE / RETIRE** for each existing ALNILAM source/CI/test/schema; freeze a proven v0.1.3 source and Site fixture. #80 is mandatory before any frontend migration that could delete working assets.
 2. **Shirone unmodified baseline:** pin upstream SHA, build and run browser flows in an isolated preview before removing old ALNILAM front-end.
 3. **Single-base migration:** replace conflicting UI/route code in feature PRs, preserve repository-level CI, provenance and ownership constraints.
 4. **Core/Site adapter:** fit Shirone collections/configuration into ALNILAM's frozen schema v1 or a documented opt-in v2 migration; do not mutate Site.
@@ -64,6 +64,10 @@ See [06-REUSE-DOC-GOVERNANCE.md](06-REUSE-DOC-GOVERNANCE.md). The **Shirone appl
 | Appearance judged only from code | Screenshot matrix 1440px desktop/390px mobile + interactive browser review and owner acceptance |
 | Project completion inflated by checkbox counts | Phase gates require links to actual CI runs, browser proof and owner review; project status is not product PASS |
 | Dependency on private ADS in public CI | Root AGENTS.md remains sufficient public baseline; do not request private ADS credentials in public CI |
+
+## 6. Explicit gate ordering: P0 evidence before frozen Spec
+
+The **P0 source audit is allowed as read-only / non-destructive evidence gathering before final Spec freeze**. P0 cannot logically be blocked by a Spec that requires its audit results. After evidence (pinned reference checkouts, existing ALNILAM and Shirone baseline, source/asset matrix, licensing and owner history), update Spec and pass **G0-F review/freeze**. Only implementation changes in P1–P6 require frozen requirements. See [07-PHASE-READINESS.md](07-PHASE-READINESS.md).
 
 ## 6. Plan acceptance gate (G0-A)
 - [ ] Owner confirms or requests changes to the product baseline, Shirone-first direction and styling.
