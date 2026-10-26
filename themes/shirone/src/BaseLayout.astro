@@ -1,0 +1,150 @@
+---
+import "./shirone.css";
+import Search from "@alnilam/ui/Search.svelte";
+
+interface Props {
+  title: string;
+  description?: string;
+  canonical?: string;
+  siteTitle: string;
+  appearance: "dark" | "light";
+  locale: string;
+  ogType?: "website" | "article";
+  publishedTime?: string;
+  tags?: string[];
+  alternates?: Map<string, string>;
+  htmlLang?: string;
+  showBangumi?: boolean;
+}
+
+const {
+  title,
+  description = "",
+  canonical,
+  siteTitle,
+  appearance,
+  locale,
+  ogType = "website",
+  publishedTime,
+  tags,
+  alternates,
+  htmlLang,
+  showBangumi = false,
+} = Astro.props;
+
+const year = new Date().getFullYear();
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const withBase = (path: string) => {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return base + normalized;
+};
+const withTrailingSlash = (path: string) => (path.endsWith("/") ? path : `${path}/`);
+const alternateHref = (path: string) =>
+  canonical ? new URL(withTrailingSlash(withBase(path)), canonical).toString() : withTrailingSlash(withBase(path));
+const ogImage = canonical ? new URL(withBase("/site-assets/orion.svg"), canonical).toString() : undefined;
+const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
+const navItems = [
+  { href: "/", label: "首页" },
+  { href: "/posts/", label: "文章" },
+  { href: "/archives/", label: "归档" },
+  { href: "/tags/", label: "标签" },
+  ...(showBangumi ? [{ href: "/bangumi/", label: "番组" }] : []),
+];
+const isCurrent = (path: string) => {
+  const href = withBase(path).replace(/\/$/, "") || "/";
+  return path === "/" ? currentPath === href : currentPath === href || currentPath.startsWith(href + "/");
+};
+---
+
+<!doctype html>
+<html lang={htmlLang ?? locale} data-theme={appearance}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    {canonical && <link rel="canonical" href={canonical} />}
+    {alternates && [...alternates.entries()].map(([lang, path]) => (
+      <link rel="alternate" hreflang={lang} href={alternateHref(path)} />
+    ))}
+    {alternates && <link rel="alternate" hreflang="x-default" href={alternateHref(alternates.get(locale) ?? "/")} />}
+    <link rel="alternate" type="application/rss+xml" title={siteTitle} href={withBase("/rss.xml")} />
+    <link rel="sitemap" type="application/xml" href={withBase("/sitemap.xml")} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={siteTitle} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {canonical && <meta property="og:url" content={canonical} />}
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+    {(tags ?? []).map((tag) => <meta property="article:tag" content={tag} />)}
+    <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {canonical && (
+      <script type="application/ld+json" set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": ogType === "article" ? "BlogPosting" : "WebSite",
+        headline: title,
+        name: ogType === "article" ? undefined : siteTitle,
+        description,
+        url: canonical,
+        inLanguage: locale,
+        ...(ogType === "article" ? { datePublished: publishedTime, keywords: tags?.join(", ") } : {}),
+      })} />
+    )}
+    <title>{title} · {siteTitle}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#content">跳至正文</a>
+    <div class="site-shell">
+      <header class="app-bar">
+        <a class="brand" href={withBase("/")} aria-label={`${siteTitle} 首页`}>
+          <span class="brand__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 17.5 9 12l3.2 2.8L17 8l3 3.5" />
+              <circle cx="9" cy="12" r="1.5" />
+              <circle cx="17" cy="8" r="1.5" />
+            </svg>
+          </span>
+          <span>{siteTitle}</span>
+        </a>
+
+        <nav class="primary-nav" aria-label="主导航" data-site-nav>
+          {navItems.map((item) => (
+            <a href={withBase(item.href)} aria-current={isCurrent(item.href) ? "page" : undefined}>
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
+        <div class="app-bar__actions">
+          <Search client:idle />
+          <fieldset class="theme-picker" aria-label="配色方案">
+            <legend>配色方案</legend>
+            <label data-theme-choice="dark" title="深色">
+              <input id="theme-dark" type="radio" name="theme" checked={appearance === "dark"} />
+              <span aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M20 15.2A8 8 0 0 1 8.8 4 8.2 8.2 0 1 0 20 15.2Z" /></svg>
+              </span>
+              <span class="sr-only">深色</span>
+            </label>
+            <label data-theme-choice="light" title="浅色">
+              <input id="theme-light" type="radio" name="theme" checked={appearance === "light"} />
+              <span aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5" /><path d="M12 2v2.2M12 19.8V22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M2 12h2.2M19.8 12H22M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6" /></svg>
+              </span>
+            </label>
+          </fieldset>
+        </div>
+      </header>
+
+      <main id="content"><slot /></main>
+
+      <footer class="site-footer">
+        <p>Powered by <a href="https://github.com/Skyline-Gazer/ALNILAM">ALNILAM</a> · Apache-2.0 · © {year}</p>
+        <p><a href={withBase("/rss.xml")}>RSS</a> · <a href={withBase("/archives/")}>归档</a> · <a href={withBase("/tags/")}>标签</a></p>
+      </footer>
+    </div>
+  </body>
+</html>

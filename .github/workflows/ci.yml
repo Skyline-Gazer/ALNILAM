@@ -40,6 +40,56 @@ jobs:
         run: pnpm check
       - name: Compose demo Site
         run: pnpm build
+      - name: Compose nested-base candidate
+        env:
+          ALNILAM_SITE_URL: https://example.com/ALNILAM/
+          SOURCE_DATE_EPOCH: "1700000000"
+        run: |
+          node scripts/compose.mjs --site sites/demo --out dist/nested-base
+          node scripts/artifact-check.mjs dist/nested-base
+          test -s dist/nested-base/index.html
+          test -s dist/nested-base/pagefind/pagefind.js
+          test ! -e dist/site/bangumi
+          test ! -e dist/nested-base/bangumi
+      - name: Verify generated internal URLs stay inside the deploy base
+        run: |
+          node --input-type=module <<'EOF'
+          import fs from "node:fs";
+          import path from "node:path";
+          const root = "dist/nested-base";
+          const failures = [];
+          const attrs = ["href", "src", "component-url", "renderer-url"];
+          for (const file of fs.globSync("**/*.html", { cwd: root })) {
+            const html = fs.readFileSync(path.join(root, file), "utf8");
+            for (const attr of attrs) {
+              for (const match of html.matchAll(new RegExp(`${attr}="([^"]+)"`, "g"))) {
+                const url = match[1];
+                if (url.startsWith("/") && !url.startsWith("/ALNILAM/")) {
+                  failures.push(`${file}: ${attr}=${url}`);
+                }
+                if (url.startsWith("/ALNILAM//")) failures.push(`${file}: duplicate slash ${attr}=${url}`);
+              }
+            }
+          }
+          if (failures.length) {
+            console.error(failures.join("\n"));
+            process.exit(1);
+          }
+          console.log("nested-base internal URLs OK");
+          EOF
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Browser acceptance (root and /ALNILAM/)
+        run: pnpm browser
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-evidence
+          path: |
+            browser-results/
+            test-results/
+          if-no-files-found: ignore
       - name: Check production artifact boundary
         run: python3 scripts/check-ads-devtools-boundary.py --root dist/site --target-branch main
       - name: Verify generated output

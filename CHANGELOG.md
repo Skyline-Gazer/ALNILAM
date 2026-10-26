@@ -6,6 +6,12 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 
 ## [Unreleased]
 
+### Added
+- **P1 Shirone frontend vertical slice (candidate, #48):** local Shirone-derived M3E home/list/article/archive/tag presentation with the retained ALNILAM Core/Site v1, Pagefind, optional-module and rollback contracts. Not released or deployed.
+
+### Fixed
+- Nested-base canonicals/internal links, Pagefind runtime/index resolution under `/ALNILAM/`, and disabled Bangumi route output for the default fixture.
+
 ## [0.1.3] — 2026-10-25
 
 ### Added

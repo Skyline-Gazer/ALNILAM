@@ -18,7 +18,13 @@ export function withBase(p) {
   // External URLs pass through untouched.
   if (/^https?:\/\//.test(p)) return p;
   const base = (import.meta.env?.BASE_URL ?? "/").replace(/\/$/, "");
-  return base + (p.startsWith("/") ? p : "/" + p);
+  const path = p.startsWith("/") ? p : "/" + p;
+  return (base || "") + path;
+}
+
+/** Absolute canonical URL for a Site-owned path (includes the deploy base). */
+export function canonicalUrl(path, siteUrl) {
+  return new URL(withBase(path), siteUrl).toString();
 }
 
 export function postLang(post, defaultLocale) {

@@ -1,8 +1,8 @@
 ---
 import { getCollection } from "astro:content";
-import BaseLayout from "@alnilam/theme-editorial/BaseLayout.astro";
+import BaseLayout from "@alnilam/theme-shirone/BaseLayout.astro";
 import { loadSite } from "../../lib/site-source.mjs";
-import { withBase } from "../../lib/i18n.mjs";
+import { canonicalUrl, withBase } from "../../lib/i18n.mjs";
 const { config } = loadSite();
 const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale, showBangumi: config.bangumi?.enabled ?? false };
 const posts = await getCollection("posts", ({ data }) => !data.draft);
@@ -15,22 +15,19 @@ for (const post of posts) {
 }
 const tags = [...byTag.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
 ---
-<BaseLayout title="标签" {...layout} description="按标签浏览文章" canonical={new URL("/tags/", config.site.url).toString()}>
-  <header class="mb-10">
-    <h1 class="text-4xl font-bold tracking-tight" style="color: var(--fg)">标签</h1>
-    <p class="mt-2 text-sm" style="color: var(--fg-muted)">{tags.length} 个标签</p>
+<BaseLayout title="标签" {...layout} description="按标签浏览文章" canonical={canonicalUrl("/tags/", config.site.url)}>
+  <header class="page-heading">
+    <p class="page-heading__eyebrow">Index</p>
+    <h1>标签</h1>
+    <p>{tags.length} 个标签</p>
   </header>
   {tags.length ? (
-    <div class="flex flex-wrap gap-3">
+    <div class="tag-cloud">
       {tags.map(([tag, list]) => (
-        <a
-          href={withBase(`/tags/${tag}/`)}
-          class="rounded-full px-4 py-2 text-sm font-medium transition-colors hover:[color:var(--accent)]"
-          style="background: var(--accent-soft); color: var(--accent)"
-        >
-          #{tag} <span style="color: var(--fg-muted)">{list.length}</span>
+        <a href={withBase(`/tags/${tag}/`)}>
+          #{tag} <span>{list.length}</span>
         </a>
       ))}
     </div>
-  ) : <p style="color: var(--fg-muted)">暂无标签。</p>}
+  ) : <p>暂无标签。</p>}
 </BaseLayout>

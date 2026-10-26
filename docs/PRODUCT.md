@@ -23,7 +23,7 @@
 ## Delivered and proposed scope
 v0.1.3 includes archives, tags, Pagefind, RSS/sitemap, translation metadata, pagination, optional giscus and static Bangumi. Categories and complete locale-scoped navigation are not delivered. Nested-base canonical/link defects and the limits of current artifact checks are recorded in the [P0 report](p0/P0-ACCEPTANCE.md).
 
-The [historical release roadmap](ROADMAP.md) is distinct from the unapproved [Next Plan/Spec in PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77). Shirone remains the sole proposed Next frontend; P0 evidence does not authorize P1, optional modules or production changes.
+The [historical release roadmap](ROADMAP.md) is distinct from the frozen [Next Plan/Spec](next/01-SPEC.md). G0-F authorizes P1 development only. The first P1 Shirone vertical slice (`#48`) keeps the v1 Site contract, adds a Shirone-derived presentation for the main blog routes, and retains Editorial as a rollback path. It is not released, does not close #37 and does not authorize deployment or P2–P6 work. See [the slice record](p1/48-SHIRONE-VERTICAL-SLICE.md).
 
 ## Non-goals for bootstrap
 User authentication, admin dashboard, hosted content DB, CMS server, commercial plugin marketplace, external media hotlinking, automatic production deployment.

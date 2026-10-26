@@ -61,6 +61,20 @@ test("demo Site is valid and the read-only digest is stable", () => {
   assert.equal(a.digest, b.digest);
   assert.match(a.digest, /^[a-f0-9]{64}$/);
 });
+test("nested-base output keeps canonical and internal links inside /ALNILAM/", () => {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-base-"));
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", "sites/demo", "--out", path.join(out, "site")], {
+    env: { ...process.env, ALNILAM_SITE_URL: "https://example.com/ALNILAM/", SOURCE_DATE_EPOCH: "1700000000" },
+  });
+  assert.equal(result.status, 0, "nested-base compose failed: " + result.stderr);
+  const html = fs.readFileSync(path.join(out, "site", "index.html"), "utf8");
+  const posts = fs.readFileSync(path.join(out, "site", "posts", "index.html"), "utf8");
+  assert.match(html, /<link rel="canonical" href="https:\/\/example\.com\/ALNILAM\/">/);
+  assert.doesNotMatch(html, /href="\/(?!ALNILAM\/)/);
+  assert.doesNotMatch(html, /href="\/ALNILAM\/\//);
+  assert.doesNotMatch(posts, /href="\/(?!ALNILAM\/)/);
+  fs.rmSync(out, { recursive: true, force: true });
+});
 test("output paths cannot overlap the Site source", () => {
   assert.throws(() => assertExternalOutput("sites/demo", "sites/demo/dist"));
   assert.throws(() => assertExternalOutput("sites/demo", "sites"));
