@@ -32,7 +32,7 @@ Never tag `dev`. Never tag a commit whose `verify` check has not passed on `main
 5. External-Site composition + isolation (byte-compare of the Site before/after)
 6. Two-version Core upgrade/rollback against an unchanged external Site
 7. Artifact budget check (wired into `pnpm build`): zero runtime scripts on posts pages, ≤2 islands/page, explicit img dimensions, provenance integrity
-8. ADS gitlink pin (`1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`)
+8. ADS gitlink pin (`3abf6025657a5d716476029cc8cbf5239543210b`, ADS v0.4.1)
 
 ## Known operational notes
 

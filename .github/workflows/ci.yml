@@ -67,5 +67,5 @@ jobs:
           node scripts/upgrade-check.mjs --old "$old"
       - name: Confirm ADS version pin
         run: |
-          test "$(git rev-parse HEAD:.ads)" = "2af17d9e1d816844c49835ae91b784405765ad46"
+          test "$(git rev-parse HEAD:.ads)" = "3abf6025657a5d716476029cc8cbf5239543210b"
 
