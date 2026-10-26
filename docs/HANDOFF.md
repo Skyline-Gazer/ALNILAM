@@ -1,5 +1,9 @@
 # ALNILAM — AI Agent Handoff
 
+## Current P0 evidence checkpoint — 2026-10-26
+
+See [P0 Acceptance & Decision Report](p0/P0-ACCEPTANCE.md) and Draft [PR #85](https://github.com/Skyline-Gazer/ALNILAM/pull/85). The report supersedes historical status claims below; all earlier entries remain traceability records. Existing platform source is preserved. Draft #77/#84 remain unmerged. Stop at Owner P0 acceptance, G0-F freeze and explicit P1 scope authorization.
+
 ## Identity and baseline
 - Core repository: https://github.com/Skyline-Gazer/ALNILAM (Apache-2.0).
 - Project tracker: https://github.com/orgs/Skyline-Gazer/projects/17/

@@ -1,0 +1,117 @@
+{
+  "index.html": {
+    "canonical": [
+      "https://skyline-gazer.github.io/"
+    ],
+    "escaped_base_links": [],
+    "islands": 2
+  },
+  "posts/index.html": {
+    "canonical": [
+      "https://skyline-gazer.github.io/posts/"
+    ],
+    "escaped_base_links": [
+      "/posts/en/getting-started/",
+      "/posts/getting-started/",
+      "/posts/en/hello-alnilam/",
+      "/posts/en/hello-alnilam/",
+      "/posts/hello-alnilam/",
+      "/posts/hello-alnilam/",
+      "/posts/ja/hello-alnilam/",
+      "/posts/ja/hello-alnilam/"
+    ],
+    "islands": 1
+  },
+  "posts/ja/hello-alnilam/index.html": {
+    "canonical": [
+      "https://skyline-gazer.github.io/posts/ja/hello-alnilam/"
+    ],
+    "escaped_base_links": [],
+    "islands": 1
+  },
+  "posts/getting-started/index.html": {
+    "canonical": [
+      "https://skyline-gazer.github.io/posts/getting-started/"
+    ],
+    "escaped_base_links": [],
+    "islands": 1
+  },
+  "posts/hello-alnilam/index.html": {
+    "canonical": [
+      "https://skyline-gazer.github.io/posts/hello-alnilam/"
+    ],
+    "escaped_base_links": [],
+    "islands": 1
+  },
+  "posts/en/getting-started/index.html": {
+    "canonical": [
+      "https://skyline-gazer.github.io/posts/en/getting-started/"
+    ],
+    "escaped_base_links": [],
+    "islands": 1
+  },
+  "posts/en/hello-alnilam/index.html": {
+    "canonical": [
+      "https://skyline-gazer.github.io/posts/en/hello-alnilam/"
+    ],
+    "escaped_base_links": [],
+    "islands": 1
+  },
+  "archives/index.html": {
+    "canonical": [
+      "https://skyline-gazer.github.io/archives/"
+    ],
+    "escaped_base_links": [],
+    "islands": 1
+  },
+  "tags/index.html": {
+    "canonical": [
+      "https://skyline-gazer.github.io/tags/"
+    ],
+    "escaped_base_links": [],
+    "islands": 1
+  },
+  "tags/Guide/index.html": {
+    "canonical": [
+      "https://skyline-gazer.github.io/tags/Guide/"
+    ],
+    "escaped_base_links": [
+      "/tags/"
+    ],
+    "islands": 1
+  },
+  "tags/\u6307\u5357/index.html": {
+    "canonical": [
+      "https://skyline-gazer.github.io/tags/%E6%8C%87%E5%8D%97/"
+    ],
+    "escaped_base_links": [
+      "/tags/"
+    ],
+    "islands": 1
+  },
+  "tags/Astro/index.html": {
+    "canonical": [
+      "https://skyline-gazer.github.io/tags/Astro/"
+    ],
+    "escaped_base_links": [
+      "/tags/"
+    ],
+    "islands": 1
+  },
+  "tags/ALNILAM/index.html": {
+    "canonical": [
+      "https://skyline-gazer.github.io/tags/ALNILAM/"
+    ],
+    "escaped_base_links": [
+      "/tags/"
+    ],
+    "islands": 1
+  },
+  "opt/bangumi/index.html": {
+    "canonical": [
+      "https://skyline-gazer.github.io/bangumi/"
+    ],
+    "escaped_base_links": [],
+    "islands": 1
+  }
+}

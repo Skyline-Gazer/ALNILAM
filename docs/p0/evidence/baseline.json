@@ -1,0 +1,781 @@
+{
+  "branches": [
+    {
+      "name": "chore/ads-v0.4-consumer-adoption",
+      "sha": "994a8e65a156304943ab0b4b7a7b06429fc6a71b"
+    },
+    {
+      "name": "chore/initial-platform-bootstrap",
+      "sha": "7cbcef0ae2b3a669fab987dd0f7cd57b7040c8bc"
+    },
+    {
+      "name": "dev",
+      "sha": "5fd74cea8197dc91d8391e7ee677eacbc32d3234"
+    },
+    {
+      "name": "docs/alnilam-next-plan-spec",
+      "sha": "1349f1720ba6777f7513be6c5124eb43b101735f"
+    },
+    {
+      "name": "main",
+      "sha": "07fac43cba0c3d303c930c098b6e2124b2c79e4a"
+    }
+  ],
+  "tags": [
+    {
+      "name": "v0.1.3",
+      "zipball_url": "https://api.github.com/repos/Skyline-Gazer/ALNILAM/zipball/refs/tags/v0.1.3",
+      "tarball_url": "https://api.github.com/repos/Skyline-Gazer/ALNILAM/tarball/refs/tags/v0.1.3",
+      "commit": {
+        "sha": "07fac43cba0c3d303c930c098b6e2124b2c79e4a",
+        "url": "https://api.github.com/repos/Skyline-Gazer/ALNILAM/commits/07fac43cba0c3d303c930c098b6e2124b2c79e4a"
+      },
+      "node_id": "REF_kwDOVWbBibByZWZzL3RhZ3MvdjAuMS4z"
+    },
+    {
+      "name": "v0.1.2",
+      "zipball_url": "https://api.github.com/repos/Skyline-Gazer/ALNILAM/zipball/refs/tags/v0.1.2",
+      "tarball_url": "https://api.github.com/repos/Skyline-Gazer/ALNILAM/tarball/refs/tags/v0.1.2",
+      "commit": {
+        "sha": "b6fac6ac2442f28454c2694a59f5b55533d325fc",
+        "url": "https://api.github.com/repos/Skyline-Gazer/ALNILAM/commits/b6fac6ac2442f28454c2694a59f5b55533d325fc"
+      },
+      "node_id": "REF_kwDOVWbBibByZWZzL3RhZ3MvdjAuMS4y"
+    },
+    {
+      "name": "v0.1.1",
+      "zipball_url": "https://api.github.com/repos/Skyline-Gazer/ALNILAM/zipball/refs/tags/v0.1.1",
+      "tarball_url": "https://api.github.com/repos/Skyline-Gazer/ALNILAM/tarball/refs/tags/v0.1.1",
+      "commit": {
+        "sha": "0591e4b4e9680dca2e46bec4b44ca86674ee0b4e",
+        "url": "https://api.github.com/repos/Skyline-Gazer/ALNILAM/commits/0591e4b4e9680dca2e46bec4b44ca86674ee0b4e"
+      },
+      "node_id": "REF_kwDOVWbBibByZWZzL3RhZ3MvdjAuMS4x"
+    },
+    {
+      "name": "v0.1.0",
+      "zipball_url": "https://api.github.com/repos/Skyline-Gazer/ALNILAM/zipball/refs/tags/v0.1.0",
+      "tarball_url": "https://api.github.com/repos/Skyline-Gazer/ALNILAM/tarball/refs/tags/v0.1.0",
+      "commit": {
+        "sha": "52a5d13f98c981fdf5aaed1ae217c85d65c0a345",
+        "url": "https://api.github.com/repos/Skyline-Gazer/ALNILAM/commits/52a5d13f98c981fdf5aaed1ae217c85d65c0a345"
+      },
+      "node_id": "REF_kwDOVWbBibByZWZzL3RhZ3MvdjAuMS4w"
+    }
+  ],
+  "releases": [
+    {
+      "tag_name": "v0.1.3",
+      "target_commitish": "main",
+      "html_url": "https://github.com/Skyline-Gazer/ALNILAM/releases/tag/v0.1.3",
+      "published_at": "2026-10-25T12:46:56Z",
+      "draft": false,
+      "prerelease": false
+    },
+    {
+      "tag_name": "v0.1.2",
+      "target_commitish": "main",
+      "html_url": "https://github.com/Skyline-Gazer/ALNILAM/releases/tag/v0.1.2",
+      "published_at": "2026-10-25T12:24:36Z",
+      "draft": false,
+      "prerelease": false
+    },
+    {
+      "tag_name": "v0.1.1",
+      "target_commitish": "main",
+      "html_url": "https://github.com/Skyline-Gazer/ALNILAM/releases/tag/v0.1.1",
+      "published_at": "2026-10-25T11:55:11Z",
+      "draft": false,
+      "prerelease": false
+    },
+    {
+      "tag_name": "v0.1.0",
+      "target_commitish": "main",
+      "html_url": "https://github.com/Skyline-Gazer/ALNILAM/releases/tag/v0.1.0",
+      "published_at": "2026-10-25T09:50:09Z",
+      "draft": false,
+      "prerelease": false
+    }
+  ],
+  "ruleset-dev": {
+    "id": 25809723,
+    "name": "alnilam-dev",
+    "target": "branch",
+    "source_type": "Repository",
+    "source": "Skyline-Gazer/ALNILAM",
+    "enforcement": "active",
+    "conditions": {
+      "ref_name": {
+        "exclude": [],
+        "include": [
+          "refs/heads/dev"
+        ]
+      }
+    },
+    "rules": [
+      {
+        "type": "deletion"
+      },
+      {
+        "type": "non_fast_forward"
+      },
+      {
+        "type": "pull_request",
+        "parameters": {
+          "required_approving_review_count": 0,
+          "dismiss_stale_reviews_on_push": false,
+          "required_reviewers": [],
+          "require_code_owner_review": false,
+          "dismissal_restriction": {
+            "enabled": false,
+            "allowed_actors": []
+          },
+          "require_last_push_approval": false,
+          "required_review_thread_resolution": true,
+          "require_extra_approval_for_unattributed_changes": true,
+          "allowed_merge_methods": [
+            "merge",
+            "squash",
+            "rebase"
+          ]
+        }
+      },
+      {
+        "type": "required_status_checks",
+        "parameters": {
+          "strict_required_status_checks_policy": true,
+          "do_not_enforce_on_create": false,
+          "required_status_checks": [
+            {
+              "context": "verify",
+              "integration_id": 15368
+            }
+          ]
+        }
+      }
+    ],
+    "node_id": "RRS_lACqUmVwb3NpdG9yec5VZsGJzgGJ0zs",
+    "created_at": "2026-10-25T12:36:21.374+08:00",
+    "updated_at": "2026-10-25T12:36:21.511+08:00",
+    "bypass_actors": [],
+    "current_user_can_bypass": "never",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/Skyline-Gazer/ALNILAM/rulesets/25809723"
+      },
+      "html": {
+        "href": "https://github.com/Skyline-Gazer/ALNILAM/rules/25809723"
+      }
+    }
+  },
+  "ruleset-main": {
+    "id": 25809753,
+    "name": "alnilam-main",
+    "target": "branch",
+    "source_type": "Repository",
+    "source": "Skyline-Gazer/ALNILAM",
+    "enforcement": "active",
+    "conditions": {
+      "ref_name": {
+        "exclude": [],
+        "include": [
+          "refs/heads/main"
+        ]
+      }
+    },
+    "rules": [
+      {
+        "type": "deletion"
+      },
+      {
+        "type": "non_fast_forward"
+      },
+      {
+        "type": "pull_request",
+        "parameters": {
+          "required_approving_review_count": 0,
+          "dismiss_stale_reviews_on_push": false,
+          "required_reviewers": [],
+          "require_code_owner_review": false,
+          "dismissal_restriction": {
+            "enabled": false,
+            "allowed_actors": []
+          },
+          "require_last_push_approval": false,
+          "required_review_thread_resolution": true,
+          "require_extra_approval_for_unattributed_changes": true,
+          "allowed_merge_methods": [
+            "merge",
+            "squash",
+            "rebase"
+          ]
+        }
+      },
+      {
+        "type": "required_status_checks",
+        "parameters": {
+          "strict_required_status_checks_policy": true,
+          "do_not_enforce_on_create": false,
+          "required_status_checks": [
+            {
+              "context": "verify",
+              "integration_id": 15368
+            }
+          ]
+        }
+      }
+    ],
+    "node_id": "RRS_lACqUmVwb3NpdG9yec5VZsGJzgGJ01k",
+    "created_at": "2026-10-25T12:37:51.936+08:00",
+    "updated_at": "2026-10-25T12:37:52.103+08:00",
+    "bypass_actors": [],
+    "current_user_can_bypass": "never",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/Skyline-Gazer/ALNILAM/rulesets/25809753"
+      },
+      "html": {
+        "href": "https://github.com/Skyline-Gazer/ALNILAM/rules/25809753"
+      }
+    }
+  },
+  "pages": {
+    "url": "https://api.github.com/repos/Skyline-Gazer/ALNILAM/pages",
+    "status": "built",
+    "cname": null,
+    "custom_404": false,
+    "html_url": "https://skyline-gazer.github.io/ALNILAM/",
+    "build_type": "workflow",
+    "source": {
+      "branch": "main",
+      "path": "/"
+    },
+    "public": true,
+    "protected_domain_state": null,
+    "pending_domain_unverified_at": null,
+    "https_enforced": true
+  },
+  "environments": {
+    "total_count": 1,
+    "environments": [
+      {
+        "id": 25271177363,
+        "node_id": "EN_kwDOVWbBic8AAAAF4keQkw",
+        "name": "github-pages",
+        "url": "https://api.github.com/repos/Skyline-Gazer/ALNILAM/environments/github-pages",
+        "html_url": "https://github.com/Skyline-Gazer/ALNILAM/deployments/activity_log?environments_filter=github-pages",
+        "created_at": "2026-10-25T11:55:59Z",
+        "updated_at": "2026-10-25T11:55:59Z",
+        "can_admins_bypass": true,
+        "protection_rules": [
+          {
+            "id": 70035358,
+            "node_id": "GA_kwDOVWbBic4ELKee",
+            "type": "branch_policy"
+          }
+        ],
+        "deployment_branch_policy": {
+          "protected_branches": false,
+          "custom_branch_policies": true
+        }
+      }
+    ]
+  },
+  "milestones": [],
+  "project": {
+    "data": {
+      "organization": {
+        "projectV2": {
+          "id": "PVT_kwDOEwGMMc4Bomrx",
+          "title": "Dev Contron",
+          "fields": {
+            "nodes": [
+              {
+                "id": "PVTF_lADOEwGMMc4BomrxzhnGAhg",
+                "name": "Title",
+                "dataType": "TITLE"
+              },
+              {
+                "id": "PVTF_lADOEwGMMc4BomrxzhnGAhw",
+                "name": "Assignees",
+                "dataType": "ASSIGNEES"
+              },
+              {
+                "id": "PVTSSF_lADOEwGMMc4BomrxzhnGAh8",
+                "name": "Status",
+                "options": [
+                  {
+                    "id": "f75ad846",
+                    "name": "Todo"
+                  },
+                  {
+                    "id": "47fc9ee4",
+                    "name": "In Progress"
+                  },
+                  {
+                    "id": "98236657",
+                    "name": "Done"
+                  }
+                ]
+              },
+              {
+                "id": "PVTF_lADOEwGMMc4BomrxzhnGAiM",
+                "name": "Labels",
+                "dataType": "LABELS"
+              },
+              {
+                "id": "PVTF_lADOEwGMMc4BomrxzhnGAiY",
+                "name": "Linked pull requests",
+                "dataType": "LINKED_PULL_REQUESTS"
+              },
+              {
+                "id": "PVTF_lADOEwGMMc4BomrxzhnGAig",
+                "name": "Milestone",
+                "dataType": "MILESTONE"
+              },
+              {
+                "id": "PVTF_lADOEwGMMc4BomrxzhnGAio",
+                "name": "Repository",
+                "dataType": "REPOSITORY"
+              },
+              {
+                "id": "PVTF_lADOEwGMMc4BomrxzhnGAi0",
+                "name": "Reviewers",
+                "dataType": "REVIEWERS"
+              },
+              {
+                "id": "PVTF_lADOEwGMMc4BomrxzhnGAi8",
+                "name": "Parent issue",
+                "dataType": "PARENT_ISSUE"
+              },
+              {
+                "id": "PVTF_lADOEwGMMc4BomrxzhnGAjE",
+                "name": "Sub-issues progress",
+                "dataType": "SUB_ISSUES_PROGRESS"
+              },
+              {
+                "id": "PVTF_lADOEwGMMc4BomrxzhnGAjM",
+                "name": "Created",
+                "dataType": "CREATED"
+              },
+              {
+                "id": "PVTF_lADOEwGMMc4BomrxzhnGAjY",
+                "name": "Updated",
+                "dataType": "UPDATED"
+              },
+              {
+                "id": "PVTF_lADOEwGMMc4BomrxzhnGAjg",
+                "name": "Closed",
+                "dataType": "CLOSED"
+              }
+            ]
+          },
+          "items": {
+            "totalCount": 17,
+            "pageInfo": {
+              "hasNextPage": false,
+              "endCursor": "Y3Vyc29yOnYyOpK5MDAwMDAwMDAuMDU4ODIzNTI5NDExNzY0N84Q1swT"
+            },
+            "nodes": [
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDT8ck",
+                "content": {
+                  "number": 1,
+                  "title": "P0 · Verify bootstrap: Core/Site composition, locked CI and ADS adoption",
+                  "state": "CLOSED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/issues/1",
+                  "milestone": null,
+                  "parent": null,
+                  "subIssues": {
+                    "nodes": []
+                  }
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDT8d0",
+                "content": {
+                  "number": 3,
+                  "title": "P0 · External Site v1 schema, migration and upgrade/rollback acceptance",
+                  "state": "CLOSED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/issues/3",
+                  "milestone": null,
+                  "parent": null,
+                  "subIssues": {
+                    "nodes": []
+                  }
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDT8eo",
+                "content": {
+                  "number": 4,
+                  "title": "P1 · Editorial design system and Fuwari single-column article flow",
+                  "state": "CLOSED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/issues/4",
+                  "milestone": null,
+                  "parent": null,
+                  "subIssues": {
+                    "nodes": []
+                  }
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDT8fs",
+                "content": {
+                  "number": 5,
+                  "title": "P2 · Essential blogging: content, SEO, search and i18n",
+                  "state": "CLOSED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/issues/5",
+                  "milestone": null,
+                  "parent": null,
+                  "subIssues": {
+                    "nodes": []
+                  }
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDT8hI",
+                "content": {
+                  "number": 6,
+                  "title": "P3 · Optional modules: comments, music, galleries and moments",
+                  "state": "CLOSED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/issues/6",
+                  "milestone": null,
+                  "parent": null,
+                  "subIssues": {
+                    "nodes": []
+                  }
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDT8iE",
+                "content": {
+                  "number": 7,
+                  "title": "P4 · Release readiness, security and production governance",
+                  "state": "CLOSED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/issues/7",
+                  "milestone": null,
+                  "parent": null,
+                  "subIssues": {
+                    "nodes": []
+                  }
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDT8i0",
+                "content": {
+                  "number": 8,
+                  "title": "P0 · Enforce Git branch governance and remote-first CI",
+                  "state": "CLOSED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/issues/8",
+                  "milestone": null,
+                  "parent": null,
+                  "subIssues": {
+                    "nodes": []
+                  }
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDT8js",
+                "content": {
+                  "number": 2,
+                  "title": "chore: initialize ALNILAM Core/Site baseline and ADS v0.3",
+                  "state": "MERGED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/pull/2"
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDT8kY",
+                "content": {
+                  "number": 9,
+                  "title": "feat: two-version Core upgrade/rollback acceptance vs unchanged external Site",
+                  "state": "MERGED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/pull/9"
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDUW3s",
+                "content": {
+                  "number": 10,
+                  "title": "feat(editorial): P1 Editorial UI — tokens, true light theme, Fuwari one-per-row composition",
+                  "state": "MERGED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/pull/10"
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDU5Xc",
+                "content": {
+                  "number": 12,
+                  "title": "feat(core): freeze Site schema v1, deterministic provenance, Site onboarding docs",
+                  "state": "MERGED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/pull/12"
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDU8LQ",
+                "content": {
+                  "number": 13,
+                  "title": "feat(ci): artifact budget + CLS regression guards in build",
+                  "state": "MERGED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/pull/13"
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDVHuY",
+                "content": {
+                  "number": 15,
+                  "title": "feat(p2): RSS, sitemap, robots, archives, tags, OpenGraph + JSON-LD structured metadata",
+                  "state": "MERGED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/pull/15"
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDVmF0",
+                "content": {
+                  "number": 17,
+                  "title": "feat(p2): Pagefind local search, i18n routing with hreflang, paginated posts, image policy",
+                  "state": "MERGED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/pull/17"
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDV2Jc",
+                "content": {
+                  "number": 19,
+                  "title": "chore(p4): release readiness — compliance, legacy fixtures, a11y/perf budgets, docs",
+                  "state": "MERGED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/pull/19"
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDV5tA",
+                "content": {
+                  "number": 20,
+                  "title": "release: v0.1.0",
+                  "state": "MERGED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/pull/20"
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "PVTI_lADOEwGMMc4BomrxzhDWzBM",
+                "content": {
+                  "number": 24,
+                  "title": "feat(p3): comments (giscus) and Bangumi modules — feature-flagged, zero-footprint when disabled",
+                  "state": "MERGED",
+                  "url": "https://github.com/Skyline-Gazer/ALNILAM/pull/24"
+                },
+                "fieldValues": {
+                  "nodes": [
+                    {},
+                    {},
+                    {
+                      "name": "Done",
+                      "field": {
+                        "name": "Status"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "observed_on": "2026-10-26",
+  "note": "Read-only start-of-task snapshot; Project unmodified. PRs and CI are reported separately."
+}
