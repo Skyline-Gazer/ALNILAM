@@ -1,9 +1,9 @@
 ---
 import { getCollection, render, type CollectionEntry } from "astro:content";
-import BaseLayout from "@alnilam/theme-editorial/BaseLayout.astro";
+import BaseLayout from "@alnilam/theme-shirone/BaseLayout.astro";
 import Comments from "@alnilam/ui/Comments.svelte";
 import { loadSite } from "../../lib/site-source.mjs";
-import { postLang, postPath, translationAlternates, withBase } from "../../lib/i18n.mjs";
+import { canonicalUrl, postLang, postPath, translationAlternates, withBase } from "../../lib/i18n.mjs";
 
 export async function getStaticPaths() {
   const allPosts = await getCollection("posts", ({ data }) => !data.draft);
@@ -32,24 +32,24 @@ const alternates = (translationAlternates(post, allPosts, config.site.locale) ??
   title={post.data.title}
   {...layout}
   description={post.data.description}
-  canonical={new URL(path + "/", config.site.url).toString()}
+  canonical={canonicalUrl(path + "/", config.site.url)}
   ogType="article"
   publishedTime={dateIso}
   tags={tags}
   alternates={alternates}
   htmlLang={lang}
 >
-  <article class="mx-auto max-w-3xl">
-    <header class="mb-10">
-      <p class="mb-3 text-sm" style="color: var(--fg-muted)">
+  <article class="article-view">
+    <header class="article-header">
+      <div class="article-meta">
         <time datetime={dateIso}>{dateIso.slice(0, 10)}</time>
         {post.data.updatedDate && <span aria-label="更新于"> · 更新于 <time datetime={post.data.updatedDate.toISOString()}>{post.data.updatedDate.toISOString().slice(0, 10)}</time></span>}
-      </p>
-      <h1 class="text-4xl font-bold leading-tight sm:text-5xl" style="color: var(--fg)">{post.data.title}</h1>
+      </div>
+      <h1>{post.data.title}</h1>
       {tags.length > 0 && (
-        <div class="mt-5 flex flex-wrap gap-2" aria-label="文章标签">
+        <div class="article-tags" aria-label="文章标签">
           {tags.map((tag) => (
-            <span class="rounded-full px-2.5 py-1 text-xs" style="background: var(--accent-soft); color: var(--accent)">#{tag}</span>
+            <span>#{tag}</span>
           ))}
         </div>
       )}
@@ -62,13 +62,12 @@ const alternates = (translationAlternates(post, allPosts, config.site.locale) ??
         decoding="async"
         width="640"
         height="360"
-        class="mb-10 h-auto w-full rounded-2xl"
-        style="border: 1px solid var(--border); background: var(--bg-card)"
+        class="article-cover"
       />
     )}
     <div class="prose-post"><Content /></div>
     {config.comments.enabled && (
-      <section class="mt-14 border-t pt-8" aria-label="评论" style="border-color: var(--border)">
+      <section class="article-comments" aria-label="评论">
         <Comments
           client:visible
           repo={config.comments.repo}
@@ -81,8 +80,8 @@ const alternates = (translationAlternates(post, allPosts, config.site.locale) ??
         />
       </section>
     )}
-    <nav class="mt-14 border-t pt-6 text-sm" aria-label="返回" style="border-color: var(--border)">
-      <a href={withBase("/posts/")} class="transition-colors hover:[color:var(--accent)]" style="color: var(--fg-muted)">← 返回全部文章</a>
+    <nav class="article-return" aria-label="返回">
+      <a href={withBase("/posts/")} class="pill-link">← 返回全部文章</a>
     </nav>
   </article>
 </BaseLayout>

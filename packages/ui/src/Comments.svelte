@@ -17,6 +17,9 @@
   let container: HTMLDivElement | undefined = $state();
   let loaded = false;
 
+  const selectedTheme = () =>
+    document.documentElement.dataset.theme === "light" ? "light" : "dark_dimmed";
+
   $effect(() => {
     if (!container || loaded) return;
     loaded = true;
@@ -33,9 +36,21 @@
     s.setAttribute("data-reactions-enabled", "1");
     s.setAttribute("data-emit-metadata", "0");
     s.setAttribute("data-input-position", "top");
-    s.setAttribute("data-theme", theme === "light" ? "light" : "dark_dimmed");
+    s.setAttribute("data-theme", selectedTheme());
     s.setAttribute("data-lang", lang.startsWith("zh") ? "zh-CN" : lang.startsWith("ja") ? "ja" : "en");
     container.appendChild(s);
+  });
+
+  $effect(() => {
+    const updateTheme = (event: Event) => {
+      const iframe = container?.querySelector<HTMLIFrameElement>("iframe.giscus-frame");
+      iframe?.contentWindow?.postMessage(
+        { giscus: { setConfig: { theme: selectedTheme() } } },
+        "https://giscus.app",
+      );
+    };
+    window.addEventListener("giscus-theme-change", updateTheme);
+    return () => window.removeEventListener("giscus-theme-change", updateTheme);
   });
 </script>
 

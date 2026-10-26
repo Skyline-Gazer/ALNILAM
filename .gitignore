@@ -10,4 +10,7 @@ dist/
 .temp/
 .tmp/
 .site-cache/
+browser-results/
+playwright-report/
+test-results/
 

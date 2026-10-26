@@ -26,11 +26,12 @@
   async function initSearch() {
     try {
       // Location-derived URL is computed at runtime so no bundler can resolve it.
-      // Base-aware (sub-path deploys like GitHub Pages); BASE_URL ends with "/".
-      const pagefindUrl = new URL("pagefind/pagefind.js", new URL(import.meta.env.BASE_URL, location.origin)).href;
+      // Normalize because Astro does not guarantee a trailing slash in BASE_URL.
+      const baseUrl = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+      const pagefindUrl = new URL(`${baseUrl}pagefind/pagefind.js`, location.origin).href;
       searchApi = await import(/* @vite-ignore */ pagefindUrl);
       await searchApi.init();
-      await searchApi.options({ baseUrl: "/" });
+      await searchApi.options({ baseUrl });
       if (query) runSearch(query);
     } catch {
       // Index unavailable (e.g. built without pagefind) — leave the UI inert.

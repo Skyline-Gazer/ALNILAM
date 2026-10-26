@@ -38,9 +38,6 @@ jobs:
           SOURCE_DATE_EPOCH: "1700000000"
         run: |
           node scripts/compose.mjs --site sites/demo --out dist/site
-          # Prefix asset/absolute links for the /ALNILAM/ base path is NOT needed:
-          # demo Site config url is overridden above; internal links are root-relative
-          # and Pages serves under /ALNILAM/ — handled by the base option below.
       - name: Add .nojekyll
         run: touch dist/site/.nojekyll
       - uses: actions/configure-pages@v5

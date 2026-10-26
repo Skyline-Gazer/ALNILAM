@@ -1,9 +1,9 @@
 ---
 import { getCollection, type CollectionEntry } from "astro:content";
-import BaseLayout from "@alnilam/theme-editorial/BaseLayout.astro";
-import PostCard from "@alnilam/theme-editorial/PostCard.astro";
+import BaseLayout from "@alnilam/theme-shirone/BaseLayout.astro";
+import PostCard from "@alnilam/theme-shirone/PostCard.astro";
 import { loadSite } from "../../lib/site-source.mjs";
-import { postPath, withBase } from "../../lib/i18n.mjs";
+import { canonicalUrl, postPath, withBase } from "../../lib/i18n.mjs";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
@@ -24,13 +24,13 @@ const { list } = Astro.props as { list: CollectionEntry<"posts">[] };
 const { config } = loadSite();
 const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale, showBangumi: config.bangumi?.enabled ?? false };
 ---
-<BaseLayout title={`#${tag}`} {...layout} description={`标签 ${tag} 下的全部文章`} canonical={new URL(`/tags/${tag}/`, config.site.url).toString()}>
-  <header class="mb-8">
-    <p class="text-sm" style="color: var(--fg-muted)"><a href="/tags/" class="hover:[color:var(--accent)]">← 全部标签</a></p>
-    <h1 class="mt-2 text-3xl font-bold tracking-tight" style="color: var(--fg)">#{tag}</h1>
-    <p class="mt-2 text-sm" style="color: var(--fg-muted)">{list.length} 篇文章</p>
+<BaseLayout title={`#${tag}`} {...layout} description={`标签 ${tag} 下的全部文章`} canonical={canonicalUrl(`/tags/${tag}/`, config.site.url)}>
+  <header class="page-heading">
+    <p class="page-heading__eyebrow"><a href={withBase("/tags/")}>← 全部标签</a></p>
+    <h1>#{tag}</h1>
+    <p>{list.length} 篇文章</p>
   </header>
-  <div class="space-y-4">
+  <div class="post-list">
     {list.map((post) => (
       <PostCard
         title={post.data.title}

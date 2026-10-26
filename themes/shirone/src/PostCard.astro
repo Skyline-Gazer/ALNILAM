@@ -1,0 +1,54 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  href: string;
+  published: Date;
+  tags: string[];
+  cover?: string;
+}
+
+const { title, description, href, published, tags, cover } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const withBase = (path: string) => base + (path.startsWith("/") ? path : `/${path}`);
+const coverSrc = cover && (/^https?:\/\//.test(cover) ? cover : withBase(cover));
+const tagHref = (tag: string) => withBase(`/tags/${encodeURIComponent(tag)}/`);
+const dateIso = published.toISOString();
+const dateText = dateIso.slice(0, 10);
+---
+
+<article class="post-card" data-post-card data-cover={Boolean(cover)}>
+  <div class="post-card__content">
+    <div class="post-card__meta">
+      <span class="meta-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" /></svg>
+      </span>
+      <time datetime={dateIso}>{dateText}</time>
+    </div>
+
+    <h2 class="post-card__title">
+      <span class="accent-bar" aria-hidden="true"></span>
+      <a href={href}>{title}</a>
+      <svg class="post-card__arrow" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m9 5 7 7-7 7" />
+      </svg>
+    </h2>
+
+    {description && <p class="post-card__description">{description}</p>}
+
+    {tags.length > 0 && (
+      <div class="post-card__tags" aria-label="文章标签">
+        {tags.map((tag) => (
+          <a href={tagHref(tag)}># {tag}</a>
+        ))}
+      </div>
+    )}
+  </div>
+
+  {cover && (
+    <a class="post-card__cover" href={href} tabindex="-1" aria-hidden="true">
+      <img src={coverSrc} alt="" width="640" height="360" loading="lazy" decoding="async" />
+      <span class="post-card__cover-glow"></span>
+    </a>
+  )}
+</article>

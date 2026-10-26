@@ -1,9 +1,9 @@
 ---
 import { getCollection, type CollectionEntry } from "astro:content";
-import BaseLayout from "@alnilam/theme-editorial/BaseLayout.astro";
-import PostCard from "@alnilam/theme-editorial/PostCard.astro";
+import BaseLayout from "@alnilam/theme-shirone/BaseLayout.astro";
+import PostCard from "@alnilam/theme-shirone/PostCard.astro";
 import { loadSite } from "../../lib/site-source.mjs";
-import { postPath } from "../../lib/i18n.mjs";
+import { canonicalUrl, postPath, withBase } from "../../lib/i18n.mjs";
 
 export async function getStaticPaths({ paginate }: { paginate: (items: CollectionEntry<"posts">[], opts: { pageSize: number; props: Record<string, unknown> }) => unknown[] }) {
   const { config } = loadSite();
@@ -25,34 +25,35 @@ const canonicalPage = page.currentPage === 1 ? "/posts/" : `/posts/${page.curren
   title={page.currentPage === 1 ? "文章" : `文章 · 第 ${page.currentPage} 页`}
   {...layout}
   description="全部文章"
-  canonical={new URL(canonicalPage, config.site.url).toString()}
+  canonical={canonicalUrl(canonicalPage, config.site.url)}
 >
-  <header class="mb-8">
-    <h1 class="text-4xl font-bold tracking-tight" style="color: var(--fg)">全部文章</h1>
-    <p class="mt-2 text-sm" style="color: var(--fg-muted)">共 {page.total} 篇 · 第 {page.currentPage}/{page.lastPage} 页</p>
+  <header class="page-heading">
+    <p class="page-heading__eyebrow">Writing</p>
+    <h1>全部文章</h1>
+    <p>共 {page.total} 篇 · 第 {page.currentPage}/{page.lastPage} 页</p>
   </header>
-  <div class="space-y-4">
+  <div class="post-list">
     {page.data.length
       ? page.data.map((post) => (
           <PostCard
             title={post.data.title}
             description={post.data.description}
-            href={postPath(post, config.site.locale) + "/"}
+            href={withBase(postPath(post, config.site.locale)) + "/"}
             published={post.data.pubDate}
             tags={post.data.tags}
             cover={post.data.cover}
           />
         ))
-      : <p style="color: var(--fg-muted)">暂无文章。</p>}
+      : <p>暂无文章。</p>}
   </div>
   {(page.url.prev || page.url.next) && (
-    <nav class="mt-10 flex items-center justify-between text-sm" aria-label="分页">
+    <nav class="pagination" aria-label="分页">
       <span>
-        {page.url.prev && <a href={page.url.prev} rel="prev" class="transition-colors hover:[color:var(--accent)]" style="color: var(--fg-soft)">← 上一页</a>}
+        {page.url.prev && <a href={page.url.prev} rel="prev" class="pill-link">← 上一页</a>}
       </span>
-      <span style="color: var(--fg-muted)">{page.currentPage} / {page.lastPage}</span>
+      <span>{page.currentPage} / {page.lastPage}</span>
       <span>
-        {page.url.next && <a href={page.url.next} rel="next" class="transition-colors hover:[color:var(--accent)]" style="color: var(--fg-soft)">下一页 →</a>}
+        {page.url.next && <a href={page.url.next} rel="next" class="pill-link">下一页 →</a>}
       </span>
     </nav>
   )}

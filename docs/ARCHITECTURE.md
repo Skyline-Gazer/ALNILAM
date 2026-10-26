@@ -16,10 +16,11 @@ Status: v0.1 implementation baseline; not a framework-neutral CMS.
 apps/web/              # Astro assembly app, build & route entrypoints
 packages/core/         # shared site config contract; no Astro dependency
 packages/ui/           # Svelte UI islands
-themes/editorial/      # visual layout + Fuwari-style single-row Post card
+themes/editorial/      # released visual layout + rollback surface
+themes/shirone/        # P1 Shirone-derived layout, tokens and Post card
 sites/demo/            # Core-repo Site fixture (only for tests & preview)
 scripts/compose.mjs    # non-mutating external Site builder
-.ads/                  # optional private ADS v0.3 gitlink; not cloned by public CI
+.ads/                  # optional private ADS v0.4.1 gitlink; not cloned by public CI
 ```
 
 ## Build algorithm
@@ -40,6 +41,6 @@ scripts/compose.mjs    # non-mutating external Site builder
 - Rollback selects the previous Core commit and rebuilds against the same Site commit.
 - When a Site content schema changes, require explicit migration PR and a test against the old Site fixture.
 
-## Scope
-The first theme is Editorial. This is a **package boundary**, not a production-ready theme marketplace or plugin SDK. Theme switching, authenticated comments, server adapters, CLI install/update flows, and rich Firefly/Mizuki functionality are future milestone work. Never promise them as implemented.
+## Theme boundary and P1 preview
+Released v0.1.3 uses Editorial. The authorized P1 vertical slice routes the main blog pages through `themes/shirone`, while retaining the Editorial package as an unchanged rollback surface and keeping Core/Site v1 untouched. This is still a **package boundary**, not a theme marketplace or plugin SDK. Runtime theme switching, authenticated comments, server adapters, CLI install/update flows and rich Firefly/Mizuki functionality are not implemented. P1 does not authorize production release.
 

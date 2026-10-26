@@ -61,6 +61,38 @@ test("demo Site is valid and the read-only digest is stable", () => {
   assert.equal(a.digest, b.digest);
   assert.match(a.digest, /^[a-f0-9]{64}$/);
 });
+test("nested-base output keeps canonical and internal links inside /ALNILAM/", (t) => {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-base-"));
+  t.after(() => fs.rmSync(out, { recursive: true, force: true }));
+  const site = path.join(out, "site-source");
+  fs.cpSync("sites/demo", site, { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "pagination-regression.md"),
+    [
+      "---",
+      'title: "Pagination regression"',
+      'description: "Sixth post exercises page two under a nested base."',
+      "pubDate: 2026-10-24",
+      'tags: ["Test"]',
+      "---",
+      "",
+      "Pagination regression fixture.",
+      "",
+    ].join("\n"),
+  );
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(out, "site")], {
+    env: { ...process.env, ALNILAM_SITE_URL: "https://example.com/ALNILAM/", SOURCE_DATE_EPOCH: "1700000000" },
+  });
+  assert.equal(result.status, 0, "nested-base compose failed: " + result.stderr);
+  const html = fs.readFileSync(path.join(out, "site", "index.html"), "utf8");
+  const posts = fs.readFileSync(path.join(out, "site", "posts", "index.html"), "utf8");
+  assert.match(html, /<link rel="canonical" href="https:\/\/example\.com\/ALNILAM\/">/);
+  assert.doesNotMatch(html, /href="\/(?!ALNILAM\/)/);
+  assert.doesNotMatch(html, /href="\/ALNILAM\/\//);
+  assert.doesNotMatch(posts, /href="\/(?!ALNILAM\/)/);
+  assert.match(posts, /<a href="\/ALNILAM\/posts\/2" rel="next"/);
+  assert.doesNotMatch(posts, /\/ALNILAM\/ALNILAM\//);
+});
 test("output paths cannot overlap the Site source", () => {
   assert.throws(() => assertExternalOutput("sites/demo", "sites/demo/dist"));
   assert.throws(() => assertExternalOutput("sites/demo", "sites"));

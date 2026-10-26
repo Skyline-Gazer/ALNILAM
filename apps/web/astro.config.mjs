@@ -7,16 +7,18 @@ const { config } = loadSite();
 
 /**
  * Optional-module route gating: a disabled module must ship nothing — no page,
- * no 404 stub, no JS. Module pages live under src/pages/opt/ and are injected
+ * no 404 stub, no JS. Module pages live under src/modules/ and are injected
  * via injectRoute ONLY when the Site config enables them.
  */
+
+const base = new URL(config.site.url).pathname.replace(/\/$/, "") || "/";
 
 export default defineConfig({
   site: config.site.url,
   // Sites hosted under a sub-path (e.g. GitHub Pages /ALNILAM/) need Astro's
   // base so internal links and assets are prefixed correctly. Root-hosted
   // Sites (custom domains) get "/".
-  base: new URL(config.site.url).pathname.replace(/\/$/, ""),
+  base,
   output: "static",
   outDir: process.env.ALNILAM_OUTPUT_DIR || "./dist",
   integrations: [
@@ -27,7 +29,7 @@ export default defineConfig({
       hooks: {
         "astro:config:setup": ({ injectRoute }) => {
           if (config.bangumi.enabled) {
-            injectRoute({ pattern: "/bangumi/", entrypoint: "./src/pages/opt/bangumi.astro", prerender: true });
+            injectRoute({ pattern: "/bangumi/", entrypoint: "./src/modules/bangumi.astro", prerender: true });
           }
         },
       },
