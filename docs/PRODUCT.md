@@ -11,7 +11,7 @@
 - Mobile: single-column card with cover above content; responsive text sizing and keyboard navigation.
 - Article detail: centered readable column, no mandatory right-hand article column.
 - Motion: reduced-motion compliance and no required Lenis/smooth-scroll runtime.
-- Dark and light palettes are implemented in `themes/editorial/editorial.css`; the legacy Site fixture exercises light appearance.
+- Dark and light palettes are implemented in `themes/editorial/src/editorial.css`; the legacy Site fixture exercises light appearance.
 
 ## Minimal product v0.1
 - Static homepage, posts index and post detail.

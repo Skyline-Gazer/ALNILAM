@@ -1,6 +1,6 @@
 # P0 file-level reuse decisions
 
-Date: 2026-10-26. **Audit recommendations; no frontend migration or source removal performed.** Baseline A = `5fd74cea8197dc91d8391e7ee677eacbc32d3234`; release `07fac43cba0c3d303c930c098b6e2124b2c79e4a` has the identical product/test/config tree (only HANDOFF differs). All 61 reachable baseline commits were retained and inspected through history/file attribution. Fixed source identities and license hashes: [manifest](evidence/source-manifest.json).
+Date: 2026-10-26. **Audit recommendations; no frontend migration or source removal performed.** Baseline A = `5fd74cea8197dc91d8391e7ee677eacbc32d3234`; release `07fac43cba0c3d303c930c098b6e2124b2c79e4a` has the identical product/test/config tree (only HANDOFF differs). All 61 reachable baseline commits were retained; current source and history/file attribution were audited, without claiming a semantic review of every historical commit. Fixed source identities and license hashes: [manifest](evidence/source-manifest.json).
 
 S = Shirone `55a84b2322bdfb634a59ca6383bb242e5ce646bf`; F = Firefly `cd920b035b475fe9a6cd3a88afb42cf9440bb8a9`; K = KIRARI `5700bcdeb965de87a1818d5d9aec6bf8e227523d`; M = Mizuki `14da4262d8aa1d93dc8cff11705f14918ed7369f`. Every path below is relative to its named repository and these exact commits, not a moving branch.
 

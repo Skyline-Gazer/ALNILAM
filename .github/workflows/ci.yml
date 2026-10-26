@@ -40,6 +40,8 @@ jobs:
         run: pnpm check
       - name: Compose demo Site
         run: pnpm build
+      - name: Check production artifact boundary
+        run: python3 scripts/check-ads-devtools-boundary.py --root dist/site --target-branch main
       - name: Verify generated output
         run: |
           test -s dist/site/index.html

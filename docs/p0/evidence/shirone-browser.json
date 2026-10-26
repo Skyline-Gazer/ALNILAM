@@ -1,0 +1,106 @@
+{
+  "7.3.8": {
+    "outcomes": {
+      "TYPECHECK": "success",
+      "LINT": "failure",
+      "UNIT": "success",
+      "BUILD": "success",
+      "SMOKE": "success"
+    },
+    "browser": [
+      {
+        "name": "desktop",
+        "width": 1440,
+        "height": 1000,
+        "errors": [],
+        "homeTitle": "Shirone - A Material 3 anime blog",
+        "article": "/posts/guide/",
+        "articleTitle": "Shirone Authoring & Usage Guide",
+        "searchResults": [
+          "/about/",
+          "/posts/guide/",
+          "/series/markdown-syntax-guide/",
+          "/posts/markdown-enhancements/",
+          "/posts/mdx-showcase/",
+          "/posts/steps/",
+          "/posts/markdown-includes/",
+          "/posts/markdown-mermaid/"
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "mobile",
+        "width": 390,
+        "height": 844,
+        "errors": [],
+        "homeTitle": "Shirone - A Material 3 anime blog",
+        "article": "/posts/guide/",
+        "articleTitle": "Shirone Authoring & Usage Guide",
+        "searchResults": [
+          "/about/",
+          "/posts/guide/",
+          "/series/markdown-syntax-guide/",
+          "/posts/markdown-enhancements/",
+          "/posts/mdx-showcase/",
+          "/posts/steps/",
+          "/posts/markdown-includes/",
+          "/posts/markdown-mermaid/"
+        ],
+        "status": "PASS"
+      }
+    ],
+    "output_allocated_kib": 74076
+  },
+  "7.4.2": {
+    "outcomes": {
+      "TYPECHECK": "success",
+      "LINT": "failure",
+      "UNIT": "success",
+      "BUILD": "success",
+      "SMOKE": "success"
+    },
+    "browser": [
+      {
+        "name": "desktop",
+        "width": 1440,
+        "height": 1000,
+        "errors": [],
+        "homeTitle": "Shirone - A Material 3 anime blog",
+        "article": "/posts/guide/",
+        "articleTitle": "Shirone Authoring & Usage Guide",
+        "searchResults": [
+          "/about/",
+          "/posts/guide/",
+          "/series/markdown-syntax-guide/",
+          "/posts/markdown-enhancements/",
+          "/posts/mdx-showcase/",
+          "/posts/steps/",
+          "/posts/markdown-includes/",
+          "/posts/markdown-mermaid/"
+        ],
+        "status": "PASS"
+      },
+      {
+        "name": "mobile",
+        "width": 390,
+        "height": 844,
+        "errors": [],
+        "homeTitle": "Shirone - A Material 3 anime blog",
+        "article": "/posts/guide/",
+        "articleTitle": "Shirone Authoring & Usage Guide",
+        "searchResults": [
+          "/about/",
+          "/posts/guide/",
+          "/series/markdown-syntax-guide/",
+          "/posts/markdown-enhancements/",
+          "/posts/mdx-showcase/",
+          "/posts/steps/",
+          "/posts/markdown-includes/",
+          "/posts/markdown-mermaid/"
+        ],
+        "status": "PASS"
+      }
+    ],
+    "output_allocated_kib": 73804
+  }
+}
