@@ -69,6 +69,10 @@ See [06-REUSE-DOC-GOVERNANCE.md](06-REUSE-DOC-GOVERNANCE.md). The **Shirone appl
 
 The **P0 source audit is allowed as read-only / non-destructive evidence gathering before final Spec freeze**. P0 cannot logically be blocked by a Spec that requires its audit results. After evidence (pinned reference checkouts, existing ALNILAM and Shirone baseline, source/asset matrix, licensing and owner history), update Spec and pass **G0-F review/freeze**. Only implementation changes in P1–P6 require frozen requirements. See [07-PHASE-READINESS.md](07-PHASE-READINESS.md).
 
+### Required one-time post-P0 owner checkpoint
+
+Once P0 read-only/reproducibility/audit tasks conclude, issue one **P0 Acceptance / Decision Report** covering reference SHAs, ALNILAM retained-source matrix, Shirone baseline, official-Astro tradeoffs, Site compatibility, legal/test evidence, draft Spec changes, risks and the smallest viable P1 plan. Pause feature implementation until the owner explicitly **confirms or requests corrections**. The report is not an invitation to approve every technical micro-decision; routine P0 work remains autonomous. The reporting schema and G0-F decision gate are in [07-PHASE-READINESS.md](07-PHASE-READINESS.md). **P0 PASS without owner sign-off does not authorize P1.**
+
 ## 6. Plan acceptance gate (G0-A)
 - [ ] Owner confirms or requests changes to the product baseline, Shirone-first direction and styling.
 - [ ] Core/Site, privacy, packaging and release boundaries have no unresolved contradictory requirements.
