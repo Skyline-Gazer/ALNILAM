@@ -1,6 +1,6 @@
 # ALNILAM Next — PLAN (proposal)
 
-> **DRAFT — NOT APPROVED.** 2026-10-25. This is a proposal for a Plan → Spec → Review/Freeze → Project decomposition workflow, not an authorization to implement, merge or deploy. Related: #36–#76; product acceptance and legacy regression: #34, #35.
+> **DRAFT — NOT APPROVED.** 2026-10-25. This is a proposal for a Plan → Spec → Review/Freeze → Project decomposition workflow, not an authorization to implement, merge or deploy. Related: Phase Issues #36–#42, active candidate Tasks #43–#76/#78/#79/#80/#81/#82; future-only #83; product acceptance and legacy regression: #34, #35.
 
 ## 1. Problem statement and outcome
 ALNILAM v0.1.3 has been published, but successful Issues, CI, and release tags do not establish that the actual product matches its owner's intended blog. The previous approach implemented architecture and generated task closure before capturing a sufficiently testable product specification.
@@ -11,7 +11,9 @@ ALNILAM v0.1.3 has been published, but successful Issues, CI, and release tags d
 - **One product foundation: Shirone** `LyraVoid/Shirone` @ `55a84b2322bdfb634a59ca6383bb242e5ce646bf`. Start with upstream behavior as the observable functional baseline before adapting.
 - **Targeted integrations only:** Firefly `CuteLeaf/Firefly` @ `cd920b035b475fe9a6cd3a88afb42cf9440bb8a9` for proven differentiated features/layout; KIRARI `markd3ng/KIRARI` @ `5700bcdeb965de87a1818d5d9aec6bf8e227523d` for Core/Site, build, provenance and delivery practices; Mizuki `matsuzaka-yuki/Mizuki` @ `14da4262d8aa1d93dc8cff11705f14918ed7369f` only for confirmed gaps.
 - **One implementation per capability:** exactly one Astro route tree, global design token system, page transition manager, content schema, theme preference store, search-index lifecycle and optional-module registry. Do not run full themes side-by-side.
-- **Protect ALNILAM contracts:** retain repository, Git history, Apache-2.0 policy with appropriate upstream notices, ADS rules, external Site as user-owned input, source immutability, separate Core/Site revisions, predictable static output and upgrade/rollback.
+- **Protect ALNILAM source/code assets as the default:** do NOT replace the working `scripts/compose.mjs`, `scripts/site-contract.mjs`, `scripts/upgrade-check.mjs`, `scripts/artifact-check.mjs`, contract tests, GitHub Actions, search/comments/Bangumi or published docs merely because Shirone has a similar function. Inventory and benchmark actual existing functionality, then **KEEP/ADAPT/WRAP** before **REPLACE/RETIRE**. Keep the current repo, Git history, Apache-2.0 policy and licensed notices, external Site immutability, independent Core/Site SHA, outputs and rollback.
+- **Documentation governance is part of implementation:** a single reviewed Plan/Spec, versioned ADRs, correct README/Product/Architecture/Site Onboarding/MAINTAINERS/HANDOFF/ROADMAP/CHANGELOG/NOTICE, requirement→Issue→PR→CI/browser traceability and docs checks. Never treat draft planning prose as shipped capabilities.
+- **ADS v0.4 adoption, not v0.3:** official v0.4 release commit `2af17d9e1d816844c49835ae91b784405765ad46` is proposed for the retained private `.ads` Git submodule via separate Draft PR #84; CodeGraph and official full RTK mandatory development tooling, dev-only configuration, production-boundary guard and remote-first verification tracked by #82. This does NOT replace the Shirone base or ALNILAM's build scripts.
 - **Design direction:** Shirone M3E single UI design system, retaining owner-required Fuwari-style one-post-per-row, text-left/cover-right desktop (approximately 28% cover) and mobile cover-on-top. Earlier SHBlog Next visual goals are historical input to reconcile in Spec; do not claim a 1:1 clone is required by default.
 - **Static-first:** no mandatory runtime database, CMS backend, identity layer or paid always-on service.
 - **Scope control:** gallery, moments and music appear in historical docs as owner-declined, but original proof is not established in this review. Treat them as *candidates pending decision*, not automatically mandatory or permanently cancelled. Comments/Bangumi are also to be tested as optional Site-configured modules.
@@ -35,13 +37,21 @@ Before implementing any core capability, choose the lowest-maintenance valid sou
 - Treating untrusted user-submitted MDX as a sandbox (trusted author content only).
 
 ## 4. Migration strategy
-1. **Decision baseline:** reconcile owner intent with docs and real GitHub SHA; record Keep / Replace / Delete and source/provenance; freeze a known working ALNILAM reference.
+1. **Decision + preservation baseline:** reconcile owner intent with docs and real GitHub SHA; record **KEEP / ADAPT / WRAP / REPLACE / RETIRE** for each existing ALNILAM source/CI/test/schema; freeze a proven v0.1.3 source and Site fixture. #80 is mandatory before any frontend migration that could delete working assets.
 2. **Shirone unmodified baseline:** pin upstream SHA, build and run browser flows in an isolated preview before removing old ALNILAM front-end.
 3. **Single-base migration:** replace conflicting UI/route code in feature PRs, preserve repository-level CI, provenance and ownership constraints.
 4. **Core/Site adapter:** fit Shirone collections/configuration into ALNILAM's frozen schema v1 or a documented opt-in v2 migration; do not mutate Site.
 5. **UI and blog essentials:** progressively integrate justified Firefly features, correct links/search/SEO for root and `/ALNILAM/` deployments.
 6. **Explicitly selected optional modules:** ship behind feature flags with disabled-is-zero-overhead verification.
 7. **Candidate release:** independent external Site and version rollback tests, mobile/desktop evidence, performance/security/license gates and separate owner release authorization.
+
+### Future optimization scope boundary
+
+Astro experimental incremental build and parallel prerendering must **NOT** enter current M1–M3 release/Phase Gates, nor be enabled merely because 7.x ships an experimental flag. The official stable state is a future dependency; Issue [#83](https://github.com/Skyline-Gazer/ALNILAM/issues/83) tracks a separate official-stable-only benchmark/compatibility and rollback PR, not an active implementation commitment. Test actual build reproducibility, Site immutability and invalidation before any merge.
+
+### Binding migration + docs governance
+
+See [06-REUSE-DOC-GOVERNANCE.md](06-REUSE-DOC-GOVERNANCE.md). The **Shirone application is the sole frontend base; the existing ALNILAM repository and its functional systems are the retained platform**. Agent work shall be additive/adapter-first and require file-by-file deletion justification and regression evidence. Document authority, historical status, versioned ADRs and docs-as-code CI are acceptance Gates.
 
 ## 5. Risk / mitigation register
 | Risk | Mitigation and measurable proof |
@@ -72,4 +82,4 @@ Before implementing any core capability, choose the lowest-maintenance valid sou
 ## 8. Order of execution
 `PLAN` (this proposal) → `SPEC` (normative acceptance) → `review/freeze` (owner-approved snapshot + changelog) → `Milestone/Phase/Sub-issue reconciliation` in Project #17 → `one Issue / PR / remote CI / visual verification at a time`.
 
-**Current Issue #36–#76 status: proposed backlog, not approved implementation scope.**
+**Current Issues #36–#82 (excluding PR #77) remain candidate backlog as mapped in 02-GITHUB-PROJECT; build-acceleration #83 is a future-only TODO, not part of M1–M3.** GitHub Project V2 items and true GitHub Milestones are not yet written.
