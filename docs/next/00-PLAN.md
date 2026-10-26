@@ -23,6 +23,10 @@ ALNILAM v0.1.3 has been published, but successful Issues, CI, and release tags d
 - Include opt-in **llmstxt.org v2** support (subpath and locale indexes, source-backed Markdown views, HTML alternate/describedby); optional llms-full is a distinct policy. This is LLM discoverability support, **not** a verified search ranking improvement.
 - Detailed acceptance: [04-ROUTING-SEO-LLMS-V2.md](04-ROUTING-SEO-LLMS-V2.md). This is a proposed contract awaiting G0 review, not a deployed capability.
 
+### Upstream + Astro 7.4 official-first architecture rule
+
+Before implementing any core capability, choose the lowest-maintenance valid source in this order: **Astro 7.4.x stable official API / official @astrojs integrations → pinned Shirone existing implementation → pinned KIRARI verified engineering mechanism → Firefly/Mizuki only for differentiated behavior → minimal ALNILAM-specific integration**. This is a selection principle, not an automatic replacement order: a known-compatible Shirone v7.3.8 baseline MUST be obtained before separately testing Astro 7.4.x upgrades and plugin compatibility. Native methods are not always better for specialized CJK font subsetting or MDX/asset staging. Read [05-UPSTREAM-ASTRO-AUDIT.md](05-UPSTREAM-ASTRO-AUDIT.md) before approving any Phase. **No "already implemented in upstream" claim constitutes drop-in integration or acceptance.**
+
 ## 3. Explicit non-goals
 - Replacing GitHub repository, erasing history, force pushing, rewriting tags, auto-deploying new production code.
 - Rebuilding Firefly, Mizuki and Shirone as three separate themes in ALNILAM.
