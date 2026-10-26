@@ -29,10 +29,19 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Contract tests
         run: pnpm test
+      - name: Production-boundary fixtures and offline two-round release DAG
+        run: python3 -m unittest discover -s scripts/tests -p '*_test.py'
+      - name: Check actual production candidate in required verify
+        env:
+          PR_BASE: ${{ github.base_ref }}
+          REF_NAME: ${{ github.ref_name }}
+        run: python3 scripts/check-ads-devtools-boundary.py --target-branch "${PR_BASE:-$REF_NAME}"
       - name: Astro type and content checks
         run: pnpm check
       - name: Compose demo Site
         run: pnpm build
+      - name: Check production artifact boundary
+        run: python3 scripts/check-ads-devtools-boundary.py --root dist/site --target-branch main
       - name: Verify generated output
         run: |
           test -s dist/site/index.html

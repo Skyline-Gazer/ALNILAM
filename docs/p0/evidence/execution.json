@@ -1,0 +1,145 @@
+{
+  "observed_on": "2026-10-26",
+  "audit_pr": "https://github.com/Skyline-Gazer/ALNILAM/pull/85",
+  "initial_source_sha": "80beb02a05026348113732635e4bd55de1b1a218",
+  "policy_sha": "8e6ce58402fdf4feda888fe8f4fe13687338e504",
+  "browser_harness_sha": "bf6a5871aed39d87f0232e8e360c343ff3362566",
+  "legacy": {
+    "sha": "07fac43cba0c3d303c930c098b6e2124b2c79e4a",
+    "old_core_sha": "52a5d13f98c981fdf5aaed1ae217c85d65c0a345",
+    "run": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40282203325",
+    "result": "PASS",
+    "checks": [
+      "13 original contract tests",
+      "Astro check",
+      "compose and artifact-check",
+      "external legacy Site",
+      "two-version upgrade/rollback"
+    ],
+    "locked_versions": {
+      "astro": "7.4.2",
+      "svelte": "5.57.2",
+      "tailwindcss": "4.3.3",
+      "pnpm": "10.19.0"
+    }
+  },
+  "initial_shirone_attempt": {
+    "run": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40282203325",
+    "source_sha": "8e6ce58402fdf4feda888fe8f4fe13687338e504",
+    "outcomes": {
+      "7.3.8": {
+        "TYPECHECK": "success",
+        "LINT": "failure",
+        "UNIT": "success",
+        "BUILD": "success",
+        "E2E": "failure",
+        "SMOKE": "failure"
+      },
+      "7.4.2": {
+        "TYPECHECK": "success",
+        "LINT": "failure",
+        "UNIT": "success",
+        "BUILD": "success",
+        "E2E": "failure",
+        "SMOKE": "failure"
+      }
+    },
+    "unit_tests_each": 681,
+    "lint_errors_each": 5,
+    "browser_suite_each": 480,
+    "browser_result": "PARTIAL: 10 minute single-worker timeout",
+    "smoke_result": "FAIL: harness asserted article before Swup content replacement",
+    "output_allocated_kib_7_3_8": 74080,
+    "artifacts": [
+      "p0-shirone-astro-7.3.8",
+      "p0-shirone-astro-7.4.2",
+      "p0-legacy"
+    ]
+  },
+  "latest_browser_run": {
+    "run": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40284029959",
+    "source_sha": "bf6a5871aed39d87f0232e8e360c343ff3362566",
+    "status": "COMPLETED",
+    "note": "4 isolated single-worker shards per version; final receipt will replace this state",
+    "smoke": "PASS both versions; desktop/mobile/theme/article/real Pagefind/back/no pageerror",
+    "lint": "FAIL unchanged upstream5errors each",
+    "conclusion": "FAILURE",
+    "reason": "Unmodified upstream lint and complete E2E failures remain visible",
+    "per_version_e2e": {
+      "7.3.8": {
+        "passed": 415,
+        "failed": 17,
+        "skipped_by_upstream": 48,
+        "total": 480
+      },
+      "7.4.2": {
+        "passed": 415,
+        "failed": 17,
+        "skipped_by_upstream": 48,
+        "total": 480
+      }
+    },
+    "same_observed_failure_set": true,
+    "artifacts_file": "artifact-manifest.json"
+  },
+  "ads_stable_guard": {
+    "source_sha": "2af17d9e1d816844c49835ae91b784405765ad46",
+    "tests": 9,
+    "result": "PASS",
+    "actual_legacy_main_tree": "FAIL: historical tool-specific .gitignore rules",
+    "corrected_task_candidate": "PASS: exact exported staged tree, generic guard unchanged; tool ignore rules moved to untracked Git info/exclude",
+    "built_artifacts": "Required verify now scans dist/site as production output"
+  },
+  "ads_candidate": {
+    "sha": "13c50f072d3f2b6aa95ca7387a8cff3dc0b606a1",
+    "provider_review_sync_tests": 19,
+    "result": "PASS local; live NOT_RUN",
+    "upstream_ci": "https://github.com/Skyline-Gazer/ADS/actions/runs/40278298633"
+  },
+  "offline_dag": {
+    "rounds": 2,
+    "result": "PASS",
+    "scope": "Git-only, including actual guard/tree/ancestry/tag/idempotence/interruption and negative pushes; platform/review/credential/event-loop NOT_RUN"
+  },
+  "ads_extension": {
+    "sha": "c5952ab8b0d8e7a3644419bfc440cdd780911981",
+    "pr": "https://github.com/Skyline-Gazer/ADS/pull/67",
+    "run": "https://github.com/Skyline-Gazer/ADS/actions/runs/40283068928",
+    "result": "PASS",
+    "local_tests": 116,
+    "scope": "draft governance extension; no new runtime mode implemented",
+    "compatibility_run": "https://github.com/Skyline-Gazer/ADS/actions/runs/40283069145"
+  },
+  "ads84": {
+    "sha": "fdae422f89a80a8a45f1031baa14305fba92cf97",
+    "pr": "https://github.com/Skyline-Gazer/ALNILAM/pull/84",
+    "verify": "PASS",
+    "run": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40282237864"
+  },
+  "tooling": {
+    "codegraph_operation": "PASS",
+    "codegraph_official_provenance": "BLOCKED",
+    "codegraph_official_stable": "NOT_FOUND",
+    "full_rtk_edition": "PASS",
+    "rtk_latest_stable": "BLOCKED: installed1.0.1 vs stable1.1.0",
+    "greptile_app": "INSTALLED: selected ALNILAM",
+    "greptile_current_sha_gate": "UNVERIFIED",
+    "cnb_session": "DETECTED; no ALNILAM target/sandbox found",
+    "provider_cutover": "NOT_RUN",
+    "codegraph_final_sync": "One pending edited file persisted after native sync; explicit project-local sync used for recovery, status rechecked."
+  },
+  "owner_gate": "NOT_READY; no P1/freeze/merge/deploy authorized",
+  "root_ci": {
+    "head_sha": "21f96d7f79a248e148efe23e2589535cb889f151",
+    "run": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40284488614",
+    "result": "PASS",
+    "policy_doc_tests": 12,
+    "note": "The delivery commit receives its own verify; exact final SHA/run are attached to PR85 and final response."
+  },
+  "plan77": {
+    "sha": "f947b95e9d3589a0c6cf7c44799bdf8eda0e3e69",
+    "run": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40286760770",
+    "result": "PASS",
+    "pr": "https://github.com/Skyline-Gazer/ALNILAM/pull/77"
+  }
+}

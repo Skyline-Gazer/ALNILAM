@@ -1,33 +1,11 @@
-# Project #17 — Issue tracking and verification
+# Project #17 — verified P0 snapshot
 
-Board: https://github.com/orgs/Skyline-Gazer/projects/17/
+[Board](https://github.com/orgs/Skyline-Gazer/projects/17/) queried with authenticated Projects v2 GraphQL on 2026-10-26. Raw read-back, item IDs and fields: [baseline evidence](p0/evidence/baseline.json).
 
-## Confirmed repository tasks
-- https://github.com/Skyline-Gazer/ALNILAM/issues/1 — P0 bootstrap CI and ADS acceptance
-- https://github.com/Skyline-Gazer/ALNILAM/issues/3 — P0 Core/Site schema, upgrade & rollback
-- https://github.com/Skyline-Gazer/ALNILAM/issues/4 — P1 Editorial UI
-- https://github.com/Skyline-Gazer/ALNILAM/issues/5 — P2 Blogging essentials
-- https://github.com/Skyline-Gazer/ALNILAM/issues/6 — P3 Optional features
-- https://github.com/Skyline-Gazer/ALNILAM/issues/7 — P4 Release readiness
-- https://github.com/Skyline-Gazer/ALNILAM/issues/8 — P0 Git branch protection and remote-first CI
+- Project ID: `PVT_kwDOEwGMMc4Bomrx`, actual title **Dev Contron**.
+- 17 existing historical items, all Status **Done**. These include historical Issues and PRs; this does not establish Next completion.
+- Only custom selection field is Status (Todo / In Progress / Done). No Phase field exists. Native Milestone, Parent issue and Sub-issues progress are exposed as system fields. Repository milestone list is empty.
+- Next Issues #36/#44/#45/#46/#47/#80/#81/#82/#83 were absent from the board at this read-back. Native Next parent/sub-issue relationships were separately queried and are absent. Markdown Parent text is not a native relationship.
+- Current CLI can read the Project; older statements that no Project API was available are historical. No Project, milestone or hierarchy mutation was performed in P0. The proposed hierarchy remains gated on Owner G0-F approval in Draft #77.
 
-PR: https://github.com/Skyline-Gazer/ALNILAM/pull/2 (bootstrap → dev, unmerged).
-
-## Honest board status
-GitHub repository Issues were created successfully. The connected GitHub tool has **no writable Projects v2 API**. Consequently, issue membership in Project #17, field options and board status are NOT VERIFIED and must not be represented as synchronized.
-
-## Exact follow-up once GitHub Projects v2 authorization/tool is available
-Use an authenticated `gh` CLI with `project` read/write scopes, or the Projects v2 GraphQL API:
-```bash
-gh project view 17 --owner Skyline-Gazer
-gh project item-add 17 --owner Skyline-Gazer --url https://github.com/Skyline-Gazer/ALNILAM/issues/1
-gh project item-add 17 --owner Skyline-Gazer --url https://github.com/Skyline-Gazer/ALNILAM/issues/3
-gh project item-add 17 --owner Skyline-Gazer --url https://github.com/Skyline-Gazer/ALNILAM/issues/4
-gh project item-add 17 --owner Skyline-Gazer --url https://github.com/Skyline-Gazer/ALNILAM/issues/5
-gh project item-add 17 --owner Skyline-Gazer --url https://github.com/Skyline-Gazer/ALNILAM/issues/6
-gh project item-add 17 --owner Skyline-Gazer --url https://github.com/Skyline-Gazer/ALNILAM/issues/7
-gh project item-add 17 --owner Skyline-Gazer --url https://github.com/Skyline-Gazer/ALNILAM/issues/8
-gh project item-add 17 --owner Skyline-Gazer --url https://github.com/Skyline-Gazer/ALNILAM/pull/2
-gh project item-list 17 --owner Skyline-Gazer --format json
-```
-Idempotency: **read existing items first** and skip already-linked Issue/PR URLs rather than creating duplicates. Discover actual field IDs and options before setting `Status`, `Priority`, `Iteration` or `Phase`. Do not invent field IDs. Record real item IDs and verify status updates at phase/milestone boundaries. The text above is a **handoff procedure**, not a record that it executed.
+Existing Issues are reused by [audit PR #85](https://github.com/Skyline-Gazer/ALNILAM/pull/85). P0 evidence and pending Owner decisions are tracked in the [acceptance report](p0/P0-ACCEPTANCE.md); no item is declared Done from green CI alone.
