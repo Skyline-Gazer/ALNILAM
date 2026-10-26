@@ -1,6 +1,6 @@
 # Maintainer guide
 
-Operational notes for ALNILAM maintainers. Public contributor docs live in the [README](README.md) and [Site onboarding](SITE_ONBOARDING.md).
+Operational notes for ALNILAM maintainers. Public contributor docs live in the [README](../README.md) and [Site onboarding](SITE_ONBOARDING.md).
 
 ## Branch model
 
@@ -31,8 +31,9 @@ Never tag `dev`. Never tag a commit whose `verify` check has not passed on `main
 4. Demo compose + output assertions (`index.html`, first post, `site-assets/orion.svg`)
 5. External-Site composition + isolation (byte-compare of the Site before/after)
 6. Two-version Core upgrade/rollback against an unchanged external Site
-7. Artifact budget check (wired into `pnpm build`): zero runtime scripts on posts pages, ≤2 islands/page, explicit img dimensions, provenance integrity
-8. ADS gitlink pin (`3abf6025657a5d716476029cc8cbf5239543210b`, ADS v0.4.1)
+7. Artifact budget check (wired into `pnpm build`): external script-tag scan on posts pages, ≤2 islands/page, explicit img dimensions and provenance shape. Inline hydration and canonical correctness are not covered; see the [P0 report](p0/P0-ACCEPTANCE.md).
+8. ADS gitlink pin (`3abf6025657a5d716476029cc8cbf5239543210b`, ADS v0.4.1).
+9. Markdown link checks, production-boundary negative fixtures and a two-round offline release DAG. The candidate-tree guard runs inside required `verify`; tool-specific `.gitignore` entries remain development-only, with an exact exported-candidate positive check. Built artifacts are also scanned in verify.
 
 ## Known operational notes
 

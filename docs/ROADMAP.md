@@ -1,5 +1,7 @@
 # ALNILAM roadmap (Issue-driven)
 
+This is the historical v0.1.x P0–P4 roadmap. Next P0–P6 remains the separate unapproved [Plan/Spec PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77); its [P0 acceptance report](p0/P0-ACCEPTANCE.md) does not freeze the Spec or start P1.
+
 **Tracker:** [Skyline-Gazer Project #17](https://github.com/orgs/Skyline-Gazer/projects/17/). Project v2 board status is **not verified** merely because a linked repository Issue exists.
 
 ## P0 · Bootstrap & Core/Site

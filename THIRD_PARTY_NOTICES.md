@@ -12,7 +12,17 @@ For any future code migration:
 Upstream license summaries (not substitutes for their actual license texts):
 - KIRARI, Firefly, SHBlog Next, Fuwari: MIT.
 - Mizuki: Apache-2.0 with separate original MIT/third-party notices.
-- ADS is pinned by Git Submodule; its guidance files are read in-place, not relicensed or copied.
+- ADS is pinned by Git Submodule; its guidance is read in place. The generic production-boundary guard and fixtures listed below are copied under MIT.
+
+## ADS production-boundary policy code
+
+Source: [Skyline-Gazer/ADS](https://github.com/Skyline-Gazer/ADS/tree/2af17d9e1d816844c49835ae91b784405765ad46), stable v0.4 commit `2af17d9e1d816844c49835ae91b784405765ad46`.
+
+- `templates/consumer-devtools/check-production-boundary.py` → `scripts/check-ads-devtools-boundary.py` (unchanged).
+- `templates/consumer-devtools/production-boundary.yml` → `.github/workflows/ads-devtools-boundary.yml` (unchanged).
+- `tests/test_consumer_devtools_boundary.py` → `scripts/tests/production_boundary_test.py` (only the consumer script path adjusted).
+
+Copyright (c) 2026 ADS contributors. MIT license text: [LICENSES/ADS-MIT.txt](LICENSES/ADS-MIT.txt). This does not relicense ALNILAM.
 
 ## Runtime and build dependencies (npm)
 
