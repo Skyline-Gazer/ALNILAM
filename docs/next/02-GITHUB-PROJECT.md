@@ -24,7 +24,7 @@ Milestone completion means its actual Phase Gates are PASS, not a pre-assigned d
 
 | Phase parent | Native sub-issues to attach after G0 | Phase Gate |
 | --- | --- | --- |
-| **#36 P0 Planning/architecture** | #43 baseline, #44 functionality matrix, #45 licensing, #46 ADR/old Issue reconciliation, **#80 retain existing ALNILAM inventory**, **#82 ADS v0.4 consumer adoption** | Source SHA and keep/replace/delete, licence notice plan, owner-approved ADR |
+| **#36 P0 Planning/architecture** | #43 baseline, #44 functionality matrix, #45 licensing, #46 ADR/old Issue reconciliation, **#80 retain existing ALNILAM inventory**, **#82 ADS v0.4.1 consumer adoption** | Source SHA and keep/replace/delete, licence notice plan, owner-approved ADR |
 | **#37 P1 Shirone foundation** | #47 pristine upstream build, #48 ALNILAM import, #49 single dependency/router stack, #50 browser preview, **#79 Astro 7.4 official-API compatibility pilot** | Single real site runs on preview, CI and browser evidence |
 | **#38 P2 Core/Site** | #51 schema, #52 immutable builder, #53 assets, #54 provenance/rollback, #55 CI, #56 build security | External Site immutability, upgrade+rollback, dual provenance and read-only proof |
 | **#39 P3 UI** | #57 M3E tokens, #58 Fuwari feed, #59 responsive nav/settings, #60 transition lifecycle, #61 visual tests | User-visible responsive browser comparison + accessible interaction |
@@ -52,7 +52,7 @@ P3/P4 may overlap once the relevant P2 contract is stable. P6 test infrastructur
 
 - Before implementation Phase P1, P0 **#80** inventories every usable ALNILAM file and its retained contract, and requires KEEP/ADAPT/WRAP before REPLACE/RETIRE. **Shirone** is the product frontend base; **ALNILAM** is the reused platform/repository. The migration is not a greenfield rebuild.
 - **#81** mandates doc governance from the beginning, even though P6 is the final gate. No merged feature with stale Site/README/ADR/spec/contract docs.
-- **#82** pins verified ADS v0.4 and adopts actual development preflight + production boundary, through separate Draft PR #84; no empty declaration of full compliance from Gitlink alone.
+- **#82** pins verified ADS v0.4.1 and adopts actual development preflight + production boundary, through merged PR #84; no empty declaration of full compliance from Gitlink alone.
 - The binding annex is [06-REUSE-DOC-GOVERNANCE.md](06-REUSE-DOC-GOVERNANCE.md). Deletion of existing source without a verified Reuse Decision Record blocks task acceptance.
 
 ## Recommended Project #17 fields

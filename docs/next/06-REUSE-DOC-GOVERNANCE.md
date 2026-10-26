@@ -1,6 +1,6 @@
 # ALNILAM Next — Reuse-first migration and document governance
 
-> **DRAFT normative annex** · 2026-10-26 · applies to the Plan/Spec review in PR #77. There is exactly one new product foundation: **Shirone**. Existing functional ALNILAM infrastructure **must be reused unless an evidence-backed incompatibility requires adaptation or retirement**. Neither Shirone migration nor ADS v0.4 licenses a rewrite from scratch. Current release v0.1.3 remains unchanged until a separately approved release.
+> **DRAFT normative annex** · 2026-10-26 · applies to the Plan/Spec review in PR #77. There is exactly one new product foundation: **Shirone**. Existing functional ALNILAM infrastructure **must be reused unless an evidence-backed incompatibility requires adaptation or retirement**. Neither Shirone migration nor ADS v0.4.1 licenses a rewrite from scratch. Current release v0.1.3 remains unchanged until a separately approved release.
 
 ## A. Architecture source of truth
 
@@ -28,7 +28,7 @@ Verified from `dev` tree at `5fd74cea8197dc91d8391e7ee677eacbc32d3234`. This is 
 | Existing Editorial UI/PostCard | `themes/editorial/src/PostCard.astro`, `BaseLayout.astro`, `editorial.css` | **VISUAL REFERENCE/SELECTIVE REUSE** for agreed Fuwari single-row layout and branding. Do not run Editorial as competing full frontend after Shirone migration; copy proven behavior then only retire redundant code with tests. |
 | Existing CI / deploy | `.github/workflows/ci.yml`, `.github/workflows/deploy.yml` | **KEEP** and increment. Production deploy remains gated; do not replace working Actions with a new platform without benefit. |
 | Existing Site fixtures/config/documentation | `sites/demo/`, `docs/SITE_ONBOARDING.md`, `docs/ARCHITECTURE.md`, `docs/MAINTAINERS.md` | **KEEP** as regression fixtures and historical contract evidence. No content deletion; version/migrate documents to match new architecture. |
-| ADS Git submodule | `.ads`, `.gitmodules`, root `AGENTS.md` | Upgrade exact pin via separate PR #84; require ADS v0.4 consumer preflight and dev-only tooling boundary. Preserve public CI no-private-ADS dependency. |
+| ADS Git submodule | `.ads`, `.gitmodules`, root `AGENTS.md` | Exact v0.4.1 pin merged via PR #84; retain ADS consumer preflight and dev-only tooling boundary. Preserve public CI no-private-ADS dependency. |
 | Release, license, history | `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, `CHANGELOG.md`, tags | **KEEP/UPDATE** attribution as code origins change; never reset repository history or relicense current ALNILAM simply because ADS or Shirone license differs. |
 
 ## C. Required Reuse Decision Record (RDR)
@@ -70,20 +70,20 @@ For every nontrivial change that removes or rewrites existing ALNILAM code, the 
 6. **No duplicate trackers**: GitHub Project #17 remains tracker, native Milestones/Phase parent/subissues; Markdown is source documentation, not an invented parallel status database.
 7. **Before Agent execution**: all required accounts, external Site credentials, service provider config and permissions are collected **up front**; optional provider gaps cannot block independent feature work. Never ask for private access just to validate public CI.
 
-## E. ADS v0.4 adoption: exact state and boundaries
+## E. ADS v0.4.1 adoption: exact state and boundaries
 
-- Verified upstream release [ADS v0.4](https://github.com/Skyline-Gazer/ADS/releases/tag/v0.4), published 2026-10-25, tag-object `c76d74f479e3db81e0e031cf1a306bec0c86b905`, **commit SHA `2af17d9e1d816844c49835ae91b784405765ad46`**.
-- Existing ALNILAM `dev` Gitlink remained `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac` (v0.3) at this review; separate **draft PR #84** pins the new commit and updates AGENTS/README.
-- ADS v0.4 strengthens developer-tool governance: **CodeGraph and official full RTK**, latest stable channel when officially published, controlled CodeGraph source fallback only with explicit authorization, dev-only tool artifacts/config and production guard, remote-first verification. It remains a standards submodule: it does **not** replace Shirone and does **not** supply a new ALNILAM build engine.
+- Verified upstream release [ADS v0.4.1](https://github.com/Skyline-Gazer/ADS/releases/tag/v0.4.1), **commit SHA `3abf6025657a5d716476029cc8cbf5239543210b`**; annotated tag object `e38d01ff176448a13180afe2419c1c9c94a6ab43` is not the gitlink.
+- ALNILAM `dev` Gitlink was `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac` (v0.3) before adoption; merged PR #84 now pins v0.4.1 and updates AGENTS/README. Historical v0.3 remains traceability only.
+- ADS v0.4.1 strengthens developer-tool governance: **CodeGraph and official full RTK**, latest stable channel when officially published, controlled CodeGraph source fallback only with explicit authorization, dev-only tool artifacts/config and production guard, remote-first verification. It remains a standards submodule: it does **not** replace Shirone and does **not** supply a new ALNILAM build engine.
 - ALNILAM public CI MUST NOT recursively fetch the private ADS repo. Verify `.ads` gitlink and root policies against pinned external release metadata. ADS v0.4 MIT license does not automatically relicense ALNILAM's Apache-2.0 work.
-- **Partial adoption ≠ PASS**: pinned Gitlink and updated docs are not proof CodeGraph MCP, full RTK active hooks or production-boundary guards have been verified in the actual development environment. Issue #82 retains these checks.
+- **Adoption evidence:** pinned Gitlink plus CodeGraph MCP/worktree query, official source-fallback provenance, full RTK hook/compression/failure behavior and production-boundary fixtures are recorded in the P0 report. Stable CodeGraph publication remains NOT_FOUND; no claim of a stable CodeGraph release.
 
 ## F. Deferred upstream build optimizations
 
 **Issue #83 (Future/WAITING_UPSTREAM_STABLE)**: Astro experimental incremental build and parallel prerendering are **not** in any active M1/M2/M3 requirement. No speculative optimizations now. After the respective features are officially stable and compatible with Shirone ALNILAM, run representative build/time/memory/reproducibility tests, Site hash isolation, cache invalidation and rollback. Merge only when performance improves without correctness regressions. Never introduce this future task as a blocker to P6.
 
 ## G. New task mapping
-- **P0 parent #36:** new #80 existing code inventory/reuse-first hard gate, new #82 ADS v0.4 consumer adoption.
+- **P0 parent #36:** new #80 existing code inventory/reuse-first hard gate, new #82 ADS v0.4.1 consumer adoption.
 - **P6 parent #42:** new #81 docs governance, exercised from P0 onward.
 - **Future:** #83 upstream build acceleration, no active Milestone and no release gate.
 - Existing P0–P6 tasks remain candidate backlog until G0 Spec freeze. Project #17 membership and native parent/subissue attachment remain **not verified** with the current connected tools.
@@ -131,4 +131,4 @@ For every nontrivial change that removes or rewrites existing ALNILAM code, the 
 
 ## P0 G0-R execution receipt — 2026-10-26
 
-Actual execution findings are maintained once in [the upstream audit receipt](05-UPSTREAM-ASTRO-AUDIT.md#p0-g0-r-execution-receipt--2026-10-26), linked to the authoritative [P0 report in #85](https://github.com/Skyline-Gazer/ALNILAM/pull/85). This Draft remains unapproved; Owner acceptance, G0-F freeze and exact P1 scope are required before implementation.
+Actual execution findings are maintained once in [the upstream audit receipt](05-UPSTREAM-ASTRO-AUDIT.md#p0-g0-r-execution-receipt--2026-10-26), linked to the authoritative [P0 report](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/p0/P0-ACCEPTANCE.md). Current dev baseline is `625038cb3c4915c135b436799bbfc2915bf19a7b` after merged #85/#84/#86. This Draft remains unapproved; Owner acceptance, G0-F freeze and exact P1 scope are required before implementation.

@@ -1,6 +1,6 @@
 # ALNILAM Next — Phase readiness and stage-gate audit
 
-> Historical pre-execution readiness snapshot. Current executed P0 results are maintained in [05 audit receipt](05-UPSTREAM-ASTRO-AUDIT.md#p0-g0-r-execution-receipt--2026-10-26) and the linked #85 report; preserve earlier gaps below as history rather than present-tense status.
+> Historical pre-execution readiness snapshot. Current executed P0 results are maintained in [05 audit receipt](05-UPSTREAM-ASTRO-AUDIT.md#p0-g0-r-execution-receipt--2026-10-26) and the linked P0 report; preserve earlier gaps below as history rather than present-tense status.
 > **DRAFT · 2026-10-26.** This is a **readiness assessment**, not implemented functionality, CI acceptance, approval to merge, or an assertion that GitHub Project #17 is synchronized. Product frontend foundation remains **Shirone**. The current **ALNILAM** repository, its Site contract, existing code, CI, tests and docs remain the reused platform. Keep licensed upstream sources in isolated `ALNILAM-ref/` checkouts.
 
 ## Gate correction: evidence collection cannot depend on Spec freeze
@@ -16,13 +16,13 @@ Earlier issues erroneously described **all P0 tasks as blocked by final G0 Spec 
 
 | Phase | What is known in Plan/Spec | Unverified before implementation | Next independent evidence | Status |
 | --- | --- | --- | --- | --- |
-| P0 #36 — Evidence + freeze | Source candidates/versions, published v0.1.3 baseline, mandatory reuse, licensing/ADS v0.4, reference structure | **Actual pinned clones/clean SHA readback**, original Shirone build, ALNILAM old/current test results, Keep/Adapt/Wrap/Replace/Retire inventory, code/asset provenance, historical feature decisions | Read-only #43/#44/#45/#46/#80; document RDR, link evidence, reconcile docs. ADS pin separate Draft PR #84; consumer-tool verification #82 remains open | **Evidence work ready, freeze not ready** |
+| P0 #36 — Evidence + freeze | Source candidates/versions, published v0.1.3 baseline, mandatory reuse, licensing/ADS v0.4.1, reference structure | Owner product decisions, final browser completeness, media/font rights and legacy regression requirements; engineering evidence now exists | Resolve Owner decisions and remaining product gaps; ADS consumer adoption and PR #84 are complete | **Evidence complete for Owner review, freeze not ready** |
 | P1 #37 — Shirone frontend import | Shirone sole frontend, ALNILAM retained platform, no full theme duplication, independent Astro 7.4.x pilot #79 | No proven pristine Shirone artifact, no one-to-one functional smoke screenshot, no integrated existing ALNILAM package/route plan or diff; no actual frontend migration | Baseline Shirone check/build/E2E in disposable env; map every retained component; create minimal incremental migration PR with browser proof | **Architecture chosen, execution not ready** |
 | P2 #38 — Core/Site contract | Existing ALNILAM read-only compose + SHA/provenance + rollback; KIRARI contract & Shirone overlay available | Exact adaptation into Shirone Content Layer and v1 Schema; external assets and content paths; failure/rollback in new UI; no end-to-end verified matrix | Spike using **unchanged existing Site fixture** and external `glob/file`, verify before/after site digest, two SHA provenance, Core upgrades; not a new compose engine | **Contract known, integration spec incomplete** |
 | P3 #39 — Design and UX | Shirone M3E main design + Fuwari single-column text-left/cover-right; no second design/transition engine | Original screenshot baseline not approved; responsive breakpoints, navigation, TOC, dark/light, motion, view lifecycle, no-jump measures need exact acceptance | 1440/390 screenshots from Shirone reference, UI element matrix, interaction/walkthrough against agreed reference; decide minimal components to adapt | **Direction known, visual acceptance incomplete** |
 | P4 #40 — Blogging/SEO/i18n/LLMs v2 | Detailed ROUTE/TAX/SEARCH/SEO/LLM contracts in 04; Astro official-first APIs, Pagefind and KIRARI llms-v2 provenance | Multilingual real URL fixtures/legacy alias semantics, translation/taxonomy migration tests, official `@astrojs/sitemap` partial-translation behavior in target site, exact output content mapping | Build root and `/ALNILAM/` variants with zh-CN/en/ja 12+ post fixtures; tests of category/tag/search/feeds/SEO/hreflang/llms Markdown/disabled | **Detailed spec, target compatibility unverified** |
 | P5 #41 — Optional modules | Sources for gallery/dynamics/music/Bangumi/comments are inventoried; feature-flag rule, privacy and zero-overhead | Existing recorded scope says gallery/moments/music declined for v0.1.3, not automatically mandatory for vNext; which Shirone components actually beat retained ALNILAM Bangumi/comments needs behavior comparison | Component-by-component **keep/adapt/reuse** and optional scope matrix with owner decision when genuinely needed; fixture enabled/disabled & network proof | **Features located, selection/scope unresolved** |
-| P6 #42 — Acceptance/docs | CI, browser, performance, license, docs governance #81, ADS v0.4 #82; Phase exit needs evidence | Final reproducibility/perf budget and exact cross-host workflows, doc schema/ADR ownership, negative fixtures, external Site onboarding, v0.1.3 migration | During earlier Phases establish evidence archive, docs-as-code checks, CI smoke; RC must replay against target integration, not only isolated references | **Quality framework known, full acceptance matrix incomplete** |
+| P6 #42 — Acceptance/docs | CI, browser, performance, license, docs governance #81, ADS v0.4.1 #82; Phase exit needs evidence | Final reproducibility/perf budget and exact cross-host workflows, doc schema/ADR ownership, negative fixtures, external Site onboarding, v0.1.3 migration | During earlier Phases establish evidence archive, docs-as-code checks, CI smoke; RC must replay against target integration, not only isolated references | **Quality framework known, full acceptance matrix incomplete** |
 
 ## P0 completion report and explicit owner confirmation — mandatory G0-F checkpoint
 
@@ -32,7 +32,7 @@ The report MUST include:
 
 | Section | Required evidence and decision |
 | --- | --- |
-| 1. Verified state | ALNILAM dev/main/v0.1.3 Git SHAs, reference clone URLs/SHAs, clean checkouts, CI/preview links, ADS v0.4 Gitlink and host-tool verification status separately |
+| 1. Verified state | ALNILAM dev/main/v0.1.3 Git SHAs, reference clone URLs/SHAs, clean checkouts, CI/preview links, ADS v0.4.1 Gitlink and host-tool verification status separately |
 | 2. Existing asset reuse | Per-file **KEEP / ADAPT / WRAP / REPLACE / RETIRE** matrix, including compose/schema/rollback/tests/CI/Pagefind/comments/Bangumi/docs; each proposed removal has a reason and a backward-compatibility test |
 | 3. Shirone baseline | Pristine build, screenshots and key routes/features; gaps against ALNILAM requirements; specific Firefly/KIRARI/Mizuki source additions only where needed |
 | 4. Official Astro | Official APIs vs upstream implementations vs necessary custom adapter; compatibility and identified risks; no unverified latest-version claims |
@@ -61,10 +61,10 @@ Subsequent phases should publish their Gate summaries, but they need another own
 - An Issue exists ≠ Project Item exists, Spec Frozen, milestone linked or implementation done.
 - Upstream source exists ≠ code legally/technically drop-in compatible, benchmarked, or passing product E2E.
 - Merged upstream backend pattern ≠ released vNext user-facing blog.
-- Documentation says ADS v0.4 ≠ actual merged gitlink + complete CodeGraph/full RTK host and production boundary verification.
+- Documentation says ADS v0.4.1 ≠ actual merged gitlink + complete CodeGraph/full RTK host and production boundary verification.
 - Original v0.1.3 release and its historical acceptances must remain intact and explicitly differentiated from proposed vNext.
 
 
 ## P0 G0-R execution receipt — 2026-10-26
 
-Actual execution findings are maintained once in [the upstream audit receipt](05-UPSTREAM-ASTRO-AUDIT.md#p0-g0-r-execution-receipt--2026-10-26), linked to the authoritative [P0 report in #85](https://github.com/Skyline-Gazer/ALNILAM/pull/85). This Draft remains unapproved; Owner acceptance, G0-F freeze and exact P1 scope are required before implementation.
+Actual execution findings are maintained once in [the upstream audit receipt](05-UPSTREAM-ASTRO-AUDIT.md#p0-g0-r-execution-receipt--2026-10-26), linked to the authoritative [P0 report](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/p0/P0-ACCEPTANCE.md). Current dev baseline is `625038cb3c4915c135b436799bbfc2915bf19a7b` after merged #85/#84/#86. This Draft remains unapproved; Owner acceptance, G0-F freeze and exact P1 scope are required before implementation.

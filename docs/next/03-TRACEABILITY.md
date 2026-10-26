@@ -13,7 +13,7 @@ Traceability rule: requirement → selected source/implementation → atomic Iss
 | P0 | #45 | NFR-03 | Pending Spec freeze |
 | P0 | #46 | PRD-01, CS-01, MOD-03, NFR-07 | Pending Spec freeze |
 | P0 | **#80** | **MIG-01, MIG-02; baseline KEEP/ADAPT/WRAP/REPLACE/RETIRE** | Pending Spec freeze |
-| P0 | **#82** | **NFR-09; ADS v0.4 full RTK/CodeGraph dev-only boundary** | Pending Spec freeze |
+| P0 | **#82** | **NFR-09; ADS v0.4.1 full RTK/CodeGraph dev-only boundary** | Consumer adoption PASS; P0 Spec freeze pending |
 | P1 | #47 | PRD-02, NFR-01 | Pending Spec freeze |
 | P1 | #48 | PRD-01, PRD-02, PRD-04 | Pending Spec freeze |
 | P1 | #49 | PRD-02, PRD-06, NFR-01 | Pending Spec freeze |
@@ -54,7 +54,7 @@ Traceability rule: requirement → selected source/implementation → atomic Iss
 
 ## Reuse + docs audit
 
-[06-REUSE-DOC-GOVERNANCE.md](06-REUSE-DOC-GOVERNANCE.md) binds all 39 active candidate tasks. Preserve ALNILAM's real source and working tests first, keep Shirone as one frontend base, and require RDR and docs-as-code for destructive changes. ADS v0.4 adoption PR #84 is distinct from planning PR #77.
+[06-REUSE-DOC-GOVERNANCE.md](06-REUSE-DOC-GOVERNANCE.md) binds all 39 active candidate tasks. Preserve ALNILAM's real source and working tests first, keep Shirone as one frontend base, and require RDR and docs-as-code for destructive changes. ADS v0.4.1 adoption PR #84 is merged and distinct from planning PR #77.
 
 ## Official Astro API / upstream source decision
 

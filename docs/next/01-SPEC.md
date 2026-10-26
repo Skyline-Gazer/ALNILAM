@@ -40,7 +40,7 @@
 
 ### Reuse-first and document-governance normative annex
 
-**[06-REUSE-DOC-GOVERNANCE.md](06-REUSE-DOC-GOVERNANCE.md) binds every Phase.** Preserve the existing `Skyline-Gazer/ALNILAM` repository and working Core/Site, CI and tests while using Shirone as the ONE product frontend base. Every destructive code change requires a Reuse Decision Record and proof; copying upstream code does not imply rewriting ALNILAM. Maintain documents and evidence with the corresponding code PR, not as a release-end afterthought. ADS v0.4 is pinned in separate Draft PR #84, and experimental build acceleration is only a post-stable TODO #83.
+**[06-REUSE-DOC-GOVERNANCE.md](06-REUSE-DOC-GOVERNANCE.md) binds every Phase.** Preserve the existing `Skyline-Gazer/ALNILAM` repository and working Core/Site, CI and tests while using Shirone as the ONE product frontend base. Every destructive code change requires a Reuse Decision Record and proof; copying upstream code does not imply rewriting ALNILAM. Maintain documents and evidence with the corresponding code PR, not as a release-end afterthought. ADS v0.4.1 is pinned via merged PR #84, and experimental build acceleration is only a post-stable TODO #83.
 
 ### Official-Astro-first implementation criterion
 
@@ -71,7 +71,7 @@
 | NFR-06 | SHOULD | Realistic performance budgets are established *from measured Shirone/ALNILAM baselines*, not invented values. | Record LCP, CLS, INP where measurable, JS/CSS/image/font weights and page count; define explicit CI fail thresholds after baseline measurements and justification. |
 | NFR-07 | MUST | Main/tag/production deploy are separate owner-authorized operations. | PR to dev for work, then explicit release PR and authorization; no automatic production promotion or secret deployment. |
 | NFR-08 | MUST | **Document governance**: correct single-source Plan/Spec/ADR, current-vs-draft labels, implementation-driven README/PRODUCT/ARCHITECTURE/SITE_ONBOARDING/HANDOFF/ROADMAP/RELEASE/NOTICE, traceability and docs CI. | #81 document inventory, link/schema/version checks, updated owner-and-Site docs in same functional PR, historical evidence preserved, CI with negative fixture. |
-| NFR-09 | MUST | ADS consumer governance follows **v0.4** rather than old v0.3, with CodeGraph and **official full RTK** development-only checks and real production boundary. | Gitlink commit matches v0.4 `2af17d9...`; public CI does not need private ADS clone; dev-only CodeGraph/RTK, production-boundary negative tests, verified preflight/hook status, explicit approval for installs; #82 and Draft PR #84. |
+| NFR-09 | MUST | ADS consumer governance follows **v0.4.1** rather than old v0.3, with CodeGraph and **official full RTK** development-only checks and real production boundary. | Gitlink commit matches v0.4.1 `3abf602...`; public CI does not need private ADS clone; dev-only CodeGraph/RTK, production-boundary negative tests, verified preflight/hook status, explicit approval for installs; #82 and merged PR #84. |
 | NFR-10 | MUST | Experimental Astro incremental/parallel build acceleration is **out of current release scope** until officially stable and independently validated. | Future-only #83 has no M1/M2/M3 Milestone or Phase Gate; revisit stable release proof, Shirone compatibility, representative performance and reproducibility after stabilization. |
 
 ## Acceptance scenarios (Gherkin-style)
@@ -145,4 +145,4 @@ Then an exact path- and locale-aware llms.txt index links to a source-backed ind
 
 ## P0 G0-R execution receipt — 2026-10-26
 
-Actual execution findings are maintained once in [the upstream audit receipt](05-UPSTREAM-ASTRO-AUDIT.md#p0-g0-r-execution-receipt--2026-10-26), linked to the authoritative [P0 report in #85](https://github.com/Skyline-Gazer/ALNILAM/pull/85). This Draft remains unapproved; Owner acceptance, G0-F freeze and exact P1 scope are required before implementation.
+Actual execution findings are maintained once in [the upstream audit receipt](05-UPSTREAM-ASTRO-AUDIT.md#p0-g0-r-execution-receipt--2026-10-26), linked to the authoritative [P0 report](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/p0/P0-ACCEPTANCE.md). Current dev baseline is `625038cb3c4915c135b436799bbfc2915bf19a7b` after merged #85/#84/#86. This Draft remains unapproved; Owner acceptance, G0-F freeze and exact P1 scope are required before implementation.
