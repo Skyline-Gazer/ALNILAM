@@ -1,6 +1,6 @@
-# ALNILAM Next — Product and Engineering SPEC (proposal)
+# ALNILAM Next — Product and Engineering SPEC (G0-F owner approved)
 
-> **DRAFT / NOT FROZEN — 2026-10-25.** Implementation begins only after explicit G0 review. The words MUST/SHOULD describe target behavior, not capabilities already shipped in v0.1.3. Linked plan: [00-PLAN.md](00-PLAN.md).
+> **FROZEN P1 SCOPE · Owner G0-F approval 2026-10-26** ([decision](08-G0-F-DECISION.md)). Requirements are targets, not features already shipped in v0.1.3. P1 implementation is authorized through reviewed dev PRs, not production publication. The words MUST/SHOULD describe target behavior, not capabilities already shipped in v0.1.3. Linked plan: [00-PLAN.md](00-PLAN.md).
 
 ## Normative product requirements
 
@@ -56,7 +56,7 @@
 | --- | --- | --- | --- |
 | MOD-01 | MUST | Optional modules are individually switchable from Site config, default OFF unless owner explicitly authorizes otherwise. | Disabled route/widget has zero SDK/network requests, zero empty placeholder DOM and no unnecessary JS/CSS in shared bundle; verify browser network and built assets. |
 | MOD-02 | MUST for approved scope only | Comments/Bangumi integration works when enabled with correctly scoped config and static-first behavior. | Enabled preview exercises real interaction or fully isolated deterministic provider fixture; provider failures degrade safely; no secrets in public files. |
-| MOD-03 | PENDING scope | Gallery/album, moments/dynamics, music are candidate modules; historical “declined” note is not independent authorization proof. | Owner-approved scope record must precede implementation or formal deferral; nonselected items are not misreported as shipped. |
+| MOD-03 | DEFERRED | Gallery/album, moments/dynamics and music are excluded from P1 and the current release by the Owner G0-F decision. | No implementation/routes/dependencies included; a new scoped Owner approval and Spec change are required before reconsideration. |
 | MOD-04 | SHOULD | Feature sources are chosen via functionality/license comparison, not by feature quantity alone. | Per-feature implementation owner (Shirone vs Firefly vs Mizuki) documented; duplicate engines removed. |
 
 ## Quality, compliance and delivery
@@ -135,14 +135,14 @@ Then an exact path- and locale-aware llms.txt index links to a source-backed ind
 - [ ] Project fields and parent/sub-issue progress accurately reflect actual state.
 - [ ] No production/tag work without release-specific owner approval.
 
-## Review-needed product decisions (not implementation blockers yet)
-1. The Shirone M3E + Firefly/Fuwari-list visual contract replaces or coexists with the older cinematic SHBlog Next inspiration; record approved screenshots or design tokens.
-2. Historic gallery/moments/music deferral vs reopening for ALNILAM Next; select/defer each explicitly.
+## G0-F Owner decisions and bounded P1 authorization
+1. Shirone M3E is the only frontend visual base; retain the Fuwari one-post-per-row listing, left text/right ~28% cover at desktop and cover-first on mobile. Capture approval/reference screenshots during P1.
+2. Gallery/moments/music are explicitly deferred by the Owner; comments/Bangumi remain optional with zero-output/zero-network disabled-state criteria.
 3. Which user-level Site customization interfaces are vNext MUST vs later SHOULD, after comparing actual upstream code.
 4. Which optional third-party providers require a live preview rather than a deterministic fixture.
 
-**Status discipline:** all requirements are targets until code and verification evidence exist. The 39 active candidate task Issues remain candidate backlog until this Spec is reviewed and frozen.
+**Status discipline:** G0-F is Owner-approved with [decision record](08-G0-F-DECISION.md); this freezes only the approved P1 scope. Other candidate Phase Issues remain unimplemented/not automatically Ready. Product and release PASS remain separately evidence-gated.
 
 ## P0 G0-R execution receipt — 2026-10-26
 
-Actual execution findings are maintained once in [the upstream audit receipt](05-UPSTREAM-ASTRO-AUDIT.md#p0-g0-r-execution-receipt--2026-10-26), linked to the authoritative [P0 report](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/p0/P0-ACCEPTANCE.md). Current dev baseline is `625038cb3c4915c135b436799bbfc2915bf19a7b` after merged #85/#84/#86. This Draft remains unapproved; Owner acceptance, G0-F freeze and exact P1 scope are required before implementation.
+Actual execution findings are maintained once in [the upstream audit receipt](05-UPSTREAM-ASTRO-AUDIT.md#p0-g0-r-execution-receipt--2026-10-26), linked to the authoritative [P0 report](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/p0/P0-ACCEPTANCE.md). Dev baseline before G0-F Plan/Spec merge is `bcf7c642287af1528cd0e60c0a3388126db7e527` after #85/#84/#86/#87. The Owner [approved G0-F scope](https://github.com/Skyline-Gazer/ALNILAM/issues/36#issuecomment-6416284698) on 2026-10-26; retain original NOT_READY as historical P0 pre-decision evidence. Only bounded P1 is authorized; publication and wider scopes remain excluded.

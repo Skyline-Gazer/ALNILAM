@@ -1,6 +1,6 @@
 # ALNILAM Next — GitHub Project #17 Reconciliation Plan
 
-> **PROPOSAL ONLY.** The Issues below already exist as an *unspecified candidate backlog*. They are NOT confirmed Project #17 items, are NOT currently native sub-issues, and are NOT approved implementation tasks. No GitHub Milestones, Project fields, parent/sub-issue links or Project membership were changed by this planning PR.
+> **G0-F structure approved for P1 · actual Project write/readback PENDING** ([Owner decision](08-G0-F-DECISION.md)). Issues exist; native milestones, sub-issues, Next Project #17 membership and actual statuses are not implied by Spec approval. Preserve existing 18 historical Done items. Do not claim `PROJECT_VERIFIED` without authenticated readback.
 
 ## Project identities
 - **Existing repository:** https://github.com/Skyline-Gazer/ALNILAM
@@ -76,7 +76,7 @@ Discover *real* Project fields before writing anything, reuse instead of duplica
 
 ## Formal P0 → P1 owner confirmation gate
 
-Before promoting P1 #37 or its tasks to Ready, #36 must contain a consolidated **P0 Acceptance / Decision Report** (see [07-PHASE-READINESS.md](07-PHASE-READINESS.md)), links to actual pinned-source/ALNILAM legacy/CI evidence and the **explicit owner decision**. The G0-F status is **Awaiting owner review** after report issuance, not automatically PASS. Once approved, freeze the versioned Spec, then reconcile actual Milestone/Project #17 data. Preserve existing Issue IDs; do not create a duplicate Board or task set. Scope/architecture-changing decisions in later phases require renewed approval, routine already-authorized engineering does not.
+Before promoting P1 #37 or its tasks to Ready, #36 must contain a consolidated **P0 Acceptance / Decision Report** (see [07-PHASE-READINESS.md](07-PHASE-READINESS.md)), links to actual pinned-source/ALNILAM legacy/CI evidence and the **explicit owner decision**. The G0-F scope was approved by the Owner on 2026-10-26; merge of the reviewed Plan/Spec and subsequent native Project reconciliation are separate actions, and Project synchronization is not yet PASS. Once approved, freeze the versioned Spec, then reconcile actual Milestone/Project #17 data. Preserve existing Issue IDs; do not create a duplicate Board or task set. Scope/architecture-changing decisions in later phases require renewed approval, routine already-authorized engineering does not.
 
 ## Evidence-first G0-R / G0-F sequencing
 

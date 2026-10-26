@@ -1,6 +1,6 @@
 # ALNILAM Next — i18n / Taxonomy / SEO / LLMs v2 contract
 
-> **PROPOSED NORMATIVE CONTRACT · review required**. 2026-10-25. Subordinate to [01-SPEC.md](01-SPEC.md) and [00-PLAN.md](00-PLAN.md). All behavior in this document is a target, NOT a claim of current implementation. Scope: Astro 7 SSG; Shirone frontend; standalone Site; GitHub Pages subpath and domain-root hosting. Source references: Astro i18n docs, Pagefind multilingual docs, Google Search Central localized versions, https://llmstxt.org/ (v2, 2026-08-10), and KIRARI archived P6/#101 LLMs v2 implementation.
+> **G0-F approved target contract; not yet implemented** ([decision](08-G0-F-DECISION.md)). 2026-10-25. Subordinate to [01-SPEC.md](01-SPEC.md) and [00-PLAN.md](00-PLAN.md). All behavior in this document is a target, NOT a claim of current implementation. Scope: Astro 7 SSG; Shirone frontend; standalone Site; GitHub Pages subpath and domain-root hosting. Source references: Astro i18n docs, Pagefind multilingual docs, Google Search Central localized versions, https://llmstxt.org/ (v2, 2026-08-10), and KIRARI archived P6/#101 LLMs v2 implementation.
 
 ## A. Single URL and locale contract (ROUTE-01–ROUTE-07)
 

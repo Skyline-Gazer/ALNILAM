@@ -1,6 +1,6 @@
 # ALNILAM Next — Upstream implementation and Astro 7.4 audit
 
-> **2026-10-26 — REVIEW PROPOSAL, NOT AN IMPLEMENTATION PASS.** Companion to 00-PLAN, 01-SPEC and 04-ROUTING-SEO-LLMS-V2. This addresses two questions: is every planned capability already implemented in the four references, and does the latest official Astro offer a better direct implementation? Source-file review and official documentation do not constitute a working integration, user acceptance or full E2E verification.
+> **G0-R HISTORIC AUDIT · G0-F reference selection approved, NOT implementation PASS.** Companion to 00-PLAN, 01-SPEC and 04-ROUTING-SEO-LLMS-V2. This addresses two questions: is every planned capability already implemented in the four references, and does the latest official Astro offer a better direct implementation? Source-file review and official documentation do not constitute a working integration, user acceptance or full E2E verification.
 
 ## 1. Pinned reference snapshots and framework baseline
 
@@ -76,7 +76,7 @@ Astro incremental build and parallel prerendering are intentionally deferred und
 - Dynamic multi-language taxonomy translation-key slug contract as written in SPEC does NOT exactly exist in one reference; KIRARI is nearest, requires a Site Schema migration.
 - Cross-host redirect status codes and Pages static fallback require target-host trials. No universal Astro server redirect in GitHub Pages SSG.
 - Astro 7.4.x behavior in Shirone's own Integration/overlays has not yet been executed; it is a separate proof point.
-- The original explicit owner decision on reintroducing gallery/moments/music is still unresolved; modules in source do not create product authorization.
+- Owner G0-F expressly deferred gallery/moments/music; modules in upstream source do not create implementation or redistribution authorization.
 - Performance of native View Transitions vs Swup, Astro font API vs Shirone font subsets, and Astro external glob vs staged materialization must be **measured**, not inferred.
 
 ## 5. Gate decisions and references
@@ -114,7 +114,7 @@ Authoritative audit and exact evolving receipts: [ALNILAM P0 Acceptance & Decisi
 - Actual Project17 read-back has17 historical Done items, no Next membership, no Phase field, no milestones or native Next hierarchy. Existing tracker structure remains unchanged pending G0-F.
 - CNB Development + GitHub Release Gate is a distinct proposed extension, not ADS v0.4 or the current CNB-authoritative mirror. [ADS Draft #67](https://github.com/Skyline-Gazer/ADS/pull/67) records the incompatibility/forward-only version-title correction. Two-round offline Git mechanics pass; real protection/credentials/review/event-loop acceptance remains NOT_RUN/BLOCKED. Greptile App is installed for ALNILAM, but current-SHA review/required-check and account entitlement remain unverified.
 
-**Owner Gate stays closed:** accept P0 findings, decide G0-F frozen Plan/Spec and authorize an exact P1 scope explicitly. No CI result, Issue state, this document update or proposed ADR grants implementation/release/cutover permission. Optional modules, runtime budgets, legacy aliases, Site schema migration and tool installation still require the recorded relevant decisions.
+**Owner G0-F approved limited P1:** see [08 decision](08-G0-F-DECISION.md). This approval does not convert historic product/upstream failures into PASS, and does not authorize release, deployment or provider cutover. Optional modules, runtime budgets, legacy aliases, Site schema migration and tool installation still require the recorded relevant decisions.
 
 
 ### Final baseline receipt

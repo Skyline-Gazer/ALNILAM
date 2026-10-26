@@ -1,6 +1,6 @@
 # ALNILAM Next — Spec-to-Issue traceability
 
-> **DRAFT**. Actual requirement coverage, Project item membership, native parent hierarchy and functional PASS statuses have **not been independently verified**. This table is a planning index, not a product pass report.
+> **G0-F OWNER APPROVED FOR P1** ([decision](08-G0-F-DECISION.md)). Requirement-to-Issue mapping is authoritative planning guidance, not evidence that native Project membership, child hierarchy or products PASS. Deferred modules remain OUT OF SCOPE.
 
 Traceability rule: requirement → selected source/implementation → atomic Issue → PR + changed files → CI/browser evidence → owner decision. Scope changes must revise Spec and keep the former decision/link.
 
@@ -73,7 +73,7 @@ An execution-ready Issue must include:
 
 ## Change management
 - Requirement changes first open a Spec review; changes are NOT silently applied to executable Issues.
-- P5 #67/#68/#69 historically conflict with recorded feature deferral; status remains **not approved** until product scope is explicitly reconciled.
+- P5 #67/#68/#69 historically conflict with recorded feature deferral; status is **DEFERRED by G0-F**; not approved for P1/current release until a new scoped decision.
 - #34 and #35 remain provenance/regression references. They are not discarded but should not require patching UI slated for replacement.
 - G0 review approval precedes native Project hierarchy creation/field editing; GitHub Project membership remains **not verified** in this proposal.
 - Phase success is determined by the acceptance evidence of the *actual selected scope*, not number of closed Issues.

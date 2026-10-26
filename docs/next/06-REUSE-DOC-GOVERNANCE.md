@@ -1,6 +1,6 @@
 # ALNILAM Next — Reuse-first migration and document governance
 
-> **DRAFT normative annex** · 2026-10-26 · applies to the Plan/Spec review in PR #77. There is exactly one new product foundation: **Shirone**. Existing functional ALNILAM infrastructure **must be reused unless an evidence-backed incompatibility requires adaptation or retirement**. Neither Shirone migration nor ADS v0.4.1 licenses a rewrite from scratch. Current release v0.1.3 remains unchanged until a separately approved release.
+> **G0-F APPROVED normative annex** · 2026-10-26 · Owner [decision](08-G0-F-DECISION.md). There is exactly one new product foundation: **Shirone**. Existing functional ALNILAM infrastructure **must be reused unless an evidence-backed incompatibility requires adaptation or retirement**. Neither Shirone migration nor ADS v0.4.1 licenses a rewrite from scratch. Current release v0.1.3 remains unchanged until a separately approved release.
 
 ## A. Architecture source of truth
 
@@ -131,4 +131,4 @@ For every nontrivial change that removes or rewrites existing ALNILAM code, the 
 
 ## P0 G0-R execution receipt — 2026-10-26
 
-Actual execution findings are maintained once in [the upstream audit receipt](05-UPSTREAM-ASTRO-AUDIT.md#p0-g0-r-execution-receipt--2026-10-26), linked to the authoritative [P0 report](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/p0/P0-ACCEPTANCE.md). Current dev baseline is `625038cb3c4915c135b436799bbfc2915bf19a7b` after merged #85/#84/#86. This Draft remains unapproved; Owner acceptance, G0-F freeze and exact P1 scope are required before implementation.
+Actual execution findings are maintained once in [the upstream audit receipt](05-UPSTREAM-ASTRO-AUDIT.md#p0-g0-r-execution-receipt--2026-10-26), linked to the authoritative [P0 report](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/p0/P0-ACCEPTANCE.md). Dev baseline before G0-F Plan/Spec merge is `bcf7c642287af1528cd0e60c0a3388126db7e527` after #85/#84/#86/#87. The Owner [approved G0-F scope](https://github.com/Skyline-Gazer/ALNILAM/issues/36#issuecomment-6416284698) on 2026-10-26; retain original NOT_READY as historical P0 pre-decision evidence. Only bounded P1 is authorized; publication and wider scopes remain excluded.

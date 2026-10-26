@@ -1,6 +1,6 @@
-# ALNILAM Next — PLAN (proposal)
+# ALNILAM Next — PLAN (G0-F owner approved)
 
-> **DRAFT — NOT APPROVED.** 2026-10-25. This is a proposal for a Plan → Spec → Review/Freeze → Project decomposition workflow, not an authorization to implement, merge or deploy. Related: Phase Issues #36–#42, active candidate Tasks #43–#76/#78/#79/#80/#81/#82; future-only #83; product acceptance and legacy regression: #34, #35.
+> **G0-F OWNER APPROVED · 2026-10-26.** Frozen P1 scope and exclusions: [08-G0-F-DECISION.md](08-G0-F-DECISION.md) (Owner [#36 decision](https://github.com/Skyline-Gazer/ALNILAM/issues/36#issuecomment-6416284698)). This describes the approved product target, NOT implemented functionality or a production-release authorization. Related: Phase Issues #36–#42, active candidate Tasks #43–#76/#78/#79/#80/#81/#82; future-only #83; product acceptance and legacy regression: #34, #35.
 
 ## 1. Problem statement and outcome
 ALNILAM v0.1.3 has been published, but successful Issues, CI, and release tags do not establish that the actual product matches its owner's intended blog. The previous approach implemented architecture and generated task closure before capturing a sufficiently testable product specification.
@@ -16,7 +16,7 @@ ALNILAM v0.1.3 has been published, but successful Issues, CI, and release tags d
 - **ADS v0.4.1 adoption, not v0.3:** official release commit `3abf6025657a5d716476029cc8cbf5239543210b` is pinned in the retained private `.ads` Git submodule and merged via PR #84; CodeGraph and official full RTK development tooling, dev-only configuration, production-boundary guard and remote-first verification are tracked by #82. This does NOT replace the Shirone base or ALNILAM's build scripts.
 - **Design direction:** Shirone M3E single UI design system, retaining owner-required Fuwari-style one-post-per-row, text-left/cover-right desktop (approximately 28% cover) and mobile cover-on-top. Earlier SHBlog Next visual goals are historical input to reconcile in Spec; do not claim a 1:1 clone is required by default.
 - **Static-first:** no mandatory runtime database, CMS backend, identity layer or paid always-on service.
-- **Scope control:** gallery, moments and music appear in historical docs as owner-declined, but original proof is not established in this review. Treat them as *candidates pending decision*, not automatically mandatory or permanently cancelled. Comments/Bangumi are also to be tested as optional Site-configured modules.
+- **Scope control (Owner G0-F):** gallery, moments and music are **deferred** from P1/current release; comments/Bangumi remain optional Site-configured modules with enabled/disabled tests. Reopening deferred modules requires an explicit change request. Comments/Bangumi are also to be tested as optional Site-configured modules.
 
 ## 2A. Content discovery and multilingual URL decisions (candidate)
 - Initial URL design: Site-configured default locale is unprefixed; other enabled locales use a single prefix. A stable route registry generates both root and /ALNILAM/ links and canonical URLs. Existing legacy article paths need explicit compatible aliases or a recorded no-breaking-change decision.
@@ -88,10 +88,10 @@ Once P0 read-only/reproducibility/audit tasks conclude, issue one **P0 Acceptanc
 **Only later, when specific integrations are enabled:** optional Giscus discussion IDs, third-party service settings, external private Site access and actual publish target credentials; never block planning on these or store them in a public repo.
 
 ## 8. Order of execution
-`PLAN` (this proposal) → `SPEC` (normative acceptance) → `review/freeze` (owner-approved snapshot + changelog) → `Milestone/Phase/Sub-issue reconciliation` in Project #17 → `one Issue / PR / remote CI / visual verification at a time`.
+`PLAN` + `SPEC` owner-approved G0-F → reviewed PR #77 into dev → actual Project #17 reconciliation/readback as permissions allow → scoped P1 Issue/PR/remote CI/browser verification. No P2–P6 or main publication authorization.
 
 **Current Issues #36–#82 (excluding PR #77) remain candidate backlog as mapped in 02-GITHUB-PROJECT; build-acceleration #83 is a future-only TODO, not part of M1–M3.** GitHub Project V2 items and true GitHub Milestones are not yet written.
 
 ## P0 G0-R execution receipt — 2026-10-26
 
-Actual execution findings are maintained once in [the upstream audit receipt](05-UPSTREAM-ASTRO-AUDIT.md#p0-g0-r-execution-receipt--2026-10-26), linked to the authoritative [P0 report](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/p0/P0-ACCEPTANCE.md). Current dev baseline is `625038cb3c4915c135b436799bbfc2915bf19a7b` after merged #85/#84/#86. This Draft remains unapproved; Owner acceptance, G0-F freeze and exact P1 scope are required before implementation.
+Actual execution findings are maintained once in [the upstream audit receipt](05-UPSTREAM-ASTRO-AUDIT.md#p0-g0-r-execution-receipt--2026-10-26), linked to the authoritative [P0 report](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/p0/P0-ACCEPTANCE.md). Dev baseline before G0-F Plan/Spec merge is `bcf7c642287af1528cd0e60c0a3388126db7e527` after #85/#84/#86/#87. The Owner [approved G0-F scope](https://github.com/Skyline-Gazer/ALNILAM/issues/36#issuecomment-6416284698) on 2026-10-26; retain original NOT_READY as historical P0 pre-decision evidence. Only bounded P1 is authorized; publication and wider scopes remain excluded.
