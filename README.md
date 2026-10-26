@@ -4,7 +4,7 @@
 
 Apache-2.0 licensed, static-first Astro 7 / Svelte 5 / Tailwind CSS 4 blogging platform, with a strict Core/Site ownership boundary and an original Editorial theme.
 
-> **Status: v0.1.0.** Core/Site composition, two-version upgrade/rollback acceptance, Editorial UI (dark/light), RSS/sitemap/robots/SEO, archives, tags, local search (Pagefind), i18n with hreflang, and paginated streams are implemented and CI-verified. See [CHANGELOG.md](CHANGELOG.md).
+> **Status: v0.1.3 released; ALNILAM Next Shirone-first redesign is a **separate proposed Plan/Spec** (draft PR #77), not current shipped functionality.** Core/Site composition, two-version upgrade/rollback acceptance, Editorial UI (dark/light), RSS/sitemap/robots/SEO, archives, tags, local search (Pagefind), i18n with hreflang, and paginated streams are implemented and CI-verified. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Quickstart
 
@@ -62,10 +62,12 @@ CI runs this acceptance on every PR (two revisions, one unchanged external Site,
 
 - Primary development: `dev` with Issue-linked PRs; `main` is release-only (rulesets `alnilam-dev` / `alnilam-main`: PR-only + required `verify` check, no force pushes/deletion).
 - Tagging: `vX.Y.Z` on `main` only, annotated, created by the release PR merge. See [CHANGELOG.md](CHANGELOG.md) for versioning rules (SemVer; `lang`/`translationKey` are schema-v1 additive fields).
-- ADS v0.3 pinned at `.ads` (private; optional for public users — `git submodule update --init --recursive` requires authorized access). CI never clones it.
+- ADS v0.4.1 pinned at `.ads` (commit `3abf6025657a5d716476029cc8cbf5239543210b`; private — optional for public users, `git submodule update --init --recursive` requires authorized access). CI never clones it.
 - Docs: [Architecture](docs/ARCHITECTURE.md) · [Site onboarding](docs/SITE_ONBOARDING.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/HANDOFF.md)
 - Attribution: [CREDITS.md](CREDITS.md) · [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) · [NOTICE](NOTICE)
 - GitHub Project #17: https://github.com/orgs/Skyline-Gazer/projects/17/
+- Proposed ALNILAM Next: [draft Plan/Spec PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77). **Shirone** is the intended product base; reusable ALNILAM v0.1.3 implementation (immutable Site build, config/version contract, CI, Search/comments/Bangumi) is preserved by default and audited before any replacement. Future Astro build acceleration stays out of release scope until official stabilization. The planning PR is not yet merged.
+- ADS consumer v0.4.1: [release](https://github.com/Skyline-Gazer/ADS/releases/tag/v0.4.1) and [mandatory development-only CodeGraph/full RTK policy](https://github.com/Skyline-Gazer/ADS/blob/v0.4.1/docs/consumer-dev-toolchain.md). This project remains Apache-2.0; ADS's MIT license does not relicense ALNILAM.
 
 ## License
 

@@ -20,15 +20,16 @@ class ConsumerDevtoolsBoundaryTests(unittest.TestCase):
         path.write_text(content, encoding="utf-8")
         return path
 
-    def run_guard(self, branch="main"):
+    def run_guard(self, branch="main", *extra, root=None):
         return subprocess.run(
             [
                 sys.executable,
                 str(SCRIPT),
                 "--root",
-                str(self.root),
+                str(root or self.root),
                 "--target-branch",
                 branch,
+                *extra,
             ],
             capture_output=True,
             text=True,
@@ -90,6 +91,74 @@ class ConsumerDevtoolsBoundaryTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn("codegraph.json", result.stderr)
         self.assertIn("CLAUDE.md", result.stderr)
+
+    def test_generated_rtk_and_sqlite_sidecars_fail_on_main(self):
+        self.write("RTK.md", "# Command output\n")
+        self.write(".codegraph/codegraph.db-wal", "generated")
+        self.write(".codegraph/codegraph.db-shm", "generated")
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("RTK.md", result.stderr)
+        self.assertIn("codegraph.db-wal", result.stderr)
+        self.assertIn("codegraph.db-shm", result.stderr)
+
+    def test_codegraph_worktree_directories_fail_on_main(self):
+        self.write(".codegraph-task-2/index.json", "generated")
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(".codegraph-task-2", result.stderr)
+
+    def test_symlink_inside_production_tree_is_allowed_on_main(self):
+        target = self.write("src/app.py", "def main(): return 1\n")
+        (self.root / "src" / "alias.py").symlink_to(target)
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_escaping_symlink_fails_on_main(self):
+        outside = Path(self.temp.name).parent / f"{Path(self.temp.name).name}-outside.txt"
+        outside.write_text("outside", encoding="utf-8")
+        self.addCleanup(outside.unlink)
+        (self.root / "escape.txt").symlink_to(outside)
+        result = self.run_guard()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("escape.txt", result.stderr)
+        self.assertIn("unverified symlink", result.stderr)
+
+    def test_external_manifest_preserves_declared_path_policy(self):
+        self.write("src/app.py", "def main(): return 1\n")
+        manifest = Path(self.temp.name).parent / f"{Path(self.temp.name).name}-manifest.json"
+        manifest.write_text('{"dev_only_paths":["src/app.py"]}', encoding="utf-8")
+        self.addCleanup(manifest.unlink)
+        result = self.run_guard("main", "--dev-only-manifest", str(manifest))
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("declared dev-only path exists", result.stderr)
+
+    def test_invalid_external_manifest_fails_closed(self):
+        self.write("src/app.py", "def main(): return 1\n")
+        manifest = Path(self.temp.name).parent / f"{Path(self.temp.name).name}-manifest.json"
+        manifest.write_text('{"dev_only_paths":"not-an-array"}', encoding="utf-8")
+        self.addCleanup(manifest.unlink)
+        result = self.run_guard("main", "--dev-only-manifest", str(manifest))
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("trusted development manifest invalid", result.stderr)
+
+    def test_artifact_root_is_scanned_even_for_dev_target(self):
+        self.write("src/app.py", "def main(): return 1\n")
+        artifact = Path(self.temp.name).parent / f"{Path(self.temp.name).name}-artifact"
+        artifact.mkdir()
+        (artifact / "RTK.md").write_text("# Command output\n", encoding="utf-8")
+        self.addCleanup(lambda: __import__("shutil").rmtree(artifact))
+        result = self.run_guard("dev", "--artifact-root", str(artifact))
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("artifact", result.stderr)
+        self.assertIn("RTK.md", result.stderr)
+
+    def test_missing_artifact_root_fails_closed(self):
+        self.write("src/app.py", "def main(): return 1\n")
+        missing = Path(self.temp.name).parent / f"{Path(self.temp.name).name}-missing-artifact"
+        result = self.run_guard("dev", "--artifact-root", str(missing))
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("expected an existing directory", result.stderr)
 
     def test_devtools_helper_and_release_workflow_fail_on_main(self):
         self.write("scripts/check-ads-devtools-latest.py", "print('check latest')\\n")

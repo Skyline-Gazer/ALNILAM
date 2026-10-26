@@ -1,23 +1,25 @@
 # ALNILAM — Agent Entry Point
 
-This file is the binding repository-level operating entrypoint. ADS is pinned as a Git Submodule at `.ads` to commit `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac` (release v0.3). ADS is **private**. Only authorized maintainers may materialize it via `git submodule update --init --recursive`. This public repository and GitHub Actions must not require secret cross-repo tokens. If `.ads` is unavailable, this root file remains the public operational baseline and ADS details are **not independently verified**. With ADS available, read `.ads/AGENTS.md`, `.ads/STANDARD.md`, `.ads/SAFETY.md`, `.ads/QUALITY.md`, and `.ads/profiles/astro-typescript.md` before structural changes. Do not assume ADS files are automatically discovered by the host agent.
+This file is the binding repository-level operating entrypoint. ADS is pinned as a Git Submodule at `.ads` to commit `3abf6025657a5d716476029cc8cbf5239543210b` (release v0.4.1; annotated tag object `e38d01ff176448a13180afe2419c1c9c94a6ab43` resolves to this **commit**, never use the tag-object SHA as a gitlink). ADS is **private**. Only authorized maintainers may materialize it via `git submodule update --init --recursive`. This public repository and GitHub Actions must not require secret cross-repo tokens. If `.ads` is unavailable, this root file remains the public operational baseline and ADS details are **not independently verified**. With ADS available, read `.ads/AGENTS.md`, `.ads/STANDARD.md`, `.ads/SAFETY.md`, `.ads/QUALITY.md`, and `.ads/profiles/astro-typescript.md` before structural changes. Do not assume ADS files are automatically discovered by the host agent.
 
 ## Product invariants
 - Product: ALNILAM, generic open-source blogging platform (Apache-2.0).
 - **Core owns program; Site owns content, configuration and assets.** No production operation may mutate Site.
 - Core is a pnpm Monorepo; `sites/demo` is a fixture, not a user's real Site.
 - Astro 7 + Svelte 5 + Tailwind CSS 4; SSR/backend/database are not baseline dependencies.
-- Editorial visual direction: SHBlog Next; Post list layout: Fuwari single-column, one Post per row, text left and cover right on desktop.
+- **Current released v0.1.3** uses the original Editorial UI; **planned ALNILAM Next**, subject to Plan/Spec G0 review (draft PR #77), keeps the same repo and history, uses **Shirone as the one product base**, adds only selected Firefly/KIRARI/Mizuki capabilities and preserves ALNILAM's functional Core/Site/CI/assets. Do not delete and recreate functioning subsystems just because the frontend base is changing. Fuwari-style single-row post list remains a target.
 - Reference project code must not be copied without auditing source licenses, notices, and assets; record reused code in THIRD_PARTY_NOTICES.md.
 - Core/Site external composition must remain functional independent of the demo profile.
 
 ## Git and delivery
 - Default work target is `dev`; create `feat/*`, `fix/*`, or `chore/*` branches from `dev`.
 - All work lands via Issue-linked PR; never commit direct to `main`. `main` is release only.
-- This initialization is an unmerged PR. Do not merge or deploy production without explicit authorization.
+- Existing ALNILAM versions through v0.1.3 are released. ALNILAM Next Plan/Spec (draft PR #77) and this ADS upgrade are separate proposed changes; neither implies permission to merge to `dev`/`main`, create a release tag or deploy production without explicit authorization.
 - Project tracking target: https://github.com/orgs/Skyline-Gazer/projects/17/. Verify actual Project state before claiming status updates; do not substitute Issues for board membership.
 - Prefer GitHub Actions and ephemeral Preview for integration evidence; no new paid or persistent infrastructure.
-- RTK and CodeGraph: check availability and initialize task-scoped tools when supported. Keep local tool configs/indexes/artifacts out of `main` and published deliverables; never auto-install without owner authorization.
+- ADS v0.4.1 **consumer policy** requires CodeGraph and **official full RTK**, not `rtk-oss`. For every development session/worktree, preflight version/channel/initialization/host MCP or hook integration and actual operation; record proof separately from whether a binary is present. Use the latest published stable upstream distribution; CodeGraph immutable `SOURCE_FALLBACK` is allowed only when the official stable package/release is absent and after explicit authorization and SHA/licensing verification. Never claim a source fallback is latest stable. ALNILAM's authorized CodeGraph pin is source SHA `bb11bc1226db30233ac9e66a2670c4b16dfa85fa` (metadata 1.1.1, MIT); the `@colbymchenry/codegraph` package is **not** the ADS official publisher.
+- Development-only tool manifests, host hooks and CodeGraph/RTK configuration may live on `dev`/task branches, **never in production `main`**. Generated indexes/caches, binaries, machine-local absolute paths and secrets may not be committed anywhere. Adopt the upstream production-boundary guard + negative fixtures; generic guard may remain in production. Full RTK output compression must preserve command failures and raw diagnostic access.
+- Never install developer tools, change global host settings or grant broad repository access without explicit owner approval. Public CI must not check out private ADS recursively. See [ADS v0.4.1 consumer toolchain](https://github.com/Skyline-Gazer/ADS/blob/v0.4.1/docs/consumer-dev-toolchain.md) and [ADS v0.4.1 release](https://github.com/Skyline-Gazer/ADS/releases/tag/v0.4.1).
 
 ## Commands
 ```bash
@@ -31,5 +33,6 @@ node scripts/compose.mjs --site /absolute/path/to/site --out /absolute/path/to/o
 The pnpm-lock.yaml is generated by GitHub Actions and version-controlled. Enforce --frozen-lockfile in CI and local tests.
 
 ## Handoff
-Read `docs/HANDOFF.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md` and the assigned Issue. The current bootstrap is intentionally minimal. Never infer implemented features from planned roadmap entries. End each task with exact commit SHA, CI run URL/results, PR, verified functionality, and unresolved blockers.
+Read `docs/HANDOFF.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md` and the assigned Issue. Never infer implemented features from planned roadmap entries. During the proposed Shirone migration, produce a before/after Keep/Adapt/Replace/Retire matrix for existing ALNILAM source, tests, CI and docs. Plan/Spec is in draft PR #77 until formally reviewed and frozen. End each task with exact commit SHA, CI run URL/results, PR, verified functionality, and unresolved blockers.
 
+@RTK.md

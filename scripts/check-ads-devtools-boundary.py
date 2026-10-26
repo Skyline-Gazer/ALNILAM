@@ -28,7 +28,7 @@ FORBIDDEN_NAMES = {
 }
 FORBIDDEN_DIRS = {".ads-devtools", ".codegraph", ".rtk"}
 HOST_CONFIG_ROOTS = {".claude", ".codex", ".omp", ".opencode", ".cursor", ".agents"}
-AGENT_INSTRUCTIONS = {"CLAUDE.md", "GEMINI.md", "CODEX.md", ".github/copilot-instructions.md"}
+AGENT_INSTRUCTIONS = {"AGENTS.md", "RTK.md", "CLAUDE.md", "GEMINI.md", "CODEX.md", ".github/copilot-instructions.md"}
 AGENT_TOOL_INSTRUCTION = re.compile(
     r"(?i)(?:\buse\s+rtk\s+(?:instead|for|to)\b|\brtk\s+(?:git|grep|find|ls|read|test|cargo|npm|pnpm|init)\b|"
     r"\bcodegraph\s+(?:serve\s+--mcp|init|sync|status)\b)"
@@ -39,18 +39,20 @@ GITIGNORE_TOOL_PATTERN = re.compile(r"(?im)^\s*/?(?:\.codegraph|\.rtk|codegraph(
 SKIP_DIRS = {".git", ".ads", "node_modules", ".venv", "venv"}
 
 
-def files_under(root: Path):
+def files_under(root: Path, *, artifact=False):
     for path in root.rglob("*"):
         relative = path.relative_to(root)
-        if any(part in SKIP_DIRS for part in relative.parts):
+        if not artifact and any(part in SKIP_DIRS for part in relative.parts):
             continue
         if path.is_file():
             yield relative, path
 
 
-def violations(root: Path) -> list[str]:
+def violations(root: Path, *, artifact=False, dev_only_paths=()) -> list[str]:
+    if not root.is_dir():
+        return [f"{root}: expected an existing directory"]
     found: list[str] = []
-    all_files = list(files_under(root))
+    all_files = list(files_under(root, artifact=artifact))
     manifest_path = root / ".ads-devtools.json"
     manifest: dict = {}
     if manifest_path.is_file():
@@ -64,6 +66,9 @@ def violations(root: Path) -> list[str]:
         except (OSError, json.JSONDecodeError) as exc:
             found.append(f".ads-devtools.json: cannot parse dev-only path declarations: {exc}")
 
+    for path in root.rglob("*"):
+        if path.is_symlink() and (artifact or not path.resolve().is_relative_to(root.resolve())):
+            found.append(f"{path.relative_to(root)}: unverified symlink in production boundary")
     for rel, path in all_files:
         rel_posix = rel.as_posix()
         lower_path = rel_posix.lower()
@@ -71,9 +76,13 @@ def violations(root: Path) -> list[str]:
             found.append(f"{rel_posix}: consumer developer-tool helper must remain on development branches")
         if len(rel.parts) >= 3 and rel.parts[:2] == (".github", "workflows") and any(token in rel.name.lower() for token in ("ads-devtools", "codegraph", "rtk")) and rel.name != "ads-devtools-boundary.yml":
             found.append(f"{rel_posix}: tool-specific workflow must remain on development branches")
+        if rel.name == "RTK.md":
+            found.append(f"{rel_posix}: generated RTK adapter instructions must remain development-only")
+        if rel.name in {"codegraph.db-wal", "codegraph.db-shm"}:
+            found.append(f"{rel_posix}: forbidden generated SQLite sidecar")
         if rel.name in FORBIDDEN_NAMES and rel_posix != ".ads-devtools.json":
             found.append(f"{rel_posix}: forbidden generated artifact or tool binary")
-        if any(part.lower() in FORBIDDEN_DIRS for part in rel.parts):
+        if any(part.lower() in FORBIDDEN_DIRS or part.lower().startswith(".codegraph-") for part in rel.parts):
             found.append(f"{rel_posix}: forbidden tool configuration/artifact directory")
         if rel.name.lower() in {"rtk", "rtk.exe"}:
             found.append(f"{rel_posix}: RTK executable must not enter production")
@@ -94,7 +103,7 @@ def violations(root: Path) -> list[str]:
     if not isinstance(declared_paths, list):
         found.append(".ads-devtools.json: dev_only_paths must be a JSON array")
         declared_paths = []
-    for declared in declared_paths:
+    for declared in [*declared_paths, *dev_only_paths]:
         if not isinstance(declared, str) or not declared:
             found.append(".ads-devtools.json: dev_only_paths must contain non-empty relative paths")
             continue
@@ -112,17 +121,36 @@ def main() -> int:
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--target-branch", required=True, help="PR base branch or push branch")
     parser.add_argument("--production-branch", default="main")
+    parser.add_argument("--artifact-root", type=Path, action="append", default=[],
+                        help="Existing extracted build output; always scanned as production")
+    parser.add_argument("--dev-only-manifest", type=Path,
+                        help="Trusted development manifest outside the production candidate")
     args = parser.parse_args()
     root = args.root.resolve()
 
-    if args.target_branch != args.production_branch:
+    paths = []
+    if args.dev_only_manifest:
+        try:
+            manifest = json.loads(args.dev_only_manifest.read_text(encoding="utf-8"))
+            paths = manifest["dev_only_paths"]
+            if not isinstance(paths, list):
+                raise ValueError("dev_only_paths must be an array")
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            print(f"FAIL: trusted development manifest invalid: {exc}", file=sys.stderr)
+            return 1
+    if not root.is_dir():
+        print(f"FAIL: expected an existing root directory: {root}", file=sys.stderr)
+        return 1
+    if args.target_branch != args.production_branch and not args.artifact_root:
         print(
             f"PASS/SKIP: target {args.target_branch!r} is not the configured production branch "
             f"{args.production_branch!r}; development-only integration may remain here."
         )
         return 0
 
-    problems = violations(root)
+    problems = violations(root, dev_only_paths=paths) if args.target_branch == args.production_branch else []
+    for artifact in args.artifact_root:
+        problems.extend(f"artifact {artifact}: {item}" for item in violations(artifact.resolve(), artifact=True, dev_only_paths=paths))
     if problems:
         print(
             f"FAIL: consumer CodeGraph/RTK configuration or artifacts would enter production {args.production_branch}:",

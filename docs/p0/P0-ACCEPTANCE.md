@@ -1,6 +1,6 @@
 # ALNILAM Next — P0 Acceptance & Decision Report
 
-**2026-10-26 · G0-R evidence only · verdict: NOT_READY for G0-F / P1.** Owner acceptance, Spec freeze and P1 scope remain separate explicit decisions. This report is evidence and recommendations, not a second product specification. The sole Draft Plan/Spec stays in [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77). [Audit PR #85](https://github.com/Skyline-Gazer/ALNILAM/pull/85) and [ADS adoption #84](https://github.com/Skyline-Gazer/ALNILAM/pull/84) remain unmerged.
+**2026-10-26 · G0-R evidence only · verdict: NOT_READY for G0-F / P1.** Owner acceptance, Spec freeze and P1 scope remain separate explicit decisions. This report is evidence and recommendations, not a second product specification. The sole Draft Plan/Spec stays in [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77). [Audit PR #85](https://github.com/Skyline-Gazer/ALNILAM/pull/85) is merged into `dev`; [ADS adoption #84](https://github.com/Skyline-Gazer/ALNILAM/pull/84) remains unmerged.
 
 Status vocabulary: capability `NOT_FOUND / DETECTED / INSTALLED / CONFIGURED / VERIFIED / BLOCKED`; test `PASS / PARTIAL / FAIL / BLOCKED / NOT_RUN`. A skipped branch check, installed App, local Git fixture or green build is never a live integration PASS. The [execution receipts](evidence/execution.json) identify exact code SHA, run IDs, outcomes and artifacts; canceled superseded runs are not successful evidence.
 
@@ -8,12 +8,12 @@ Status vocabulary: capability `NOT_FOUND / DETECTED / INSTALLED / CONFIGURED / V
 
 | Fact | Verified result |
 | --- | --- |
-| ALNILAM dev | `5fd74cea8197dc91d8391e7ee677eacbc32d3234` |
+| ALNILAM dev at audit start | `5fd74cea8197dc91d8391e7ee677eacbc32d3234`; #85 merged as `b36b61fff8377694f209fcc7488f7457251a2ce9` |
 | ALNILAM main / v0.1.3 | `07fac43cba0c3d303c930c098b6e2124b2c79e4a`; published release retained |
 | Prior Core for actual two-version test | v0.1.0 `52a5d13f98c981fdf5aaed1ae217c85d65c0a345` |
 | Product source difference dev vs release | None: only HANDOFF differs; existing source/tests/fixtures/workflows preserved |
-| ADS actual dev pin | v0.3 `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`; materialized with authorized maintainer access |
-| ADS proposed stable pin | v0.4 **commit** `2af17d9e1d816844c49835ae91b784405765ad46` in Draft #84; annotated tag object is not the gitlink |
+| ADS actual dev pin at audit start | v0.3 `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`; materialized with authorized maintainer access |
+| ADS v0.4.1 adoption candidate | release **commit** `3abf6025657a5d716476029cc8cbf5239543210b` in #84; annotated tag object `e38d01ff176448a13180afe2419c1c9c94a6ab43` is not the gitlink |
 | CNB candidate | `13c50f072d3f2b6aa95ca7387a8cff3dc0b606a1`, independently exported/tested; never adopted as project gitlink |
 | Rulesets | `alnilam-dev` 25809723 / `alnilam-main` 25809753, Active; PR-only, no deletion/non-fast-forward, strict required `verify` from GitHub Actions, zero bypass actors |
 | Pages | Workflow build, source main, published URL `https://skyline-gazer.github.io/ALNILAM/`; deploy.yml triggers main push or manual dispatch. Neither triggered by this task |
@@ -51,7 +51,7 @@ Failures include three `tests/site/motion.spec.ts` navigation/sidebar icon asser
 |19 candidate ADS provider/review/sync tests | PASS local; live CNB NOT_RUN |
 |116 ADS extension tests +docs validation/remote CI | PASS; extension still a proposal |
 | Historical actual main production boundary | FAIL; corrected task candidate PASS |
-| Official CodeGraph provenance /RTK freshness | BLOCKED |
+| Official CodeGraph provenance / RTK freshness | PASS with attested source fallback / official stable v1.1.0; native Host evidence separate |
 | Real dual-platform review/protection/credentials/event-loop gates | BLOCKED/NOT_RUN; offline Git PASS only |
 
 Shirone actual build = content sync → Astro → local Pagefind CLI → font validation. Its no-config content source is local/no-op; font subsetting **still requests Meting song text by default** (`fontConfig.allowRemoteText=true`, mixed music enabled), with an8-second warning fallback. Therefore baseline build PASS does not prove network-free or deterministic output. The original lockfile stays pristine; a separate run creates an isolated Astro7.4.2 lockfile and reinstalls frozen. Static production-preview smoke now PASS on **both** versions:1440×1000 desktop and390×844 mobile, real Light/Dark clicks, list→/posts/guide/ Swup navigation, actual Pagefind query returning that article, browser back navigation and no pageerror events. [Per-viewport browser receipts](evidence/shirone-browser.json). Allocated output measured by du -sk:74076KiB original /73804KiB7.4.2; these are disk blocks, not transferred/gzipped bundle sizes or a speed benchmark. Screenshots and exact lockfiles/dependency lists stay in the corresponding run artifacts. Full-page images can retain offscreen animation state; no pixel-diff, full accessibility or motion-equivalence PASS is inferred. Exact results are not inferred from upstream README.
@@ -110,20 +110,20 @@ Performance/security limits: upstream default modules/network fonts, substantial
 
 | Capability | State / test | Evidence and action |
 | --- | --- | --- |
-| Stable Gitlink proposal | CONFIGURED / PASS after CI repair | #84 exact stable commit; original CI hardcoded v0.3. Repaired pin check in `fdae422f89a80a8a45f1031baa14305fba92cf97`; verify PASS. No merge |
+| Stable Gitlink proposal | CONFIGURED / PASS after CI repair | #84 now pins exact v0.4.1 commit `3abf6025657a5d716476029cc8cbf5239543210b`; original CI hardcoded v0.3. No merge before final validation |
 | Public CI independence | VERIFIED / PASS | Existing and new workflows checkout submodules:false, persist-credentials:false; no private cross-repo token added |
-| CodeGraph operation | CONFIGURED / PASS | CLI1.0.1; correct active MCP project; source exploration worked; native sync automatically increased61→69 indexed files and594→683 nodes after P0 additions. A pending edited file persisted at final preflight; one explicit project-local sync was used for recovery and freshness rechecked |
-| CodeGraph official provenance | BLOCKED | Installed package is @colbymchenry/codegraph1.0.1, ADS official channel is andysom25/codegraph. npm official latest actual404 and Releases empty. Approved upstream fallback SHA is `bb11bc1226db30233ac9e66a2670c4b16dfa85fa` (metadata1.1.1/MIT), not a published stable release. No authorization to replace global install was inferred |
-| Full RTK edition | VERIFIED / PASS | Installed1.0.1 official Homebrew archive matches binary and both CLI/engine licenses; engine methods work; log sample1280→581 bytes; sentinel exit7 preserved |
-| RTK latest stable | BLOCKED | Official stable v1.1.0 published2026-10-25T18:00:11Z. Existing global1.0.1 is outdated; update requires Owner grant |
-| Developer-only configuration | PARTIAL | Existing ignored local indexes and RTK host integration work; no new generated/config/host artifacts committed. No manifest pretending official provenance complete |
-| Production boundary fixtures | PASS | Exact stable ADS guard +9 positive/negative fixtures copied with MIT; offline DAG additionally runs actual guard on both release trees |
+| CodeGraph operation | VERIFIED / PASS | v1.1.1 official source fallback, 108 indexed files / 1272 nodes, correct worktree and zero pending changes; CLI source query and native Host MCP both resolve the current checkout |
+| CodeGraph official provenance | VERIFIED source fallback, not stable | Official npm `latest` is 404 and Releases is empty. Approved immutable SHA `bb11bc1226db30233ac9e66a2670c4b16dfa85fa` (metadata 1.1.1, MIT), built from a clean detached checkout with `npm ci --ignore-scripts`; executable SHA-256 attested. It is not claimed as latest stable |
+| Full RTK edition | VERIFIED / PASS | Official v1.1.0 full archive and binary SHA-256 attested; Apache-2.0 + BUSL-1.1 engine license markers pass; representative compression1347→665 bytes; sentinel exit7 and diagnostic preserved |
+| RTK latest stable | VERIFIED / PASS | Official stable v1.1.0 published2026-10-25T18:00:11Z; active v1.1.0 path and hash match attestation. Previous v1.0.1 retained for rollback |
+| Developer-only configuration | VERIFIED / PASS | `.ads-devtools.json`, `.codex/hooks.json`, `RTK.md` and policy helpers are on the development branch only; generated CodeGraph state is excluded through untracked `.git/info/exclude`; production candidate/artifact checks fail closed |
+| Production boundary fixtures | PASS | Exact ADS v0.4.1 guard plus 17 positive/negative fixtures, including artifact roots, trusted external manifests, SQLite sidecars, `.codegraph-*`, RTK instructions and escaping symlinks; offline DAG additionally runs actual guard on both release trees |
 | Existing exact main / corrected audit candidate | FAIL historical main; PASS task candidate | Stable guard rejects historical tool-specific .gitignore entries. #85 removes those two entries and keeps local generated-data exclusions in untracked Git info/exclude. The exact staged candidate is exported and checked with the unchanged guard; actual main remains unmodified and failing until a reviewed adoption |
 | Required enforcement | CONFIGURED in #85 | Actual guard now runs within required `verify`, with trusted branch context; the built dist/site is separately scanned as a production artifact on every verify. Dev target prints SKIP, never production PASS. Separate generic workflow also checks main PRs; no Ruleset changed |
 | ADS candidate code | PASS locally, live NOT_RUN | Stable boundary9 tests; candidate provider/review/sync19 tests. Safe mirror script remains incompatible with the new release-authority direction |
 | Native delegation | VERIFIED bounded read-only use | Three source/governance audit workers and one follow-up review. Shared host has unrestricted filesystem: no OS confinement or model-cost/speedup claim. Only parent wrote/integrated changes and ran experiments |
 
-RTK archive SHA256 `4aae2f60cfc49c9e81b8c8c57020aa0cb824da608c78b4f0cf5c0988e19e824e`; binary `3c74b98caa71b0aa2a1832d287492638d12d5e1b6e6d9fdb2be1a82e32746c49`. Full RTK CLI Apache-2.0 and engine BUSL terms remain independent of ALNILAM; no rtk-oss substitution. [Official editions](https://www.rtk-ai.app/docs/resources/editions/), [v1.1.0](https://github.com/rtk-ai/rtk/releases/tag/v1.1.0).
+RTK archive SHA256 `8da773b0954cf90b115ec95c4e4eb420f04c39de233c5db102246a6caf073ba7`; binary `65629fb7c2f057cc1bb9c28dbe32a44e7acf2e196e1514104c350d7d1c6caab8`. CodeGraph executable SHA256 `7dec3fe23747ce13d1503631fcb5b82c5efeb5a4000b9b29fd07ef5fe41c2346`. Full RTK CLI Apache-2.0 and engine BUSL terms remain independent of ALNILAM; no rtk-oss substitution. [Official editions](https://www.rtk-ai.app/docs/resources/editions/), [v1.1.0](https://github.com/rtk-ai/rtk/releases/tag/v1.1.0).
 
 Released ADS STANDARD/SAFETY/QUALITY still say0.3 candidate; record as historical title drift. Forward-only correction and new pilot design are proposed in [ADS Draft #67](https://github.com/Skyline-Gazer/ADS/pull/67), based on candidate13c50f. Immutable v0.4 tag/history unchanged. #67 passes116 tests and docs validation; it **does not implement new sync adapters** or grant cutover.
 
@@ -147,9 +147,9 @@ Candidate sync only supports CNB-authoritative main→GitHub main; requested dir
 - ADR0001 is proposed, not frozen. Reuse matrix distinguishes immediate preservation from future conditional retirement.
 - PRODUCT light-mode/shipped-scope and MAINTAINERS link/check wording corrected. ROADMAP/HANDOFF explicitly separate historical P0–P4 from Next P0–P6. PROJECT_TRACKING now cites actual Project/item/native-relationship read-back. Root version/status corrections remain in separate #84.
 - Markdown relative-link checker with deliberate missing-link negative fixture joins required verify. Legacy Site config/schema fixtures are unchanged. No product source removal, imported frontend or dependency upgrade.
-- P0 Issues remain open where Owner decision or real acceptance is missing; GitHub Project is not marked synchronized/Done. Experimental #83 remains Future.
+- P0 Issues remain open where Owner decision or real acceptance is missing; GitHub Project is not marked synchronized/Done. Experimental #83 remains Future. #85 is merged as evidence, not product acceptance; #82 can close only after #84 and its remaining acceptance are complete.
 
-G0-F freeze candidate needs Owner decisions on (1) Shirone design plus exact list/mobile contract; (2) v1 adapter and legacy URL aliases vs future opt-in v2; (3) enabled optional modules, privacy/export and asset/font selection; (4) runtime/a11y/performance budgets replacing overbroad historical zero-JS claims through stronger tests; (5) official tool replacement/update grant; (6) provider pilot authority and isolated target, separately from any production cutover.
+G0-F freeze candidate needs Owner decisions on (1) Shirone design plus exact list/mobile contract; (2) v1 adapter and legacy URL aliases vs future opt-in v2; (3) enabled optional modules, privacy/export and asset/font selection; (4) runtime/a11y/performance budgets replacing overbroad historical zero-JS claims through stronger tests; (5) provider pilot authority and isolated target, separately from any production cutover. Tool replacement/update authority for this adoption has been granted and executed; continued freshness remains a preflight obligation.
 
 ## H. P1 proposal — not authorized
 
@@ -166,6 +166,6 @@ Milestone M1–M3 / native hierarchy remains proposed in #77, not created or cla
 
 ## I. Final verdict / Owner gate
 
-**NOT_READY** for unconditional G0-F freeze or P1. Existing platform and isolated build proofs are valuable PASS results, but mandatory tool provenance/freshness, real-browser completeness, historical main boundary pending merge, legacy base/module regression requirements, media/font rights and real dual-platform gates are unresolved. CNB/Greptile live limitations block a provider cutover, not completion or review of this P0 evidence report. Final workflow outcome is FAILURE, retained alongside the independent PASS checks. Full individual outcomes are in [execution.json](evidence/execution.json), including failures/timeouts; no result is upgraded to PASS by another green check.
+**NOT_READY** for unconditional G0-F freeze or P1. Existing platform and isolated build proofs are valuable PASS results, and ADS consumer adoption is now supported by attested tool evidence, but real-browser completeness, legacy base/module regression requirements, media/font rights, provider gates and Owner product decisions remain unresolved. CNB/Greptile live limitations block a provider cutover, not completion or review of this P0 evidence report. The upstream evidence workflow remains FAILURE by design, retained alongside independent PASS checks. Full individual outcomes are in [execution.json](evidence/execution.json), including failures/timeouts; no result is upgraded to PASS by another green check.
 
 Owner must explicitly accept the P0 findings, freeze the sole Plan/Spec, and authorize an exact P1 scope. All PRs remain Draft/open. No main mutation, release tag, production Pages dispatch, provider cutover, global install, App permission update, Ruleset bypass or paid service occurred. Work stops at this Acceptance Gate.
