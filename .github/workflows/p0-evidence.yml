@@ -1,0 +1,141 @@
+name: P0 evidence
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [chore/p0-evidence-preflight]
+permissions:
+  contents: read
+concurrency:
+  group: p0-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  legacy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 07fac43cba0c3d303c930c098b6e2124b2c79e4a
+          submodules: false
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test && pnpm check && pnpm build
+      - name: External Site and two-version upgrade / rollback
+        env:
+          SOURCE_DATE_EPOCH: '1700000000'
+        run: |
+          cp -a sites/legacy-demo "$RUNNER_TEMP/p0-site"
+          node scripts/compose.mjs --site "$RUNNER_TEMP/p0-site" --out "$RUNNER_TEMP/p0-output"
+          git fetch --no-tags --depth=1 origin refs/tags/v0.1.0
+          node scripts/upgrade-check.mjs --old "$(git rev-parse FETCH_HEAD^{commit})"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p0-legacy
+          path: |
+            dist/site/alnilam-provenance.json
+            dist/site/sitemap.xml
+            dist/site/rss.xml
+  shirone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        astro: [7.3.8, 7.4.2]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Prepare pristine pinned references outside Core
+        run: python3 scripts/p0/references.py "$RUNNER_TEMP/ALNILAM-ref"
+      - name: Create disposable Shirone build copy
+        run: |
+          cp -a "$RUNNER_TEMP/ALNILAM-ref/Shirone" "$RUNNER_TEMP/shirone-run"
+          cp scripts/p0/shirone-smoke.mjs "$RUNNER_TEMP/shirone-run/p0-smoke.mjs"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.28.2
+          package_json_file: ${{ runner.temp }}/shirone-run/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install exact upstream lockfile
+        working-directory: ${{ runner.temp }}/shirone-run
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Isolated Astro compatibility lockfile
+        if: matrix.astro != '7.3.8'
+        working-directory: ${{ runner.temp }}/shirone-run
+        run: |
+          pnpm add --lockfile-only --ignore-scripts --save-exact astro@${{ matrix.astro }}
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Typecheck
+        id: typecheck
+        continue-on-error: true
+        working-directory: ${{ runner.temp }}/shirone-run
+        run: pnpm check
+      - name: Non-mutating lint
+        id: lint
+        continue-on-error: true
+        working-directory: ${{ runner.temp }}/shirone-run
+        run: pnpm exec biome ci ./src
+      - name: Node tests (sequential after typecheck)
+        id: unit
+        continue-on-error: true
+        working-directory: ${{ runner.temp }}/shirone-run
+        run: node --test 'tests/**/*.test.mjs'
+      - name: Original build pipeline
+        id: build
+        continue-on-error: true
+        working-directory: ${{ runner.temp }}/shirone-run
+        run: pnpm build
+      - name: Upstream Playwright tests
+        id: e2e
+        continue-on-error: true
+        timeout-minutes: 10
+        working-directory: ${{ runner.temp }}/shirone-run
+        run: pnpm test
+      - name: Static preview desktop / mobile smoke
+        id: smoke
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
+        working-directory: ${{ runner.temp }}/shirone-run
+        run: |
+          pnpm preview --host 127.0.0.1 --port 4322 > "$RUNNER_TEMP/preview.log" 2>&1 &
+          node p0-smoke.mjs
+      - name: Record outcomes and keep failures visible
+        if: always()
+        env:
+          TYPECHECK: ${{ steps.typecheck.outcome }}
+          LINT: ${{ steps.lint.outcome }}
+          UNIT: ${{ steps.unit.outcome }}
+          BUILD: ${{ steps.build.outcome }}
+          E2E: ${{ steps.e2e.outcome }}
+          SMOKE: ${{ steps.smoke.outcome }}
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib
+          keys = ['TYPECHECK', 'LINT', 'UNIT', 'BUILD', 'E2E', 'SMOKE']
+          result = {k: os.environ[k] for k in keys}
+          pathlib.Path(os.environ['RUNNER_TEMP'], 'outcomes.json').write_text(json.dumps(result, indent=2))
+          print(json.dumps(result, indent=2))
+          raise SystemExit(0 if all(v == 'success' for v in result.values()) else 1)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p0-shirone-astro-${{ matrix.astro }}
+          path: |
+            ${{ runner.temp }}/ALNILAM-ref/manifest.json
+            ${{ runner.temp }}/outcomes.json
+            ${{ runner.temp }}/preview.log
+            ${{ runner.temp }}/shirone-run/p0-evidence/
+            ${{ runner.temp }}/shirone-run/test-results/
+            ${{ runner.temp }}/shirone-run/pnpm-lock.yaml
