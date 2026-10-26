@@ -23,6 +23,29 @@ Earlier issues erroneously described **all P0 tasks as blocked by final G0 Spec 
 | P5 #41 — Optional modules | Sources for gallery/dynamics/music/Bangumi/comments are inventoried; feature-flag rule, privacy and zero-overhead | Existing recorded scope says gallery/moments/music declined for v0.1.3, not automatically mandatory for vNext; which Shirone components actually beat retained ALNILAM Bangumi/comments needs behavior comparison | Component-by-component **keep/adapt/reuse** and optional scope matrix with owner decision when genuinely needed; fixture enabled/disabled & network proof | **Features located, selection/scope unresolved** |
 | P6 #42 — Acceptance/docs | CI, browser, performance, license, docs governance #81, ADS v0.4 #82; Phase exit needs evidence | Final reproducibility/perf budget and exact cross-host workflows, doc schema/ADR ownership, negative fixtures, external Site onboarding, v0.1.3 migration | During earlier Phases establish evidence archive, docs-as-code checks, CI smoke; RC must replay against target integration, not only isolated references | **Quality framework known, full acceptance matrix incomplete** |
 
+## P0 completion report and explicit owner confirmation — mandatory G0-F checkpoint
+
+**The first Phase is a deliberate stop-and-confirm gate.** The agent may autonomously run all safe P0 evidence gathering, reproduce builds, compare sources and prepare draft Plan/Spec/ADR updates. However, it MUST NOT automatically start P1 application migration, mark Spec FROZEN, or claim that M1 is ready when P0 audit activity is completed. Publish one consolidated human-readable **P0 Acceptance / Decision Report**, as a GitHub Issue #36 comment or linked evidence document, and present it to the owner for explicit sign-off.
+
+The report MUST include:
+
+| Section | Required evidence and decision |
+| --- | --- |
+| 1. Verified state | ALNILAM dev/main/v0.1.3 Git SHAs, reference clone URLs/SHAs, clean checkouts, CI/preview links, ADS v0.4 Gitlink and host-tool verification status separately |
+| 2. Existing asset reuse | Per-file **KEEP / ADAPT / WRAP / REPLACE / RETIRE** matrix, including compose/schema/rollback/tests/CI/Pagefind/comments/Bangumi/docs; each proposed removal has a reason and a backward-compatibility test |
+| 3. Shirone baseline | Pristine build, screenshots and key routes/features; gaps against ALNILAM requirements; specific Firefly/KIRARI/Mizuki source additions only where needed |
+| 4. Official Astro | Official APIs vs upstream implementations vs necessary custom adapter; compatibility and identified risks; no unverified latest-version claims |
+| 5. Contract/quality | Independent Site v1, old/new Core, SHA immutability, root + /ALNILAM/ URLs, copyright/license, privacy, test PASS/PARTIAL/FAIL/NOT VERIFIED with artifact URLs |
+| 6. Spec delta | What changed from draft #77, exact unresolved decisions (e.g. design acceptance and deferred optional modules), and ADR links; never silently mark tentative decisions approved |
+| 7. Proposed P1 execution | Small Issue/PR sequence, dependencies, reuse constraints, rollback/verification approach, expected owner actions and real blockers |
+| 8. Gate verdict | **READY / CONDITIONAL / NOT READY**, with explicit remaining risks; mark tested vs inferred items separately |
+
+**Owner decision options**: `Approve P0 / freeze Spec / authorize P1`; `Approve with explicit constraints`; or `Revise P0/Spec first`. Record the owner's actual decision link/date and resulting scoped authorization. No reply, ambiguous praise, or PR review signal must be treated as unconditional P1 authorization. A separate approval is still required to merge/release/deploy where Git governance requires it.
+
+After approval, update the exact Plan/Spec/ADR frozen revision; reconcile real Project #17 Milestone → parent Phase → native sub-issues with readback verification and then start the scoped P1 PRs. If owner asks for changes, keep #36 open and revise the audit/Spec before proceeding. **Do not block P0 itself for this confirmation**; the checkpoint happens *after* the evidence report.
+
+Subsequent phases should publish their Gate summaries, but they need another owner decision only for a substantive scope/architecture change, missing authorization, a real risk acceptance, or release/promotion. Do not interrupt the owner for routine individual code changes already covered by a frozen Spec.
+
 ## Mandatory next sequence (not a request to start full implementation)
 
 1. **Run P0 Evidence Preflight only**: prepare `ALNILAM-ref/` checkouts at pinned SHA and v0.1.3, verify clean detached heads; current and old ALNILAM tests/outputs; pristine Shirone build; source-selection matrix; actual defect and license report. No need to choose a new platform or ask owner for credentials to read public sources.
