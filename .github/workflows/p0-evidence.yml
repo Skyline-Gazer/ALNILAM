@@ -106,12 +106,6 @@ jobs:
           du -sk dist > p0-evidence/output-kib.txt
           cp package.json p0-evidence/package.json
           pnpm list --depth=0 > p0-evidence/dependencies.txt
-      - name: Upstream Playwright tests
-        id: e2e
-        continue-on-error: true
-        timeout-minutes: 10
-        working-directory: ${{ runner.temp }}/shirone-run
-        run: pnpm test
       - name: Static preview desktop / mobile smoke
         id: smoke
         if: steps.build.outcome == 'success'
@@ -127,12 +121,11 @@ jobs:
           LINT: ${{ steps.lint.outcome }}
           UNIT: ${{ steps.unit.outcome }}
           BUILD: ${{ steps.build.outcome }}
-          E2E: ${{ steps.e2e.outcome }}
           SMOKE: ${{ steps.smoke.outcome }}
         run: |
           python3 - <<'PY'
           import json, os, pathlib
-          keys = ['TYPECHECK', 'LINT', 'UNIT', 'BUILD', 'E2E', 'SMOKE']
+          keys = ['TYPECHECK', 'LINT', 'UNIT', 'BUILD', 'SMOKE']
           result = {k: os.environ[k] for k in keys}
           pathlib.Path(os.environ['RUNNER_TEMP'], 'outcomes.json').write_text(json.dumps(result, indent=2))
           print(json.dumps(result, indent=2))
@@ -149,3 +142,47 @@ jobs:
             ${{ runner.temp }}/shirone-run/p0-evidence/
             ${{ runner.temp }}/shirone-run/test-results/
             ${{ runner.temp }}/shirone-run/pnpm-lock.yaml
+
+  upstream-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        astro: [7.3.8, 7.4.2]
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Pin Shirone in a disposable runner directory
+        run: |
+          git init "$RUNNER_TEMP/shirone-e2e"
+          git -C "$RUNNER_TEMP/shirone-e2e" remote add origin https://github.com/LyraVoid/Shirone.git
+          git -C "$RUNNER_TEMP/shirone-e2e" fetch --depth=1 origin 55a84b2322bdfb634a59ca6383bb242e5ce646bf
+          git -C "$RUNNER_TEMP/shirone-e2e" checkout --detach 55a84b2322bdfb634a59ca6383bb242e5ce646bf
+          test "$(git -C "$RUNNER_TEMP/shirone-e2e" rev-parse HEAD)" = "55a84b2322bdfb634a59ca6383bb242e5ce646bf"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.28.2
+          package_json_file: ${{ runner.temp }}/shirone-e2e/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Frozen install
+        working-directory: ${{ runner.temp }}/shirone-e2e
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Isolated compatible lockfile
+        if: matrix.astro != '7.3.8'
+        working-directory: ${{ runner.temp }}/shirone-e2e
+        run: |
+          pnpm add --lockfile-only --ignore-scripts --save-exact astro@${{ matrix.astro }}
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Complete upstream suite shard, original single-worker configuration
+        working-directory: ${{ runner.temp }}/shirone-e2e
+        run: pnpm test --shard=${{ matrix.shard }}/4
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p0-e2e-${{ matrix.astro }}-${{ matrix.shard }}
+          path: ${{ runner.temp }}/shirone-e2e/test-results/
