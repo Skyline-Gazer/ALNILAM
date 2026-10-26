@@ -112,21 +112,27 @@
   },
   "ads84": {
     "sha": "fdae422f89a80a8a45f1031baa14305fba92cf97",
+    "adoption_sha": "pending final PR head",
     "pr": "https://github.com/Skyline-Gazer/ALNILAM/pull/84",
     "verify": "PASS",
-    "run": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40282237864"
+    "run": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40282237864",
+    "ads_release": "v0.4.1",
+    "ads_commit": "3abf6025657a5d716476029cc8cbf5239543210b",
+    "state": "adoption branch updated from dev; final remote verification pending"
   },
   "tooling": {
     "codegraph_operation": "PASS",
-    "codegraph_official_provenance": "BLOCKED",
+    "codegraph_official_provenance": "VERIFIED_SOURCE_FALLBACK: bb11bc1226db30233ac9e66a2670c4b16dfa85fa, metadata 1.1.1, MIT; not stable",
     "codegraph_official_stable": "NOT_FOUND",
-    "full_rtk_edition": "PASS",
-    "rtk_latest_stable": "BLOCKED: installed1.0.1 vs stable1.1.0",
+    "codegraph_host_mcp": "VERIFIED current worktree query",
+    "full_rtk_edition": "PASS: v1.1.0 official full archive, Apache-2.0 + BUSL-1.1",
+    "rtk_latest_stable": "PASS: v1.1.0, published 2026-10-25T18:00:11Z",
+    "rtk_host_hook": "VERIFIED: Codex interception, compression 1347->665 bytes, exit 7/diagnostic preserved",
     "greptile_app": "INSTALLED: selected ALNILAM",
     "greptile_current_sha_gate": "UNVERIFIED",
     "cnb_session": "DETECTED; no ALNILAM target/sandbox found",
     "provider_cutover": "NOT_RUN",
-    "codegraph_final_sync": "One pending edited file persisted after native sync; explicit project-local sync used for recovery, status rechecked."
+    "codegraph_final_sync": "108 files / 1272 nodes; pending 0/0/0; worktreeMismatch null; reindexRecommended false"
   },
   "owner_gate": "NOT_READY; no P1/freeze/merge/deploy authorized",
   "root_ci": {

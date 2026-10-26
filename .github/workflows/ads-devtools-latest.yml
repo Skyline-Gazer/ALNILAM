@@ -1,0 +1,27 @@
+name: ADS consumer devtool latest releases
+
+on:
+  push:
+    branches: [dev, "feat/**", "fix/**", "chore/**"]
+  pull_request:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  latest-stable:
+    name: Check official latest stable CodeGraph and RTK releases
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Query official latest stable releases
+        run: python3 scripts/check-ads-devtools-latest.py
