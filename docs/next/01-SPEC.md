@@ -36,6 +36,10 @@
 | BLOG-06 | MUST | i18n UI, translated content, locale-aware taxonomies and feeds use **one canonical route registry**, including default-locale unprefixed / other-locale prefixed rules. | Route examples and missing-translation behavior specified in 04; zh-CN/en/ja fixtures; only real equivalent hreflang, localized taxonomy pages and Pagefind language separation. |
 | BLOG-07 | MUST (opt-in feature) | Support **llms.txt v2** locale/subpath indexes, source-backed Markdown page views and HTML discovery when enabled. | /llms.txt, /en/llms.txt, article index.md, alternate/describedby, disabled=absent, root and /ALNILAM/ tests; optional full aggregation separately configured. |
 
+### Official-Astro-first implementation criterion
+
+[05-UPSTREAM-ASTRO-AUDIT.md](05-UPSTREAM-ASTRO-AUDIT.md) maps every capability group to actual pinned reference source and Astro 7.4 official APIs. **Before coding, the relevant Issue must identify (i) Astro official function/integration, (ii) existing upstream source+SHA, (iii) the smallest missing ALNILAM-specific contract and why custom code is warranted.** Avoid a duplicate localization router, content system, static RSS/sitemap generator or image engine when official Astro features satisfy the acceptance behavior; protect vendor compatibility and prove any proposed substitutions.
+
 ### Route/SEO/AI content normative annex
 
 [04-ROUTING-SEO-LLMS-V2.md](04-ROUTING-SEO-LLMS-V2.md) is the detailed reviewable contract for **ROUTE-01–07, TAX-01–06, SEARCH-01–03, SEO-01–09 and LLM-01–08**. This annex overrides ambiguous high-level wording in this table. In particular URL basePath, locale prefixes, category/tag IDs, canonical/hreflang, search isolation and llmstxt.org v2 are not optional guesses left to implementers.
