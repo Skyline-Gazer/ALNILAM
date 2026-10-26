@@ -4,7 +4,7 @@
 
 Traceability rule: requirement → selected source/implementation → atomic Issue → PR + changed files → CI/browser evidence → owner decision. Scope changes must revise Spec and keep the former decision/link.
 
-## Proposed work-item traceability (all 35 existing atomic Issues)
+## Proposed work-item traceability (all 36 existing atomic Issues)
 
 | Phase | Candidate Issue | Spec requirement IDs | Planning status |
 | --- | --- | --- | --- |
@@ -16,6 +16,7 @@ Traceability rule: requirement → selected source/implementation → atomic Iss
 | P1 | #48 | PRD-01, PRD-02, PRD-04 | Pending Spec freeze |
 | P1 | #49 | PRD-02, PRD-06, NFR-01 | Pending Spec freeze |
 | P1 | #50 | PRD-04, PRD-05, NFR-05 | Pending Spec freeze |
+| P1 | **#79** | PRD-02, NFR-01, NFR-05; Astro 7.4 official-native feasibility | Pending Spec freeze |
 | P2 | #51 | CS-04, BLOG-01 | Pending Spec freeze |
 | P2 | #52 | CS-01, CS-02 | Pending Spec freeze |
 | P2 | #53 | CS-02, BLOG-05 | Pending Spec freeze |
