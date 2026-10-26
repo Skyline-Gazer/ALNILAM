@@ -44,6 +44,10 @@ Traceability rule: requirement → selected source/implementation → atomic Iss
 | P6 | #75 | NFR-03, NFR-04 | Pending Spec freeze |
 | P6 | #76 | PRD-01, NFR-02, NFR-07 | Pending Spec freeze |
 
+## Official Astro API / upstream source decision
+
+See [05-UPSTREAM-ASTRO-AUDIT.md](05-UPSTREAM-ASTRO-AUDIT.md). All P1/P2/P3/P4 tasks must attach a **native Astro API vs upstream code vs ALNILAM gap** decision. No single external project covers all exact acceptance contracts; static blog features are mostly present, but quality/security/dual-revision Site/governance and source-backed LLM v2 discovery require integration and proof.
+
 ## Issue authoring rules after Spec freeze
 An execution-ready Issue must include:
 1. **Requirement IDs and corresponding acceptance scenario** (S1–S6 where applicable).
