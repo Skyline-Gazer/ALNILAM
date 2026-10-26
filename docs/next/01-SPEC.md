@@ -116,6 +116,10 @@ Given LLM publishing is enabled and an article with code/math/images has locale-
 When the static site is built under /ALNILAM/
 Then an exact path- and locale-aware llms.txt index links to a source-backed index.md, page head alternate/describedby point to real output files, nonpublic content is absent, and disabling the feature removes all outputs/discovery.
 
+## Stage gates and readiness
+
+**Read-only P0 evidence discovery does NOT require the final frozen Spec.** It generates the evidence needed to freeze it: pinned reference source checkouts, existing ALNILAM behavior/tests, pristine Shirone browser baseline, Reuse Decision Record, risk and licensing. Existing P0 Issues may be investigated/propose documentation without implementing a changed production feature or merging releases. **G0-F Spec freeze** then authorizes execution-ready P1–P6 feature tasks after per-Phase Ready review. Full status/gaps: [07-PHASE-READINESS.md](07-PHASE-READINESS.md).
+
 ## Definition of Ready for an implementable Issue
 - [ ] Linked Plan and frozen Spec requirement IDs.
 - [ ] Implementation owner/source selected and conflicts resolved.
