@@ -74,6 +74,10 @@ Discover *real* Project fields before writing anything, reuse instead of duplica
 4. **Agent Ready Queue**: Spec Gate = Frozen, no blocker, acceptance criteria present; prioritize smaller scope, one Issue per PR.
 5. **Verification**: PR review, remote CI/E2E and owner acceptance links; no false "Done".
 
+## Formal P0 → P1 owner confirmation gate
+
+Before promoting P1 #37 or its tasks to Ready, #36 must contain a consolidated **P0 Acceptance / Decision Report** (see [07-PHASE-READINESS.md](07-PHASE-READINESS.md)), links to actual pinned-source/ALNILAM legacy/CI evidence and the **explicit owner decision**. The G0-F status is **Awaiting owner review** after report issuance, not automatically PASS. Once approved, freeze the versioned Spec, then reconcile actual Milestone/Project #17 data. Preserve existing Issue IDs; do not create a duplicate Board or task set. Scope/architecture-changing decisions in later phases require renewed approval, routine already-authorized engineering does not.
+
 ## Evidence-first G0-R / G0-F sequencing
 
 - **G0-R evidence collection (allowed before freeze)**: inspect read-only GitHub state and clone pinned third-party sources in external `ALNILAM-ref/`/ephemeral CI; use existing ALNILAM releases and fixtures, compare actual code and create docs-only evidence. Phase P0's #43/#44/#45/#46/#80 research is **not blocked by frozen Spec**. No destructive migration, private credentials, release merge or source deletion.
