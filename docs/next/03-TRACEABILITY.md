@@ -4,7 +4,7 @@
 
 Traceability rule: requirement → selected source/implementation → atomic Issue → PR + changed files → CI/browser evidence → owner decision. Scope changes must revise Spec and keep the former decision/link.
 
-## Proposed work-item traceability (all 36 existing atomic Issues)
+## Proposed work-item traceability (all 39 active candidate atomic Issues)
 
 | Phase | Candidate Issue | Spec requirement IDs | Planning status |
 | --- | --- | --- | --- |
@@ -12,6 +12,8 @@ Traceability rule: requirement → selected source/implementation → atomic Iss
 | P0 | #44 | PRD-02, PRD-06, MOD-04 | Pending Spec freeze |
 | P0 | #45 | NFR-03 | Pending Spec freeze |
 | P0 | #46 | PRD-01, CS-01, MOD-03, NFR-07 | Pending Spec freeze |
+| P0 | **#80** | **MIG-01, MIG-02; baseline KEEP/ADAPT/WRAP/REPLACE/RETIRE** | Pending Spec freeze |
+| P0 | **#82** | **NFR-09; ADS v0.4 full RTK/CodeGraph dev-only boundary** | Pending Spec freeze |
 | P1 | #47 | PRD-02, NFR-01 | Pending Spec freeze |
 | P1 | #48 | PRD-01, PRD-02, PRD-04 | Pending Spec freeze |
 | P1 | #49 | PRD-02, PRD-06, NFR-01 | Pending Spec freeze |
@@ -43,7 +45,16 @@ Traceability rule: requirement → selected source/implementation → atomic Iss
 | P6 | #73 | BLOG-04, BLOG-06, BLOG-07, NFR-05; ROUTE/TAX/SEARCH/SEO/LLM E2E | Pending Spec freeze |
 | P6 | #74 | NFR-05, NFR-06 | Pending Spec freeze |
 | P6 | #75 | NFR-03, NFR-04 | Pending Spec freeze |
-| P6 | #76 | PRD-01, NFR-02, NFR-07 | Pending Spec freeze |
+| P6 | #76 | PRD-01, NFR-02, NFR-07, NFR-08, NFR-09 | Pending Spec freeze |
+| P6 | **#81** | **NFR-08; current-doc/spec/ADR/README/Site/manual CI governance** | Pending Spec freeze |
+
+## Future Backlog — not counted as an active Phase task
+
+- **#83** `NFR-10`: after Astro incremental builds and parallel prerendering become officially stable, assess and measure. It is NOT part of M1–M3, active Phase Gates or a default production flag. Add native parent/milestone only when stable and the scope is approved.
+
+## Reuse + docs audit
+
+[06-REUSE-DOC-GOVERNANCE.md](06-REUSE-DOC-GOVERNANCE.md) binds all 39 active candidate tasks. Preserve ALNILAM's real source and working tests first, keep Shirone as one frontend base, and require RDR and docs-as-code for destructive changes. ADS v0.4 adoption PR #84 is distinct from planning PR #77.
 
 ## Official Astro API / upstream source decision
 
