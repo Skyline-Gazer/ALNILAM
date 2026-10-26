@@ -74,6 +74,12 @@ Discover *real* Project fields before writing anything, reuse instead of duplica
 4. **Agent Ready Queue**: Spec Gate = Frozen, no blocker, acceptance criteria present; prioritize smaller scope, one Issue per PR.
 5. **Verification**: PR review, remote CI/E2E and owner acceptance links; no false "Done".
 
+## Evidence-first G0-R / G0-F sequencing
+
+- **G0-R evidence collection (allowed before freeze)**: inspect read-only GitHub state and clone pinned third-party sources in external `ALNILAM-ref/`/ephemeral CI; use existing ALNILAM releases and fixtures, compare actual code and create docs-only evidence. Phase P0's #43/#44/#45/#46/#80 research is **not blocked by frozen Spec**. No destructive migration, private credentials, release merge or source deletion.
+- **G0-F Spec freeze (after P0 evidence)**: resolve scope and visual targets against actual baseline, then approve normative Plan/Spec and decide work readiness. Only then reconcile native GitHub Milestones/Project #17 hierarchy as documented below and authorize implementation PRs.
+- See [07-PHASE-READINESS.md](07-PHASE-READINESS.md) for current P0–P6 readiness and missing evidence. Do not mark M1 complete simply because documentation and Issues exist.
+
 ## Safe migration sequence after G0
 
 1. **Read before write**: `gh project view 17 --owner Skyline-Gazer`, `gh project item-list 17 --owner Skyline-Gazer --format json`, `gh project field-list 17 --owner Skyline-Gazer --format json`; inspect native repo milestones, Issue type and actual Issue IDs. This requires an authenticated principal with `project` read/write permission; do not assume token access.
