@@ -88,4 +88,41 @@ For every nontrivial change that removes or rewrites existing ALNILAM code, the 
 - **Future:** #83 upstream build acceleration, no active Milestone and no release gate.
 - Existing P0–P6 tasks remain candidate backlog until G0 Spec freeze. Project #17 membership and native parent/subissue attachment remain **not verified** with the current connected tools.
 
+## H. P0 mandatory reference source snapshot workspace (read-only)
+
+**Decision:** prepare a reproducible, **pinned, reusable reference checkout directory** before feature mapping and importing any third-party code. This is a **P0 prerequisite** (#80, #44), not a greenfield project or a new dependency checked into ALNILAM. The local agent workspace and the ephemeral GitHub Actions workspace share the same path convention.
+
+```text
+<workspace>/
+├── ALNILAM/                    # the only writable application repository, dev feature branches
+└── ALNILAM-ref/                # outside ALNILAM Git tree; do not commit or publish
+    ├── Shirone/                # product baseline; pinned pristine checkout
+    ├── Firefly/                # selective feature source
+    ├── KIRARI/                 # retained platform/LLMs v2/taxonomy engineering reference
+    ├── Mizuki/                 # selective additional source
+    └── ALNILAM-v0.1.3/        # historical accepted-code baseline, read-only
+```
+
+**Pinned manifest (do not float to main/master/latest):**
+
+| Reference | GitHub repository | Exact SHA |
+| --- | --- | --- |
+| Shirone | `LyraVoid/Shirone` | `55a84b2322bdfb634a59ca6383bb242e5ce646bf` |
+| Firefly | `CuteLeaf/Firefly` | `cd920b035b475fe9a6cd3a88afb42cf9440bb8a9` |
+| KIRARI | `markd3ng/KIRARI` | `5700bcdeb965de87a1818d5d9aec6bf8e227523d` |
+| Mizuki | `matsuzaka-yuki/Mizuki` | `14da4262d8aa1d93dc8cff11705f14918ed7369f` |
+| Existing ALNILAM | `Skyline-Gazer/ALNILAM` | release tag `v0.1.3` (resolve and record exact commit on setup) |
+
+**Setup contract:**
+1. Determine ALNILAM checkout root by `git rev-parse --show-toplevel`. Default `ALNILAM_REF_DIR` to its **sibling** `../ALNILAM-ref`; in GitHub Actions prefer ${RUNNER_TEMP}/ALNILAM-ref. Never put references inside a tracked `ref/`, `vendor/`, `src/`, monorepo workspace package, or production artifact directory.
+2. First invocation clones exact repositories and checks out **detached HEAD at the full SHA**. Repeated invocation must verify URL, `HEAD`, and a clean worktree and **reuse the checkout**, not pull newer upstream revisions or reset unknown user changes. Fail loudly on mismatch. Never auto-update reference revisions during an unrelated task.
+3. Provide a machine-checkable `references.lock.json` or equivalent documented manifest containing source URL/SHA/role/license. The manifest can be versioned; **cloned trees and their `.git` directories must never be committed**.
+4. Reference trees are logically **read-only**. Do not edit or run production builds in them. For upstream behavior reproduction, make a separate disposable trial worktree/copy (not the pinned snapshot) and run only reviewed lockfile/install/build steps. Never run unreviewed upstream install hooks with production credentials.
+5. Review source code/API/file-level licenses and images/fonts/music separately before copying. A reference checkout is **not** permission to redistribute artwork or assets.
+6. Before removing an ALNILAM component, compare its historical v0.1.3 checkout, present `dev` code and Shirone equivalent, link exact paths and SHAs in its Reuse Decision Record; preserve existing tests and Site v1 fixtures.
+7. GitHub Actions: use an isolated **P0 source-audit job**, not mandatory full four-repo checkout on every CI run. Repository sources can be fetched only where needed with read-only Git credentials and short-lived runner disk; never need the user's Mac/Homelab or a private ADS token. Retain only **summaries, diff evidence and measured results** as CI artifacts; do not upload full third-party source trees.
+8. Project doc/handoff identifies which reference snapshot was used. Changes to a reference SHA require a separate reviewed decision and refreshed compatibility tests, not an implicit `git pull`.
+
+**Acceptance:** print exact `git remote -v`, `git rev-parse HEAD`, clean worktree for every snapshot, prove reference path is outside `git rev-parse --show-toplevel`, and ensure the ALNILAM working-tree status and Site hash are unchanged. No implementation begins with guessed upstream version provenance. This workflow is required for development preparation, **not** a hard runtime/install prerequisite for using the already shipped ALNILAM blog.
+
 **Release gate**: evidence that actual ALNILAM code was *retained/adapted* and that Shirone's production-ready UI is the starting point, not a greenfield recreation.
