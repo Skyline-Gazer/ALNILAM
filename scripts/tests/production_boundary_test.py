@@ -94,11 +94,13 @@ class ConsumerDevtoolsBoundaryTests(unittest.TestCase):
 
     def test_generated_rtk_and_sqlite_sidecars_fail_on_main(self):
         self.write("RTK.md", "# Command output\n")
+        self.write("AGENTS.md", "@RTK.md\n")
         self.write(".codegraph/codegraph.db-wal", "generated")
         self.write(".codegraph/codegraph.db-shm", "generated")
         result = self.run_guard()
         self.assertEqual(result.returncode, 1)
         self.assertIn("RTK.md", result.stderr)
+        self.assertIn("AGENTS.md", result.stderr)
         self.assertIn("codegraph.db-wal", result.stderr)
         self.assertIn("codegraph.db-shm", result.stderr)
 
@@ -162,10 +164,12 @@ class ConsumerDevtoolsBoundaryTests(unittest.TestCase):
 
     def test_devtools_helper_and_release_workflow_fail_on_main(self):
         self.write("scripts/check-ads-devtools-latest.py", "print('check latest')\\n")
+        self.write("scripts/check-ads-devtools-license.py", "print('check license')\\n")
         self.write(".github/workflows/ads-devtools-latest.yml", "name: latest release check\\n")
         result = self.run_guard()
         self.assertEqual(result.returncode, 1)
         self.assertIn("check-ads-devtools-latest.py", result.stderr)
+        self.assertIn("check-ads-devtools-license.py", result.stderr)
         self.assertIn("ads-devtools-latest.yml", result.stderr)
 
     def test_custom_production_branch_can_be_selected(self):
