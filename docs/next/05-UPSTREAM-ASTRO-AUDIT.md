@@ -14,6 +14,12 @@
 
 Astro's **7.4** release was published 2026-10-15; Astro upgrade docs list **7.4.1** at review time. Initial migration SHOULD preserve the known-compatible upstream Shirone lockfile, followed by **a separate isolated Astro 7.4.x compatibility PR** using official `@astrojs/upgrade` and real regression tests. Do not mix framework upgrade with main-base import or use floating `latest` for production. Docs: https://astro.build/blog/astro-740/, https://docs.astro.build/en/upgrade-astro/.
 
+## Implementation priority correction: preserve functioning ALNILAM before substituting upstream
+
+**Product base = Shirone. Existing codebase/platform = ALNILAM.** Before replacing anything with official Astro functionality or imported KIRARI/Firefly code, audit the **actual ALNILAM implementation** and behavior. Keep/Adapt/Wrap existing working Core/Site builder, CLI, old/new Core rollback, contracts, artifact checks, Pagefind and optional modules; only remove source after equivalence/reproducibility tests, licencing and docs migration. A newer Astro API is an implementation candidate, not automatic permission to rewrite. See [06-REUSE-DOC-GOVERNANCE.md](06-REUSE-DOC-GOVERNANCE.md) and P0 #80.
+
+ADS v0.4 is independently verified (official tag commit `2af17d9e1d816844c49835ae91b784405765ad46`) and upgrades via draft #84; runtime CodeGraph/full RTK proof remains under #82. Experimental Astro incremental/parallel build acceleration is outside releases until official stable state, tracked by future #83.
+
 ## 2. Verified source inventory and official-first decision matrix
 
 Legend: **Existing source** = inspected upstream code/doc exists; **Adapt** = cannot drop into ALNILAM unchanged; **New integration required** = no single reference implements ALNILAM's exact contract. **Official** means Astro or official `@astrojs/*` integration. Neither unit tests nor compilation have yet been executed for this plan.
@@ -59,6 +65,10 @@ Legend: **Existing source** = inspected upstream code/doc exists; **Adapt** = ca
 9. **Build performance:** Astro 7.4 `--timings` for evidence. 7.2 incremental and 7.4 parallel are **experimental**: do not make either a baseline architecture dependency or compromise deterministic external-Site builds.
 10. **Upgrade/publishing governance:** Keep Core/Site SHA/digest/rollback and owner authorization because neither Astro nor any single reference combines ALNILAM's exact versioned contract.
 11. **Test before replacing:** Each official-first substitution is an ADR/comparison with explicit conditions: source evidence, official API version, migration cost, fixture compatibility, browser proof, bundle/perf measurement, and rollback.
+
+## 3A. No automatic experimental build acceleration
+
+Astro incremental build and parallel prerendering are intentionally deferred under #83 until their respective official stable releases. Do not enable experimental flags during Shirone migration or the current release candidate. Preserve current deterministic compose, public CI, output digest and Site isolation, then benchmark if a stable feature truly improves performance.
 
 ## 4. What is not confirmed yet
 
