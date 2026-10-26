@@ -2,8 +2,10 @@ name: P0 evidence
 on:
   pull_request:
     branches: [dev]
+    paths: ['scripts/p0/**', '.github/workflows/p0-evidence.yml']
   push:
     branches: [chore/p0-evidence-preflight]
+    paths: ['scripts/p0/**', '.github/workflows/p0-evidence.yml']
 permissions:
   contents: read
 concurrency:
@@ -96,6 +98,14 @@ jobs:
         continue-on-error: true
         working-directory: ${{ runner.temp }}/shirone-run
         run: pnpm build
+      - name: Output measurements
+        if: steps.build.outcome == 'success'
+        working-directory: ${{ runner.temp }}/shirone-run
+        run: |
+          mkdir -p p0-evidence
+          du -sk dist > p0-evidence/output-kib.txt
+          cp package.json p0-evidence/package.json
+          pnpm list --depth=0 > p0-evidence/dependencies.txt
       - name: Upstream Playwright tests
         id: e2e
         continue-on-error: true

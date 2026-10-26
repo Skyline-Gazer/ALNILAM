@@ -1,0 +1,31 @@
+name: ADS consumer developer-tool boundary
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  production-boundary:
+    name: Reject dev-only CodeGraph/RTK integration on production main
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Check candidate production tree
+        env:
+          PR_BASE: ${{ github.base_ref }}
+          REF_NAME: ${{ github.ref_name }}
+          PRODUCTION_BRANCH: main
+        run: |
+          set -euo pipefail
+          target="${PR_BASE:-$REF_NAME}"
+          python3 scripts/check-ads-devtools-boundary.py --target-branch "$target" --production-branch "$PRODUCTION_BRANCH"
