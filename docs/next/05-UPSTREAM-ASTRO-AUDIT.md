@@ -115,3 +115,10 @@ Authoritative audit and exact evolving receipts: [ALNILAM P0 Acceptance & Decisi
 - CNB Development + GitHub Release Gate is a distinct proposed extension, not ADS v0.4 or the current CNB-authoritative mirror. [ADS Draft #67](https://github.com/Skyline-Gazer/ADS/pull/67) records the incompatibility/forward-only version-title correction. Two-round offline Git mechanics pass; real protection/credentials/review/event-loop acceptance remains NOT_RUN/BLOCKED. Greptile App is installed for ALNILAM, but current-SHA review/required-check and account entitlement remain unverified.
 
 **Owner Gate stays closed:** accept P0 findings, decide G0-F frozen Plan/Spec and authorize an exact P1 scope explicitly. No CI result, Issue state, this document update or proposed ADR grants implementation/release/cutover permission. Optional modules, runtime budgets, legacy aliases, Site schema migration and tool installation still require the recorded relevant decisions.
+
+
+### Final baseline receipt
+
+[Completed run40284029959](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40284029959), P0 harness `bf6a5871aed39d87f0232e8e360c343ff3362566`: both original7.3.8 and isolated7.4.2 have681 Node tests/typecheck/build PASS, production-preview desktop/mobile/theme/real Pagefind/article/back PASS, lint5errors FAIL, and complete upstream E2E **415pass/17fail/48upstream skips out of480**. Motion/sidebar icon, taxonomy icon and visual snapshot failure sets match; no blind snapshot update, skipped test or production upgrade. Compatibility remains PARTIAL. Exact shard names/diagnostics/artifact digests and the NOT_READY Owner verdict stay in #85's report.
+
+The stable guard also detects old main's historical tool-specific ignore rules. #85 repairs only its task candidate by moving local generated-data exclusions to untracked Git info/exclude; the exact exported candidate and built distribution are checked without relaxing the guard. Actual main remains unchanged. Official CodeGraph provenance/RTK freshness and real provider cutover remain separate unresolved gates.
