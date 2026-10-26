@@ -1,5 +1,6 @@
 # ALNILAM Next — Phase readiness and stage-gate audit
 
+> Historical pre-execution readiness snapshot. Current executed P0 results are maintained in [05 audit receipt](05-UPSTREAM-ASTRO-AUDIT.md#p0-g0-r-execution-receipt--2026-10-26) and the linked #85 report; preserve earlier gaps below as history rather than present-tense status.
 > **DRAFT · 2026-10-26.** This is a **readiness assessment**, not implemented functionality, CI acceptance, approval to merge, or an assertion that GitHub Project #17 is synchronized. Product frontend foundation remains **Shirone**. The current **ALNILAM** repository, its Site contract, existing code, CI, tests and docs remain the reused platform. Keep licensed upstream sources in isolated `ALNILAM-ref/` checkouts.
 
 ## Gate correction: evidence collection cannot depend on Spec freeze
