@@ -226,7 +226,7 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError("--evidence and --query are required; version strings alone cannot verify provenance")
         evidence_path = args.evidence.resolve()
         evidence = json.loads(evidence_path.read_text())
-        license_result = load_policy_module("check-license-compliance").inspect(evidence, evidence_path.parent)
+        license_result = load_policy_module("check-ads-devtools-license").inspect(evidence, evidence_path.parent)
         if license_result["errors"]:
             raise ValueError("; ".join(license_result["errors"]))
         for tool, executable in installed.items():

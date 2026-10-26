@@ -2,14 +2,14 @@
 
 ## Current P0 evidence checkpoint — 2026-10-26
 
-See [P0 Acceptance & Decision Report](p0/P0-ACCEPTANCE.md), merged [PR #85](https://github.com/Skyline-Gazer/ALNILAM/pull/85) and ADS v0.4.1 adoption [PR #84](https://github.com/Skyline-Gazer/ALNILAM/pull/84). The report supersedes historical status claims below; all earlier entries remain traceability records. Existing platform source is preserved. Draft #77 remains unmerged. Stop at Owner P0 acceptance, G0-F freeze and explicit P1 scope authorization.
+See [P0 Acceptance & Decision Report](p0/P0-ACCEPTANCE.md), merged [PR #85](https://github.com/Skyline-Gazer/ALNILAM/pull/85) (`b36b61fff8377694f209fcc7488f7457251a2ce9`) and merged ADS v0.4.1 adoption [PR #84](https://github.com/Skyline-Gazer/ALNILAM/pull/84) (`2555c4658599598bfed604fbf0d9b525d24c3ded`; post-merge dev CI [40321449502](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40321449502) PASS). The report supersedes historical status claims below; all earlier entries remain traceability records. Existing platform source is preserved. Draft #77 remains unmerged. Stop at Owner P0 acceptance, G0-F freeze and explicit P1 scope authorization.
 
 ### ADS v0.4.1 consumer adoption — 2026-10-26
 
 - `.ads` is pinned to release commit `3abf6025657a5d716476029cc8cbf5239543210b` (v0.4.1); annotated tag object is `e38d01ff176448a13180afe2419c1c9c94a6ab43` and must not be used as the gitlink. The submodule remains private; public CI checks only the gitlink.
 - CodeGraph uses the owner-approved official source fallback `bb11bc1226db30233ac9e66a2670c4b16dfa85fa` (metadata 1.1.1, MIT) because official npm `latest` returns 404 and GitHub Releases is empty. It is **not** a published stable release. The previous unrelated `@colbymchenry/codegraph` installation is not accepted as official provenance.
 - Full RTK is official v1.1.0, with Apache-2.0 CLI and BUSL-1.1 engine licenses. The previous v1.0.1 remains recoverable outside the repository. Native Codex hook interception, output compression, failure exit code and diagnostic preservation were exercised.
-- Development-only integration consists of `.ads-devtools.json`, `.codex/hooks.json`, `RTK.md`, the three consumer policy helpers, the latest-release workflow and an optional project-local CodeGraph index. Generated indexes/caches stay untracked; `.git/info/exclude` supplies local exclusions rather than tracked production ignore rules.
+- Development-only integration consists of `.ads-devtools.json`, `.codex/hooks.json`, `RTK.md`, the ADS devtool policy helpers, the latest-release workflow and an optional project-local CodeGraph index. Generated indexes/caches stay untracked; `.git/info/exclude` supplies local exclusions rather than tracked production ignore rules.
 - The generic production-boundary guard may remain on production branches. It rejects the manifest, host integration, generated SQLite sidecars, `.codegraph-*` directories, tool-specific workflows/helpers, escaping symlinks and contaminated build outputs.
 - Local preflight is `CLI_PASS_HOST_UNVERIFIED` (exit 3); native Host MCP query and RTK interception were verified separately. See [P0 report section E](p0/P0-ACCEPTANCE.md#e-ads-governance) for evidence boundaries and unresolved product risks.
 
