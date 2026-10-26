@@ -30,7 +30,7 @@ FORBIDDEN_DIRS = {".ads-devtools", ".codegraph", ".rtk"}
 HOST_CONFIG_ROOTS = {".claude", ".codex", ".omp", ".opencode", ".cursor", ".agents"}
 AGENT_INSTRUCTIONS = {"AGENTS.md", "RTK.md", "CLAUDE.md", "GEMINI.md", "CODEX.md", ".github/copilot-instructions.md"}
 AGENT_TOOL_INSTRUCTION = re.compile(
-    r"(?i)(?:\buse\s+rtk\s+(?:instead|for|to)\b|\brtk\s+(?:git|grep|find|ls|read|test|cargo|npm|pnpm|init)\b|"
+    r"(?im)(?:\buse\s+rtk\s+(?:instead|for|to)\b|\brtk\s+(?:git|grep|find|ls|read|test|cargo|npm|pnpm|init)\b|"
     r"\bcodegraph\s+(?:serve\s+--mcp|init|sync|status)\b|^\s*@RTK\.md\s*$)"
 )
 TOOL_MARKER = re.compile(r"(?i)\b(?:codegraph|rtk(?:-oss)?)\b")
