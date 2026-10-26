@@ -123,6 +123,8 @@ For every nontrivial change that removes or rewrites existing ALNILAM code, the 
 7. GitHub Actions: use an isolated **P0 source-audit job**, not mandatory full four-repo checkout on every CI run. Repository sources can be fetched only where needed with read-only Git credentials and short-lived runner disk; never need the user's Mac/Homelab or a private ADS token. Retain only **summaries, diff evidence and measured results** as CI artifacts; do not upload full third-party source trees.
 8. Project doc/handoff identifies which reference snapshot was used. Changes to a reference SHA require a separate reviewed decision and refreshed compatibility tests, not an implicit `git pull`.
 
+**Gate sequencing:** this pinned-reference preparation and non-destructive source inspection are **G0-R pre-freeze P0 discovery work**. They are deliberately allowed before owner freezes the final Spec; the read-only evidence enables the freeze. Only full application migration and release work stay blocked pending G0-F. See [07-PHASE-READINESS.md](07-PHASE-READINESS.md).
+
 **Acceptance:** print exact `git remote -v`, `git rev-parse HEAD`, clean worktree for every snapshot, prove reference path is outside `git rev-parse --show-toplevel`, and ensure the ALNILAM working-tree status and Site hash are unchanged. No implementation begins with guessed upstream version provenance. This workflow is required for development preparation, **not** a hard runtime/install prerequisite for using the already shipped ALNILAM blog.
 
 **Release gate**: evidence that actual ALNILAM code was *retained/adapted* and that Shirone's production-ready UI is the starting point, not a greenfield recreation.
