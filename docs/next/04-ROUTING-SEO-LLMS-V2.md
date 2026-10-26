@@ -27,7 +27,7 @@
 
 Do not generate optional locale pages whose content does not exist merely to satisfy a symmetric URL table.
 
-**ROUTE-03 · Single route builder.** Site has one validated absolute `site.url` and explicit normalized `basePath` (root `/`, Pages `/ALNILAM/`). Resolve `absoluteUrl(routeId, locale, params)` and `internalHref(...)` from one shared route registry. A subpath must appear **exactly once**. Never `new URL('/posts/...', site.url)` when `site.url` includes a base path, because a leading slash discards that path. Prevent traversal, double encoding, locale duplication, unsupported language, URL-parameter collisions and invalid/duplicate slug. External HTTP(S), anchors, mailto and tel are outside route rewriting.
+**ROUTE-03 · Astro-first route composition.** Set Astro's native `site`, `base`, `i18n.defaultLocale` and `i18n.routing.prefixDefaultLocale`. Use `astro:i18n` `getRelativeLocaleUrl` / `getAbsoluteLocaleUrl` and native Astro file routing / `getStaticPaths` as the primary locale/base URL mechanism. A **thin ALNILAM entity resolver** may map source `translationKey`, localized slug and taxonomy ID to published pages; it MUST delegate standard locale path/base behavior to Astro and MUST NOT replace the entire i18n router or create a second localization system. Site has one validated absolute `site.url` and explicit normalized `basePath` (root `/`, Pages `/ALNILAM/`). Resolve `absoluteUrl(routeId, locale, params)` and `internalHref(...)` from one shared route registry. A subpath must appear **exactly once**. Never `new URL('/posts/...', site.url)` when `site.url` includes a base path, because a leading slash discards that path. Prevent traversal, double encoding, locale duplication, unsupported language, URL-parameter collisions and invalid/duplicate slug. External HTTP(S), anchors, mailto and tel are outside route rewriting.
 
 **ROUTE-04 · Stable content identity.** Each article has a stable `translationKey` (not a translated title) linking only genuine translated articles. Its `slug` may differ by locale and MUST be mapped explicitly to the right canonical route. Untranslated articles do not become fictional translations through template/UI fallback. All published locale URLs require actual locale-specific article content. Same rule applies to translated static pages.
 
@@ -72,7 +72,7 @@ tags:
 
 ## C. Search and language isolation (SEARCH-01–SEARCH-03)
 
-**SEARCH-01.** One Pagefind build can produce separate indexes per language by inspecting each page's `<html lang="...">`; use this official behavior rather than duplicating full search engines. `zh-CN`, `en`, `ja` need language-specific URLs, UI labels, and tests with same-name fixtures. Default search only covers current language; a global/all-languages search is a separate opt-in UX decision.
+**SEARCH-01.** Use Pagefind's **official multilingual indexing behavior**, which distinguishes indices from `<html lang>` and selects the language of the current page; do not write a second search indexer. One Pagefind build can produce separate indexes per language by inspecting each page's `<html lang="...">`; use this official behavior rather than duplicating full search engines. `zh-CN`, `en`, `ja` need language-specific URLs, UI labels, and tests with same-name fixtures. Default search only covers current language; a global/all-languages search is a separate opt-in UX decision.
 
 **SEARCH-02.** Index only published, indexable article/content routes. Exclude search results, draft, private/unlisted, alias, duplicate pagination shells and generated Markdown mirrors. A taxonomy page may be discoverable in conventional HTML sitemap but should not be returned as an article result unless explicitly desired. Verify manual segmented Chinese query and English case in browser.
 
@@ -88,9 +88,9 @@ tags:
 
 **SEO-04 · Structured data.** WebSite on site root; BlogPosting/Article on post pages with `headline`, `mainEntityOfPage`, `datePublished`, real `dateModified`, `inLanguage`, author and licensed image if available; BreadcrumbList on hierarchical pages; CollectionPage on appropriate taxonomy archives if supported and meaningful. No fictional rating/review schema or duplicated site metadata.
 
-**SEO-05 · Sitemap.** Include indexable public canonicals only, not drafts, aliases, Markdown mirrors, empty taxonomy pages, noindex/search UI result pages or soft redirects. Use meaningful `lastmod` from actual content updates. Build-time artifacts link to canonical origin/base. Output can use one sitemap with locale URLs; sitemap index is optional at scale.
+**SEO-05 · Sitemap.** Use the official `@astrojs/sitemap` integration with `filter()` / `serialize()` and its `i18n` option where verified correct. For **partial translations**, do not assume that enabling its i18n option produces only real reciprocal equivalence groups; generate and verify alternatives against the actual published route inventory before accepting emitted XML. Include indexable public canonicals only, not drafts, aliases, Markdown mirrors, empty taxonomy pages, noindex/search UI result pages or soft redirects. Use meaningful `lastmod` from actual content updates. Build-time artifacts link to canonical origin/base. Output can use one sitemap with locale URLs; sitemap index is optional at scale.
 
-**SEO-06 · Feeds.** Generate one RSS/Atom feed per enabled locale only when appropriate. Each feed contains that locale's posts with absolute canonical item URLs, stable GUID, proper content/date escaping and self link. Feed discovery from pages points to the matching locale file. Cross-language links belong in equivalent HTML pages, not by mixing languages in a single feed.
+**SEO-06 · Feeds.** Use the official `@astrojs/rss` helper for generation and escaping, supplying locale-scoped content, absolute canonical URLs and the correct `Astro.site` context. Do not hand-roll XML escaping unless a documented official integration limitation is demonstrated. Generate one RSS/Atom feed per enabled locale only when appropriate. Each feed contains that locale's posts with absolute canonical item URLs, stable GUID, proper content/date escaping and self link. Feed discovery from pages points to the matching locale file. Cross-language links belong in equivalent HTML pages, not by mixing languages in a single feed.
 
 **SEO-07 · robots policy.** Root-domain `/robots.txt` is a host-level protocol; when hosted at a GitHub Pages project subpath `/ALNILAM/`, a file at `/ALNILAM/robots.txt` is NOT automatically the origin-wide robots file. Do not claim subpath robots governs the whole host; rely on meta `noindex` and sitemap inclusion for per-page policy, and document the hosting limitation. `robots.txt` is not access control for sensitive content.
 
@@ -122,6 +122,17 @@ Do not advertise nonexistent Markdown views or stale locale indexes.
 **LLM-07 · Index coherency.** All links inside llms indexes, Markdown source views and HTML discovery are absolute/canonical, correct for `/ALNILAM/` or root deployment, and refer only to existing generated files. Under a multilingual Site, default and locale-specific indexes cover the correct language while the root may contain a link to each locale index.
 
 **LLM-08 · Tests.** Fixture-tests enabled/disabled, two+ locales, nested content slug, missing translation, draft, category/tag pages (no fake article views), code+math+Mermaid preservation, MDX fallback, relative images, rooted/external links, and repeat-build output determinism. A head discovery crawler verifies every published alternate/describedby reference resolves. LLMS v2 does not change Google indexing guarantees.
+
+## E2. Framework API priority and boundaries
+
+- Default language prefix and URL helpers: **Astro `i18n` and `astro:i18n`**, not homemade `withLangPrefix` clones. Use a thin content-entity resolver only for translated source identity and cross-locale equivalence.
+- Collections/taxonomy input: **Astro Content Layer `glob()` / `file()` and Zod validation**, including loading from external Site directories. Do not copy files to Core merely because source files live outside `src/content`; stage derived assets only when Astro pipeline requires it, preserving source Site immutability.
+- Pagination: **native `paginate()`** (Astro 7.1 introduced `format()`) for posts and locale category/tag listings. Product code owns filtering and metadata, not another pagination generator.
+- Search: **Pagefind's official multilingual support** (not Astro built-in); browser-test Chinese/Japanese segmentation and locale select.
+- Sitemap: official **`@astrojs/sitemap`** and validated partial-translation alternate lists; RSS: official **`@astrojs/rss`**.
+- LLMs v2: **not built into Astro**; adapt source-backed KIRARI P6/#101 with Astro static endpoints and source/AST, not Shirone/Firefly's basic aggregation, without adding a separate route framework.
+- URL migration: Astro 7.4 static custom redirects are experimental; a Pages project may only support HTML fallback rather than true 301. Never advertise HTML fallback as HTTP redirect.
+- The implementation decision matrix and official docs are in [05-UPSTREAM-ASTRO-AUDIT.md](05-UPSTREAM-ASTRO-AUDIT.md). An upstream feature's presence is not proof of direct compatibility.
 
 ## F. Implementation ownership and review checkpoints
 
