@@ -128,4 +128,4 @@ Then an exact path- and locale-aware llms.txt index links to a source-backed ind
 3. Which user-level Site customization interfaces are vNext MUST vs later SHOULD, after comparing actual upstream code.
 4. Which optional third-party providers require a live preview rather than a deterministic fixture.
 
-**Status discipline:** all requirements are targets until code and verification evidence exist. The 35 existing task Issues remain candidate backlog until this Spec is reviewed and frozen.
+**Status discipline:** all requirements are targets until code and verification evidence exist. The 36 existing task Issues remain candidate backlog until this Spec is reviewed and frozen.
