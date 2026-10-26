@@ -61,9 +61,22 @@ test("root and nested-base pages navigate, theme, and search", async ({ browser 
       await firstPost.click();
       await expect(page.locator(".article-view")).toBeVisible();
       await expect(page.locator("h1")).toHaveCount(1);
+      await expect(page.locator(".prose-post ol").first()).toHaveCSS("list-style-type", "decimal");
+      await page.locator(".prose-post").evaluate((root) => {
+        root.insertAdjacentHTML(
+          "beforeend",
+          "<table><thead><tr><th>Column</th></tr></thead><tbody><tr><td>Value</td></tr></tbody></table>",
+        );
+      });
+      await expect(page.locator(".prose-post th").first()).toHaveCSS("border-top-style", "solid");
       await page.screenshot({ path: `browser-results/${name}-article-dark.png`, fullPage: true });
       await selectTheme(page, "light");
       await page.screenshot({ path: `browser-results/${name}-article-light.png`, fullPage: true });
+      await page.getByRole("link", { name: "文章" }).first().click();
+      await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+      await expect(page.getByRole("radio", { name: "浅色" })).toBeChecked();
+      await page.goBack({ waitUntil: "networkidle" });
+      await expect(page.locator(".article-view")).toBeVisible();
       await page.getByRole("link", { name: "← 返回全部文章" }).click();
       await expect(page.locator(".post-list")).toBeVisible();
       await page.keyboard.press("Home");
@@ -79,6 +92,9 @@ test("root and nested-base pages navigate, theme, and search", async ({ browser 
       await expect(search.locator("a[href]").first()).toBeVisible();
       const resultHref = await search.locator("a[href]").first().getAttribute("href");
       expect(resultHref?.startsWith(`${basePath(origin)}/`)).toBeTruthy();
+      await search.locator("a[href]").first().click();
+      await expect(page.locator("h1")).toHaveCount(1);
+      await expect(page).toHaveURL(new URL(resultHref!, origin).href);
       results.push({ name, href, resultHref, errors, status: "PASS" });
     } catch (error) {
       await page.screenshot({ path: `browser-results/${name}-failure.png`, fullPage: true });

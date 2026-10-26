@@ -49,11 +49,11 @@ const canonicalPage = page.currentPage === 1 ? "/posts/" : `/posts/${page.curren
   {(page.url.prev || page.url.next) && (
     <nav class="pagination" aria-label="分页">
       <span>
-        {page.url.prev && <a href={withBase(page.url.prev)} rel="prev" class="pill-link">← 上一页</a>}
+        {page.url.prev && <a href={page.url.prev} rel="prev" class="pill-link">← 上一页</a>}
       </span>
       <span>{page.currentPage} / {page.lastPage}</span>
       <span>
-        {page.url.next && <a href={withBase(page.url.next)} rel="next" class="pill-link">下一页 →</a>}
+        {page.url.next && <a href={page.url.next} rel="next" class="pill-link">下一页 →</a>}
       </span>
     </nav>
   )}

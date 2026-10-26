@@ -53,6 +53,8 @@ Local implementation evidence:
 - Both generated roots contain zero `bangumi`/`opt` route output for the default fixture.
 - `pnpm browser`: root and `/ALNILAM/` desktop flows, 390px mobile flow, dark/light themes, keyboard order, Pagefind search, article return and card geometry PASS.
 - Browser network journal confirms nested Pagefind requests use `/ALNILAM/pagefind/` (not origin-root `/pagefind/`).
+- Theme choice persists across navigation and is applied to the optional Giscus comments surface; article list markers and table layout have dedicated regression coverage.
+- A temporary sixth post is composed under `/ALNILAM/` in the contract suite to verify pagination links contain exactly one deploy-base prefix.
 
 Screenshots are generated in ignored `browser-results/` and uploaded by CI as `browser-evidence`; they are intentionally not committed.
 
@@ -60,7 +62,7 @@ Remote CI, PR and final implementation SHA are recorded in the PR and phase chec
 
 ## Rollback
 
-The Site is unchanged. To return to the released Editorial presentation, restore the six page imports from `@alnilam/theme-shirone/*` to `@alnilam/theme-editorial/*` and rebuild the same Site revision. The `themes/editorial` package and existing Core/Site contract remain present, so this does not require content migration or a Site write.
+The Site is unchanged. To return to the released Editorial presentation, restore the prior page markup as well as the six page imports from `@alnilam/theme-shirone/*` to `@alnilam/theme-editorial/*`, then rebuild the same Site revision. Restoring imports alone is insufficient because the routes now use Shirone-specific layout classes. The simplest source rollback is to revert this slice's page commits while retaining the later fixes; `themes/editorial` and the existing Core/Site contract remain present, so this does not require content migration or a Site write.
 
 For an operational rollback, check out the previous Core revision and compose the same unchanged Site into a separate output directory before swapping the served artifact.
 

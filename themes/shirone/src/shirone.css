@@ -794,6 +794,18 @@ main {
   padding-left: 1.45em;
 }
 
+.prose-post ul {
+  list-style: disc;
+}
+
+.prose-post ol {
+  list-style: decimal;
+}
+
+.prose-post li {
+  margin: 0.4em 0;
+}
+
 .prose-post a {
   color: var(--primary);
   text-decoration: underline;
@@ -837,6 +849,26 @@ main {
   max-width: 100%;
   height: auto;
   border-radius: var(--shape-m);
+}
+
+.prose-post table {
+  width: 100%;
+  margin: 1.5em 0;
+  border-collapse: collapse;
+  font-size: 0.94em;
+}
+
+.prose-post th,
+.prose-post td {
+  padding: 0.55em 0.8em;
+  border: 1px solid var(--outline-variant);
+  text-align: left;
+}
+
+.prose-post th {
+  color: var(--on-surface);
+  background: var(--surface-container);
+  font-weight: 650;
 }
 
 .article-return {
