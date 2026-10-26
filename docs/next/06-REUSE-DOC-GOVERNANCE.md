@@ -1,0 +1,91 @@
+# ALNILAM Next — Reuse-first migration and document governance
+
+> **DRAFT normative annex** · 2026-10-26 · applies to the Plan/Spec review in PR #77. There is exactly one new product foundation: **Shirone**. Existing functional ALNILAM infrastructure **must be reused unless an evidence-backed incompatibility requires adaptation or retirement**. Neither Shirone migration nor ADS v0.4 licenses a rewrite from scratch. Current release v0.1.3 remains unchanged until a separately approved release.
+
+## A. Architecture source of truth
+
+1. **Shirone (LyraVoid/Shirone)** is the sole baseline for pages/layout/main frontend components and bundled working blog capabilities. Establish its pinned upstream unmodified baseline before integrations.
+2. **ALNILAM existing repository (Skyline-Gazer/ALNILAM)** is the retained platform/codebase of record. Keep its Git history, release tags, Project #17, protected dev/main workflow, immutable Site builder/validation, test corpus and release documentation. **Migrate incrementally inside the existing monorepo**, not `git init`, mass-file deletion, a new repository or a wholesale switch to Shirone's own Git history.
+3. **KIRARI** is the proven source for specific missing engineering mechanisms (Site v2 schema, i18n taxonomy pages, LLMs v2) only if ALNILAM's existing mechanism cannot satisfy the contract.
+4. **Firefly/Mizuki** are sources for differentiated UX/functions only; never merge whole-theme routing/CSS/JS/component systems as second or third main application.
+5. **Astro official APIs first** where a stable API already solves standard work. Official framework primitives supplement the Shirone product base; they do not authorize rewriting the entire existing ALNILAM platform.
+6. **Preserve behavior by default**. Source deletion requires independent functional equivalence/feature regression tests, a smaller/more-maintainable replacement, a file-by-file diff and an explicit PR rationale/rollback.
+
+## B. Verified existing ALNILAM areas (inventory seed, not completed source audit)
+
+Verified from `dev` tree at `5fd74cea8197dc91d8391e7ee677eacbc32d3234`. This is not proof every piece already works against Shirone. Audit and run tests before selection.
+
+| Existing area | File/path evidence | Default migration choice and rationale |
+| --- | --- | --- |
+| Immutable external Site composition | `scripts/compose.mjs` | **KEEP/ADAPT**: Site hash before/after, staged output and provenance; do not substitute Shirone sync blindly. |
+| Site schema v1 and config validation | `scripts/site-contract.mjs`, `packages/core/src/index.mjs` | **KEEP/ADAPT**: existing frozen Site v1 consumer compatibility, use stable Astro Content Layer loaders as implementation enhancement. |
+| Two-version upgrade/rollback | `scripts/upgrade-check.mjs` | **KEEP** automated old/new Core same-Site evidence. |
+| Artifact budgets/SEO & input verification | `scripts/artifact-check.mjs` | **KEEP/EXTEND** with multilingual taxonomy, llms v2 and nested-path crawl. |
+| Existing contract tests | `scripts/tests/contract.test.mjs` | **KEEP** and expand; proof of migration is old+new fixtures passing. |
+| Search + comments | `packages/ui/src/Search.svelte`, `packages/ui/src/Comments.svelte` | **COMPARE/ADAPT** against Shirone's existing UI modules; reuse tested Pagefind/feature gate behavior instead of recreating search and comments. Exactly one production implementation each. |
+| Build-time Bangumi | `apps/web/src/lib/bangumi.mjs`, `apps/web/src/pages/opt/bangumi.astro` | **COMPARE/REUSE** verified static data behavior, provider fallback, optional route gate and tests; integrate with Shirone UI rather than duplicate provider fetches. |
+| Existing i18n and publishing routes | `apps/web/src/lib/i18n.mjs`, `apps/web/src/pages/posts/`, `tags/`, `rss.xml.js`, `sitemap.xml.js`, `robots.txt.js` | **ADAPT** into Astro-native i18n/official RSS/sitemap with regression evidence; retain behavior and compatibility even if file-level implementation is replaced. |
+| Existing Editorial UI/PostCard | `themes/editorial/src/PostCard.astro`, `BaseLayout.astro`, `editorial.css` | **VISUAL REFERENCE/SELECTIVE REUSE** for agreed Fuwari single-row layout and branding. Do not run Editorial as competing full frontend after Shirone migration; copy proven behavior then only retire redundant code with tests. |
+| Existing CI / deploy | `.github/workflows/ci.yml`, `.github/workflows/deploy.yml` | **KEEP** and increment. Production deploy remains gated; do not replace working Actions with a new platform without benefit. |
+| Existing Site fixtures/config/documentation | `sites/demo/`, `docs/SITE_ONBOARDING.md`, `docs/ARCHITECTURE.md`, `docs/MAINTAINERS.md` | **KEEP** as regression fixtures and historical contract evidence. No content deletion; version/migrate documents to match new architecture. |
+| ADS Git submodule | `.ads`, `.gitmodules`, root `AGENTS.md` | Upgrade exact pin via separate PR #84; require ADS v0.4 consumer preflight and dev-only tooling boundary. Preserve public CI no-private-ADS dependency. |
+| Release, license, history | `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, `CHANGELOG.md`, tags | **KEEP/UPDATE** attribution as code origins change; never reset repository history or relicense current ALNILAM simply because ADS or Shirone license differs. |
+
+## C. Required Reuse Decision Record (RDR)
+
+For every nontrivial change that removes or rewrites existing ALNILAM code, the implementing Issue/PR MUST include:
+
+- **Legacy area / exact tree SHA / previous behavior** and linked contract test(s).
+- **Shirone baseline equivalent** (exact upstream SHA/path); Firefly/KIRARI/Mizuki only if genuine missing behavior.
+- **Astro official API feasibility**.
+- **Decision**: `KEEP`, `ADAPT`, `WRAP`, `REPLACE`, `RETIRE`; default is `KEEP/ADAPT` without contradictory evidence.
+- **Reason**: incompatible API, duplication, security, performance, maintainability or feature gap; *"cleaner to rewrite"* alone is insufficient.
+- **Proof**: old scenario failing/passing in migration, Site v1 compatibility, output comparison and browser results as relevant.
+- **Docs and rollback**: new owners, migration notes, restore source path/commit, and when the old path may be removed.
+
+**Avoid bulk import/rewrite PRs without stepwise diff review.** Preserve old tests in a compatibility suite until equivalent or stronger tests pass. Ideally PRs target a single component/contract, not a mass delete. Never use code deletion as progress metric.
+
+## D. Document governance — single source of truth, owners and timing
+
+| Artifact | Authority / upkeep | Required update trigger |
+| --- | --- | --- |
+| `docs/next/00-PLAN.md` | Owner-approved product scope, feature choice, risks; unapproved copies always labelled DRAFT | Product direction/scope changes; no implementation status claims |
+| `docs/next/01-SPEC.md` and normative annexes | Testable requirements, routes, data contract, security/privacy/performance, DoR/DoD | Before any task enters Ready; change requires recorded review and affected Issue links |
+| ADR `docs/adr/NNNN-*.md` (planned) | One decision, considered options, decision/justification, consequence, reversal trigger, source refs | Framework/API/source selection, Site Schema compatibility, design or visibility policy changes |
+| `AGENTS.md` and pinned ADS | Binding agent governance, ADS release and CodeGraph/full RTK consumer dev-only rules | ADS pin update, tooling changes, Git governance revision |
+| `README.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md` | **Currently shipped** capabilities vs proposed vNext; architecture boundaries with actual files | PR that changes product behavior or build interfaces |
+| `docs/SITE_ONBOARDING.md` + Site Schema docs | How independently owned Site builds/validates/migrates/rolls back with exact tested CLI | Schema/CLI/config or content layout changes |
+| `docs/ROADMAP.md`, `docs/PROJECT_TRACKING.md` | Actual Milestone/Phase/Task status; Project links/IDs, blocked and verification evidence | Issue/Phase state changes, release planning, reconciliation |
+| `docs/HANDOFF.md`, maintenance/release docs | Current real HEAD/PR/tests, next steps, owner inputs, not aspirational 17/17 PASS | Every handoff, migration Phase Gate, CI/release strategy update |
+| `CHANGELOG.md`, `NOTICE`, `THIRD_PARTY_NOTICES.md` | Released deltas and per-file upstream legal attribution | Source code/assets copied, license changes, release candidate |
+| CI evidence index (planned) | Link actual PR, SHA, GitHub Actions run IDs, browser screenshots, root/base/site fixture results | Every Task/Phase gate; no screenshot/success claims without artifact |
+
+### Governance rules
+
+1. **Version and ownership labels** on docs: `DRAFT`, `FROZEN SPEC`, `IMPLEMENTED`, `HISTORICAL`; distinguish which Git SHA/release a claim refers to. Do not silently replace documented v0.1.3 reality with unshipped vNext.
+2. **Docs-as-code per PR**: implementation PRs update relevant `PRODUCT/ARCHITECTURE/SITE_ONBOARDING/README/CHANGELOG/NOTICE` when they change behavior. A separate docs-only deferred PR is not a substitute for accuracy.
+3. **Review gate for Spec/ADR change**: note original requirement, scope impact, compatible Site version, alternatives, owner decision date/link. Phase acceptance checks requirement IDs against actual browser and CI evidence.
+4. **History preservation**: archive or label obsolete docs as historical and link replacements; do not delete older decisions and evidence without a migration reference.
+5. **Automated integrity**: relative links, broken refs, frontmatter validity, code examples, feature matrix contradictions, ADS tag/gitlink mismatch and package/version claims should have CI checks where verifiable. Avoid huge new documentation toolchains.
+6. **No duplicate trackers**: GitHub Project #17 remains tracker, native Milestones/Phase parent/subissues; Markdown is source documentation, not an invented parallel status database.
+7. **Before Agent execution**: all required accounts, external Site credentials, service provider config and permissions are collected **up front**; optional provider gaps cannot block independent feature work. Never ask for private access just to validate public CI.
+
+## E. ADS v0.4 adoption: exact state and boundaries
+
+- Verified upstream release [ADS v0.4](https://github.com/Skyline-Gazer/ADS/releases/tag/v0.4), published 2026-10-25, tag-object `c76d74f479e3db81e0e031cf1a306bec0c86b905`, **commit SHA `2af17d9e1d816844c49835ae91b784405765ad46`**.
+- Existing ALNILAM `dev` Gitlink remained `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac` (v0.3) at this review; separate **draft PR #84** pins the new commit and updates AGENTS/README.
+- ADS v0.4 strengthens developer-tool governance: **CodeGraph and official full RTK**, latest stable channel when officially published, controlled CodeGraph source fallback only with explicit authorization, dev-only tool artifacts/config and production guard, remote-first verification. It remains a standards submodule: it does **not** replace Shirone and does **not** supply a new ALNILAM build engine.
+- ALNILAM public CI MUST NOT recursively fetch the private ADS repo. Verify `.ads` gitlink and root policies against pinned external release metadata. ADS v0.4 MIT license does not automatically relicense ALNILAM's Apache-2.0 work.
+- **Partial adoption ≠ PASS**: pinned Gitlink and updated docs are not proof CodeGraph MCP, full RTK active hooks or production-boundary guards have been verified in the actual development environment. Issue #82 retains these checks.
+
+## F. Deferred upstream build optimizations
+
+**Issue #83 (Future/WAITING_UPSTREAM_STABLE)**: Astro experimental incremental build and parallel prerendering are **not** in any active M1/M2/M3 requirement. No speculative optimizations now. After the respective features are officially stable and compatible with Shirone ALNILAM, run representative build/time/memory/reproducibility tests, Site hash isolation, cache invalidation and rollback. Merge only when performance improves without correctness regressions. Never introduce this future task as a blocker to P6.
+
+## G. New task mapping
+- **P0 parent #36:** new #80 existing code inventory/reuse-first hard gate, new #82 ADS v0.4 consumer adoption.
+- **P6 parent #42:** new #81 docs governance, exercised from P0 onward.
+- **Future:** #83 upstream build acceleration, no active Milestone and no release gate.
+- Existing P0–P6 tasks remain candidate backlog until G0 Spec freeze. Project #17 membership and native parent/subissue attachment remain **not verified** with the current connected tools.
+
+**Release gate**: evidence that actual ALNILAM code was *retained/adapted* and that Shirone's production-ready UI is the starting point, not a greenfield recreation.
