@@ -10,7 +10,7 @@
 | Firefly `CuteLeaf/Firefly` | `cd920b035b475fe9a6cd3a88afb42cf9440bb8a9` | `7.3.2` | Layout and candidate modules |
 | KIRARI `markd3ng/KIRARI` | `5700bcdeb965de87a1818d5d9aec6bf8e227523d` | `7.3.5` | Provenance, external Site, LLM v2 and locale taxonomy |
 | Mizuki `matsuzaka-yuki/Mizuki` | `14da4262d8aa1d93dc8cff11705f14918ed7369f` | `7.1.3` | Selective fallback source |
-| ALNILAM `dev` at audit | `5fd74cea8197dc91d8391e7ee677eacbc32d3234` | `7.3.x` (check exact lockfile at execution) | Existing Site immutability and Git history |
+| ALNILAM `dev` at audit | `5fd74cea8197dc91d8391e7ee677eacbc32d3234` | `^7.3.5` manifest / **7.4.2 locked**, verified in v0.1.3 | Existing Site immutability and Git history |
 
 Astro's **7.4** release was published 2026-10-15; Astro upgrade docs list **7.4.1** at review time. Initial migration SHOULD preserve the known-compatible upstream Shirone lockfile, followed by **a separate isolated Astro 7.4.x compatibility PR** using official `@astrojs/upgrade` and real regression tests. Do not mix framework upgrade with main-base import or use floating `latest` for production. Docs: https://astro.build/blog/astro-740/, https://docs.astro.build/en/upgrade-astro/.
 
@@ -122,3 +122,5 @@ Authoritative audit and exact evolving receipts: [ALNILAM P0 Acceptance & Decisi
 [Completed run40284029959](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40284029959), P0 harness `bf6a5871aed39d87f0232e8e360c343ff3362566`: both original7.3.8 and isolated7.4.2 have681 Node tests/typecheck/build PASS, production-preview desktop/mobile/theme/real Pagefind/article/back PASS, lint5errors FAIL, and complete upstream E2E **415pass/17fail/48upstream skips out of480**. Motion/sidebar icon, taxonomy icon and visual snapshot failure sets match; no blind snapshot update, skipped test or production upgrade. Compatibility remains PARTIAL. Exact shard names/diagnostics/artifact digests and the NOT_READY Owner verdict stay in #85's report.
 
 The stable guard also detects old main's historical tool-specific ignore rules. #85 repairs only its task candidate by moving local generated-data exclusions to untracked Git info/exclude; the exact exported candidate and built distribution are checked without relaxing the guard. Actual main remains unchanged. Official CodeGraph provenance/RTK freshness and real provider cutover remain separate unresolved gates.
+
+ALNILAM baseline-version correction: v0.1.3 already locks Astro7.4.2, Svelte5.57.2 and Tailwind4.3.3 despite its Astro ^7.3.5 manifest range. This is not a P0 upgrade and does not substitute for the separately isolated Shirone compatibility run.
