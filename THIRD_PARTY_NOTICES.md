@@ -2,6 +2,19 @@
 
 **Initial bootstrap:** No implementation code or bundled third-party imagery from KIRARI, Fuwari, Mizuki, Firefly, or SHBlog Next has been directly copied into ALNILAM. The demo SVG is newly authored for this repository.
 
+## Shirone frontend adoption (P1 #48)
+
+Source: [LyraVoid/Shirone](https://github.com/LyraVoid/Shirone) at commit `55a84b2322bdfb634a59ca6383bb242e5ce646bf`. MIT license text: [LICENSES/Shirone-MIT.txt](LICENSES/Shirone-MIT.txt).
+
+The initial vertical slice adapts visual structure from:
+
+- `src/components/organisms/PostCard.astro` and `src/components/atoms/blog/PostCard.astro`: one-post-per-row card with text left and 28% cover right on desktop, cover above content on mobile.
+- `src/components/organisms/TopAppBar.astro`: sticky Material 3 top app bar, brand mark, centered navigation, and compact light/dark control.
+- `src/layouts/Layout.astro` and `src/utils/theme-utils.ts`: M3E surface/role vocabulary and light/dark scheme semantics, implemented here as static CSS tokens without the upstream HCT runtime.
+- `src/styles/variables.styl`: token names only; colors and layout are locally defined for ALNILAM.
+
+No Shirone fonts, images, character artwork, demo media, music, or other binary assets were copied. No upstream Astro integration, Swup, HCT color engine, icon package, or third-party font runtime is imported. ALNILAM owns `themes/shirone/src/*` modifications and retains Apache-2.0 licensing for its original code.
+
 For any future code migration:
 1. Identify exact upstream repository, path, commit and license.
 2. Preserve original copyright/license text for MIT-origin code.

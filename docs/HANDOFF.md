@@ -1,5 +1,11 @@
 # ALNILAM — AI Agent Handoff
 
+## Current P1 implementation checkpoint — 2026-10-26
+
+G0-F Plan/Spec is frozen on `dev` at `e0ff5177b7cb5f4a7803325b5a552883f24cd61a` (merged [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77); post-merge `verify` [40326089246](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40326089246) PASS). The first authorized P1 slice, [#48](https://github.com/Skyline-Gazer/ALNILAM/issues/48), is under review on `feat/48-shirone-frontend-vertical-slice`. It adds a Shirone-derived presentation while retaining the v1 Site contract, compose/provenance, Pagefind, optional modules and the unchanged Editorial rollback path. Read [the slice record](p1/48-SHIRONE-VERTICAL-SLICE.md) for exact scope, KEEP/ADAPT/WRAP decisions, evidence and limits.
+
+This checkpoint is **not** P1 completion: #37 stays open pending the Owner's phase confirmation. Do not merge the slice to `main`, create a release/tag, deploy production or start P2–P6 work without separate authorization. The earlier P0 record below remains historical evidence.
+
 ## Current P0 evidence checkpoint — 2026-10-26
 
 See [P0 Acceptance & Decision Report](p0/P0-ACCEPTANCE.md), merged [PR #85](https://github.com/Skyline-Gazer/ALNILAM/pull/85) (`b36b61fff8377694f209fcc7488f7457251a2ce9`) and merged ADS v0.4.1 adoption [PR #84](https://github.com/Skyline-Gazer/ALNILAM/pull/84) (`2555c4658599598bfed604fbf0d9b525d24c3ded`; post-merge dev CI [40321449502](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40321449502) PASS). The report supersedes historical status claims below; all earlier entries remain traceability records. Existing platform source is preserved. Draft #77 remains unmerged. Stop at Owner P0 acceptance, G0-F freeze and explicit P1 scope authorization.

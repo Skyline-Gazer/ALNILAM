@@ -1,0 +1,63 @@
+---
+import BaseLayout from "@alnilam/theme-shirone/BaseLayout.astro";
+import { loadSite } from "../lib/site-source.mjs";
+import { fetchBangumiCollections } from "../lib/bangumi.mjs";
+import { canonicalUrl, withBase } from "../lib/i18n.mjs";
+
+// Injected via astro.config.mjs only when [bangumi] enabled = true — the page
+// never ships for disabled modules.
+const { config } = loadSite();
+let collections: { name: string; nameCn: string; cover: string; href: string; summary: string; comment: string; updatedAt: string }[] = [];
+let error: string | null = null;
+try {
+  collections = await fetchBangumiCollections(config.bangumi);
+} catch (e: unknown) {
+  error = String((e as Error).message ?? e);
+}
+const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale, showBangumi: config.bangumi?.enabled ?? false };
+---
+<BaseLayout title="番组计划" {...layout} description={`${config.bangumi.userId} 的 ${config.bangumi.subjectType} 收藏`} canonical={canonicalUrl("/bangumi/", config.site.url)}>
+  <header class="page-heading">
+    <p class="page-heading__eyebrow">Collections</p>
+    <h1>Bangumi 收藏</h1>
+    <p>
+      <a href={`https://bgm.tv/user/${config.bangumi.userId}`} rel="noopener noreferrer">@{config.bangumi.userId}</a>
+      · {config.bangumi.subjectType} · 数据在构建时获取
+    </p>
+  </header>
+  {error && (
+    <p class="module-alert" role="alert">
+      Bangumi 数据获取失败（构建时）：{error}。页面其余部分不受影响。
+    </p>
+  )}
+  {collections.length ? (
+    <ul class="post-list bangumi-list">
+      {collections.map((c) => (
+        <li class="bangumi-card">
+          {c.cover && (
+            <img
+              src={withBase(c.cover)}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              width="200"
+              height="280"
+              referrerpolicy="no-referrer"
+              class="bangumi-cover"
+              style="background: var(--bg-card)"
+            />
+          )}
+          <div class="bangumi-card__content">
+            <h2>
+              {c.href ? <a href={c.href} rel="noopener noreferrer" >{c.nameCn}</a> : c.nameCn}
+            </h2>
+            {c.nameCn !== c.name && <p class="bangumi-name">{c.name}</p>}
+            <p class="bangumi-summary">{c.summary}</p>
+          </div>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    !error && <p>暂无收藏。</p>
+  )}
+</BaseLayout>

@@ -1,8 +1,8 @@
 ---
 import { getCollection, type CollectionEntry } from "astro:content";
-import BaseLayout from "@alnilam/theme-editorial/BaseLayout.astro";
+import BaseLayout from "@alnilam/theme-shirone/BaseLayout.astro";
 import { loadSite } from "../../lib/site-source.mjs";
-import { postPath, withBase } from "../../lib/i18n.mjs";
+import { canonicalUrl, postPath, withBase } from "../../lib/i18n.mjs";
 const { config } = loadSite();
 const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale, showBangumi: config.bangumi?.enabled ?? false };
 const posts: CollectionEntry<"posts">[] = (await getCollection("posts", ({ data }) => !data.draft))
@@ -15,23 +15,26 @@ for (const post of posts) {
 }
 const years = [...byYear.keys()].sort((a, b) => Number(b) - Number(a));
 ---
-<BaseLayout title="归档" {...layout} description="全部文章归档" canonical={new URL("/archives/", config.site.url).toString()}>
-  <header class="mb-10">
-    <h1 class="text-4xl font-bold tracking-tight" style="color: var(--fg)">归档</h1>
-    <p class="mt-2 text-sm" style="color: var(--fg-muted)">共 {posts.length} 篇 · {years.length} 个年份</p>
+<BaseLayout title="归档" {...layout} description="全部文章归档" canonical={canonicalUrl("/archives/", config.site.url)}>
+  <header class="page-heading">
+    <p class="page-heading__eyebrow">Archive</p>
+    <h1>归档</h1>
+    <p>共 {posts.length} 篇 · {years.length} 个年份</p>
   </header>
   {years.map((year) => (
-    <section class="mb-12" aria-labelledby={`year-${year}`}>
-      <h2 id={`year-${year}`} class="mb-4 text-xl font-semibold" style="color: var(--fg)">{year}</h2>
-      <ul class="space-y-3">
+    <section class="archive-year" aria-labelledby={`year-${year}`}>
+      <h2 id={`year-${year}`}>{year}</h2>
+      <ul class="archive-list">
         {byYear.get(year)!.map((post) => (
-          <li class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-4">
-            <time class="shrink-0 text-xs tabular-nums" datetime={post.data.pubDate.toISOString()} style="color: var(--fg-muted)">{post.data.pubDate.toISOString().slice(0, 10)}</time>
-            <a href={withBase(postPath(post, config.site.locale)) + "/"} class="text-sm font-medium transition-colors hover:[color:var(--accent)]" style="color: var(--fg-soft)">{post.data.title}</a>
+          <li>
+            <a href={withBase(postPath(post, config.site.locale)) + "/"}>
+              <time datetime={post.data.pubDate.toISOString()}>{post.data.pubDate.toISOString().slice(0, 10)}</time>
+              <span>{post.data.title}</span>
+            </a>
           </li>
         ))}
       </ul>
     </section>
   ))}
-  {posts.length === 0 && <p style="color: var(--fg-muted)">暂无文章。</p>}
+  {posts.length === 0 && <p>暂无文章。</p>}
 </BaseLayout>
