@@ -12,6 +12,8 @@
 | PRD-04 | MUST | Actual end-to-end usability of homepage, posts, archives, taxonomy, nav, search and article detail. | Browser flows from homepage through search/article/category/tag/archive with nontrivial post corpus; no 404. |
 | PRD-05 | MUST | Dark and light palette with predictable interactive, keyboard and reduced-motion states. | Keyboard navigation; no flash/mismatch and no broken touch controls across page transitions. |
 | PRD-06 | SHOULD | Shirone M3E semantics and component reuse form a coherent visual language. | Single token set, no duplicate components of the same job unless ADR justifies an exception. |
+| MIG-01 | MUST | **Shirone is the sole frontend base, but the existing ALNILAM codebase is reused first**, with no blank-project rebuild or gratuitous deletion. | Reuse Decision Record (RDR) for existing compose/schema/rollback/artifact/tests/CI/search/comments/Bangumi, KEEP/ADAPT/WRAP by default, justified replacement plus prior/current regression evidence; same repo/Git history retained. |
+| MIG-02 | MUST | A new source/theme integration never silently removes working ALNILAM user features, stable Site inputs or legacy URLs. | File-level before/after list, v1 legacy Site tests, migration and rollback guide, real root/base E2E; deletions receive explicit independently reviewable proof. |
 
 ## Content and Core/Site contract
 
@@ -35,6 +37,10 @@
 | BLOG-05 | MUST | Local and remote image behavior does not break Site immutability or violate licenses. | Correct paths, responsive dimension/CLS, alt, no unintended third-party fetch or embed; image generation only in isolated staging. |
 | BLOG-06 | MUST | i18n UI, translated content, locale-aware taxonomies and feeds use **one canonical route registry**, including default-locale unprefixed / other-locale prefixed rules. | Route examples and missing-translation behavior specified in 04; zh-CN/en/ja fixtures; only real equivalent hreflang, localized taxonomy pages and Pagefind language separation. |
 | BLOG-07 | MUST (opt-in feature) | Support **llms.txt v2** locale/subpath indexes, source-backed Markdown page views and HTML discovery when enabled. | /llms.txt, /en/llms.txt, article index.md, alternate/describedby, disabled=absent, root and /ALNILAM/ tests; optional full aggregation separately configured. |
+
+### Reuse-first and document-governance normative annex
+
+**[06-REUSE-DOC-GOVERNANCE.md](06-REUSE-DOC-GOVERNANCE.md) binds every Phase.** Preserve the existing `Skyline-Gazer/ALNILAM` repository and working Core/Site, CI and tests while using Shirone as the ONE product frontend base. Every destructive code change requires a Reuse Decision Record and proof; copying upstream code does not imply rewriting ALNILAM. Maintain documents and evidence with the corresponding code PR, not as a release-end afterthought. ADS v0.4 is pinned in separate Draft PR #84, and experimental build acceleration is only a post-stable TODO #83.
 
 ### Official-Astro-first implementation criterion
 
@@ -64,6 +70,9 @@
 | NFR-05 | MUST | Accessible keyboard/touch experiences, reduced-motion support, mobile readability and stable runtime lifecycle. | 390px & 1440px cross-page E2E, repeat nav/scroll/search tests, no critical axe issues, screenshots and measured CLS. |
 | NFR-06 | SHOULD | Realistic performance budgets are established *from measured Shirone/ALNILAM baselines*, not invented values. | Record LCP, CLS, INP where measurable, JS/CSS/image/font weights and page count; define explicit CI fail thresholds after baseline measurements and justification. |
 | NFR-07 | MUST | Main/tag/production deploy are separate owner-authorized operations. | PR to dev for work, then explicit release PR and authorization; no automatic production promotion or secret deployment. |
+| NFR-08 | MUST | **Document governance**: correct single-source Plan/Spec/ADR, current-vs-draft labels, implementation-driven README/PRODUCT/ARCHITECTURE/SITE_ONBOARDING/HANDOFF/ROADMAP/RELEASE/NOTICE, traceability and docs CI. | #81 document inventory, link/schema/version checks, updated owner-and-Site docs in same functional PR, historical evidence preserved, CI with negative fixture. |
+| NFR-09 | MUST | ADS consumer governance follows **v0.4** rather than old v0.3, with CodeGraph and **official full RTK** development-only checks and real production boundary. | Gitlink commit matches v0.4 `2af17d9...`; public CI does not need private ADS clone; dev-only CodeGraph/RTK, production-boundary negative tests, verified preflight/hook status, explicit approval for installs; #82 and Draft PR #84. |
+| NFR-10 | MUST | Experimental Astro incremental/parallel build acceleration is **out of current release scope** until officially stable and independently validated. | Future-only #83 has no M1/M2/M3 Milestone or Phase Gate; revisit stable release proof, Shirone compatibility, representative performance and reproducibility after stabilization. |
 
 ## Acceptance scenarios (Gherkin-style)
 
@@ -128,4 +137,4 @@ Then an exact path- and locale-aware llms.txt index links to a source-backed ind
 3. Which user-level Site customization interfaces are vNext MUST vs later SHOULD, after comparing actual upstream code.
 4. Which optional third-party providers require a live preview rather than a deterministic fixture.
 
-**Status discipline:** all requirements are targets until code and verification evidence exist. The 36 existing task Issues remain candidate backlog until this Spec is reviewed and frozen.
+**Status discipline:** all requirements are targets until code and verification evidence exist. The 39 active candidate task Issues remain candidate backlog until this Spec is reviewed and frozen.
