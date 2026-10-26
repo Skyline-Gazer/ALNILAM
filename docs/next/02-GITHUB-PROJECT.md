@@ -79,6 +79,10 @@ Discover *real* Project fields before writing anything, reuse instead of duplica
 - **#35**: historic product acceptance mismatches; trace relevant requirements to this Spec/P0 and actual owner decisions, do not automatically claim outdated screenshot design as the new target.
 - Existing closed #1–#33 and old Project #17 completion remain historical; do not reopen or erase simply to inflate the new roadmap.
 
+## Astro-version and official-API investigation gate (before code)
+
+Add to Phase P0/#44 and P1/#47–#49: review [05-UPSTREAM-ASTRO-AUDIT.md](05-UPSTREAM-ASTRO-AUDIT.md), then determine actual Astro 7.4.x compatibility with pinned Shirone 7.3.8 in a separate remote-first CI experiment. Use official `astro:i18n`, Content Layer `glob/file`, `paginate`, `@astrojs/sitemap`, `@astrojs/rss`, `astro:assets` and native transitions where their acceptance behavior is proven. Do NOT preapprove custom alternatives simply because other upstream blogs hand-roll them. The matrix and compatibility tests are mandatory Phase P0/P1 evidence, not automatically new milestones.
+
 ## Authorization and reporting
 - This PR **does not** create milestones, attach sub-issues, alter Project #17, merge into dev/main, tag or deploy production.
 - Current connected GitHub write actions support repository Issues/branches/PRs but **do not expose Projects v2 fields/membership, GitHub Milestone creation or native sub-issue attachment**. A future authorized `gh`/GraphQL pass is needed for these changes; never claim they're already done.
