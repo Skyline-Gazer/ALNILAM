@@ -14,9 +14,9 @@ Use repository-native Milestones as product outcomes, not to replace Phases. Sho
 
 | Milestone (proposed, not created) | Target outcome | Phase parent Issues | Candidate Task Issues |
 | --- | --- | --- | --- |
-| **M1 — Foundation Alpha** | Verifiable Shirone blog base + independently versioned immutable Site | P0 #36, P1 #37, P2 #38 | #43–#56 plus #79 (15) |
+| **M1 — Foundation Alpha** | Verifiable Shirone blog base + independently versioned immutable Site | P0 #36, P1 #37, P2 #38 | #43–#56 plus #79, #80, #82 (17) |
 | **M2 — Product Beta** | Unified responsive design + real blogging/search/SEO | P3 #39, P4 #40 | #57–#66 plus #78 (11) |
-| **M3 — Integration & RC** | Owner-selected optional modules + quality/release readiness | P5 #41, P6 #42 | #67–#76 (10) |
+| **M3 — Integration & RC** | Owner-selected optional modules + quality/release readiness | P5 #41, P6 #42 | #67–#76 plus #81 (11) |
 
 Milestone completion means its actual Phase Gates are PASS, not a pre-assigned date. Set milestone dates only if a real deadline exists; do not invent dates or release numbers.
 
@@ -24,13 +24,13 @@ Milestone completion means its actual Phase Gates are PASS, not a pre-assigned d
 
 | Phase parent | Native sub-issues to attach after G0 | Phase Gate |
 | --- | --- | --- |
-| **#36 P0 Planning/architecture** | #43 baseline, #44 functionality matrix, #45 licensing, #46 ADR/old Issue reconciliation | Source SHA and keep/replace/delete, licence notice plan, owner-approved ADR |
+| **#36 P0 Planning/architecture** | #43 baseline, #44 functionality matrix, #45 licensing, #46 ADR/old Issue reconciliation, **#80 retain existing ALNILAM inventory**, **#82 ADS v0.4 consumer adoption** | Source SHA and keep/replace/delete, licence notice plan, owner-approved ADR |
 | **#37 P1 Shirone foundation** | #47 pristine upstream build, #48 ALNILAM import, #49 single dependency/router stack, #50 browser preview, **#79 Astro 7.4 official-API compatibility pilot** | Single real site runs on preview, CI and browser evidence |
 | **#38 P2 Core/Site** | #51 schema, #52 immutable builder, #53 assets, #54 provenance/rollback, #55 CI, #56 build security | External Site immutability, upgrade+rollback, dual provenance and read-only proof |
 | **#39 P3 UI** | #57 M3E tokens, #58 Fuwari feed, #59 responsive nav/settings, #60 transition lifecycle, #61 visual tests | User-visible responsive browser comparison + accessible interaction |
 | **#40 P4 Blogging** | #62 content/taxonomy, #63 pagination/search, #64 SEO/base paths, #65 i18n, #66 markdown/images, **#78 llms.txt v2 source Markdown views/discovery** | Real content fixture and root/subpath E2E PASS |
 | **#41 P5 Extensions** | #67 gallery, #68 moments, #69 music, #70 Bangumi, #71 comments | **Only selected features** must be implemented; remaining items are explicitly deferred or closed as not planned with source decision |
-| **#42 P6 Release candidate** | #72 privacy/zero-cost, #73 cross-host E2E, #74 performance/a11y, #75 security/licenses, #76 docs/release | Evidence-based release candidate and owner signoff, not auto-deploy |
+| **#42 P6 Release candidate** | #72 privacy/zero-cost, #73 cross-host E2E, #74 performance/a11y, #75 security/licenses, #76 docs/release, **#81 documentation governance** | Evidence-based release candidate and owner signoff, not auto-deploy |
 
 ### Dependencies
 ```text
@@ -43,6 +43,17 @@ G0 Plan + Spec review/freeze
                                              ┘
 ```
 P3/P4 may overlap once the relevant P2 contract is stable. P6 test infrastructure may start earlier. Do not block a Phase merely because a scoped-out optional feature never enters delivery.
+
+## Deferred future TODO (outside active milestones)
+
+**#83 — Astro build acceleration after official stabilization** is outside M1/M2/M3 and is not a Phase Gate. Monitor only through this TODO (no background task implied). Do not switch on experimental incremental build or parallel prerendering in normal releases; only after official stable support and separate reproducible performance/rollback proof.
+
+## Reuse-first and documentation governance gate
+
+- Before implementation Phase P1, P0 **#80** inventories every usable ALNILAM file and its retained contract, and requires KEEP/ADAPT/WRAP before REPLACE/RETIRE. **Shirone** is the product frontend base; **ALNILAM** is the reused platform/repository. The migration is not a greenfield rebuild.
+- **#81** mandates doc governance from the beginning, even though P6 is the final gate. No merged feature with stale Site/README/ADR/spec/contract docs.
+- **#82** pins verified ADS v0.4 and adopts actual development preflight + production boundary, through separate Draft PR #84; no empty declaration of full compliance from Gitlink alone.
+- The binding annex is [06-REUSE-DOC-GOVERNANCE.md](06-REUSE-DOC-GOVERNANCE.md). Deletion of existing source without a verified Reuse Decision Record blocks task acceptance.
 
 ## Recommended Project #17 fields
 
@@ -66,8 +77,8 @@ Discover *real* Project fields before writing anything, reuse instead of duplica
 ## Safe migration sequence after G0
 
 1. **Read before write**: `gh project view 17 --owner Skyline-Gazer`, `gh project item-list 17 --owner Skyline-Gazer --format json`, `gh project field-list 17 --owner Skyline-Gazer --format json`; inspect native repo milestones, Issue type and actual Issue IDs. This requires an authenticated principal with `project` read/write permission; do not assume token access.
-2. Reuse existing same-named milestones or create **exactly M1/M2/M3** once. No parallel Board or 43 duplicate Issues.
-3. Use native GitHub Sub-issues API/UI to attach existing #43–#76, #78 and #79 as children of #36–#42. **Plain Markdown checkboxes are not a substitute.** Preserve each Issue number, history and comments.
+2. Reuse existing same-named milestones or create **exactly M1/M2/M3** once. No parallel Board or 46 duplicate Issues.
+3. Use native GitHub Sub-issues API/UI to attach existing #43–#76, #78, #79, #80, #81 and #82 as children of #36–#42. **Plain Markdown checkboxes are not a substitute.** Preserve each Issue number, history and comments.
 4. Assign the milestone corresponding to each Phase to the parent and relevant sub-issue; add the missing Issues to the *existing* Project #17 idempotently after reading the current membership.
 5. Add/validate required fields and views. Configure the review gate; keep existing v0.1.x closed work as history, not a new false green milestone.
 6. Add requirement IDs / validation links to each issue **only after the Spec is frozen**, splitting or closing duplicates where justified.
