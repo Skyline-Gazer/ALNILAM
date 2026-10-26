@@ -1,9 +1,9 @@
-# ALNILAM Issue #94 — isolated CNB Cloud Build Playwright/CLS pilot.
-# Only for an authorized ALNILAM test branch hosted on CNB, not the ADS repository.
-# GitHub PR events alone do not trigger CNB. Does not build/publish releases.
+# Issue #94: isolated remote-first CNB Playwright/CLS & plugin pilot.
+# Executes only in a CNB-hosted repository. GitHub PRs do NOT trigger CNB.
+# No tag, release, auto-merge, mirror, deployment, or production credentials.
 chore/94-cnb-browser-ci-pilot:
   push:
-    - &browser_pilot
+    - &browser
       name: alnilam-browser-cls-pilot
       runner:
         tags: cnb:arch:amd64
@@ -12,28 +12,31 @@ chore/94-cnb-browser-ci-pilot:
         image: mcr.microsoft.com/playwright:v1.64.1-noble
       env:
         CI: "true"
-        ALNILAM_CNB_BROWSER_PILOT: "1"
       stages:
-        - name: Verify browser runner
+        - name: Verify runtime
           script: |
             set -eu
             node -v
-            node -e 'if (process.versions.node.split(".").map(Number)[0] < 24) process.exit(2)'
+            node -e 'const [a,b,c]=process.versions.node.split(".").map(Number);if(a<22||(a===22&&(b<23||(b===23&&c<4))))process.exit(2)'
             npm install -g pnpm@10.19.0
-            pnpm --version
-        - name: Reuse existing ALNILAM build and tests
+        - name: Existing build plus test coverage
           script: |
             set -eu
             pnpm install --frozen-lockfile
-            pnpm test
+            mkdir -p artifacts/coverage
+            node --experimental-test-coverage --test-reporter=lcov --test scripts/tests/*.test.mjs > artifacts/coverage/lcov.info
+            grep -q '^SF:' artifacts/coverage/lcov.info
             pnpm check
             pnpm build
-            test -s dist/site/index.html
             test -s dist/site/posts/hello-alnilam/index.html
+        - name: Coverage report (baseline only)
+          type: testing:coverage
+          options:
+            pattern: artifacts/coverage/lcov.info
+            breakIfNoCoverage: true
         - name: Browser and CLS baseline
           script: |
             set -eu
-            # Pinned pilot tooling outside pnpm workspace; promote into lockfile after proof.
             npm install --prefix .cnb-browser-tools --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright@1.64.1
             mkdir -p artifacts/cnb-browser
             set +e
@@ -41,25 +44,87 @@ chore/94-cnb-browser-ci-pilot:
             status=$?
             set -e
             cat artifacts/cnb-browser/run.log
-            printf '%s\n' "$status" > artifacts/cnb-browser/status.txt
-        - name: Package remote browser evidence
+            echo "$status" > artifacts/cnb-browser/status.txt
+        - name: Package immutable test evidence
           script: |
             set -eu
-            tar -czf artifacts/alnilam-cnb-browser-evidence.tgz -C artifacts cnb-browser
+            echo "tested_sha=${CNB_COMMIT:-unknown} source_sha=${CNB_PULL_REQUEST_SHA:-not-pr}" > artifacts/cnb-browser/identity.txt
+            tar -czf artifacts/alnilam-cnb-browser-evidence.tgz -C artifacts cnb-browser coverage
             test -s artifacts/alnilam-cnb-browser-evidence.tgz
-        - name: Upload trace and screenshots to CNB commit
-          # Pilot uses documented latest; pin immutable version/digest before required-gate use.
+        - name: CNB commit attachments
           image: cnbcool/attachments:latest
           settings:
             attachments:
-              - "artifacts/alnilam-cnb-browser-evidence.tgz"
+              - artifacts/alnilam-cnb-browser-evidence.tgz
             ttl: 14
-        - name: Final deterministic browser gate
+        - name: Browser verdict must succeed
           script: |
             set -eu
             test -s artifacts/cnb-browser/status.txt
             test "$(cat artifacts/cnb-browser/status.txt)" = 0
-            echo "CNB Browser Pilot PASS for test commit: ${CNB_COMMIT:-unknown}"
+        - name: AI review negative fixtures
+          script: |
+            set -eu
+            node --test scripts/ci/cnb-review-gate.test.mjs
+        - name: git-auto-tag safety simulation (disposable local repo ONLY)
+          script: |
+            set -eu
+            node scripts/ci/cnb-release-tag-dry-run.mjs
 dev:
   pull_request:
-    - *browser_pilot
+    - *browser
+    - name: alnilam-sca-and-review
+      runner:
+        tags: cnb:arch:amd64
+        cpus: 2
+      docker:
+        image: node:24-bookworm
+      stages:
+        - name: PR vulnerability delta (high/critical block)
+          image: cnbcool/sca-vulnerability:latest
+          settings:
+            failOnSeverity: high
+        - name: PR dependency license delta
+          image: cnbcool/sca-license:latest
+          settings:
+            failOnSeverity: high
+        - name: PR SBOM delta
+          image: cnbcool/sca-sbom:latest
+          settings:
+            output: ${CNB_BUILD_WORKSPACE}/.cnb-sca/sbom-delta.json
+        - name: CNB security scan readout (NOT a scan gate)
+          image: cnbcool/cnb-sechook:latest
+          settings:
+            scanning_disabled: false
+            sensitive_disabled: false
+            max_display_authors: 5
+        - name: Prepare AI review output
+          script: |
+            set -eu
+            mkdir -p artifacts/cnb-review
+        - name: Official PR code-review
+          image: cnbcool/code-review:1.22.2
+          settings:
+            output: artifacts/cnb-review/code_review.json
+            comment: true
+            review_event: comment
+            max_comments: 10
+            min_confidence: medium
+            exclude_categories: style,nit
+            timeout_minutes: 15
+        - name: Deterministic AI review gate
+          script: |
+            set -eu
+            node scripts/ci/cnb-review-gate.mjs artifacts/cnb-review/code_review.json
+        - name: Pack review evidence
+          script: |
+            set -eu
+            tar -czf artifacts/alnilam-cnb-review-evidence.tgz artifacts/cnb-review
+        - name: Attach review evidence
+          image: cnbcool/attachments:latest
+          settings:
+            attachments:
+              - artifacts/alnilam-cnb-review-evidence.tgz
+            ttl: 14
+# Deliberately no auto_tag/tag_push or write-enabled NPC. Tag generation may
+# ONLY happen after a separate owner-authorized release gate outside this pilot.
