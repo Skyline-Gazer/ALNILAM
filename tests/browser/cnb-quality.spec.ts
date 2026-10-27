@@ -32,11 +32,14 @@ for (const origin of origins) for (const width of [390, 1440]) {
       await expect(page.locator('.article-view')).toBeVisible();
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       await sample('article-scroll');
-      for (let round = 0; round < 2; round++) {
+      const scrollPosition = await page.evaluate(() => scrollY);
+      expect(scrollPosition).toBeGreaterThan(0);
+      for (let round = 0; round < 10; round++) {
         await page.goBack({waitUntil: 'networkidle'});
         await expect(page.locator('.home-hero')).toBeVisible();
         await page.goForward({waitUntil: 'networkidle'});
         await expect(page.locator('.article-view')).toBeVisible();
+        await expect.poll(async () => Math.abs(await page.evaluate(() => scrollY) - scrollPosition)).toBeLessThanOrEqual(2);
         expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('light');
       }
       await sample('restoration');
@@ -51,8 +54,10 @@ for (const origin of origins) for (const width of [390, 1440]) {
       const search = page.getByRole('dialog', {name: '站内搜索'});
       await search.getByRole('searchbox').fill('ALNILAM');
       await expect(search.locator('a[href]').first()).toBeVisible();
+      const resultURL = new URL((await search.locator('a[href]').first().getAttribute('href'))!, origin).href;
       await search.locator('a[href]').first().click();
-      await expect(page.locator('h1')).toHaveCount(1);
+      await expect(page).toHaveURL(resultURL);
+      await expect(page.locator('.article-view')).toBeVisible();
       await sample('search');
       expect(errors).toEqual([]);
     } finally {
@@ -85,19 +90,19 @@ test('deterministic consent, ads, GA4, comments and adblock fixtures', async ({p
   await page.setContent(`<style>body{margin:0}#slot{height:250px}#comments{height:260px}#notice{position:fixed;bottom:0}article{font:20px sans-serif}</style>
     <main><article><h1>Readable article fixture</h1><p>Article stays readable when optional requests fail.</p></article>
     <div id="slot"></div><div id="comments"></div></main><aside id="notice" hidden>Nonblocking adblock notice</aside>
-    <script>window.pageviews=[];window.seen=new Set();window.initializeOptional=(consent,path)=>{
+    <script>window.pageviews=[];window.seen=new Set();window.initializeOptional=(consent,path,navigation)=>{
       if(!consent)return;
       for(const id of ['ads','ga4','comments']){if(document.getElementById('script-'+id))continue;const script=document.createElement('script');script.id='script-'+id;script.src='https://fixture.invalid/'+id+'.js';document.head.append(script)}
-      if(!seen.has(path)){seen.add(path);pageviews.push(path)}
+      if(!seen.has(navigation)){seen.add(navigation);pageviews.push(path)}
     };</script>`);
   await page.waitForTimeout(650);
   await page.evaluate('window.__cnbShifts = []');
   await page.evaluate('initializeOptional(false,"/article/")');
   expect(calls).toEqual([]);
   expect(await page.locator('script[src]').count()).toBe(0);
-  await page.evaluate('initializeOptional(true,"/article/");initializeOptional(true,"/article/");initializeOptional(true,"/next/")');
+  await page.evaluate('initializeOptional(true,"/article/",1);initializeOptional(true,"/article/",1);initializeOptional(true,"/next/",2);initializeOptional(true,"/article/",3)');
   await expect.poll(() => calls.length).toBe(3);
-  expect(await page.evaluate('pageviews')).toEqual(['/article/', '/next/']);
+  expect(await page.evaluate('pageviews')).toEqual(['/article/', '/next/', '/article/']);
   await page.waitForTimeout(650);
   await page.evaluate(() => {
     const iframe = document.createElement('iframe'); iframe.title = 'Mock comments'; iframe.style.cssText = 'width:100%;height:250px;border:0'; iframe.srcdoc = '<p>Mock comments</p>';
@@ -152,7 +157,12 @@ test('large shift is detected and the CLS gate rejects it', async ({page}) => {
   expect(() => assertCLSBudget(events)).toThrow(/CLS regression/);
 });
 
-test('intentional browser failure probe', async () => {
+test('intentional browser failure probe', async ({page}, info) => {
   test.skip(process.env.CNB_BROWSER_FORCE_FAILURE !== '1', 'Run separately with CNB_BROWSER_FORCE_FAILURE=1 to prove nonzero exit');
+  await page.goto(`${origins[0]}/`);
+  await expect(page.locator('.home-hero')).toBeVisible();
+  const screenshot = info.outputPath('negative-browser.png');
+  await page.screenshot({path: screenshot});
+  await info.attach('negative-browser', {path: screenshot, contentType: 'image/png'});
   expect(false, 'CNB_INTENTIONAL_BROWSER_FAILURE').toBe(true);
 });

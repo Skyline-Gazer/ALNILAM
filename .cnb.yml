@@ -4,6 +4,8 @@ chore/94-cnb-browser-ci-pilot:
   push:
     - &browser
       name: alnilam-browser-quality
+      breakIfModify: true
+      retry: 0
       runner:
         tags: cnb:arch:amd64
         cpus: 2
@@ -23,6 +25,7 @@ chore/94-cnb-browser-ci-pilot:
             pnpm install --frozen-lockfile
             mkdir -p artifacts .tmp/cnb
         - name: Capture build and quality verdicts
+          timeout: 20m
           script: |
             set +e
             node scripts/ci/cnb-consumer-build.mjs > artifacts/build.log 2>&1
@@ -97,7 +100,7 @@ dev:
         tags: cnb:arch:amd64
         cpus: 2
       docker:
-        image: node:24-bookworm
+        image: node:24-bookworm@sha256:6449e19d8184d84062525b6a7524def03146c2cb04a7f08b076680d0e8e4240a
       git:
         submodules: false
       stages:
