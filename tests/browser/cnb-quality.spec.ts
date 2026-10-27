@@ -30,6 +30,8 @@ for (const origin of origins) for (const width of [390, 1440]) {
       await sample('theme');
       await page.locator('[data-post-card] h2 a').first().click();
       await expect(page.locator('.article-view')).toBeVisible();
+      const articleURL = page.url();
+      const articleTitle = await page.locator('.article-header h1').innerText();
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       await sample('article-scroll');
       const scrollPosition = await page.evaluate(() => scrollY);
@@ -52,11 +54,11 @@ for (const origin of origins) for (const width of [390, 1440]) {
       await sample('tags');
       await page.getByRole('button', {name: '搜索', exact: true}).click();
       const search = page.getByRole('dialog', {name: '站内搜索'});
-      await search.getByRole('searchbox').fill('ALNILAM');
-      await expect(search.locator('a[href]').first()).toBeVisible();
-      const resultURL = new URL((await search.locator('a[href]').first().getAttribute('href'))!, origin).href;
-      await search.locator('a[href]').first().click();
-      await expect(page).toHaveURL(resultURL);
+      await search.getByRole('searchbox').fill(articleTitle);
+      const resultURLs = () => search.locator('a[href]').evaluateAll(links => links.map(link => (link as HTMLAnchorElement).href));
+      await expect.poll(resultURLs).toContain(articleURL);
+      await search.locator('a[href]').nth((await resultURLs()).indexOf(articleURL)).click();
+      await expect(page).toHaveURL(articleURL);
       await expect(page.locator('.article-view')).toBeVisible();
       await sample('search');
       expect(errors).toEqual([]);

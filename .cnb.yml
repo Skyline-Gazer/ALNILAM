@@ -96,6 +96,8 @@ dev:
   pull_request:
     - *browser
     - name: alnilam-structured-review
+      breakIfModify: true
+      retry: 0
       runner:
         tags: cnb:arch:amd64
         cpus: 2
@@ -108,24 +110,44 @@ dev:
           script: |
             set -eu
             mkdir -p artifacts/cnb-review
-            rm -f artifacts/cnb-review/review.json
+            mkdir -p "/tmp/cnb-review-${CNB_BUILD_ID}"
+            rm -f "/tmp/cnb-review-${CNB_BUILD_ID}/review.json"
             git show "${CNB_PULL_REQUEST_TARGET_SHA}:scripts/ci/cnb-review-gate.mjs" > /tmp/cnb-trusted-review-gate.mjs
         - name: Official code review (comments only)
           image: cnbcool/code-review:v1.22.2@sha256:d0af9a2e683488e2424d42d3e0bffe478c87b37d44903d4f5b8b2288480704eb
           settings:
-            output: artifacts/cnb-review/review.json
-            comment: true
+            output: /tmp/cnb-review-${CNB_BUILD_ID}/review.json
+            comment: false
             review_event: comment
             max_comments: 10
             min_confidence: medium
             exclude_categories: style,nit
             max_turns: 20
             timeout_minutes: 10
+        - name: Package raw review and native identity
+          script: |
+            set -eu
+            node -e 'const fs=require("node:fs"),e=process.env;fs.writeFileSync(`/tmp/cnb-review-${e.CNB_BUILD_ID}/identity.json`,JSON.stringify({build:e.CNB_BUILD_ID,source:e.CNB_PULL_REQUEST_SHA,target:e.CNB_PULL_REQUEST_TARGET_SHA,merge:e.CNB_PULL_REQUEST_MERGE_SHA,event:e.CNB_EVENT},null,2))'
+            tar -C "/tmp/cnb-review-${CNB_BUILD_ID}" -czf "review-${CNB_BUILD_ID}.tgz" review.json identity.json
+        - name: Upload raw Review evidence (fatal stage)
+          image: cnbcool/attachments:v1.1.5@sha256:3112e2ee5c562dc508ed2d51706ecccb1770781a105c488cc7620b53d6bf5442
+          settings:
+            attachments:
+              - review-${CNB_BUILD_ID}.tgz
+            ttl: 14
+          exports:
+            FILES: REVIEW_FILES
+        - name: Require Review upload receipt
+          script: test "$REVIEW_FILES" = "review-${CNB_BUILD_ID}.tgz"
         - name: Current source target and merge gate
-          script: node /tmp/cnb-trusted-review-gate.mjs artifacts/cnb-review/review.json
+          lock:
+            key: review-comment-${CNB_REPO_SLUG}-${CNB_PULL_REQUEST_SHA}
+            wait: true
+            timeout: 120
+          script: node /tmp/cnb-trusted-review-gate.mjs /tmp/cnb-review-${CNB_BUILD_ID}/review.json --comment
       failStages:
         - name: Review diagnostics
-          script: test ! -f artifacts/cnb-review/review.json || cat artifacts/cnb-review/review.json
+          script: test ! -f /tmp/cnb-review-${CNB_BUILD_ID}/review.json || cat /tmp/cnb-review-${CNB_BUILD_ID}/review.json
   pull_request.target:
     - name: alnilam-native-security
       runner:
