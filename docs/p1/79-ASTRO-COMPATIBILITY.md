@@ -1,6 +1,6 @@
 # Issue #79 — Astro compatibility pilot
 
-Status: **PR #99 open** from `chore/79-astro-compatibility-pilot`, based on `dev` `1f382aa72052eedbe8a2809011e5a36a82f697d0`. No framework version or Site contract is changed.
+Status: **PR #99 open** from `chore/79-astro-compatibility-pilot`, based on `dev` `1f382aa72052eedbe8a2809011e5a36a82f697d0`. No framework version or Site contract is changed. Product implementation/tested commit: `985664d76ebf4a55f7f1e65e45ebde66f5f5bfba`; subsequent PR updates are documentation-only.
 
 ## Corrected version baseline
 
@@ -67,5 +67,7 @@ The full upstream E2E suite was **partial on both versions**: 415 passed, 17 fai
 **Candidate verdict: `COMPATIBLE_AS_IS`** for ALNILAM's actual Astro `7.4.2` lock and current integrations. Evidence is the prior 7.3.8/7.4.2 upstream comparison plus local frozen install, Astro check, demo build, external root/nested MDX build, artifact checks, browser smoke, and green focused plus required PR CI. The known upstream E2E and lint failures remain explicit limitations; they are identical across the tested Astro versions.
 
 The focused push run [40522444780](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40522444780) and PR run [40522572115](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40522572115) passed on head `985664d76ebf4a55f7f1e65e45ebde66f5f5bfba`, including external root/nested builds and browser smoke (`2/2`), and uploaded `astro-compatibility-evidence`. Required PR `verify` run [40522572426](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40522572426) also passed.
+
+The docs-only snapshot `25735746285741e964173143b2480e96a45cbfc9` passed its focused push/PR workflows [40525827100](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40525827100) and [40525839352](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40525839352), push `verify` [40525827117](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40525827117), and required PR `verify` [40525839582](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40525839582). These reruns contain no product or Site changes.
 
 No product dependency or Site change is proposed. Reverting the feature PR removes only the focused workflow, MDX compatibility fixture, and documentation. The Site remains an immutable build input.
