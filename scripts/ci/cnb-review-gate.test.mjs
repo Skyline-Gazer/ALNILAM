@@ -46,20 +46,30 @@ test('observed null confidence adapter preserves warning and raw data', () => {
   assert.throws(() => normalizeReview({status: 'passed', issues: [{...finding('info'), confidence: 'unknown'}]}));
 });
 test('comment adapter is comment-only, deduplicates and fails unavailable evidence', async () => {
-  const env = {CNB_API_ENDPOINT: 'https://api.cnb.cool', CNB_REPO_SLUG: 'group/repo', CNB_PULL_REQUEST_IID: '1', CNB_TOKEN: 'synthetic-test'};
+  const env = {CNB_API_ENDPOINT: 'https://api.cnb.cool', CNB_REPO_SLUG: 'group/repo', CNB_PULL_REQUEST_IID: '1', CNB_REVIEW_COMMENT_AUTHOR: 'trusted-bot', CNB_TOKEN: 'synthetic-test'};
   const reviews = [];
   let writes = 0;
   const request = async (_url, options) => {
     if (options.method === 'POST') {
       const body = JSON.parse(options.body);
       assert.equal(body.event, 'comment'); assert.equal(body.work_mode, false);
-      reviews.push({state: 'commented', body: body.body}); writes++;
+      reviews.push({state: 'commented', author: {username: 'trusted-bot'}, body: body.body}); writes++;
     }
     return {ok: true, json: async () => reviews};
   };
   assert.equal((await commentReview(JSON.stringify(clean), identity, env, request)).state, 'COMMENT_PUBLISHED');
   assert.equal((await commentReview(JSON.stringify(clean), identity, env, request)).state, 'COMMENT_ALREADY_PRESENT');
   assert.equal(writes, 1);
+  reviews[0].author.username = 'untrusted-user';
+  assert.equal((await commentReview(JSON.stringify(clean), identity, env, request)).state, 'COMMENT_PUBLISHED');
+  assert.equal(writes, 2);
+  reviews[1].user = {username: 'trusted-bot'};
+  delete reviews[1].author;
+  assert.equal((await commentReview(JSON.stringify(clean), identity, env, request)).state, 'COMMENT_ALREADY_PRESENT');
+  reviews[1].author = {username: 'untrusted-user'};
+  assert.equal((await commentReview(JSON.stringify(clean), identity, env, request)).state, 'COMMENT_PUBLISHED');
+  assert.equal(writes, 3);
+  await assert.rejects(commentReview(JSON.stringify(clean), identity, {...env, CNB_REVIEW_COMMENT_AUTHOR: ''}, request), /context/);
   await assert.rejects(commentReview(JSON.stringify(clean), identity, env, async () => ({ok: false, status: 503})), /unavailable/);
   await assert.rejects(commentReview('{invalid', identity, env, request));
 });

@@ -41,9 +41,14 @@ export function gateReview(result, reviewed, current) {
 export async function commentReview(raw, identity, env = process.env, request = fetch) {
   const result = normalizeReview(JSON.parse(raw));
   if (env.CNB_API_ENDPOINT !== 'https://api.cnb.cool' || !/^[\w-]+(?:\/[\w.-]+)+$/.test(env.CNB_REPO_SLUG || '') ||
-      !/^[1-9]\d*$/.test(env.CNB_PULL_REQUEST_IID || '') || !env.CNB_TOKEN) throw Error('Missing trusted comment API context');
+      !/^[1-9]\d*$/.test(env.CNB_PULL_REQUEST_IID || '') || !/^[\w.-]+$/.test(env.CNB_REVIEW_COMMENT_AUTHOR || '') || !env.CNB_TOKEN) throw Error('Missing trusted comment API context');
   const digest = createHash('sha256').update(raw).digest('hex');
   const marker = `<!-- ads-cnb-review:${identity.source}:${identity.target}:${identity.merge}:${digest} -->`;
+  const isOwnComment = review => {
+    const author = review.author?.username, user = review.user?.username;
+    return (author || user) === env.CNB_REVIEW_COMMENT_AUTHOR && (!author || !user || author === user) &&
+      review.state === 'commented' && review.body?.includes(marker);
+  };
   const url = `${env.CNB_API_ENDPOINT}/${env.CNB_REPO_SLUG}/-/pulls/${env.CNB_PULL_REQUEST_IID}/reviews`;
   const headers = {Authorization: `Bearer ${env.CNB_TOKEN}`, Accept: 'application/vnd.cnb.api+json', 'Content-Type': 'application/json'};
   const api = async (suffix, options = {}) => {
@@ -54,7 +59,7 @@ export async function commentReview(raw, identity, env = process.env, request = 
   for (let page = 1; page <= 10; page++) {
     const reviews = await (await api(`?page=${page}&page_size=100`)).json();
     if (!Array.isArray(reviews)) throw Error('Malformed native review list');
-    if (reviews.some(review => review.state === 'commented' && review.body?.includes(marker))) return {state: 'COMMENT_ALREADY_PRESENT', digest};
+    if (reviews.some(isOwnComment)) return {state: 'COMMENT_ALREADY_PRESENT', digest};
     if (reviews.length < 100) break;
     if (page === 10) throw Error('Review pagination bound exceeded');
   }
@@ -62,7 +67,7 @@ export async function commentReview(raw, identity, env = process.env, request = 
     result.issues.map(issue => `**${issue.severity}** ${issue.file}:${issue.start_line}\n\n${issue.problem}\n\n${issue.suggestion}`).join('\n\n---\n\n');
   await api('', {method: 'POST', body: JSON.stringify({event: 'comment', work_mode: false, body, comments: []})});
   const readback = await (await api('?page=1&page_size=100')).json();
-  if (!Array.isArray(readback) || !readback.some(review => review.state === 'commented' && review.body?.includes(marker))) throw Error('Comment readback missing');
+  if (!Array.isArray(readback) || !readback.some(isOwnComment)) throw Error('Trusted comment readback missing');
   return {state: 'COMMENT_PUBLISHED', digest};
 }
 
