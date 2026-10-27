@@ -125,6 +125,12 @@ dev:
             exclude_categories: style,nit
             max_turns: 20
             timeout_minutes: 10
+        - name: Current source target and merge gate
+          lock:
+            key: review-comment-${CNB_REPO_SLUG}-${CNB_PULL_REQUEST_SHA}
+            wait: true
+            timeout: 120
+          script: node /tmp/cnb-trusted-review-gate.mjs .tmp/cnb-review-${CNB_BUILD_ID}/review.json --comment
         - name: Package raw review and native identity
           script: |
             set -eu
@@ -140,12 +146,6 @@ dev:
             FILES: REVIEW_FILES
         - name: Require Review upload receipt
           script: test "$REVIEW_FILES" = "review-${CNB_BUILD_ID}.tgz"
-        - name: Current source target and merge gate
-          lock:
-            key: review-comment-${CNB_REPO_SLUG}-${CNB_PULL_REQUEST_SHA}
-            wait: true
-            timeout: 120
-          script: node /tmp/cnb-trusted-review-gate.mjs .tmp/cnb-review-${CNB_BUILD_ID}/review.json --comment
       failStages:
         - name: Review diagnostics
           script: test ! -f .tmp/cnb-review-${CNB_BUILD_ID}/review.json || cat .tmp/cnb-review-${CNB_BUILD_ID}/review.json
