@@ -84,8 +84,8 @@ Local checks ran sequentially because Astro build and compose share the web pack
 | Nested-base compose, artifact check and internal URL scan | PASS; 13 pages, base-prefixed links and Pagefind index |
 | Production artifact boundary, root and nested outputs | PASS |
 | `pnpm browser` | PASS, 3/3; includes root/nested navigation, mobile card layout and delayed/out-of-order Pagefind lifecycle |
-| External Site two-Core upgrade/rollback | Pending exact committed head |
-| GitHub Actions `verify` and retained browser artifact | Pending exact PR head |
+| External Site two-Core upgrade/rollback | PASS on pre-evidence-update head `bec2882`; required PR `verify` [40527551576](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40527551576) completed the unchanged-Site upgrade/rollback checks. |
+| GitHub Actions `verify` and retained browser artifact | PASS on head `bec2882`; PR `verify` [40527551576](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40527551576) and retained [`browser-evidence` artifact](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40527551576/artifacts/12744368460), 4,586,553 bytes. |
 
 ## Compatibility, rollback and limits
 
