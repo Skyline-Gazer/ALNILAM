@@ -1,0 +1,100 @@
+name: P1 Astro compatibility
+on:
+  push:
+    branches: [chore/79-astro-compatibility-pilot]
+  pull_request:
+    branches: [dev]
+    paths:
+      - "apps/web/**"
+      - "packages/**"
+      - "scripts/compose.mjs"
+      - "scripts/site-contract.mjs"
+      - "tests/fixtures/astro-compatibility.mdx"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/p1-astro-compatibility.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: p1-astro-compatibility-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - name: Install frozen workspace
+        run: pnpm install --frozen-lockfile
+      - name: Prepare disposable external Site
+        run: |
+          set -euo pipefail
+          mkdir -p astro-evidence
+          cp -a sites/demo "$RUNNER_TEMP/alnilam-astro-site"
+          cp tests/fixtures/astro-compatibility.mdx "$RUNNER_TEMP/alnilam-astro-site/content/posts/"
+          echo "ALNILAM_COMPAT_SITE=$RUNNER_TEMP/alnilam-astro-site" >> "$GITHUB_ENV"
+          {
+            git rev-parse HEAD
+            node --version
+            pnpm --version
+            pnpm --filter @alnilam/web list astro @astrojs/mdx @astrojs/svelte svelte --depth 0
+          } > astro-evidence/versions.txt
+      - name: Measure Astro root and nested builds
+        run: |
+          set -euo pipefail
+          run_timing() {
+            local name="$1"
+            local site_url="$2"
+            ALNILAM_SITE_DIR="$ALNILAM_COMPAT_SITE" \
+            ALNILAM_SITE_URL="$site_url" \
+            ALNILAM_OUTPUT_DIR="$RUNNER_TEMP/astro-timing-$name" \
+              /usr/bin/time -v pnpm --filter @alnilam/web exec astro build --timings \
+              2>&1 | tee "astro-evidence/timing-$name.log"
+          }
+          run_timing root https://example.test/
+          run_timing nested https://example.test/ALNILAM/
+      - name: Compose and verify the external Site at root and nested base
+        run: |
+          set -euo pipefail
+          site_digest() {
+            node --input-type=module -e \
+              'import { validateSiteRoot } from "./scripts/site-contract.mjs"; console.log(validateSiteRoot(process.argv[1]).digest)' \
+              "$ALNILAM_COMPAT_SITE"
+          }
+          before="$(site_digest)"
+          ALNILAM_SITE_URL=https://example.test/ node scripts/compose.mjs --site "$ALNILAM_COMPAT_SITE" --out dist/site
+          node scripts/artifact-check.mjs dist/site
+          test -s dist/site/posts/astro-compatibility/index.html
+          grep -F 'MDX fixture rendered by Astro.' dist/site/posts/astro-compatibility/index.html
+          ALNILAM_SITE_URL=https://example.test/ALNILAM/ node scripts/compose.mjs --site "$ALNILAM_COMPAT_SITE" --out dist/nested-base
+          node scripts/artifact-check.mjs dist/nested-base
+          test -s dist/nested-base/posts/astro-compatibility/index.html
+          after="$(site_digest)"
+          test "$before" = "$after"
+          printf 'external Site SHA-256: %s\n' "$after" | tee astro-evidence/site-digest.txt
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Browser smoke on external Site
+        run: pnpm browser
+      - name: Upload compatibility evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: astro-compatibility-evidence
+          path: |
+            astro-evidence/
+            browser-results/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 30

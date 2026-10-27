@@ -1,10 +1,10 @@
 # ALNILAM — AI Agent Handoff
 
-## Current P1 implementation checkpoint — 2026-10-26
+## Current P1 implementation checkpoint — 2026-10-27
 
-G0-F Plan/Spec is frozen on `dev` at `e0ff5177b7cb5f4a7803325b5a552883f24cd61a` (merged [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77); post-merge `verify` [40326089246](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40326089246) PASS). The first authorized P1 slice, [#48](https://github.com/Skyline-Gazer/ALNILAM/issues/48), is under review on `feat/48-shirone-frontend-vertical-slice`. It adds a Shirone-derived presentation while retaining the v1 Site contract, compose/provenance, Pagefind, optional modules and the unchanged Editorial rollback path. Read [the slice record](p1/48-SHIRONE-VERTICAL-SLICE.md) for exact scope, KEEP/ADAPT/WRAP decisions, evidence and limits.
+G0-F remains frozen at `e0ff5177b7cb5f4a7803325b5a552883f24cd61a`; the Shirone slice shipped in [PR #95](https://github.com/Skyline-Gazer/ALNILAM/pull/95) and retains the v1 Site contract, compose/provenance, Pagefind, optional modules, and Editorial rollback path. The live P1 candidates are [PR #97 / Issue #49](https://github.com/Skyline-Gazer/ALNILAM/pull/97), [PR #98 / Issue #50](https://github.com/Skyline-Gazer/ALNILAM/pull/98), and the isolated [Issue #79 compatibility branch](https://github.com/Skyline-Gazer/ALNILAM/tree/chore/79-astro-compatibility-pilot). Their current evidence and limits are recorded in the [P1 exit gate](p1/P1-EXIT-GATE.md), the [#49 PR](https://github.com/Skyline-Gazer/ALNILAM/pull/97), the [#50 browser baseline PR](https://github.com/Skyline-Gazer/ALNILAM/pull/98), and the [#79 compatibility record](p1/79-ASTRO-COMPATIBILITY.md).
 
-This checkpoint is **not** P1 completion: #37 stays open pending the Owner's phase confirmation. Do not merge the slice to `main`, create a release/tag, deploy production or start P2–P6 work without separate authorization. The earlier P0 record below remains historical evidence.
+The candidates remain unmerged and #37 remains open. The current gate is `P1_CONDITIONAL_WITH_BLOCKERS`; do not merge to `main`, create a release/tag, deploy production, close the phase, or start P2 without the separately required review and Owner confirmation. The earlier P0 records below are historical evidence.
 
 ## Current P0 evidence checkpoint — 2026-10-26
 
