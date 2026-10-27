@@ -1,6 +1,6 @@
 # ALNILAM roadmap (Issue-driven)
 
-This is the historical v0.1.x P0–P4 roadmap. The ALNILAM Next Plan/Spec is now frozen in the [G0-F decision](next/08-G0-F-DECISION.md), which authorizes P1 only. The first Shirone vertical slice is tracked by [#48](https://github.com/Skyline-Gazer/ALNILAM/issues/48) under [#37](https://github.com/Skyline-Gazer/ALNILAM/issues/37); this is development evidence, not a release or P1 closure.
+This is the historical v0.1.x P0–P4 roadmap. The ALNILAM Next Plan/Spec is frozen in the [G0-F decision](next/08-G0-F-DECISION.md), which authorizes P1 only. Shirone slice [PR #95](https://github.com/Skyline-Gazer/ALNILAM/pull/95) is merged to `dev`; #49, #50 and #79 continue under [#37](https://github.com/Skyline-Gazer/ALNILAM/issues/37). This is development evidence, not a release or P1 closure.
 
 **Tracker:** [Skyline-Gazer Project #17](https://github.com/orgs/Skyline-Gazer/projects/17/). Project v2 board status is **not verified** merely because a linked repository Issue exists.
 

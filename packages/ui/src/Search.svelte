@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   // Pagefind loads its index lazily from /pagefind/ at interaction time —
   // nothing is serialized into the page bundle. We render results with a
   // minimal custom UI (Pagefind's own default-ui bundle is webpack-era and
@@ -10,6 +11,10 @@
   // NOTE: deliberately NOT $state — pagefind's module namespace must not be
   // wrapped in a reactive proxy (breaks its internal state); we never render it.
   let searchApi: { search(q: string): Promise<{ results: { data(): Promise<{ url: string; meta: { title?: string }; excerpt: string }>[] } }>; init(): Promise<void>; options(o: Record<string, unknown>): Promise<void> } | undefined;
+
+  let initializing = false;
+  let destroyed = false;
+  let requestId = 0;
 
   const t = {
     placeholder: "搜索文章…",
@@ -24,43 +29,51 @@
   });
 
   async function initSearch() {
+    if (initializing || searchApi) return;
+    initializing = true;
     try {
       // Location-derived URL is computed at runtime so no bundler can resolve it.
       // Normalize because Astro does not guarantee a trailing slash in BASE_URL.
       const baseUrl = import.meta.env.BASE_URL.replace(/\/?$/, "/");
       const pagefindUrl = new URL(`${baseUrl}pagefind/pagefind.js`, location.origin).href;
-      searchApi = await import(/* @vite-ignore */ pagefindUrl);
-      await searchApi.init();
-      await searchApi.options({ baseUrl });
-      if (query) runSearch(query);
+      const api = await import(/* @vite-ignore */ pagefindUrl);
+      await api.init();
+      await api.options({ baseUrl });
+      if (destroyed) return;
+      searchApi = api;
+      if (query && !debounce) void runSearch(query);
     } catch {
       // Index unavailable (e.g. built without pagefind) — leave the UI inert.
+    } finally {
+      initializing = false;
     }
   }
 
   let debounce: ReturnType<typeof setTimeout> | undefined;
   function oninput(e: Event) {
     query = (e.target as HTMLInputElement).value;
+    requestId += 1;
     clearTimeout(debounce);
     if (!query.trim()) {
       results = [];
+      searching = false;
       return;
     }
-    debounce = setTimeout(() => runSearch(query), 200);
+    debounce = setTimeout(() => {
+      debounce = undefined;
+      void runSearch(query);
+    }, 200);
   }
 
   async function runSearch(q: string) {
-    if (!searchApi) {
-      (window as unknown as Record<string, unknown>).__rs = { stage: "no-api" };
-      return;
-    }
+    if (!searchApi) return;
+    const currentRequest = ++requestId;
     searching = true;
     try {
       const res = await searchApi.search(q);
-      (window as unknown as Record<string, unknown>).__rs = { stage: "searched", total: res.results.length };
       const data = (await Promise.all(res.results.slice(0, 10).map((r) => r.data())))
         .filter((d) => d && d.url);
-      (window as unknown as Record<string, unknown>).__rs = { stage: "data", n: data.length, urls: data.map(d => d.url) };
+      if (currentRequest !== requestId) return;
       // Pagefind may return several entries sharing one URL (page + sub-results).
       const seen = new Set();
       results = data
@@ -71,10 +84,18 @@
           // Pagefind excerpts embed <mark> highlights; render plain text.
           excerpt: d.excerpt.replaceAll("<mark>", "").replaceAll("</mark>", ""),
         }));
+    } catch {
+      if (currentRequest === requestId) results = [];
     } finally {
-      searching = false;
+      if (currentRequest === requestId) searching = false;
     }
   }
+
+  onDestroy(() => {
+    destroyed = true;
+    clearTimeout(debounce);
+    requestId += 1;
+  });
 </script>
 
 <div class="relative">
