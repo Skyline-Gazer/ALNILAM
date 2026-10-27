@@ -90,7 +90,7 @@ test("nested-base output keeps canonical and internal links inside /ALNILAM/", (
   assert.doesNotMatch(html, /href="\/(?!ALNILAM\/)/);
   assert.doesNotMatch(html, /href="\/ALNILAM\/\//);
   assert.doesNotMatch(posts, /href="\/(?!ALNILAM\/)/);
-  assert.match(posts, /<a href="\/ALNILAM\/posts\/2" rel="next"/);
+  assert.match(posts, /<a href="\/ALNILAM\/posts\/2\/" rel="next"/);
   assert.doesNotMatch(posts, /\/ALNILAM\/ALNILAM\//);
 });
 test("output paths cannot overlap the Site source", () => {

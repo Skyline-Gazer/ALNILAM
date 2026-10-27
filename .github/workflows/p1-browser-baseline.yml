@@ -1,0 +1,195 @@
+name: P1 browser baseline
+
+on:
+  push:
+    branches: [feat/50-browser-baseline]
+  pull_request:
+    branches: [dev]
+    paths:
+      - ".github/workflows/p1-browser-baseline.yml"
+      - "apps/web/**"
+      - "packages/**"
+      - "themes/**"
+      - "tests/browser/**"
+      - "tests/fixtures/p1-external-site/**"
+      - "scripts/compose.mjs"
+      - "scripts/preview-server.mjs"
+      - "scripts/site-contract.mjs"
+      - "scripts/upgrade-check.mjs"
+      - "scripts/p1/**"
+      - "lighthouserc.cjs"
+      - "playwright.baseline.config.ts"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p1-browser-baseline-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          submodules: false
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install pinned Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Prepare disposable external Site and provenance
+        id: fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/p1-baseline
+          site="$RUNNER_TEMP/alnilam-p1-site"
+          cp -a tests/fixtures/p1-external-site "$site"
+          site_digest="$(node --input-type=module -e 'import { validateSiteRoot } from "./scripts/site-contract.mjs"; console.log(validateSiteRoot(process.argv[1]).digest)' "$site")"
+          tested_sha="$(git rev-parse HEAD)"
+          base_sha="$(git merge-base HEAD origin/dev)"
+          echo "site_digest=$site_digest" >> "$GITHUB_OUTPUT"
+          echo "ALNILAM_SITE_DIGEST=$site_digest" >> "$GITHUB_ENV"
+          echo "ALNILAM_TESTED_SHA=$tested_sha" >> "$GITHUB_ENV"
+          echo "ALNILAM_BASE_CORE_SHA=$base_sha" >> "$GITHUB_ENV"
+          {
+            echo "tested_sha=$tested_sha"
+            echo "branch=${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+            echo "base_core_sha=$base_sha"
+            echo "site_digest=$site_digest"
+            echo "site_path=tests/fixtures/p1-external-site (copied to RUNNER_TEMP)"
+            echo "node=$(node --version)"
+            echo "pnpm=$(pnpm --version)"
+          } > artifacts/p1-baseline/metadata.txt
+      - name: Compose disabled-module external Site at root and nested base
+        shell: bash
+        run: |
+          set -euo pipefail
+          site="$RUNNER_TEMP/alnilam-p1-site"
+          export NODE_OPTIONS="--import=$GITHUB_WORKSPACE/tests/browser/bangumi-fetch-fixture.mjs"
+          ALNILAM_BANGUMI_FIXTURE=disabled node scripts/compose.mjs --site "$site" --out dist/site
+          ALNILAM_SITE_URL=https://example.test/ALNILAM/ ALNILAM_BANGUMI_FIXTURE=disabled node scripts/compose.mjs --site "$site" --out dist/nested-base
+          node scripts/artifact-check.mjs dist/site
+          node scripts/artifact-check.mjs dist/nested-base
+          test ! -e dist/site/bangumi
+          test ! -e dist/nested-base/bangumi
+          after="$(node --input-type=module -e 'import { validateSiteRoot } from "./scripts/site-contract.mjs"; console.log(validateSiteRoot(process.argv[1]).digest)' "$site")"
+          test "$after" = "$ALNILAM_SITE_DIGEST"
+          unset NODE_OPTIONS
+          node scripts/upgrade-check.mjs --old "$ALNILAM_BASE_CORE_SHA" --site "$site"
+      - name: Compose enabled Bangumi fixture and provider failure cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          site="$RUNNER_TEMP/alnilam-p1-bangumi-site"
+          cp -a "$RUNNER_TEMP/alnilam-p1-site" "$site"
+          cat >> "$site/alnilam.config.toml" <<'EOF'
+
+          [bangumi]
+          enabled = true
+          userId = "p1-fixture-user"
+          subjectType = "anime"
+          EOF
+          export NODE_OPTIONS="--import=$GITHUB_WORKSPACE/tests/browser/bangumi-fetch-fixture.mjs"
+          ALNILAM_BANGUMI_FIXTURE=success node scripts/compose.mjs --site "$site" --out dist/bangumi-root
+          ALNILAM_SITE_URL=https://example.test/ALNILAM/ ALNILAM_BANGUMI_FIXTURE=success node scripts/compose.mjs --site "$site" --out dist/bangumi-nested
+          ALNILAM_BANGUMI_FIXTURE=http-error node scripts/compose.mjs --site "$site" --out dist/bangumi-http-error
+          ALNILAM_BANGUMI_FIXTURE=timeout node scripts/compose.mjs --site "$site" --out dist/bangumi-timeout
+          node --input-type=module <<'EOF'
+          import assert from "node:assert/strict";
+          import fs from "node:fs";
+          const enabled = fs.readFileSync("dist/bangumi-root/bangumi/index.html", "utf8");
+          assert.match(enabled, /P1 番组夹具/);
+          assert.match(enabled, /P1 fixture show/);
+          for (const [dir, detail] of [["dist/bangumi-http-error", /Bangumi API 503/], ["dist/bangumi-timeout", /TimeoutError|timeout/i]]) {
+            assert.equal(fs.existsSync(`${dir}/index.html`), true, `${dir} missing the home page`);
+            const html = fs.readFileSync(`${dir}/bangumi/index.html`, "utf8");
+            assert.match(html, /数据获取失败/);
+            assert.match(html, detail);
+            assert.match(html, /BaseLayout|P1 Browser Fixture/);
+          }
+          console.log("Bangumi enabled, HTTP error, and bounded timeout fixtures verified");
+          EOF
+          node scripts/artifact-check.mjs dist/bangumi-http-error
+          node scripts/artifact-check.mjs dist/bangumi-timeout
+          unset NODE_OPTIONS
+      - name: Record browser and fixture metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec node --input-type=module <<'EOF'
+          import fs from "node:fs";
+          import { chromium } from "@playwright/test";
+          const browser = await chromium.launch();
+          const metadata = {
+            testedSha: process.env.ALNILAM_TESTED_SHA,
+            branch: process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME,
+            siteDigest: process.env.ALNILAM_SITE_DIGEST,
+            node: process.version,
+            pnpm: process.env.PNPM_VERSION ?? "10.19.0",
+            playwright: "1.64.1",
+            chromium: browser.version(),
+            viewportMatrix: ["390x844", "1440x900"],
+            baseMatrix: ["/", "/ALNILAM/"],
+            fixture: "external Site v1; Bangumi API mocked at build time",
+            fieldP75: "NOT VERIFIED",
+          };
+          await browser.close();
+          fs.writeFileSync("artifacts/p1-baseline/metadata.json", JSON.stringify(metadata, null, 2) + "\n");
+          console.log(JSON.stringify(metadata, null, 2));
+          EOF
+      - name: Playwright browser baseline
+        env:
+          ALNILAM_TESTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          ALNILAM_SITE_DIGEST: ${{ steps.fixture.outputs.site_digest }}
+        run: pnpm exec playwright test --config=playwright.baseline.config.ts
+      - name: Lighthouse CI mobile and desktop medians
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/preview-server.mjs --root dist/site --port 4323 --base / &
+          root_pid=$!
+          node scripts/preview-server.mjs --root dist/nested-base --port 4324 --base /ALNILAM/ &
+          nested_pid=$!
+          cleanup() {
+            kill "$root_pid" "$nested_pid" 2>/dev/null || true
+            wait "$root_pid" "$nested_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4323/ >/dev/null && curl -fsS http://127.0.0.1:4324/ALNILAM/ >/dev/null; then break; fi
+            sleep 1
+          done
+          export ALNILAM_CHROME_PATH="$(pnpm exec node --input-type=module -e 'import { chromium } from "@playwright/test"; console.log(chromium.executablePath())')"
+          export ALNILAM_TESTED_SHA
+          export ALNILAM_SITE_DIGEST
+          for form_factor in mobile desktop; do
+            export ALNILAM_LHCI_FORM_FACTOR="$form_factor"
+            pnpm dlx @lhci/cli@0.15.1 autorun --config=lighthouserc.cjs
+            node scripts/p1/lighthouse-summary.mjs "artifacts/lighthouse/$form_factor"
+          done
+      - name: Upload P1 browser and Lighthouse evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-browser-baseline-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/p1-baseline/
+            artifacts/lighthouse/
+            browser-results/p1/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 30
