@@ -17,6 +17,9 @@ on:
       - "scripts/site-contract.mjs"
       - "scripts/upgrade-check.mjs"
       - "scripts/p1/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
       - "lighthouserc.cjs"
       - "playwright.baseline.config.ts"
 
