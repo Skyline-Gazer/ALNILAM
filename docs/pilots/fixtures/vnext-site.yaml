@@ -1,0 +1,6 @@
+# Owner-requested YAML-only vNext contract example, not a runnable Site v1.
+# Parser/schema and v1 transition require their own reviewed engineering change.
+site:
+  title: ALNILAM Consumer fixture
+  url: https://example.com/ALNILAM/
+  description: Independent read-only content, configuration and assets

@@ -1,130 +1,157 @@
-# Issue #94: isolated remote-first CNB Playwright/CLS & plugin pilot.
-# Executes only in a CNB-hosted repository. GitHub PRs do NOT trigger CNB.
-# No tag, release, auto-merge, mirror, deployment, or production credentials.
+# Isolated #94 Consumer pilot. ALNILAM remains GitHub Primary.
+# Never import production credentials or enable release/mirror jobs here.
 chore/94-cnb-browser-ci-pilot:
   push:
     - &browser
-      name: alnilam-browser-cls-pilot
+      name: alnilam-browser-quality
       runner:
         tags: cnb:arch:amd64
         cpus: 2
       docker:
-        image: mcr.microsoft.com/playwright:v1.64.1-noble
+        image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
+      git:
+        submodules: false
       env:
-        CI: "true"
+        CI: 'true'
       stages:
-        - name: Verify runtime
+        - name: Lockfile-pinned runtime
           script: |
             set -eu
-            node -v
+            node --version
             node -e 'const [a,b,c]=process.versions.node.split(".").map(Number);if(a<22||(a===22&&(b<23||(b===23&&c<4))))process.exit(2)'
             npm install -g pnpm@10.19.0
-        - name: Existing build plus test coverage
-          script: |
-            set -eu
             pnpm install --frozen-lockfile
-            mkdir -p artifacts/coverage
-            node --experimental-test-coverage --test-reporter=lcov --test scripts/tests/*.test.mjs > artifacts/coverage/lcov.info
-            grep -q '^SF:' artifacts/coverage/lcov.info
-            pnpm check
-            pnpm build
-            test -s dist/site/posts/hello-alnilam/index.html
-        - name: Coverage report (baseline only)
+            mkdir -p artifacts .tmp/cnb
+        - name: Capture build and quality verdicts
+          script: |
+            set +e
+            node scripts/ci/cnb-consumer-build.mjs > artifacts/build.log 2>&1
+            echo "$?" > artifacts/build.status
+            node scripts/ci/cnb-browser-audit.mjs > artifacts/browser.log 2>&1
+            echo "$?" > artifacts/browser.status
+            node scripts/ci/cnb-lighthouse.mjs > artifacts/lighthouse.log 2>&1
+            echo "$?" > artifacts/lighthouse.status
+        - name: Source-only coverage (local baseline 77.70 percent; confirm on CNB)
           type: testing:coverage
           options:
-            pattern: artifacts/coverage/lcov.info
+            pattern: artifacts/coverage/source.lcov.info
+            allowExts: .mjs
+            lines: 77
             breakIfNoCoverage: true
-        - name: Browser and CLS baseline
+        - name: Browser failure must produce the expected red test
+          script: node scripts/ci/cnb-browser-negative.mjs
+        - name: Package exact build evidence
           script: |
             set -eu
-            npm install --prefix .cnb-browser-tools --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright@1.64.1
-            mkdir -p artifacts/cnb-browser
-            set +e
-            node scripts/ci/cnb-browser-audit.mjs --output dist/site > artifacts/cnb-browser/run.log 2>&1
-            status=$?
-            set -e
-            cat artifacts/cnb-browser/run.log
-            echo "$status" > artifacts/cnb-browser/status.txt
-        - name: Package immutable test evidence
-          script: |
-            set -eu
-            echo "tested_sha=${CNB_COMMIT:-unknown} source_sha=${CNB_PULL_REQUEST_SHA:-not-pr}" > artifacts/cnb-browser/identity.txt
-            tar -czf artifacts/alnilam-cnb-browser-evidence.tgz -C artifacts cnb-browser coverage
-            test -s artifacts/alnilam-cnb-browser-evidence.tgz
-        - name: CNB commit attachments
-          image: cnbcool/attachments:latest
+            node -e 'const fs=require("node:fs");const e=process.env;fs.writeFileSync("artifacts/platform.json",JSON.stringify({build:e.CNB_BUILD_ID,event:e.CNB_EVENT,source:e.CNB_PULL_REQUEST_SHA,target:e.CNB_PULL_REQUEST_TARGET_SHA,merge:e.CNB_PULL_REQUEST_MERGE_SHA,tested:e.CNB_COMMIT,node:process.version,arch:process.arch},null,2))'
+            tar -czf "alnilam-cnb-${CNB_BUILD_ID}.tgz" artifacts browser-results
+            sha256sum "alnilam-cnb-${CNB_BUILD_ID}.tgz" > .tmp/cnb/evidence.sha256
+        - &upload
+          name: Upload required evidence (fatal stage)
+          image: cnbcool/attachments:v1.1.5@sha256:3112e2ee5c562dc508ed2d51706ecccb1770781a105c488cc7620b53d6bf5442
           settings:
             attachments:
-              - artifacts/alnilam-cnb-browser-evidence.tgz
+              - alnilam-cnb-${CNB_BUILD_ID}.tgz
             ttl: 14
-        - name: Browser verdict must succeed
+          exports:
+            FILES: UPLOADED_FILES
+        - name: Require upload receipt and remove local copy
           script: |
             set -eu
-            test -s artifacts/cnb-browser/status.txt
-            test "$(cat artifacts/cnb-browser/status.txt)" = 0
-        - name: AI review negative fixtures
+            test "$UPLOADED_FILES" = "alnilam-cnb-${CNB_BUILD_ID}.tgz"
+            rm "alnilam-cnb-${CNB_BUILD_ID}.tgz"
+        - name: Download retained commit evidence
+          image: cnbcool/attachments:v1.1.5@sha256:3112e2ee5c562dc508ed2d51706ecccb1770781a105c488cc7620b53d6bf5442
+          settings:
+            type: DOWNLOAD
+            attachments:
+              - alnilam-cnb-${CNB_BUILD_ID}.tgz
+        - name: Verify downloaded evidence and deterministic verdicts
           script: |
             set -eu
-            node --test scripts/ci/cnb-review-gate.test.mjs
-        - name: git-auto-tag safety simulation (disposable local repo ONLY)
+            sha256sum -c .tmp/cnb/evidence.sha256
+            test "$(cat artifacts/build.status)" = 0
+            test "$(cat artifacts/browser.status)" = 0
+            test "$(cat artifacts/lighthouse.status)" = 0
+        - name: Isolated local tag safety fixture (not native auto-tag acceptance)
+          script: node scripts/ci/cnb-release-tag-dry-run.mjs
+      failStages:
+        - name: Preserve failure diagnostics
           script: |
-            set -eu
-            node scripts/ci/cnb-release-tag-dry-run.mjs
+            mkdir -p artifacts
+            tar -czf "alnilam-cnb-failed-${CNB_BUILD_ID}.tgz" artifacts browser-results 2>/dev/null || tar -czf "alnilam-cnb-failed-${CNB_BUILD_ID}.tgz" artifacts
+        - name: Upload failure diagnostics (parent remains failed)
+          image: cnbcool/attachments:v1.1.5@sha256:3112e2ee5c562dc508ed2d51706ecccb1770781a105c488cc7620b53d6bf5442
+          settings:
+            attachments:
+              - alnilam-cnb-failed-${CNB_BUILD_ID}.tgz
+            ttl: 14
+      endStages:
+        - name: Verify preview servers have exited
+          script: node -e 'Promise.all([4323,4324].map(p=>fetch("http://127.0.0.1:"+p,{signal:AbortSignal.timeout(1000)}).then(()=>{throw Error("Lingering server "+p)},()=>{}))).catch(e=>{console.error(e);process.exitCode=1})'
 dev:
   pull_request:
     - *browser
-    - name: alnilam-sca-and-review
+    - name: alnilam-structured-review
       runner:
         tags: cnb:arch:amd64
         cpus: 2
       docker:
         image: node:24-bookworm
+      git:
+        submodules: false
       stages:
-        - name: PR vulnerability delta (high/critical block)
-          image: cnbcool/sca-vulnerability:latest
-          settings:
-            failOnSeverity: high
-        - name: PR dependency license delta
-          image: cnbcool/sca-license:latest
-          settings:
-            failOnSeverity: high
-        - name: PR SBOM delta
-          image: cnbcool/sca-sbom:latest
-          settings:
-            output: ${CNB_BUILD_WORKSPACE}/.cnb-sca/sbom-delta.json
-        - name: CNB security scan readout (NOT a scan gate)
-          image: cnbcool/cnb-sechook:latest
-          settings:
-            scanning_disabled: false
-            sensitive_disabled: false
-            max_display_authors: 5
-        - name: Prepare AI review output
+        - name: Load verifier from trusted target and clear run-owned output
           script: |
             set -eu
             mkdir -p artifacts/cnb-review
-        - name: Official PR code-review
-          image: cnbcool/code-review:1.22.2
+            rm -f artifacts/cnb-review/review.json
+            git show "${CNB_PULL_REQUEST_TARGET_SHA}:scripts/ci/cnb-review-gate.mjs" > /tmp/cnb-trusted-review-gate.mjs
+        - name: Official code review (comments only)
+          image: cnbcool/code-review:v1.22.2@sha256:d0af9a2e683488e2424d42d3e0bffe478c87b37d44903d4f5b8b2288480704eb
           settings:
-            output: artifacts/cnb-review/code_review.json
+            output: artifacts/cnb-review/review.json
             comment: true
             review_event: comment
             max_comments: 10
             min_confidence: medium
             exclude_categories: style,nit
-            timeout_minutes: 15
-        - name: Deterministic AI review gate
-          script: |
-            set -eu
-            node scripts/ci/cnb-review-gate.mjs artifacts/cnb-review/code_review.json
-        - name: Pack review evidence
-          script: |
-            set -eu
-            tar -czf artifacts/alnilam-cnb-review-evidence.tgz artifacts/cnb-review
-        - name: Attach review evidence
-          image: cnbcool/attachments:latest
+            max_turns: 20
+            timeout_minutes: 10
+        - name: Current source target and merge gate
+          script: node /tmp/cnb-trusted-review-gate.mjs artifacts/cnb-review/review.json
+      failStages:
+        - name: Review diagnostics
+          script: test ! -f artifacts/cnb-review/review.json || cat artifacts/cnb-review/review.json
+  pull_request.target:
+    - name: alnilam-native-security
+      runner:
+        tags: cnb:arch:amd64
+        cpus: 2
+      git:
+        submodules: false
+      stages:
+        - name: New High and Critical vulnerability gate
+          image: cnbcool/sca-vulnerability@sha256:422900af42cc94bb8bf1295210647b9ef1676a27e6ab3c388fb8e0e66f31a05a
           settings:
-            attachments:
-              - artifacts/alnilam-cnb-review-evidence.tgz
-            ttl: 14
-# Deliberately no auto_tag/tag_push or write-enabled NPC. Tag generation may
-# ONLY happen after a separate owner-authorized release gate outside this pilot.
+            scanMode: diff
+            failOnSeverity: high
+            publish: true
+        - name: New High license risk gate
+          image: cnbcool/sca-license@sha256:06661e7f220de8064670b5dfe3b995a86cfa7a6778d17db7731a5b66690afa4a
+          settings:
+            scanMode: diff
+            failOnSeverity: high
+            publish: true
+        - name: Retained SBOM delta
+          image: cnbcool/sca-sbom@sha256:b1c8ef55ec9d800aded0aaad94e84e58594ea6dd7c50217ffc27dc7cfe58a8ca
+          settings:
+            scanMode: diff
+            format: cyclonedx-json
+            publish: true
+        - name: Native security summary (scanners above remain authoritative)
+          image: cnbcool/cnb-sechook@sha256:b31a19d033a70c327db3f9484d5ac8944e3e2c9e001afe18e5c8fc71f412ca0e
+          settings:
+            scanning_disabled: false
+            sensitive_disabled: false
+            max_display_authors: 5

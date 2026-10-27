@@ -1,5 +1,12 @@
 # ALNILAM — AI Agent Handoff
 
+## CNB integration gate — 2026-10-27
+
+PR #95 is merged; verified dev is `1f382aa72052eedbe8a2809011e5a36a82f697d0`. #47/#48 are closed; #37/#49 remain open. Existing `feat/49-unified-routing-lifecycle` is preserved at that dev baseline. Do not restart G0-F/P0 or implement #49 during this ADS integration assignment.
+
+The Owner requires real ADS CNB and Consumer acceptance before the next P1 task. [Draft PR #96](https://github.com/Skyline-Gazer/ALNILAM/pull/96) reuses its original seven commits/six files and merges current dev without rebasing. Keep it isolated until actual Pilot acceptance. GitHub remains authoritative; production main stays `07fac43cba0c3d303c930c098b6e2124b2c79e4a`. See [Pilot evidence and scope](pilots/CNB-BROWSER-PLUGINS.md) and [YAML-only requirement delta](adr/0002-vnext-yaml-requirement-delta.md).
+
+
 ## Current P1 implementation checkpoint — 2026-10-26
 
 G0-F Plan/Spec is frozen on `dev` at `e0ff5177b7cb5f4a7803325b5a552883f24cd61a` (merged [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77); post-merge `verify` [40326089246](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40326089246) PASS). The first authorized P1 slice, [#48](https://github.com/Skyline-Gazer/ALNILAM/issues/48), is under review on `feat/48-shirone-frontend-vertical-slice`. It adds a Shirone-derived presentation while retaining the v1 Site contract, compose/provenance, Pagefind, optional modules and the unchanged Editorial rollback path. Read [the slice record](p1/48-SHIRONE-VERTICAL-SLICE.md) for exact scope, KEEP/ADAPT/WRAP decisions, evidence and limits.
