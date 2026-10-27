@@ -4,6 +4,15 @@
 
 **Issue:** [#49](https://github.com/Skyline-Gazer/ALNILAM/issues/49) · **Parent:** [#37](https://github.com/Skyline-Gazer/ALNILAM/issues/37) · **Base:** `dev` at `1f382aa72052eedbe8a2809011e5a36a82f697d0` (post-#95).
 
+## Cross-layer Keep/Adapt matrix
+
+| Layer | Before | After | Decision |
+| --- | --- | --- | --- |
+| ALNILAM source | Astro file routes, Site v1 URL helpers, Pagefind island, Editorial rollback package. | Keep the existing architecture; remove the unused Editorial dependency edge, reject numeric pagination collisions, and repair search initialization/races/cleanup. | **KEEP / ADAPT** |
+| Tests | Contract and browser suites lacked the numeric-slug collision and delayed/reordered search regressions. | Add both regressions and retain external Site digest, route, and lifecycle coverage. | **ADAPT** |
+| CI | Existing frozen `verify` already runs contract, build, browser, external Site, and rollback checks. | Reuse the required workflow without adding a parallel pipeline. | **KEEP** |
+| Docs | No focused #49 record or native-MPA lifecycle ADR. | Add this report and ADR 0002; update the handoff, roadmap, traceability, and affected historical descriptions. | **ADAPT** |
+
 ## Dependency inventory
 
 | Area | Before | After | Decision |
