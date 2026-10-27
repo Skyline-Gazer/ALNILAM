@@ -6,6 +6,8 @@ PR #95 is merged; verified dev is `1f382aa72052eedbe8a2809011e5a36a82f697d0`. #4
 
 The Owner requires real ADS CNB and Consumer acceptance before the next P1 task. [Draft PR #96](https://github.com/Skyline-Gazer/ALNILAM/pull/96) reuses its original seven commits/six files and merges current dev without rebasing. Keep it isolated until actual Pilot acceptance. GitHub remains authoritative; production main stays `07fac43cba0c3d303c930c098b6e2124b2c79e4a`. See [Pilot evidence and scope](pilots/CNB-BROWSER-PLUGINS.md) and [YAML-only requirement delta](adr/0002-vnext-yaml-requirement-delta.md).
 
+**Continuation remains NO-GO without accepted CNB evidence or an explicit Owner override.** Resume the outstanding native Review/NPC/Agent Fix, current-head cloud quality, release and exit checks from [ADS #63](https://github.com/Skyline-Gazer/ADS/issues/63) and [ALNILAM #94](https://github.com/Skyline-Gazer/ALNILAM/issues/94); the existing cloud archive covers an earlier Pilot SHA and is not current-head acceptance. Mode B publication writes are disabled pending verified exclusive-writer and release authority controls. Once the gate or explicit override allows continuation, use the existing #49 branch and latest `dev`, and verify one route owner, Svelte island/Pagefind lifecycle, theme persistence, nested-base/SEO links, back/forward restoration, frozen lockfile and Core/Site contracts. #50 later carries the accepted browser, accessibility, CLS, Lighthouse and third-party fixture evidence. Do not start #49 implementation as part of the CNB Pilot.
+
 
 ## Current P1 implementation checkpoint — 2026-10-26
 

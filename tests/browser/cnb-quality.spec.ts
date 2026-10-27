@@ -28,7 +28,8 @@ for (const origin of origins) for (const width of [390, 1440]) {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await page.locator('[data-theme-choice="light"]').click();
       await sample('theme');
-      await page.locator('[data-post-card] h2 a').first().click();
+      // Pagefind searches the current document language; use the demo's default-locale article.
+      await page.locator('[data-post-card] h2 a[href$="/posts/getting-started/"]').click();
       await expect(page.locator('.article-view')).toBeVisible();
       const articleURL = page.url();
       const articleTitle = await page.locator('.article-header h1').innerText();
