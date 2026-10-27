@@ -6,7 +6,7 @@ This is the historical v0.1.x P0–P4 roadmap. The ALNILAM Next Plan/Spec is fro
 
 ## Current P1 status — 2026-10-27
 
-The implementation candidates and evidence are summarized in the [P1 exit-gate report](p1/P1-EXIT-GATE.md). PRs #97 and #98 target `dev`; Issue #79 is in its own Astro compatibility branch and PR. Keep the P1 parent [#37](https://github.com/Skyline-Gazer/ALNILAM/issues/37) open until the candidate PRs are reviewed and merged and the Owner confirms the phase gate. The proposed first P2 issue is [#51](https://github.com/Skyline-Gazer/ALNILAM/issues/51); it is a handoff only and remains unstarted.
+The implementation candidates and evidence are summarized in the [P1 exit-gate report](p1/P1-EXIT-GATE.md). PRs [#97](https://github.com/Skyline-Gazer/ALNILAM/pull/97), [#98](https://github.com/Skyline-Gazer/ALNILAM/pull/98), and [#99](https://github.com/Skyline-Gazer/ALNILAM/pull/99) target `dev`. Keep the P1 parent [#37](https://github.com/Skyline-Gazer/ALNILAM/issues/37) open until the candidate PRs are reviewed and merged and the Owner confirms the phase gate. The proposed first P2 issue is [#51](https://github.com/Skyline-Gazer/ALNILAM/issues/51); it is a handoff only and remains unstarted.
 
 ## P0 · Bootstrap & Core/Site
 - Initial Monorepo, ADS v0.3 submodule, docs, Astro + Svelte + Tailwind baseline.

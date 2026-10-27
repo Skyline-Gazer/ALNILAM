@@ -12,7 +12,7 @@ This is an evidence ledger for the current P1 candidates, not a phase approval. 
 | `main` | `07fac43cba0c3d303c930c098b6e2124b2c79e4a` |
 | #49 / PR #97 | `52686281778086e2e98af245a6b48b899d8acb2c`, open to `dev` |
 | #50 / PR #98 | `dc9a85ce91154c7cb33f6245ccef1c0703729c1c`, open to `dev` |
-| #79 | `chore/79-astro-compatibility-pilot`, based on the same `dev`; PR is this candidate's review surface |
+| #79 / PR #99 | `985664d76ebf4a55f7f1e65e45ebde66f5f5bfba`, open to `dev` |
 
 The `.ads` gitlink stays at `3abf6025657a5d716476029cc8cbf5239543210b`; the private submodule was not materialized. The #96 CNB pilot remains separate and open/draft. No `main` update, release, tag, or deployment occurred.
 
@@ -26,13 +26,13 @@ The local CLIs are present but do not satisfy the required current-channel prefl
 
 ### #50 — external browser and performance baseline
 
-[PR #98](https://github.com/Skyline-Gazer/ALNILAM/pull/98) is open from `feat/50-browser-baseline` to `dev`, based directly on the same `dev` SHA rather than on the unmerged #49 branch. It adds the disposable external Site baseline, the root/nested browser matrix, Bangumi success/error/timeout fixtures, Lighthouse median summarizer, and bounded evidence artifacts. Its required PR `verify` run [40520545076](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40520545076) passed on head `dc9a85c`. The dedicated PR browser baseline [40520545077](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40520545077) was still in progress at the last check; performance medians and its artifact are therefore pending.
+[PR #98](https://github.com/Skyline-Gazer/ALNILAM/pull/98) is open from `feat/50-browser-baseline` to `dev`, based directly on the same `dev` SHA rather than on the unmerged #49 branch. It adds the disposable external Site baseline, the root/nested browser matrix, Bangumi success/error/timeout fixtures, Lighthouse median summarizer, and bounded evidence artifacts. Its required PR `verify` run [40520545076](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40520545076) passed on head `dc9a85c`. Both dedicated runs passed on that exact head: push baseline [40520468874](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40520468874) and PR baseline [40520545077](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40520545077). Each uploaded its SHA-bound browser/Lighthouse artifact.
 
 Local evidence on `dc9a85c` with Node `22.23.4` / pnpm `10.19.0`: `pnpm test` (`19/19`), `python3 -m unittest discover -s scripts/tests -p '*_test.py'` (`20/20`), `pnpm check`, `pnpm build`, demo/nested-base compose checks, and `pnpm browser` (`2/2`) passed. The focused baseline previously passed `7/7` locally. The dedicated remote run remains the source for retained CI screenshots, traces, CLS samples, and Lighthouse results.
 
 ### #79 — Astro compatibility
 
-The isolated branch adds `.github/workflows/p1-astro-compatibility.yml`, `tests/fixtures/astro-compatibility.mdx`, and this compatibility record. It does not change framework dependencies or product source. It compares the actual ALNILAM Astro `7.4.2` lock with pinned Shirone Astro `7.3.8`, and tests a disposable external Site at root and nested base. The corrected disposable fixture has Site digest `06acb0514cd3f56d8363ded3981d227b2e1efc4c5f140f13308a4f575c5702dd`. Local root/nested builds, MDX output, artifact checks, external browser smoke, and Site immutability passed. Focused remote CI remains required before this candidate's evidence is complete.
+The isolated [PR #99](https://github.com/Skyline-Gazer/ALNILAM/pull/99) adds `.github/workflows/p1-astro-compatibility.yml`, `tests/fixtures/astro-compatibility.mdx`, and this compatibility record. It does not change framework dependencies or product source. It compares the actual ALNILAM Astro `7.4.2` lock with pinned Shirone Astro `7.3.8`, and tests a disposable external Site at root and nested base. The corrected disposable fixture has Site digest `06acb0514cd3f56d8363ded3981d227b2e1efc4c5f140f13308a4f575c5702dd`. Both focused push run [40522444780](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40522444780) and PR run [40522572115](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40522572115) passed and uploaded `astro-compatibility-evidence`; the PR artifact records browser smoke `2/2`, 16 pages in 1.74 s / 734660 KiB peak RSS at root, and 16 pages in 1.51 s / 685692 KiB peak RSS at nested base. These are single-run hosted-runner diagnostics, not a controlled comparison. The required PR `verify` run 40522572426 remained in progress at the last check.
 
 ## C. Verification ledger
 
@@ -40,18 +40,21 @@ The isolated branch adds `.github/workflows/p1-astro-compatibility.yml`, `tests/
 | --- | --- | --- | --- |
 | PR #49 frozen CI `verify` | `5268628`, GitHub Actions Node 24 / pnpm 10.19.0 | PASS | [PR run](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40508608231) |
 | PR #50 frozen CI `verify` | `dc9a85c`, GitHub Actions Node 24 / pnpm 10.19.0 | PASS | [PR run](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40520545076) |
-| PR #50 focused browser/Lighthouse run | `dc9a85c` | IN PROGRESS at last read | [Run and artifact listing](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40520545077) |
+| #50 push browser/Lighthouse baseline | `dc9a85c`, GitHub Actions Node 24.21.0 / pnpm 10.19.0 / Chromium 156 | PASS; 7 expected, 0 skipped, 0 unexpected; artifact uploaded | [Run and artifact listing](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40520468874) |
+| #50 PR browser/Lighthouse run | `dc9a85c`, GitHub Actions Node 24.21.0 / pnpm 10.19.0 / Chromium 156 | PASS; 7 expected, 0 skipped, 0 unexpected; artifact uploaded | [PR run and artifact](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40520545077) |
 | #50 local Node / Python / Astro / compose / regular browser | `dc9a85c`, macOS arm64, Node 22.23.4 / pnpm 10.19.0 | PASS | Commands and scope listed above; see [PR #98](https://github.com/Skyline-Gazer/ALNILAM/pull/98) |
-| #79 external MDX root/nested and browser smoke | `dev` baseline plus isolated fixture, Node 22.23.4 / pnpm 10.19.0 | PASS locally; remote pending | [#79 report](79-ASTRO-COMPATIBILITY.md) |
+| #79 focused push compatibility workflow | `985664d`, GitHub Actions Node 24.21.0 / pnpm 10.19.0 | PASS; external root/nested MDX, browser smoke 2/2, digest stable; artifact uploaded | [Push run](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40522444780) |
+| #79 PR focused compatibility workflow | `985664d`, GitHub Actions Node 24.21.0 / pnpm 10.19.0 | PASS; external root/nested MDX, browser smoke 2/2, digest stable; artifact uploaded | [PR run and artifact](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40522572115) |
+| #79 PR required `verify` | `985664d` | PASS | [Verify run 40522572426](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40522572426) |
 | Full upstream Shirone E2E/lint at Astro 7.3.8 and 7.4.2 | pinned-source harness `bf6a5871aed39d87f0232e8e360c343ff3362566` | PARTIAL: identical `415` pass / `17` fail / `48` upstream skips; lint has 5 errors | [Run 40284029959](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40284029959) |
 
 The local #50 command results do not substitute for the independent focused CI run. See the issue reports for exact route scope and limitations.
 
 ## D. Browser and performance coverage
 
-The #50 external Site browser matrix exercises root and `/ALNILAM/` bases at `390×844` and `1440×900`, dark and light themes, home/posts/pagination/article/localized article/archive/tag/search flows, keyboard focus, reduced motion, delayed image loading, repeated navigation/back/forward/scroll restoration, disabled Bangumi, and enabled Bangumi at both bases. The test emits route samples, screenshots, shift-source data, and console/request errors. The dedicated run has 7 Playwright tests when complete.
+The #50 external Site browser matrix exercises root and `/ALNILAM/` bases at `390×844` and `1440×900`, dark and light themes, home/posts/pagination/article/localized article/archive/tag/search flows, keyboard focus, reduced motion, delayed image loading, repeated navigation/back/forward/scroll restoration, disabled Bangumi, and enabled Bangumi at both bases. The PR run passed all 7 Playwright tests and uploaded route samples, screenshots, shift-source data, and console/request error evidence.
 
-Lighthouse is configured for `/`, `/posts/`, `/posts/cover-story/`, and `/tags/`, at both bases, mobile and desktop, three runs per URL with medians kept separate from browser field data. Search-modal Lighthouse state and field p75 are not measured. Font loading that the local fixture cannot verify is recorded as `NOT_VERIFIED`; visual contrast remains a manual review item. Do not claim the pending run's artifact or metrics before its completion.
+The completed #50 push run on the exact PR head recorded 3-run lab medians for eight URLs (four routes at `/` and `/ALNILAM/`) in both mobile and desktop form factors. Mobile LCP ranged from 1.426 to 1.657 s and CLS from 0 to 0.000249; desktop LCP ranged from 1.204 to 1.658 s and CLS from 0 to 0.000564. Lighthouse performance scores were 100 mobile and 89–95 desktop; accessibility scores were 100 with no automated findings in the report. These are local-runner lab data, not field data or an SLA. INP was unavailable (`inpMs: null`). Search-modal Lighthouse state and field p75 are not measured. Font loading that the fixture cannot verify is recorded as `NOT_VERIFIED`; visual contrast remains a manual review item. The artifact and all per-URL summaries are attached to [push run 40520468874](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40520468874) and the [PR run 40520545077](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40520545077).
 
 The #79 MDX fixture is a separate compatibility check on a disposable copy of `sites/demo`; it does not replace the #50 external fixture or the production Site contract.
 
@@ -59,19 +62,19 @@ The #79 MDX fixture is a separate compatibility check on a disposable copy of `s
 
 The candidate verdict is **`COMPATIBLE_AS_IS`** for ALNILAM's locked Astro `7.4.2` and current integrations. The official Content Layer `glob()`, MDX, file routes, `paginate()`, native MPA, custom RSS/sitemap endpoints, and pass-through Site images remain in place. `astro:i18n`, official RSS/sitemap integrations, and `astro:assets` are deferred until an approved contract/output comparison shows a concrete gain. `astro build --timings` is diagnostic only; experimental build flags remain disabled.
 
-The earlier pinned-source comparison passed the tested check/build/smoke phases on Astro `7.3.8` and `7.4.2`, but the full upstream E2E and lint suite was not clean on either version. The new focused workflow must finish before the compatibility PR has remote CI evidence. See [the detailed record](79-ASTRO-COMPATIBILITY.md).
+The earlier pinned-source comparison passed the tested check/build/smoke phases on Astro `7.3.8` and `7.4.2`, but the full upstream E2E and lint suite was not clean on either version. The focused #79 PR workflow and required generic `verify` both passed on implementation head `985664d`. See [the detailed record](79-ASTRO-COMPATIBILITY.md).
 
 ## F. Documentation and project governance
 
-This report and the #79 compatibility report update the active handoff and roadmap. PRs #97 and #98 remain open; the #79 PR is this branch's review surface. The CNB pilot [PR #96](https://github.com/Skyline-Gazer/ALNILAM/pull/96) stays open/draft and separate.
+This report and the #79 compatibility report update the active handoff and roadmap. PRs #97, #98, and #99 remain open. The CNB pilot [PR #96](https://github.com/Skyline-Gazer/ALNILAM/pull/96) stays open/draft and separate.
 
-The last authenticated Project #17 read showed #49 and #50 as In Progress, #79 absent, no milestone, and no parent/sub-issue links for #37. A fresh read/write could not be completed during this continuation: the GitHub API connector returned transport errors and the project page loaded without board contents. No board change is claimed; current item membership/status requires an authenticated Projects v2 readback.
+Project #17 was read back after reconciliation: 28 items total; Issues #37, #49, #50, and #79 and PRs #97, #98, and #99 are all `In Progress`. Issue #79 and its PR #99 are separate board items, consistent with existing issue-plus-PR tracking. No project Parent issue or Milestone was set for #79; its issue body identifies its P1 scope. PR #96 remains open/draft and outside this candidate set.
 
 ## G. Blockers and limits
 
-- **CI:** #50's dedicated browser/Lighthouse run and #79's focused compatibility CI must finish; read their exact head SHAs and artifact contents afterward.
+- **CI:** #49/#50/#79 required checks and the focused #50/#79 workflows pass on their implementation heads. A docs-only follow-up to #99 will require a fresh required check on the new PR head.
 - **Toolchain:** RTK and CodeGraph installed CLI/channel state do not meet the repository's official-current preflight. The required stable CodeGraph distribution was unavailable in the prior verified lookup. Resolution requires the official stable release and approved local installation/channel state; no global changes were made.
-- **Project permissions/transport:** Project #17 membership/status is not freshly verified. Restore the GitHub Projects v2/API path and add #79 only after reading back its current state.
+- **Project hierarchy:** Issue #79 and PR #99 are on Project #17 as `In Progress`. No project Parent issue or Milestone is set for #79; no hierarchy or milestone was inferred from its issue body.
 - **Owner review:** #97, #98, and the #79 candidate are unmerged. Phase closure, `main`, release/tag, deploy, and P2 remain outside this execution.
 - **Performance limits:** no field p75, separate Lighthouse search-modal state, or manual contrast sign-off is evidenced here.
 - **Upstream:** full upstream Shirone E2E/lint retains the same known failures on both compared Astro versions; this is not a clean upstream suite result.
@@ -82,10 +85,10 @@ The last authenticated Project #17 read showed #49 and #50 as In Progress, #79 a
 | --- | --- | --- |
 | G1 Source and architecture | PARTIAL | Existing Shirone/Core/Site baseline is retained; candidate PRs remain open for review. |
 | G2 Core/Site | PARTIAL | External fixtures, digest preservation, provenance, and rollback checks passed on candidate runs; combined accepted `dev` evidence awaits merges. |
-| G3 Functional | PARTIAL | Root/nested and browser cases are implemented; #50 dedicated remote matrix is still running. |
-| G4 Toolchain | PARTIAL | #49/#50 `verify` runs pass; #79 remote CI is pending and official-current tool preflight is unresolved. |
-| G5 Browser/performance | PARTIAL | Local matrix passed; focused remote artifact/medians pending; field p75 is not measured. |
-| G6 Documentation/governance | PARTIAL | Candidate docs are updated; Project #17 readback and #79 membership are unverified. |
+| G3 Functional | PARTIAL | #50's root/nested 7-test browser matrix and #79's external MDX/browser smoke passed; candidates remain unmerged from `dev`. |
+| G4 Toolchain | PARTIAL | Required checks and focused workflows pass on all three implementation heads; the official-current RTK/CodeGraph preflight remains unresolved. |
+| G5 Browser/performance | PARTIAL | #50's same-head push and PR matrices and Lighthouse artifacts pass; field p75, search-state Lighthouse, and manual contrast remain unverified. |
+| G6 Documentation/governance | PASS | Current handoff/roadmap/exit records are updated, and Project #17 item/status readback succeeded for the P1 issues and PRs. #79 has no project Parent issue or Milestone. |
 | G7 Delivery and isolation | PARTIAL | Issue-linked PRs target `dev`, no release/merge/deploy; #96 remains separate. |
 | G8 Independent phase review | NOT VERIFIED | Independent review of the final candidate set and evidence is still required. |
 

@@ -1,6 +1,6 @@
 # Issue #79 — Astro compatibility pilot
 
-Status: **isolated candidate on `chore/79-astro-compatibility-pilot`**, based on `dev` `1f382aa72052eedbe8a2809011e5a36a82f697d0`. No framework version or Site contract is changed.
+Status: **PR #99 open** from `chore/79-astro-compatibility-pilot`, based on `dev` `1f382aa72052eedbe8a2809011e5a36a82f697d0`. No framework version or Site contract is changed.
 
 ## Corrected version baseline
 
@@ -28,15 +28,15 @@ The full upstream E2E suite was **partial on both versions**: 415 passed, 17 fai
 
 | Area | Result | Evidence / boundary |
 | --- | --- | --- |
-| Astro check, Svelte 5, Tailwind 4 | **PASS** | Frozen install, `astro check`, and current demo build passed on the exact `dev` baseline. The version comparison above also passed its type/check/build phase on both reference versions. |
-| External content and MDX | **PASS locally; remote CI pending** | A disposable Site copy with one `.mdx` post was composed at root and `/ALNILAM/`; the generated article contained the MDX marker. The original Site digest stayed unchanged. The focused workflow repeats this and archives its evidence. |
+| Astro check, Svelte 5, Tailwind 4 | **PASS** | The required PR `verify` workflow [40522572426](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40522572426) passed, alongside the focused root/nested Astro build workflow. The version comparison also passed its type/check/build phase on both reference versions. |
+| External content and MDX | **PASS in focused CI** | A disposable Site copy with one `.mdx` post was composed at root and `/ALNILAM/`; the generated article contained the MDX marker. The Site digest remained `06acb0514cd3f56d8363ded3981d227b2e1efc4c5f140f13308a4f575c5702dd`. See [focused push run 40522444780](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40522444780) and its `astro-compatibility-evidence` artifact. |
 | Content Layer | **PASS** | ALNILAM already uses `glob({ pattern: "**/*.{md,mdx}", base: externalPostsPath })`. `file()` is unnecessary for this directory-backed post collection. Astro documents `glob()` for files anywhere on disk and MD/MDX inputs. [Content Loader API](https://docs.astro.build/en/reference/content-loader-reference/) |
 | Static routes and native pagination | **PASS** | File routes, `getStaticPaths()`, and Astro `paginate()` generate the current static route set. Root/nested composition and the existing browser smoke pass. The separate #50 candidate fixes a trailing-slash edge in generated next-page links; it is not part of this branch or current `dev`. [Routing reference](https://docs.astro.build/en/reference/routing-reference/) |
-| Svelte hydration, Pagefind, browser navigation | **PASS for the current smoke scope** | The external-Site root/nested browser suite passes 2/2; it covers theme/search interaction, navigation, and browser history. The app uses native MPA links and no Swup or `ClientRouter`. |
+| Svelte hydration, Pagefind, browser navigation | **PASS for the current smoke scope** | The external-Site root/nested browser suite passes 2/2 in [focused push run 40522444780](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40522444780); it covers theme/search interaction, navigation, and browser history. The app uses native MPA links and no Swup or `ClientRouter`. |
 | RSS and sitemap | **PASS; keep current endpoints** | Existing custom static endpoints build from the external Site and preserve ALNILAM's URL and partial-translation behavior. No parity gap has justified an extra integration dependency. Astro's official RSS helper and sitemap integration remain options for a later isolated output comparison. [RSS recipe](https://docs.astro.build/en/recipes/rss/) · [sitemap integration](https://docs.astro.build/en/guides/integrations-guide/sitemap/) |
 | Images | **PASS for current pass-through policy; API migration deferred** | Site assets are copied after rendering and existing `<img>` output carries explicit dimensions. No image transform requirement was tested or requested. `astro:assets` would need a separate external-Site path and output-equivalence evaluation. [Image service API](https://docs.astro.build/en/reference/image-service-reference/) |
 | Optional modules | **PARTIAL in this issue branch** | The P1 browser candidate separately verifies disabled, enabled, error, and timeout Bangumi behavior. Bangumi is build-time/static, so delayed runtime optional content is not applicable to its present implementation. |
-| Build time and memory | **PARTIAL locally; remote artifact pending** | Local single-run `astro build --timings` output reported 2.01 s at root and 1.60 s nested. The report counted 19 routes while composed `artifact-check` counted 16 HTML pages. This is a diagnostic on a warm local machine, not a comparable benchmark or memory result. The focused CI workflow archives root/nested timings and `/usr/bin/time -v` RSS. |
+| Build time and memory | **PASS as a diagnostic; not a comparative benchmark** | On GitHub Actions Node 24.21.0 / pnpm 10.19.0 at tested head `985664d`, the PR run built 16 pages in 1.74 s with 734660 KiB peak RSS at root, and 16 pages in 1.51 s with 685692 KiB peak RSS at `/ALNILAM/`. These are single-run hosted-runner diagnostics. The raw logs and tool versions are in the [PR workflow artifact](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40522572115). |
 | Upgrade/rollback | **PASS for unchanged Site** | No Astro or product dependency change is proposed. Existing required CI runs the Core rollback check, and #50's focused workflow runs it against a disposable Site. A revert of this PR removes the investigation fixture, workflow, and records without changing Site data. |
 
 ## Official API decisions
@@ -64,6 +64,8 @@ The full upstream E2E suite was **partial on both versions**: 415 passed, 17 fai
 
 ## Verdict and rollback
 
-**Candidate verdict: `COMPATIBLE_AS_IS`** for ALNILAM's actual Astro `7.4.2` lock and current integrations. Evidence is the prior 7.3.8/7.4.2 upstream comparison plus current frozen install, Astro check, demo build, external root/nested MDX build, artifact checks, and browser smoke. The focused remote workflow is still required before the PR evidence is complete. The known upstream E2E and lint failures remain explicit limitations; they are identical across the tested Astro versions.
+**Candidate verdict: `COMPATIBLE_AS_IS`** for ALNILAM's actual Astro `7.4.2` lock and current integrations. Evidence is the prior 7.3.8/7.4.2 upstream comparison plus local frozen install, Astro check, demo build, external root/nested MDX build, artifact checks, browser smoke, and green focused plus required PR CI. The known upstream E2E and lint failures remain explicit limitations; they are identical across the tested Astro versions.
+
+The focused push run [40522444780](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40522444780) and PR run [40522572115](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40522572115) passed on head `985664d76ebf4a55f7f1e65e45ebde66f5f5bfba`, including external root/nested builds and browser smoke (`2/2`), and uploaded `astro-compatibility-evidence`. Required PR `verify` run [40522572426](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40522572426) also passed.
 
 No product dependency or Site change is proposed. Reverting the feature PR removes only the focused workflow, MDX compatibility fixture, and documentation. The Site remains an immutable build input.
