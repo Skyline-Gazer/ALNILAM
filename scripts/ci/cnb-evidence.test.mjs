@@ -22,7 +22,9 @@ test('Lighthouse rejects old exports, missing audits and unbalanced per-URL coun
   assert.equal(validateLighthouseReports(manifest, () => lhr, [url], now).length, 3);
   assert.throws(() => validateLighthouseReports(manifest, () => ({...lhr, fetchTime: new Date(now - 1).toISOString()}), [url], now), /Stale/);
   assert.throws(() => validateLighthouseReports(manifest, () => ({...lhr, audits: {}}), [url], now), /CLS/);
-  assert.throws(() => validateLighthouseReports([...manifest, ...manifest], () => lhr, [url, 'http://other/'], now));
+  const other = 'http://other/';
+  const unbalanced = [...Array.from({length: 4}, () => ({url})), ...Array.from({length: 2}, () => ({url: other}))];
+  assert.throws(() => validateLighthouseReports(unbalanced, item => ({...lhr, requestedUrl: item.url}), [url, other], now), /Missing per-URL repeated Lighthouse reports/);
 });
 test('expected Lighthouse red needs measured excessive CLS, not auditRan failure', () => {
   const url = 'http://regression/';

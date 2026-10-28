@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Reuse the lockfile-pinned Shirone suite and its server/context teardown.
 import fs from 'node:fs';
 import {spawnSync, execFileSync} from 'node:child_process';
