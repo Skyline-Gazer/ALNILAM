@@ -1,8 +1,8 @@
 name: Deploy
+# CNB Mode A release mirroring may update GitHub main. Production Pages deployment
+# must remain a separate Owner-authorized workflow_dispatch action.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 permissions:
   contents: read
   pages: write
