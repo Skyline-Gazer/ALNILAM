@@ -1,6 +1,6 @@
 # CNB dev settings change record
 
-Read back on 2026-10-28 before the authorized Plan B change. This records the rollback point; no production `main`, mirror, tag or deployment setting is in scope.
+Rollback baseline captured 2026-10-28; authorized Plan B and organization trigger scope were read back again on 2026-10-29. No production `main`, mirror, tag or deployment setting is in scope.
 
 ## Original values
 
@@ -52,7 +52,7 @@ Root organization build controls, re-read from the logged-in Owner settings page
 {"event_auto_trigger":true,"cron_auto_trigger":true,"npc_auto_trigger":true,"untrusted_event_cross_repo":false,"scheduled_task_cross_repo":false}
 ```
 
-The root event, cron and NPC switches are organization-wide. At readback, repository event auto-trigger was enabled for `ALNILAM`, `ads-cnb-acceptance-20261027`, `AiringCal`, and `airingcal-control` (four repositories total); `code-import` had event and cron triggers off. The API rejected settings access to secret repo `airingcal-secrets` (403: secret repos do not support token access), so its repo-level state is unverified. The refreshed Owner settings page visibly showed the three root controls on; the successful native ALNILAM PR build confirms event triggering behavior. These root switches were not changed by the Agent. Untrusted-event cross-repository access and scheduled-task cross-repository access remain off. Root event/NPC triggers do not themselves grant cross-repository token access.
+The root event, cron and NPC switches are organization-wide. The 2026-10-29 refreshed Owner settings page showed all three on. Repository event/cron/NPC switches were on for `ALNILAM`, `ads-cnb-acceptance-20261027`, `AiringCal`, and `airingcal-control`; `code-import` event and cron triggers were off. The `airingcal-secrets` settings page was inaccessible and its repo-level state is unverified. The successful native ALNILAM PR build confirms event triggering behavior. The Owner selected organization-level event scope; the four configured repository event triggers were already enabled, so the Agent changed no root or repository trigger setting. Untrusted-event cross-repository access and scheduled-task cross-repository access remain off. Root event/NPC triggers do not themselves grant cross-repository token access.
 
 ## Authorized target and restoration
 
