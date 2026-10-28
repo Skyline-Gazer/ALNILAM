@@ -13,7 +13,7 @@ const SHA = /^[a-f0-9]{40}$/;
 const MAX_ARTIFACT_BYTES = 100 * 1024 * 1024;
 const ROOT = process.cwd();
 const SCRIPT = fileURLToPath(import.meta.url);
-const HARNESS_FILES = [
+export const HARNESS_FILES = [
   'lighthouserc.cjs',
   'playwright.config.ts',
   'scripts/artifact-check.mjs',
@@ -27,6 +27,7 @@ const HARNESS_FILES = [
   'scripts/ci/cnb-evidence.mjs',
   'scripts/ci/cnb-lighthouse.mjs',
   'scripts/ci/cnb-release-tag-dry-run.mjs',
+  'scripts/ci/cnb-trusted-gate.mjs',
 ];
 
 const refName = value => typeof value === 'string' ? value.replace(/^refs\/heads\//, '') : '';

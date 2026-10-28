@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
-import {validateNativePullRequest, assertMergeParents, assertLiveRefs, candidateEnvironment, inspectArtifactTree, snapshotArtifactTree, safeFailureEvidence, validateEvidence, trustedTestFiles, trustedAstroCheckArgs} from './cnb-trusted-gate.mjs';
+import {validateNativePullRequest, assertMergeParents, assertLiveRefs, candidateEnvironment, inspectArtifactTree, snapshotArtifactTree, safeFailureEvidence, validateEvidence, trustedTestFiles, trustedAstroCheckArgs, HARNESS_FILES} from './cnb-trusted-gate.mjs';
 
 const source = 'a'.repeat(40), target = 'b'.repeat(40), merge = 'c'.repeat(40);
 const env = {
@@ -70,6 +70,18 @@ test('trusted checks select target test files and bypass candidate package scrip
       '--dir', path.join(trusted, 'apps/web'), 'exec', 'astro', 'check', '--root', path.join(candidate, 'apps/web'),
     ]);
   } finally { fs.rmSync(root, {recursive: true, force: true}); }
+});
+
+test('copied trusted harness contains each local dependency of its scripts', () => {
+  const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
+  for (const relative of HARNESS_FILES) {
+    const source = fs.readFileSync(path.join(root, relative), 'utf8');
+    for (const [, , specifier] of source.matchAll(/(?:from\s*|import\s*\()(['"])(\.{1,2}\/[^'"]+)\1/g)) {
+      const dependency = path.posix.normalize(path.posix.join(path.posix.dirname(relative), specifier));
+      assert.ok(HARNESS_FILES.includes(dependency), `${relative} imports ${dependency}, which is not copied`);
+      assert.ok(fs.statSync(path.join(root, dependency)).isFile(), `${dependency} is missing from the source tree`);
+    }
+  }
 });
 
 test('artifact collection rejects links and bounds regular file evidence', () => {
