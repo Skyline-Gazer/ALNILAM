@@ -1,8 +1,7 @@
 name: Deploy
+# Keep release-mirror pushes from triggering a production Pages deployment.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 permissions:
   contents: read
   pages: write
