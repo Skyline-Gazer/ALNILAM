@@ -1,77 +1,15 @@
-# Isolated #94 Consumer pilot. ALNILAM remains GitHub Primary.
-# Never import production credentials or enable release/mirror jobs here.
-dev:
+# Public pilot only. Never publish, mirror, tag, or deploy from CNB.
+# "$" covers dev and disposable acceptance branches without modifying main.
+$:
   pull_request:
-    - name: alnilam-browser-quality
+    - name: alnilam-ai-review-advisory
       breakIfModify: true
       retry: 0
       runner:
         tags: cnb:arch:amd64
         cpus: 2
       docker:
-        image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
-      git:
-        submodules: false
-      env:
-        CI: 'true'
-      stages:
-        - name: Lockfile-pinned runtime
-          script: |
-            set -eu
-            node --version
-            node -e 'const [a,b,c]=process.versions.node.split(".").map(Number);if(a<22||(a===22&&(b<23||(b===23&&c<4))))process.exit(2)'
-            npm install -g pnpm@10.19.0
-            pnpm install --frozen-lockfile
-            mkdir -p artifacts .tmp/cnb
-        - name: Capture build and quality verdicts
-          timeout: 20m
-          script: |
-            set +e
-            node scripts/ci/cnb-consumer-build.mjs > artifacts/build.log 2>&1
-            echo "$?" > artifacts/build.status
-            node scripts/ci/cnb-browser-audit.mjs > artifacts/browser.log 2>&1
-            echo "$?" > artifacts/browser.status
-            node scripts/ci/cnb-lighthouse.mjs > artifacts/lighthouse.log 2>&1
-            echo "$?" > artifacts/lighthouse.status
-        - name: Source-only coverage (local baseline 77.70 percent; confirm on CNB)
-          type: testing:coverage
-          options:
-            pattern: artifacts/coverage/source.lcov.info
-            allowExts: .mjs
-            lines: 77
-            breakIfNoCoverage: true
-        - name: Browser failure must produce the expected red test
-          script: node scripts/ci/cnb-browser-negative.mjs
-        - name: Verify deterministic verdicts and record runtime
-          script: |
-            set -eu
-            node -e 'const fs=require("node:fs");const e=process.env;fs.writeFileSync("artifacts/platform.json",JSON.stringify({build:e.CNB_BUILD_ID,event:e.CNB_EVENT,source:e.CNB_PULL_REQUEST_SHA,target:e.CNB_PULL_REQUEST_TARGET_SHA,merge:e.CNB_PULL_REQUEST_MERGE_SHA,tested:e.CNB_COMMIT,node:process.version,arch:process.arch},null,2))'
-            cat artifacts/platform.json
-            test "$(cat artifacts/build.status)" = 0
-            test "$(cat artifacts/browser.status)" = 0
-            test "$(cat artifacts/lighthouse.status)" = 0
-        - name: Isolated local tag safety fixture (not native auto-tag acceptance)
-          script: node scripts/ci/cnb-release-tag-dry-run.mjs
-      failStages:
-        - name: Preserve failure diagnostics in the build log
-          script: |
-            for file in artifacts/build.log artifacts/browser.log artifacts/lighthouse.log; do
-              if [ -f "$file" ]; then
-                echo "----- $file -----"
-                tail -n 80 "$file"
-              fi
-            done
-      endStages:
-        - name: Verify preview servers have exited
-          script: node -e 'Promise.all([4323,4324].map(p=>fetch("http://127.0.0.1:"+p,{signal:AbortSignal.timeout(1000)}).then(()=>{throw Error("Lingering server "+p)},()=>{}))).catch(e=>{console.error(e);process.exitCode=1})'
-    - name: alnilam-structured-review
-      breakIfModify: true
-      retry: 0
-      runner:
-        tags: cnb:arch:amd64
-        cpus: 2
-      docker:
-        image: node:24-bookworm@sha256:6449e19d8184d84062525b6a7524def03146c2cb04a7f08b076680d0e8e4240a
+        image: node:24-bookworm@sha256:e2007d1f4e652444f88d9bb196256d2d035269015e3d27a0d47c1d0cb5192a98
       git:
         submodules: false
       stages:
@@ -82,49 +20,50 @@ dev:
             test ! -L .tmp
             mkdir -p .tmp
             mkdir ".tmp/cnb-review-${CNB_BUILD_ID}"
-        - name: Official code review (comments only)
+        - name: Official Code Review (advisory comment only)
           image: cnbcool/code-review:v1.22.2@sha256:d0af9a2e683488e2424d42d3e0bffe478c87b37d44903d4f5b8b2288480704eb
           settings:
             output: .tmp/cnb-review-${CNB_BUILD_ID}/review.json
-            comment: false
+            comment: true
             review_event: comment
             max_comments: 10
             min_confidence: medium
             exclude_categories: style,nit
             max_turns: 20
             timeout_minutes: 10
-        - name: Trusted target source target and merge gate
-          lock:
-            key: review-comment-${CNB_REPO_SLUG}-${CNB_PULL_REQUEST_SHA}
-            wait: true
-            timeout: 120
-          script: node scripts/ci/cnb-review-gate.mjs .tmp/cnb-review-${CNB_BUILD_ID}/review.json --comment
-        - name: Package raw review and native identity
+        - name: Record advisory Review JSON and native identity
           script: |
             set -eu
-            node -e 'const fs=require("node:fs"),e=process.env;fs.writeFileSync(`.tmp/cnb-review-${e.CNB_BUILD_ID}/identity.json`,JSON.stringify({build:e.CNB_BUILD_ID,source:e.CNB_PULL_REQUEST_SHA,target:e.CNB_PULL_REQUEST_TARGET_SHA,merge:e.CNB_PULL_REQUEST_MERGE_SHA,event:e.CNB_EVENT},null,2))'
-            tar -C ".tmp/cnb-review-${CNB_BUILD_ID}" -czf "review-${CNB_BUILD_ID}.tgz" review.json identity.json
-        - name: Upload raw Review evidence (fatal stage)
-          image: cnbcool/attachments:v1.1.5@sha256:3112e2ee5c562dc508ed2d51706ecccb1770781a105c488cc7620b53d6bf5442
-          settings:
-            attachments:
-              - review-${CNB_BUILD_ID}.tgz
-            ttl: 14
-          exports:
-            FILES: REVIEW_FILES
-        - name: Require Review upload receipt
-          script: test "$REVIEW_FILES" = "review-${CNB_BUILD_ID}.tgz"
-      failStages:
-        - name: Review diagnostics
-          script: test ! -f .tmp/cnb-review-${CNB_BUILD_ID}/review.json || cat .tmp/cnb-review-${CNB_BUILD_ID}/review.json
+            test -s ".tmp/cnb-review-${CNB_BUILD_ID}/review.json"
+            printf 'build=%s event=%s source=%s target=%s merge=%s\n' \
+              "$CNB_BUILD_ID" "$CNB_EVENT" "$CNB_PULL_REQUEST_SHA" \
+              "$CNB_PULL_REQUEST_TARGET_SHA" "$CNB_PULL_REQUEST_MERGE_SHA"
+            cat ".tmp/cnb-review-${CNB_BUILD_ID}/review.json"
+
   pull_request.target:
-    - name: alnilam-native-security
+    - name: alnilam-trusted-consumer
+      breakIfModify: true
+      retry: 0
       runner:
         tags: cnb:arch:amd64
         cpus: 2
+      docker:
+        image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
       git:
         submodules: false
       stages:
+        - name: Install pinned pnpm without CNB credentials
+          script: env -u CNB_TOKEN -u TWINE_PASSWORD npm install --global --ignore-scripts pnpm@10.19.0
+        - name: Verify native PR identity and test the exact merge commit
+          timeout: 40m
+          script: node scripts/ci/cnb-trusted-gate.mjs
+        - name: Enforce application source coverage
+          type: testing:coverage
+          options:
+            pattern: artifacts/coverage/source.lcov.info
+            allowExts: .mjs
+            lines: 77
+            breakIfNoCoverage: true
         - name: New High and Critical vulnerability gate
           image: cnbcool/sca-vulnerability@sha256:422900af42cc94bb8bf1295210647b9ef1676a27e6ab3c388fb8e0e66f31a05a
           settings:
@@ -143,9 +82,28 @@ dev:
             scanMode: diff
             format: cyclonedx-json
             publish: true
-        - name: Native security summary (scanners above remain authoritative)
+        - name: Upload source-bound consumer evidence
+          image: cnbcool/attachments:v1.1.5@sha256:3112e2ee5c562dc508ed2d51706ecccb1770781a105c488cc7620b53d6bf5442
+          settings:
+            attachments:
+              - artifacts/cnb-evidence-${CNB_BUILD_ID}.tgz
+            ttl: 14
+          exports:
+            FILES: CNB_EVIDENCE_FILES
+        - name: Require evidence upload receipt
+          script: test "$CNB_EVIDENCE_FILES" = "artifacts/cnb-evidence-${CNB_BUILD_ID}.tgz"
+        - name: Native security summary (scanner gates remain authoritative)
           image: cnbcool/cnb-sechook@sha256:b31a19d033a70c327db3f9484d5ac8944e3e2c9e001afe18e5c8fc71f412ca0e
           settings:
             scanning_disabled: false
             sensitive_disabled: false
             max_display_authors: 5
+      failStages:
+        - name: Preserve available test diagnostics
+          script: |
+            for file in artifacts/build.log artifacts/browser.log artifacts/lighthouse.log; do
+              if [ -f "$file" ]; then
+                echo "----- $file -----"
+                tail -n 80 "$file"
+              fi
+            done

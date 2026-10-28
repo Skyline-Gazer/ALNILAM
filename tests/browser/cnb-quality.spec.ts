@@ -133,8 +133,8 @@ for (const action of ['delayed-image', 'font', 'lazy', 'menu', 'comments', 'ad',
       window['__cnbAction'] = action;
       const reserved = document.querySelector<HTMLElement>('#reserved')!;
       if (action === 'font') {
-        const font = new FontFace('CNBFixture', 'local("Liberation Serif")');
-        document.fonts.add(await font.load()); document.querySelector<HTMLElement>('main')!.style.fontFamily = 'CNBFixture';
+        await document.fonts.load('24px serif');
+        document.querySelector<HTMLElement>('main')!.style.fontFamily = 'serif';
       } else if (action === 'adblock' || action === 'consent' || action === 'menu') {
         document.querySelector('#notice')!.textContent = action;
       } else if (action === 'delayed-image') {

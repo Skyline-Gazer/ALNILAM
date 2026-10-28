@@ -1,13 +1,18 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import http from 'node:http';
+import path from 'node:path';
 import {spawn, execFileSync} from 'node:child_process';
 import {setTimeout as delay} from 'node:timers/promises';
 import {chromium} from '@playwright/test';
 import {trackChild, stopChildren, assertSuccessfulResponses, validateLighthouseReports, validateLighthouseRegression} from './cnb-evidence.mjs';
 const cli = 'node_modules/@lhci/cli/src/cli.js';
-const env = {...process.env, CHROME_PATH: chromium.executablePath()};
+const env = {...process.env, CHROME_PATH: chromium.executablePath(), ALNILAM_CHROME_PATH: chromium.executablePath()};
 const children = [];
+const formFactor = process.env.ALNILAM_LHCI_FORM_FACTOR || 'mobile';
+if (!['mobile', 'desktop'].includes(formFactor)) throw Error('Unsupported Lighthouse form factor');
+const reportDir = `artifacts/lighthouse/${formFactor}`;
+const regressionDir = `artifacts/lighthouse-regression/${formFactor}`;
 function run(args) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [cli, ...args], {env, stdio: 'inherit'});
@@ -24,9 +29,9 @@ async function ready(url, child) {
   }
   throw Error(`Preview unavailable: ${url}`);
 }
-fs.rmSync('artifacts/lighthouse/cnb', {recursive: true, force: true});
-fs.rmSync('artifacts/lighthouse-regression', {recursive: true, force: true});
-fs.mkdirSync('artifacts/lighthouse/cnb', {recursive: true});
+fs.rmSync(reportDir, {recursive: true, force: true});
+fs.rmSync(regressionDir, {recursive: true, force: true});
+fs.mkdirSync(reportDir, {recursive: true});
 fs.mkdirSync('.tmp/cnb', {recursive: true});
 const started = Date.now();
 let regression;
@@ -37,9 +42,9 @@ const routes = ['/', '/posts/', '/posts/hello-alnilam/'];
 const urls = routes.flatMap(route => [`${root}${route}`, `${nested}${route}`]);
 const config = structuredClone(baseline.ci);
 config.collect.url = urls;
-config.upload.outputDir = 'artifacts/lighthouse/cnb';
-fs.writeFileSync('.tmp/cnb/lighthouse.json', JSON.stringify({ci: config}));
-const receipt = {coreSha: execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim(), node: process.version, browser: chromium.executablePath(),
+config.upload.outputDir = reportDir;
+fs.writeFileSync(`.tmp/cnb/lighthouse-${formFactor}.json`, JSON.stringify({ci: config}));
+const receipt = {coreSha: execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim(), formFactor, node: process.version, browser: chromium.executablePath(),
   runsPerURL: 3, normalStatus: 'NOT_RUN', regressionStatus: 'NOT_RUN'};
 const stop = () => stopChildren(children);
 process.once('SIGTERM', async () => {await stop(); process.exit(1);});
@@ -50,29 +55,29 @@ try {
     await ready(`http://127.0.0.1:${port}${base}`, child);
   }
   await assertSuccessfulResponses(urls);
-  if (await run(['autorun', '--config=.tmp/cnb/lighthouse.json', '--failOnUploadFailure']) !== 0) throw Error('Lighthouse collection/upload failed');
-  const manifest = JSON.parse(fs.readFileSync('artifacts/lighthouse/cnb/manifest.json', 'utf8'));
+  if (await run(['autorun', `--config=.tmp/cnb/lighthouse-${formFactor}.json`, '--failOnUploadFailure']) !== 0) throw Error('Lighthouse collection/upload failed');
+  const manifest = JSON.parse(fs.readFileSync(path.join(reportDir, 'manifest.json'), 'utf8'));
   validateLighthouseReports(manifest, item => {if (!fs.statSync(item.htmlPath).size) throw Error('Missing HTML');return JSON.parse(fs.readFileSync(item.jsonPath, 'utf8'));}, urls, started);
   receipt.normalStatus = 'BASELINE_RECORDED';
   regression = http.createServer((request, response) => response.end('<!doctype html><title>CNB regression</title><h1>Visible content shifts</h1><p>Deterministic severe regression.</p><script>setTimeout(()=>{const e=document.createElement("div");e.style.height="700px";document.body.prepend(e)},900)</script>'));
   await new Promise(resolve => regression.listen(0, '127.0.0.1', resolve));
   const config = {ci: {collect: {url: [`http://127.0.0.1:${regression.address().port}/`], numberOfRuns: 3, settings: {chromeFlags: '--headless --no-sandbox --disable-dev-shm-usage'}},
-    assert: {assertions: {'cumulative-layout-shift': ['error', {maxNumericValue: 0.10}]}}, upload: {target: 'filesystem', outputDir: 'artifacts/lighthouse-regression'}}};
-  fs.writeFileSync('.tmp/cnb/lighthouse-regression.json', JSON.stringify(config));
-  if (await run(['collect', '--config=.tmp/cnb/lighthouse-regression.json']) !== 0) throw Error('Regression fixture failed to collect');
-  const code = await run(['assert', '--config=.tmp/cnb/lighthouse-regression.json']);
+    assert: {assertions: {'cumulative-layout-shift': ['error', {maxNumericValue: 0.10}]}}, upload: {target: 'filesystem', outputDir: regressionDir}}};
+  fs.writeFileSync(`.tmp/cnb/lighthouse-regression-${formFactor}.json`, JSON.stringify(config));
+  if (await run(['collect', `--config=.tmp/cnb/lighthouse-regression-${formFactor}.json`]) !== 0) throw Error('Regression fixture failed to collect');
+  const code = await run(['assert', `--config=.tmp/cnb/lighthouse-regression-${formFactor}.json`]);
   const assertions = JSON.parse(fs.readFileSync('.lighthouseci/assertion-results.json', 'utf8'));
   if (code !== 1) throw Error('Regression assertion did not return its expected failure');
-  if (await run(['upload', '--config=.tmp/cnb/lighthouse-regression.json']) !== 0) throw Error('Regression evidence upload failed');
-  const regressionManifest = JSON.parse(fs.readFileSync('artifacts/lighthouse-regression/manifest.json', 'utf8'));
+  if (await run(['upload', `--config=.tmp/cnb/lighthouse-regression-${formFactor}.json`]) !== 0) throw Error('Regression evidence upload failed');
+  const regressionManifest = JSON.parse(fs.readFileSync(path.join(regressionDir, 'manifest.json'), 'utf8'));
   const reports = validateLighthouseReports(regressionManifest, item => JSON.parse(fs.readFileSync(item.jsonPath, 'utf8')), config.ci.collect.url, started);
   validateLighthouseRegression(reports, assertions, config.ci.collect.url[0]);
-  fs.copyFileSync('.lighthouseci/assertion-results.json', 'artifacts/lighthouse-regression/assertion-results.json');
+  fs.copyFileSync('.lighthouseci/assertion-results.json', path.join(regressionDir, 'assertion-results.json'));
   receipt.regressionStatus = 'EXPECTED_RED_VERIFIED';
 } catch (error) {receipt.error = error.message;console.error(error);process.exitCode = 1;}
 finally {
   if (regression) await new Promise(resolve => regression.close(resolve));
   await stop();
   receipt.elapsedMs = Date.now() - started;
-  fs.writeFileSync('artifacts/lighthouse/receipt.json', JSON.stringify(receipt, null, 2) + '\n');
+  fs.writeFileSync(path.join(reportDir, 'receipt.json'), JSON.stringify(receipt, null, 2) + '\n');
 }

@@ -3,8 +3,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {spawnSync, execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {validateSiteRoot} from '../site-contract.mjs';
 
+const trustedRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 fs.mkdirSync('artifacts/coverage', {recursive: true});
 fs.mkdirSync('.tmp/cnb', {recursive: true});
 const site = fs.mkdtempSync(path.join(os.tmpdir(), 'alnilam-cnb-site-'));
@@ -23,11 +25,13 @@ function run(name, command, args, extra = {}, output) {
 }
 try {
   run('unit-coverage', process.execPath, ['--experimental-test-coverage', '--test-reporter=lcov', '--test', ...fs.globSync('scripts/tests/*.test.mjs'), ...fs.globSync('scripts/ci/*.test.mjs')], {}, 'artifacts/coverage/lcov.info');
-  run('coverage-content', process.execPath, ['scripts/ci/cnb-coverage.mjs', 'artifacts/coverage/lcov.info']);
+  run('coverage-content', process.execPath, [path.join(trustedRoot, 'scripts/ci/cnb-coverage.mjs'), 'artifacts/coverage/lcov.info']);
   run('check', 'pnpm', ['check']);
+  run('demo-compose', process.execPath, [path.join(trustedRoot, 'scripts/compose.mjs'), '--site', 'sites/demo', '--out', 'dist/demo']);
+  run('demo-artifact', process.execPath, [path.join(trustedRoot, 'scripts/artifact-check.mjs'), 'dist/demo']);
   for (const [name, url] of [['site', 'https://example.com/'], ['nested-base', 'https://example.com/ALNILAM/']]) {
-    run(`compose-${name}`, process.execPath, ['scripts/compose.mjs', '--site', site, '--out', `dist/${name}`], {ALNILAM_SITE_URL: url});
-    run(`artifact-${name}`, process.execPath, ['scripts/artifact-check.mjs', `dist/${name}`]);
+    run(`compose-${name}`, process.execPath, [path.join(trustedRoot, 'scripts/compose.mjs'), '--site', site, '--out', `dist/${name}`], {ALNILAM_SITE_URL: url});
+    run(`artifact-${name}`, process.execPath, [path.join(trustedRoot, 'scripts/artifact-check.mjs'), `dist/${name}`]);
   }
   if (validateSiteRoot(site).digest !== before) throw Error('External Site mutated');
 } catch (error) { console.error(error.message); process.exitCode = 1; }

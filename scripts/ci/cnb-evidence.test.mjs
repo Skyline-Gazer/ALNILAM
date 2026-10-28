@@ -38,7 +38,7 @@ test('browser negative rejects stale, signalled and unrelated failures', () => {
     const started = Date.now();
     for (const file of ['shot.png', 'trace.zip']) fs.writeFileSync(path.join(root, file), 'fixture');
     const report = {stats: {startTime: new Date(started).toISOString(), unexpected: 1}, suites: [{specs: [{title: 'intentional browser failure probe', tests: [{results: [{status: 'failed', errors: [{message: 'CNB_INTENTIONAL_BROWSER_FAILURE'}], attachments: ['shot.png', 'trace.zip'].map(file => ({path: path.join(root, file)}))}]}]}]}]};
-    validateBrowserNegative({status: 1, signal: null}, report, started, root);
+    assert.deepEqual(validateBrowserNegative({status: 1, signal: null}, report, started, root), {screenshotBytes: 7, traceBytes: 7});
     assert.throws(() => validateBrowserNegative({status: null, signal: 'SIGTERM'}, report, started, root));
     assert.throws(() => validateBrowserNegative({status: 1}, report, started + 1, root));
     const unrelated = structuredClone(report);unrelated.suites[0].specs[0].tests[0].results[0].errors[0].message = 'Server unavailable';

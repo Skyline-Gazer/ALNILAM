@@ -41,9 +41,12 @@ export function validateBrowserNegative(result, report, started, root) {
   const spec = specs.find(item => item.title === 'intentional browser failure probe');
   const failed = spec?.tests?.flatMap(test => test.results || []).find(test => test.status === 'failed' && test.errors?.some(error => error.message?.includes('CNB_INTENTIONAL_BROWSER_FAILURE')));
   if (!failed) throw Error('Expected browser assertion did not fail');
+  const evidence = {};
   for (const extension of ['.png', '.zip']) {
     const attachment = failed.attachments?.find(item => item.path?.endsWith(extension));
     const filename = attachment?.path && path.resolve(attachment.path);
     if (!filename || !filename.startsWith(path.resolve(root) + path.sep) || !fs.lstatSync(filename).isFile() || !fs.statSync(filename).size) throw Error('Fresh browser screenshot/trace is missing');
+    evidence[extension === '.png' ? 'screenshotBytes' : 'traceBytes'] = fs.statSync(filename).size;
   }
+  return evidence;
 }
