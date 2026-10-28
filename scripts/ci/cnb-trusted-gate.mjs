@@ -126,12 +126,19 @@ export function safeFailureLogs(root) {
   try {
     const stat = fs.lstatSync(root);
     if (!stat.isDirectory() || stat.isSymbolicLink()) return [];
-    return fs.readdirSync(root, {withFileTypes: true}).flatMap(entry => {
-      if (!entry.isFile() || !/^[A-Za-z0-9._-]+\.log$/.test(entry.name)) return [];
-      const file = path.join(root, entry.name);
-      const stat = fs.lstatSync(file);
-      return stat.isFile() && !stat.isSymbolicLink() && stat.size <= 2 * 1024 * 1024 ? [entry.name] : [];
-    });
+    const files = [], directories = [root];
+    while (directories.length) {
+      const directory = directories.pop();
+      for (const entry of fs.readdirSync(directory, {withFileTypes: true})) {
+        const file = path.join(directory, entry.name);
+        const stat = fs.lstatSync(file);
+        if (stat.isDirectory() && !stat.isSymbolicLink()) directories.push(file);
+        else if (stat.isFile() && !stat.isSymbolicLink() && /^[A-Za-z0-9._-]+\.log$/.test(entry.name) && stat.size <= 2 * 1024 * 1024) {
+          files.push(path.relative(root, file));
+        }
+      }
+    }
+    return files.sort();
   } catch { return []; }
 }
 
@@ -259,7 +266,11 @@ function copyFailureLogs(candidateRoot, message, status) {
   fs.rmSync(destination, {recursive: true, force: true});
   fs.mkdirSync(destination, {recursive: true});
   const sourceRoot = path.join(candidateRoot, 'artifacts');
-  for (const name of safeFailureLogs(sourceRoot)) fs.copyFileSync(path.join(sourceRoot, name), path.join(destination, name));
+  for (const name of safeFailureLogs(sourceRoot)) {
+    const file = path.join(destination, name);
+    fs.mkdirSync(path.dirname(file), {recursive: true});
+    fs.copyFileSync(path.join(sourceRoot, name), file);
+  }
   fs.writeFileSync(path.join(destination, 'platform.json'), JSON.stringify({status, error: message}, null, 2) + '\n');
 }
 

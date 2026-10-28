@@ -31,6 +31,8 @@ test('expected Lighthouse red needs measured excessive CLS, not auditRan failure
   const reports = Array.from({length: 3}, () => ({requestedUrl: url, audits: {'cumulative-layout-shift': {numericValue: 0.5}}}));
   const result = {url, auditId: 'cumulative-layout-shift', name: 'maxNumericValue', passed: false, actual: 0.5};
   validateLighthouseRegression(reports, [result], url);
+  assert.throws(() => validateLighthouseRegression(reports, [result], url, 5), /needs 5/);
+  validateLighthouseRegression(Array.from({length: 5}, () => reports[0]), [result], url, 5);
   assert.throws(() => validateLighthouseRegression(reports, [{...result, name: 'auditRan', actual: 0}], url));
   assert.throws(() => validateLighthouseRegression([{requestedUrl: url, audits: {}}, ...reports.slice(1)], [result], url));
 });

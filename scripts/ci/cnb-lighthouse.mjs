@@ -35,6 +35,8 @@ fs.mkdirSync('.tmp/cnb', {recursive: true});
 const started = Date.now();
 let regression;
 const {default: baseline} = await import('../../lighthouserc.cjs');
+const runsPerURL = baseline.ci.collect.numberOfRuns;
+if (!Number.isSafeInteger(runsPerURL) || runsPerURL < 1) throw Error('Lighthouse numberOfRuns must be a positive integer');
 const root = 'http://127.0.0.1:4323';
 const nested = 'http://127.0.0.1:4324/ALNILAM';
 // CNB bounds collection to representative demo routes at both supported base paths.
@@ -45,7 +47,7 @@ config.collect.url = urls;
 config.upload.outputDir = reportDir;
 fs.writeFileSync(`.tmp/cnb/lighthouse-${formFactor}.json`, JSON.stringify({ci: config}));
 const receipt = {coreSha: execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim(), formFactor, node: process.version, browser: chromium.executablePath(),
-  runsPerURL: 3, normalStatus: 'NOT_RUN', regressionStatus: 'NOT_RUN'};
+  runsPerURL, normalStatus: 'NOT_RUN', regressionStatus: 'NOT_RUN'};
 const stop = () => stopChildren(children);
 process.once('SIGTERM', async () => {await stop(); process.exit(1);});
 try {
@@ -57,11 +59,11 @@ try {
   await assertSuccessfulResponses(urls);
   if (await run(['autorun', `--config=.tmp/cnb/lighthouse-${formFactor}.json`, '--failOnUploadFailure']) !== 0) throw Error('Lighthouse collection/upload failed');
   const manifest = JSON.parse(fs.readFileSync(path.join(reportDir, 'manifest.json'), 'utf8'));
-  validateLighthouseReports(manifest, item => {if (!fs.statSync(item.htmlPath).size) throw Error('Missing HTML');return JSON.parse(fs.readFileSync(item.jsonPath, 'utf8'));}, urls, started);
+  validateLighthouseReports(manifest, item => {if (!fs.statSync(item.htmlPath).size) throw Error('Missing HTML');return JSON.parse(fs.readFileSync(item.jsonPath, 'utf8'));}, urls, started, runsPerURL);
   receipt.normalStatus = 'BASELINE_RECORDED';
   regression = http.createServer((request, response) => response.end('<!doctype html><title>CNB regression</title><h1>Visible content shifts</h1><p>Deterministic severe regression.</p><script>setTimeout(()=>{const e=document.createElement("div");e.style.height="700px";document.body.prepend(e)},900)</script>'));
   await new Promise(resolve => regression.listen(0, '127.0.0.1', resolve));
-  const config = {ci: {collect: {url: [`http://127.0.0.1:${regression.address().port}/`], numberOfRuns: 3, settings: {chromeFlags: '--headless --no-sandbox --disable-dev-shm-usage'}},
+  const config = {ci: {collect: {url: [`http://127.0.0.1:${regression.address().port}/`], numberOfRuns: runsPerURL, settings: {chromeFlags: '--headless --no-sandbox --disable-dev-shm-usage'}},
     assert: {assertions: {'cumulative-layout-shift': ['error', {maxNumericValue: 0.10}]}}, upload: {target: 'filesystem', outputDir: regressionDir}}};
   fs.writeFileSync(`.tmp/cnb/lighthouse-regression-${formFactor}.json`, JSON.stringify(config));
   if (await run(['collect', `--config=.tmp/cnb/lighthouse-regression-${formFactor}.json`]) !== 0) throw Error('Regression fixture failed to collect');
@@ -70,8 +72,8 @@ try {
   if (code !== 1) throw Error('Regression assertion did not return its expected failure');
   if (await run(['upload', `--config=.tmp/cnb/lighthouse-regression-${formFactor}.json`]) !== 0) throw Error('Regression evidence upload failed');
   const regressionManifest = JSON.parse(fs.readFileSync(path.join(regressionDir, 'manifest.json'), 'utf8'));
-  const reports = validateLighthouseReports(regressionManifest, item => JSON.parse(fs.readFileSync(item.jsonPath, 'utf8')), config.ci.collect.url, started);
-  validateLighthouseRegression(reports, assertions, config.ci.collect.url[0]);
+  const reports = validateLighthouseReports(regressionManifest, item => JSON.parse(fs.readFileSync(item.jsonPath, 'utf8')), config.ci.collect.url, started, runsPerURL);
+  validateLighthouseRegression(reports, assertions, config.ci.collect.url[0], runsPerURL);
   fs.copyFileSync('.lighthouseci/assertion-results.json', path.join(regressionDir, 'assertion-results.json'));
   receipt.regressionStatus = 'EXPECTED_RED_VERIFIED';
 } catch (error) {receipt.error = error.message;console.error(error);process.exitCode = 1;}

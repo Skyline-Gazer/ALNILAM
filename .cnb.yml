@@ -104,9 +104,9 @@ $:
       failStages:
         - name: Preserve available test diagnostics
           script: |
-            for file in artifacts/*.log; do
-              if [ -f "$file" ]; then
+            find artifacts -type f -name '*.log' -exec sh -c '
+              for file do
                 echo "----- $file -----"
                 tail -n 80 "$file"
-              fi
-            done
+              done
+            ' sh {} +
