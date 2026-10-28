@@ -121,7 +121,7 @@ test("mobile cards place the cover before content", async ({ browser }) => {
     await assertListGeometry(page, 390);
     await page.screenshot({ path: "browser-results/root-mobile-dark.png", fullPage: true });
     await selectTheme(page, "light");
-    await page.screenshot({ path: "browser-results/root-mobile-light.png", fullPage: true });
+    await page.screenshot({ path: "browser-results/root-mobile-light.png", fullPage: true, animations: "disabled" });
     await page.locator("[data-post-card] h2 a").first().click();
     await expect(page.locator(".article-view")).toBeVisible();
     await expect(page.locator("h1")).toHaveCount(1);
@@ -132,4 +132,49 @@ test("mobile cards place the cover before content", async ({ browser }) => {
     await context.close();
     expect(errors, "mobile page errors").toEqual([]);
   }
+});
+
+test("search initializes once and keeps the latest result", async ({ page }) => {
+  let pagefindRequests = 0;
+  await page.route(/pagefind\/pagefind\.js(?:\?.*)?$/, async (route) => {
+    pagefindRequests += 1;
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    await route.fulfill({
+      contentType: "application/javascript",
+      body: `
+        window.__pagefindInitCalls = 0;
+        window.__pagefindOptionsCalls = 0;
+        window.__pagefindQueries = [];
+        export async function init() { window.__pagefindInitCalls += 1; }
+        export async function options() { window.__pagefindOptionsCalls += 1; }
+        export async function search(query) {
+          window.__pagefindQueries.push(query);
+          if (query === "first") await new Promise((resolve) => setTimeout(resolve, 500));
+          return { results: [{ data: async () => ({ url: '/' + query + '/', meta: { title: query }, excerpt: query }) }] };
+        }
+      `,
+    });
+  });
+
+  await page.goto(`${ROOT}/`, { waitUntil: "networkidle" });
+  const toggle = page.getByRole("button", { name: "搜索" });
+  await toggle.click();
+  await expect.poll(() => pagefindRequests).toBe(1);
+  await toggle.click();
+  await toggle.click();
+
+  const dialog = page.getByRole("dialog", { name: "站内搜索" });
+  await expect(dialog).toBeVisible();
+  await expect.poll(() => page.evaluate(() => Reflect.get(window, "__pagefindInitCalls") ?? 0)).toBe(1);
+  await expect.poll(() => page.evaluate(() => Reflect.get(window, "__pagefindOptionsCalls") ?? 0)).toBe(1);
+
+  const input = dialog.getByRole("searchbox");
+  await input.fill("first");
+  await expect.poll(() => page.evaluate(() => (Reflect.get(window, "__pagefindQueries") as string[] | undefined)?.includes("first"))).toBe(true);
+  await input.fill("second");
+  await expect(dialog.getByRole("link", { name: "second" })).toBeVisible();
+  await page.waitForTimeout(600);
+  await expect(dialog.getByRole("link", { name: "second" })).toBeVisible();
+  await expect(dialog.getByRole("link", { name: "first" })).toHaveCount(0);
+  expect(await page.evaluate(() => Reflect.has(window, "__rs"))).toBe(false);
 });

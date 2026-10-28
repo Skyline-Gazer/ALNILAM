@@ -1,0 +1,10 @@
+schemaVersion = 1
+
+[site]
+title = "P1 Browser Fixture"
+description = "Disposable external Site v1 fixture for browser and performance baselines."
+url = "https://example.test/"
+locale = "zh-CN"
+
+[theme]
+appearance = "dark"
