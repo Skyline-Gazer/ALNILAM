@@ -121,7 +121,7 @@ test("mobile cards place the cover before content", async ({ browser }) => {
     await assertListGeometry(page, 390);
     await page.screenshot({ path: "browser-results/root-mobile-dark.png", fullPage: true });
     await selectTheme(page, "light");
-    await page.screenshot({ path: "browser-results/root-mobile-light.png", fullPage: true });
+    await page.screenshot({ path: "browser-results/root-mobile-light.png", fullPage: true, animations: "disabled" });
     await page.locator("[data-post-card] h2 a").first().click();
     await expect(page.locator(".article-view")).toBeVisible();
     await expect(page.locator("h1")).toHaveCount(1);
