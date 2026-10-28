@@ -4,11 +4,16 @@ import {EventEmitter} from 'node:events';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {trackChild, stopChildren, validateLighthouseReports, validateLighthouseRegression, validateBrowserNegative} from './cnb-evidence.mjs';
+import {trackChild, stopChildren, assertSuccessfulResponses, validateLighthouseReports, validateLighthouseRegression, validateBrowserNegative} from './cnb-evidence.mjs';
 
 test('teardown handles an already-signalled child without waiting for a past event', async () => {
   const child = Object.assign(new EventEmitter(), {exitCode: null, signalCode: 'SIGKILL', kill() {throw Error('Already ended');}});
   await Promise.race([stopChildren([trackChild(child)]), new Promise((resolve, reject) => {setTimeout(() => reject(Error('Teardown hung')), 100).unref();})]);
+});
+test('Lighthouse preflight rejects missing demo routes before measuring them', async () => {
+  await assertSuccessfulResponses(['http://fixture/'], async () => ({ok: true, status: 200}));
+  await assert.rejects(assertSuccessfulResponses(['http://fixture/missing/'], async () => ({ok: false, status: 404})), /HTTP 404/);
+  await assert.rejects(assertSuccessfulResponses(['http://fixture/offline/'], async () => {throw Error('offline');}), /Target unavailable/);
 });
 test('Lighthouse rejects old exports, missing audits and unbalanced per-URL counts', () => {
   const now = Date.now(), url = 'http://fixture/';

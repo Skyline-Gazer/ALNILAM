@@ -24,15 +24,15 @@ test('malformed, forged and inconsistent results block', () => {
     assert.throws(() => gateReview(result, identity, identity));
   }
 });
-test('live lookup validates refs and evaluated merge after review', () => {
+test('live lookup validates target checkout and native PR identity', () => {
   const env = {CNB_REPO_SLUG: 'group/repo', CNB_PULL_REQUEST_SLUG: 'group/repo', CNB_PULL_REQUEST_BRANCH: 'feat/test', CNB_BRANCH: 'dev',
-    CNB_EVENT: 'pull_request', CNB_COMMIT: identity.source, CNB_PULL_REQUEST_SHA: identity.source, CNB_PULL_REQUEST_TARGET_SHA: identity.target, CNB_PULL_REQUEST_MERGE_SHA: identity.merge};
-  const git = (...args) => args[0] === 'ls-remote' ? `${args[2].endsWith('/dev') ? identity.target : identity.source}\t${args[2]}` : args[0] === 'rev-parse' ? identity.source : '';
+    CNB_EVENT: 'pull_request.target', CNB_COMMIT: identity.target, CNB_PULL_REQUEST_SHA: identity.source, CNB_PULL_REQUEST_TARGET_SHA: identity.target, CNB_PULL_REQUEST_MERGE_SHA: identity.merge};
+  const git = (...args) => args[0] === 'ls-remote' ? `${args[2].endsWith('/dev') ? identity.target : identity.source}\t${args[2]}` : args[0] === 'rev-parse' ? identity.target : '';
   assert.deepEqual(currentIdentity(env, git), identity);
-  assert.throws(() => currentIdentity({...env, CNB_COMMIT: identity.merge}, git));
-  assert.throws(() => currentIdentity({...env, CNB_EVENT: 'pull_request.target'}, git));
+  assert.throws(() => currentIdentity({...env, CNB_COMMIT: identity.source}, git));
+  assert.throws(() => currentIdentity({...env, CNB_EVENT: 'pull_request'}, git));
   assert.throws(() => currentIdentity({...env, CNB_PULL_REQUEST_SLUG: 'fork/repo'}, git));
-  assert.throws(() => currentIdentity(env, (...args) => args[0] === 'rev-parse' ? identity.merge : git(...args)));
+  assert.throws(() => currentIdentity(env, (...args) => args[0] === 'rev-parse' ? identity.source : git(...args)));
   assert.throws(() => currentIdentity(env, (...args) => args[0] === 'ls-remote' ? '' : git(...args)));
 });
 test('CLI fails without report and trusted platform identity', () => {

@@ -1,9 +1,8 @@
 # Isolated #94 Consumer pilot. ALNILAM remains GitHub Primary.
 # Never import production credentials or enable release/mirror jobs here.
-chore/94-cnb-browser-ci-pilot:
-  push:
-    - &browser
-      name: alnilam-browser-quality
+dev:
+  pull_request:
+    - name: alnilam-browser-quality
       breakIfModify: true
       retry: 0
       runner:
@@ -43,58 +42,28 @@ chore/94-cnb-browser-ci-pilot:
             breakIfNoCoverage: true
         - name: Browser failure must produce the expected red test
           script: node scripts/ci/cnb-browser-negative.mjs
-        - name: Package exact build evidence
+        - name: Verify deterministic verdicts and record runtime
           script: |
             set -eu
             node -e 'const fs=require("node:fs");const e=process.env;fs.writeFileSync("artifacts/platform.json",JSON.stringify({build:e.CNB_BUILD_ID,event:e.CNB_EVENT,source:e.CNB_PULL_REQUEST_SHA,target:e.CNB_PULL_REQUEST_TARGET_SHA,merge:e.CNB_PULL_REQUEST_MERGE_SHA,tested:e.CNB_COMMIT,node:process.version,arch:process.arch},null,2))'
-            tar -czf "alnilam-cnb-${CNB_BUILD_ID}.tgz" artifacts browser-results
-            sha256sum "alnilam-cnb-${CNB_BUILD_ID}.tgz" > .tmp/cnb/evidence.sha256
-        - &upload
-          name: Upload required evidence (fatal stage)
-          image: cnbcool/attachments:v1.1.5@sha256:3112e2ee5c562dc508ed2d51706ecccb1770781a105c488cc7620b53d6bf5442
-          settings:
-            attachments:
-              - alnilam-cnb-${CNB_BUILD_ID}.tgz
-            ttl: 14
-          exports:
-            FILES: UPLOADED_FILES
-        - name: Require upload receipt and remove local copy
-          script: |
-            set -eu
-            test "$UPLOADED_FILES" = "alnilam-cnb-${CNB_BUILD_ID}.tgz"
-            rm "alnilam-cnb-${CNB_BUILD_ID}.tgz"
-        - name: Download retained commit evidence
-          image: cnbcool/attachments:v1.1.5@sha256:3112e2ee5c562dc508ed2d51706ecccb1770781a105c488cc7620b53d6bf5442
-          settings:
-            type: DOWNLOAD
-            attachments:
-              - alnilam-cnb-${CNB_BUILD_ID}.tgz
-        - name: Verify downloaded evidence and deterministic verdicts
-          script: |
-            set -eu
-            sha256sum -c .tmp/cnb/evidence.sha256
+            cat artifacts/platform.json
             test "$(cat artifacts/build.status)" = 0
             test "$(cat artifacts/browser.status)" = 0
             test "$(cat artifacts/lighthouse.status)" = 0
         - name: Isolated local tag safety fixture (not native auto-tag acceptance)
           script: node scripts/ci/cnb-release-tag-dry-run.mjs
       failStages:
-        - name: Preserve failure diagnostics
+        - name: Preserve failure diagnostics in the build log
           script: |
-            mkdir -p artifacts
-            tar -czf "alnilam-cnb-failed-${CNB_BUILD_ID}.tgz" artifacts browser-results 2>/dev/null || tar -czf "alnilam-cnb-failed-${CNB_BUILD_ID}.tgz" artifacts
-        - name: Upload failure diagnostics (parent remains failed)
-          image: cnbcool/attachments:v1.1.5@sha256:3112e2ee5c562dc508ed2d51706ecccb1770781a105c488cc7620b53d6bf5442
-          settings:
-            attachments:
-              - alnilam-cnb-failed-${CNB_BUILD_ID}.tgz
-            ttl: 14
+            for file in artifacts/build.log artifacts/browser.log artifacts/lighthouse.log; do
+              if [ -f "$file" ]; then
+                echo "----- $file -----"
+                tail -n 80 "$file"
+              fi
+            done
       endStages:
         - name: Verify preview servers have exited
           script: node -e 'Promise.all([4323,4324].map(p=>fetch("http://127.0.0.1:"+p,{signal:AbortSignal.timeout(1000)}).then(()=>{throw Error("Lingering server "+p)},()=>{}))).catch(e=>{console.error(e);process.exitCode=1})'
-dev:
-  pull_request:
-    - *browser
     - name: alnilam-structured-review
       breakIfModify: true
       retry: 0
@@ -106,14 +75,13 @@ dev:
       git:
         submodules: false
       stages:
-        - name: Load verifier from trusted target and clear run-owned output
+        - name: Prepare isolated review output
           script: |
             set -eu
             case "$CNB_BUILD_ID" in ''|*[!a-zA-Z0-9-]*) exit 1;; esac
             test ! -L .tmp
             mkdir -p .tmp
             mkdir ".tmp/cnb-review-${CNB_BUILD_ID}"
-            git show "${CNB_PULL_REQUEST_TARGET_SHA}:scripts/ci/cnb-review-gate.mjs" > /tmp/cnb-trusted-review-gate.mjs
         - name: Official code review (comments only)
           image: cnbcool/code-review:v1.22.2@sha256:d0af9a2e683488e2424d42d3e0bffe478c87b37d44903d4f5b8b2288480704eb
           settings:
@@ -125,12 +93,12 @@ dev:
             exclude_categories: style,nit
             max_turns: 20
             timeout_minutes: 10
-        - name: Current source target and merge gate
+        - name: Trusted target source target and merge gate
           lock:
             key: review-comment-${CNB_REPO_SLUG}-${CNB_PULL_REQUEST_SHA}
             wait: true
             timeout: 120
-          script: node /tmp/cnb-trusted-review-gate.mjs .tmp/cnb-review-${CNB_BUILD_ID}/review.json --comment
+          script: node scripts/ci/cnb-review-gate.mjs .tmp/cnb-review-${CNB_BUILD_ID}/review.json --comment
         - name: Package raw review and native identity
           script: |
             set -eu

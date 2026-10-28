@@ -4,7 +4,7 @@ import http from 'node:http';
 import {spawn, execFileSync} from 'node:child_process';
 import {setTimeout as delay} from 'node:timers/promises';
 import {chromium} from '@playwright/test';
-import {trackChild, stopChildren, validateLighthouseReports, validateLighthouseRegression} from './cnb-evidence.mjs';
+import {trackChild, stopChildren, assertSuccessfulResponses, validateLighthouseReports, validateLighthouseRegression} from './cnb-evidence.mjs';
 const cli = 'node_modules/@lhci/cli/src/cli.js';
 const env = {...process.env, CHROME_PATH: chromium.executablePath()};
 const children = [];
@@ -24,26 +24,35 @@ async function ready(url, child) {
   }
   throw Error(`Preview unavailable: ${url}`);
 }
-fs.rmSync('artifacts/lighthouse', {recursive: true, force: true});
+fs.rmSync('artifacts/lighthouse/cnb', {recursive: true, force: true});
 fs.rmSync('artifacts/lighthouse-regression', {recursive: true, force: true});
-fs.mkdirSync('artifacts/lighthouse', {recursive: true});
+fs.mkdirSync('artifacts/lighthouse/cnb', {recursive: true});
 fs.mkdirSync('.tmp/cnb', {recursive: true});
 const started = Date.now();
 let regression;
+const {default: baseline} = await import('../../lighthouserc.cjs');
+const root = 'http://127.0.0.1:4323';
+const nested = 'http://127.0.0.1:4324/ALNILAM';
+const routes = ['/', '/posts/', '/posts/hello-alnilam/'];
+const urls = routes.flatMap(route => [`${root}${route}`, `${nested}${route}`]);
+const config = structuredClone(baseline.ci);
+config.collect.url = urls;
+config.upload.outputDir = 'artifacts/lighthouse/cnb';
+fs.writeFileSync('.tmp/cnb/lighthouse.json', JSON.stringify({ci: config}));
 const receipt = {coreSha: execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim(), node: process.version, browser: chromium.executablePath(),
   runsPerURL: 3, normalStatus: 'NOT_RUN', regressionStatus: 'NOT_RUN'};
 const stop = () => stopChildren(children);
 process.once('SIGTERM', async () => {await stop(); process.exit(1);});
 try {
-  for (const [port, root, base] of [[4323, 'dist/site', '/'], [4324, 'dist/nested-base', '/ALNILAM/']]) {
-    const child = spawn(process.execPath, ['scripts/preview-server.mjs', '--port', String(port), '--root', root, '--base', base], {stdio: 'inherit'});
+  for (const [port, output, base] of [[4323, 'dist/site', '/'], [4324, 'dist/nested-base', '/ALNILAM/']]) {
+    const child = spawn(process.execPath, ['scripts/preview-server.mjs', '--port', String(port), '--root', output, '--base', base], {stdio: 'inherit'});
     children.push(trackChild(child));
     await ready(`http://127.0.0.1:${port}${base}`, child);
   }
-  if (await run(['autorun', '--config=lighthouserc.cjs', '--failOnUploadFailure']) !== 0) throw Error('Lighthouse collection/upload failed');
-  const manifest = JSON.parse(fs.readFileSync('artifacts/lighthouse/manifest.json', 'utf8'));
-  const {default: baseline} = await import('../../lighthouserc.cjs');
-  validateLighthouseReports(manifest, item => {if (!fs.statSync(item.htmlPath).size) throw Error('Missing HTML');return JSON.parse(fs.readFileSync(item.jsonPath, 'utf8'));}, baseline.ci.collect.url, started);
+  await assertSuccessfulResponses(urls);
+  if (await run(['autorun', '--config=.tmp/cnb/lighthouse.json', '--failOnUploadFailure']) !== 0) throw Error('Lighthouse collection/upload failed');
+  const manifest = JSON.parse(fs.readFileSync('artifacts/lighthouse/cnb/manifest.json', 'utf8'));
+  validateLighthouseReports(manifest, item => {if (!fs.statSync(item.htmlPath).size) throw Error('Missing HTML');return JSON.parse(fs.readFileSync(item.jsonPath, 'utf8'));}, urls, started);
   receipt.normalStatus = 'BASELINE_RECORDED';
   regression = http.createServer((request, response) => response.end('<!doctype html><title>CNB regression</title><h1>Visible content shifts</h1><p>Deterministic severe regression.</p><script>setTimeout(()=>{const e=document.createElement("div");e.style.height="700px";document.body.prepend(e)},900)</script>'));
   await new Promise(resolve => regression.listen(0, '127.0.0.1', resolve));

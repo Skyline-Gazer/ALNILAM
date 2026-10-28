@@ -83,16 +83,12 @@ export function currentIdentity(env = process.env, git = (...args) => execFileSy
     if (lines.length !== 1 || lines[0].split('\t')[1] !== `refs/heads/${branch}`) throw Error('Missing/ambiguous live ref');
     return lines[0].split('\t')[0];
   });
-  const merge = git('rev-parse', 'HEAD');
+  const head = git('rev-parse', 'HEAD');
   const {CNB_PULL_REQUEST_SHA: source, CNB_PULL_REQUEST_TARGET_SHA: target} = env;
   for (const sha of [source, target, env.CNB_PULL_REQUEST_MERGE_SHA]) {
     if (!SHA.test(sha || '')) throw Error('Missing native source/target/merge SHA');
   }
-  // CNB exports the evaluated merge SHA but checks out the source commit.
-  if (env.CNB_EVENT !== 'pull_request' || env.CNB_COMMIT !== source || merge !== source) throw Error('Checkout/event is not the native evaluated PR candidate');
-  for (const sha of [source, target]) {
-    git('merge-base', '--is-ancestor', sha, merge);
-  }
+  if (env.CNB_EVENT !== 'pull_request.target' || env.CNB_COMMIT !== target || head !== target) throw Error('Checkout/event is not the trusted target revision');
   return {source: live[0], target: live[1], merge: env.CNB_PULL_REQUEST_MERGE_SHA};
 }
 

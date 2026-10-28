@@ -9,6 +9,13 @@ export async function stopChildren(children) {
   for (const {child} of children) if (child.exitCode === null && child.signalCode === null) child.kill('SIGTERM');
   await Promise.all(children.map(entry => entry.ended));
 }
+export async function assertSuccessfulResponses(urls, request = fetch) {
+  for (const url of urls) {
+    let response;
+    try { response = await request(url); } catch (error) { throw new Error(`Target unavailable: ${url}`, {cause: error}); }
+    if (!response.ok) throw Error(`Target returned HTTP ${response.status}: ${url}`);
+  }
+}
 export function validateLighthouseReports(manifest, load, urls, started, count = 3) {
   if (!Array.isArray(manifest) || manifest.length !== urls.length * count) throw Error('Missing repeated Lighthouse manifest');
   const seen = new Map(urls.map(url => [url, 0]));
