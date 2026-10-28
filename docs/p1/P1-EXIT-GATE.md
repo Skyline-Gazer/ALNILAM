@@ -1,4 +1,23 @@
-# P1 Candidate Evidence Ledger — 2026-10-27 (historical snapshot)
+# P1 Evidence Ledger
+
+## Live integrated readback — 2026-10-28
+
+**Verdict: `P1_ACCEPTANCE_READY / OWNER_PHASE_SIGNOFF_PENDING`.** The integrated implementation and mandatory remote evidence are ready for one independent Owner phase decision. Issue #37 remains open and Project `In Progress` until that decision; this report does not close P1 or authorize P2 code, a production release, or provider cutover.
+
+| Gate | Status | Evidence / limit |
+| --- | --- | --- |
+| Frozen Shirone scope and retained Core/Site boundary | **PASS** | G0-F [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77); implementation PRs #95/#97/#98/#99 merged to protected `dev`. |
+| Integrated contract, build, external Site digest, rollback and production boundary | **PASS** | Final same-SHA `dev` CI [40629124139](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40629124139), SHA `faf2f08a7d47ab0202cf69e6069ef5c37b1ae824`; ADS version lookup [40629124122](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40629124122). |
+| Browser behavior and screenshots | **PASS** | Dedicated Playwright matrix 7/7 on tested head `81162d00a3d8876827613c51464806dfb9c27c0f`, [run 40627932130](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40627932130), [artifact 12790084558](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40627932130/artifacts/12790084558); root/nested, 390/1440, themes, reduced motion and touch-emulation (`hasTouch` + taps). No product source or browser-test changes followed that SHA. Current `dev` smoke is also 3/3 at `faf2f08` in [artifact 12790463906](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40629124139/artifacts/12790463906). |
+| Lighthouse and CLS | **PASS — lab only** | Three-run mobile/desktop medians are in artifact 12790084558. Field p75/real-traffic INP are **DEFERRED**: #74 defines field measurement as optional after release and does not set a P1 field SLA. |
+| Human visual / hardware checks | **PARTIAL; no frozen CI blocker** | Inspected all eight dedicated home screenshots: no obvious clipping or overflow. Physical touch hardware, formal manual contrast review, and late-font behavior remain **NOT VERIFIED**; emulated touch and reduced-motion checks pass. |
+| Astro compatibility | **PASS** | PR #99 and Astro 7.4.2 compatibility evidence; merge `90380e35fe239248ebed9e8463b3c8e49c49cf5a`; required/postmerge checks recorded in #37. |
+| Toolchain | **PASS in configured primary checkout** | Full official RTK `1.1.0` stable, actual host hook operation and preserved failure exit `7`; CodeGraph host MCP operation and up-to-date local index. CodeGraph uses only the authorized immutable MIT source fallback `bb11bc1226db30233ac9e66a2670c4b16dfa85fa`; no official stable is published, so it is not labeled latest stable. A separate empty managed worktree preflight reported RTK `1.0.1`, no loaded hook and no CodeGraph index; it was not used for edits. |
+| Project governance | **PASS — read back** | #37 `In Progress`; #47/#48/#49/#50/#79 `Done`; #100 `In Progress`; #38/#51 `Todo`. Parents #37 → #47/#48/#49/#50/#79/#100 and #38 → #51. No milestones exist. |
+
+The CNB consumer pilot is a separate cutover gate and is **NOT ACCEPTED**: draft #96 is still open at `c549ab8a5ca0ede71ace74f63d5aab54c9fc8e2f`; its GitHub checks pass, but no source-bound current CNB native Review/CI is verified and the actual ALNILAM CNB repository is unavailable or inaccessible. Keep P1's ready-for-signoff result separate from CNB cutover readiness.
+
+## Historical candidate snapshot — 2026-10-27
 
 **Historical 2026-10-27 disposition: `P1_CONDITIONAL_WITH_BLOCKERS`.** This records the pre-integration candidate state; references below to open PRs and unmerged heads are deliberately historical. The live post-integration phase verdict must be documented at [#37](https://github.com/Skyline-Gazer/ALNILAM/issues/37) and cannot be inferred from this snapshot.
 
