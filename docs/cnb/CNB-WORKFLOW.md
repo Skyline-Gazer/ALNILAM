@@ -41,7 +41,7 @@ CNB `main` protection and GitHub `main` protection were not changed. GitHub rema
 | GitHub PR #96 current-head checks on `4e37bdc` | **PASS** | Six statuses; CI, Astro compatibility, P1 browser/Lighthouse, and ADS checks all passed |
 | Trusted target native E2E on `cba3353` | **PASS (scratch only)** | `cnb-oi5-1k61oiv57`, receipts and archive hash verified |
 | Trusted target native E2E on final `98511ad` | **PASS (scratch only)** | `cnb-iin-1k61q4mp4`, exact merge/tested SHA `c131e6d`, archive hash and receipts verified; PR #5 merged on scratch |
-| Hardened `4e37bdc` local acceptance | **PASS (local only)** | 42/42 tests, nine consumer stages, 18 browser passes/1 intentional skip, expected-red negative evidence, no-op scripts rejected; Site digest unchanged |
+| Hardened `4e37bdc` local acceptance | **PASS (local only)** | 42/42 tests, nine consumer stages, 18 browser passes/1 intentional skip, expected-red negative evidence, one-off local no-op fixture rejected; receipt ignored/local only; Site digest unchanged |
 | Trusted target native E2E on hardened `4e37bdc` | **NOT RUN** | CNB Git write rejected; native positive and adversarial no-op PR remain outstanding |
 | Candidate workflow installed on `dev` | **NO** | CNB PR #4 remains unmerged |
 | Scratch protected target direct push | **PASS** | CNB rejected direct push; temporary rule and refs were removed |
