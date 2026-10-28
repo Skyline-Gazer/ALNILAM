@@ -58,6 +58,18 @@ export function assertMergeParents(merge, source, target, parents) {
   }
 }
 
+export function assertLiveRefs(output, identity) {
+  const refs = [`refs/heads/${identity.sourceBranch}`, `refs/heads/${identity.targetBranch}`];
+  const rows = output.trim().split('\n').filter(Boolean);
+  const found = new Map(rows.map(row => {
+    const [sha, ref] = row.split('\t');
+    return [ref, sha];
+  }));
+  if (rows.length !== 2 || found.get(refs[0]) !== identity.source || found.get(refs[1]) !== identity.target) {
+    throw Error('Live source/target refs moved during the trusted gate');
+  }
+}
+
 export function candidateEnvironment(env, home, temp) {
   const child = {
     PATH: env.PATH || '/usr/local/bin:/usr/bin:/bin',
@@ -161,12 +173,7 @@ function git(args) {
 function verifyLiveRefs(identity) {
   const refs = [`refs/heads/${identity.sourceBranch}`, `refs/heads/${identity.targetBranch}`];
   for (const ref of refs) execFileSync('git', ['check-ref-format', ref], {stdio: 'ignore'});
-  const rows = git(['ls-remote', '--refs', 'origin', ...refs]).split('\n').filter(Boolean);
-  if (rows.length !== 2) throw Error('Live source/target refs are missing or ambiguous');
-  const found = new Map(rows.map(row => row.split('\t')));
-  if (found.get(refs[0]) !== identity.source || found.get(refs[1]) !== identity.target) {
-    throw Error('Live source/target refs moved during the trusted gate');
-  }
+  assertLiveRefs(git(['ls-remote', '--refs', 'origin', ...refs]), identity);
 }
 
 function copyTrustedHarness(harnessRoot, candidateRoot) {

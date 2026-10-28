@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {validateNativePullRequest, assertMergeParents, candidateEnvironment, inspectArtifactTree, validateEvidence} from './cnb-trusted-gate.mjs';
+import {validateNativePullRequest, assertMergeParents, assertLiveRefs, candidateEnvironment, inspectArtifactTree, validateEvidence} from './cnb-trusted-gate.mjs';
 
 const source = 'a'.repeat(40), target = 'b'.repeat(40), merge = 'c'.repeat(40);
 const env = {
@@ -36,6 +36,14 @@ test('pre-merge commit must have exactly the API-verified source and target pare
   assert.doesNotThrow(() => assertMergeParents(merge, source, target, [target, source]));
   assert.throws(() => assertMergeParents(merge, source, target, [source]));
   assert.throws(() => assertMergeParents(merge, source, target, [source, 'd'.repeat(40)]));
+});
+
+test('live ref lookup maps each ls-remote SHA to its ref and rejects stale refs', () => {
+  const identity = {sourceBranch: 'chore/test', targetBranch: 'dev', source, target};
+  const output = `${source}\trefs/heads/chore/test\n${target}\trefs/heads/dev\n`;
+  assert.doesNotThrow(() => assertLiveRefs(output, identity));
+  assert.throws(() => assertLiveRefs(`${'d'.repeat(40)}\trefs/heads/chore/test\n${target}\trefs/heads/dev`, identity));
+  assert.throws(() => assertLiveRefs(`${source}\trefs/heads/chore/test`, identity));
 });
 
 test('candidate environment omits the trusted CNB and PyPI credentials', () => {
