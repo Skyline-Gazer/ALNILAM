@@ -1,6 +1,6 @@
 # CNB to GitHub mirror runbook
 
-Readback date: 2026-10-28. This retains ADS v0.4.2 Mode A; it does not add a synchronizer or authorize a write.
+Readback date: 2026-10-29. This retains ADS v0.4.2 Mode A; it does not add a synchronizer or authorize a write.
 
 ## Current direction and state
 
