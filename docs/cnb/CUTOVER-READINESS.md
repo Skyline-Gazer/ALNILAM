@@ -44,6 +44,7 @@ Also enumerate any newly added workflows/triggers before first mirror write. A *
 - Actual CNB ALNILAM repo URL/access/protections and consumer native CI/Review: not verified.
 - P1 final baseline and dev SHA: pending P1 completion.
 - GitHub main dispatch-only guard: **not yet in effect**; this PR only prepares the change for later release.
+- GitHub **main Ruleset [25809753](https://github.com/Skyline-Gazer/ALNILAM/rules/25809753)**: ACTIVE, requires PR + strict `verify` and resolved threads, with **no bypass actors** (`bypass_actors=[]`). This is an independent likely **mirror main write blocker**: normal CNB Mirror tokens cannot simply fast-forward through a mandatory PR rule. Do not relax protection or expand token authority by this PR. Before cutover, Owner must approve a narrowly scoped, actually supported mirror identity/policy exception or another rigorously verified release flow consistent with CNB Primary; prove it in an isolated real provider fixture and re-read the resulting Ruleset. A dry-run/credential scope claim alone is insufficient.
 - CNB mirror token and source/target scope: not provisioned or verified.
 - Release manifest, Owner release authorization, production deploy authorization: absent by design.
 - #96 pilot required consumer gates: not automatically satisfied by ADS #63 generic acceptance.
