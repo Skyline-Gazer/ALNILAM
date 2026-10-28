@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {validateNativePullRequest, assertMergeParents, assertLiveRefs, candidateEnvironment, inspectArtifactTree, snapshotArtifactTree, safeFailureLogs, validateEvidence} from './cnb-trusted-gate.mjs';
+import {validateNativePullRequest, assertMergeParents, assertLiveRefs, candidateEnvironment, inspectArtifactTree, snapshotArtifactTree, safeFailureEvidence, validateEvidence} from './cnb-trusted-gate.mjs';
 
 const source = 'a'.repeat(40), target = 'b'.repeat(40), merge = 'c'.repeat(40);
 const env = {
@@ -87,7 +87,7 @@ test('verified evidence snapshot cannot be changed through the candidate tree', 
   }
 });
 
-test('failure diagnostics copy only small regular log files at any artifact depth', () => {
+test('failure diagnostics copy only bounded regular logs and known receipts', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cnb-failure-logs-'));
   try {
     fs.writeFileSync(path.join(root, 'demo-artifact.log'), 'failure detail');
@@ -96,9 +96,19 @@ test('failure diagnostics copy only small regular log files at any artifact dept
     fs.mkdirSync(path.join(root, 'nested.log'));
     fs.mkdirSync(path.join(root, 'cnb-browser'));
     fs.writeFileSync(path.join(root, 'cnb-browser', 'negative.log'), 'browser failure');
+    fs.writeFileSync(path.join(root, 'cnb-browser', 'negative-receipt.json'), '{"status":"failed"}');
+    fs.writeFileSync(path.join(root, 'cnb-browser', 'untrusted.json'), '{"unexpected":true}');
     fs.symlinkSync('/etc/passwd', path.join(root, 'cnb-browser', 'linked.log'));
-    assert.deepEqual(safeFailureLogs(root), ['cnb-browser/negative.log', 'demo-artifact.log']);
-    assert.deepEqual(safeFailureLogs(path.join(root, 'missing')), []);
+    assert.deepEqual(safeFailureEvidence(root), ['cnb-browser/negative-receipt.json', 'cnb-browser/negative.log', 'demo-artifact.log']);
+    assert.deepEqual(safeFailureEvidence(path.join(root, 'missing')), []);
+  } finally { fs.rmSync(root, {recursive: true, force: true}); }
+});
+
+test('failure evidence scanning stops after 5000 entries', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cnb-failure-scan-limit-'));
+  try {
+    for (let i = 0; i < 5001; i++) fs.writeFileSync(path.join(root, `ignored-${i}`), '');
+    assert.deepEqual(safeFailureEvidence(root), []);
   } finally { fs.rmSync(root, {recursive: true, force: true}); }
 });
 

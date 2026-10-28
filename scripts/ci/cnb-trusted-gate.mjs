@@ -141,19 +141,25 @@ export function snapshotArtifactTree(source, destination) {
   return after;
 }
 
-export function safeFailureLogs(root) {
+export function safeFailureEvidence(root) {
   try {
     const stat = fs.lstatSync(root);
     if (!stat.isDirectory() || stat.isSymbolicLink()) return [];
+    const allowedReceipt = new Set(['build-receipt.json', 'receipt.json', 'negative-receipt.json', 'source-summary.json']);
     const files = [], directories = [root];
+    let bytes = 0, inspected = 0;
     while (directories.length) {
       const directory = directories.pop();
       for (const entry of fs.readdirSync(directory, {withFileTypes: true})) {
+        if (++inspected > 5000) return files.sort();
         const file = path.join(directory, entry.name);
         const stat = fs.lstatSync(file);
         if (stat.isDirectory() && !stat.isSymbolicLink()) directories.push(file);
-        else if (stat.isFile() && !stat.isSymbolicLink() && /^[A-Za-z0-9._-]+\.log$/.test(entry.name) && stat.size <= 2 * 1024 * 1024) {
+        else if (stat.isFile() && !stat.isSymbolicLink() &&
+          (/^[A-Za-z0-9._-]+\.log$/.test(entry.name) || allowedReceipt.has(entry.name)) &&
+          stat.size <= 2 * 1024 * 1024 && files.length < 64 && bytes + stat.size <= 10 * 1024 * 1024) {
           files.push(path.relative(root, file));
+          bytes += stat.size;
         }
       }
     }
@@ -289,12 +295,12 @@ function runCandidate(candidateRoot, harnessRoot) {
   run('isolated tag dry run', process.execPath, [path.join(ci, 'cnb-release-tag-dry-run.mjs')]);
 }
 
-function copyFailureLogs(candidateRoot, message, status) {
+function copyFailureEvidence(candidateRoot, message, status) {
   const destination = path.join(ROOT, 'artifacts');
   fs.rmSync(destination, {recursive: true, force: true});
   fs.mkdirSync(destination, {recursive: true});
   const sourceRoot = path.join(candidateRoot, 'artifacts');
-  for (const name of safeFailureLogs(sourceRoot)) {
+  for (const name of safeFailureEvidence(sourceRoot)) {
     const file = path.join(destination, name);
     fs.mkdirSync(path.dirname(file), {recursive: true});
     fs.copyFileSync(path.join(sourceRoot, name), file);
@@ -365,7 +371,7 @@ async function main() {
   } catch (error) {
     stopCandidateProcesses();
     failure = error;
-    copyFailureLogs(candidateRoot, error.message, 'FAIL');
+    copyFailureEvidence(candidateRoot, error.message, 'FAIL');
   } finally {
     fs.rmSync(tempRoot, {recursive: true, force: true});
   }
