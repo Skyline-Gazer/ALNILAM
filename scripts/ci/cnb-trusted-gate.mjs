@@ -5,6 +5,7 @@ import path from 'node:path';
 import {spawnSync, execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {fileURLToPath, pathToFileURL} from 'node:url';
+import {MIN_SOURCE_COVERAGE} from './cnb-coverage.mjs';
 
 const REPO = 'KoolingMachine/ALNILAM';
 const API = 'https://api.cnb.cool';
@@ -136,7 +137,8 @@ export function safeFailureLogs(root) {
 
 function readJson(file) {
   if (!fs.lstatSync(file).isFile()) throw Error(`Evidence is not a regular file: ${file}`);
-  return JSON.parse(fs.readFileSync(file, 'utf8'));
+  try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
+  catch (error) { throw new Error(`Invalid evidence JSON at ${file}: ${error.message}`, {cause: error}); }
 }
 
 export function validateEvidence(root, identity) {
@@ -161,8 +163,9 @@ export function validateEvidence(root, identity) {
   if (negative.status !== 'EXPECTED_RED_VERIFIED' || negative.exitCode <= 0 ||
       !negative.screenshotBytes || !negative.traceBytes) throw Error('Browser negative evidence is incomplete');
   const coverage = readJson(path.join(artifacts, 'coverage', 'source-summary.json'));
-  if (!Number.isFinite(coverage.percent) || coverage.percent < 77 || coverage.files < 1 || coverage.lines < 1) {
-    throw Error('Application source coverage receipt is missing or below 77 percent');
+  if (!Number.isFinite(coverage.percent) || coverage.minimum !== MIN_SOURCE_COVERAGE ||
+      coverage.percent < coverage.minimum || coverage.files < 1 || coverage.lines < 1) {
+    throw Error('Node source coverage receipt is missing, inconsistent, or below its recorded minimum');
   }
   return {build, browser, coverage};
 }

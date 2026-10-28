@@ -91,8 +91,14 @@ test('verified evidence requires exact SHA receipts, browser negative evidence, 
       coreSha: merge, formFactor, normalStatus: 'BASELINE_RECORDED', regressionStatus: 'EXPECTED_RED_VERIFIED',
     });
     put('cnb-browser/negative-receipt.json', {status: 'EXPECTED_RED_VERIFIED', exitCode: 1, screenshotBytes: 1, traceBytes: 1});
-    put('coverage/source-summary.json', {percent: 77, files: 1, lines: 1});
+    put('coverage/source-summary.json', {percent: 77, minimum: 77, files: 1, lines: 1});
     assert.equal(validateEvidence(root, {source, target, merge}).coverage.percent, 77);
+    fs.writeFileSync(path.join(root, 'artifacts/coverage/source-summary.json'), '{');
+    assert.throws(() => validateEvidence(root, {source, target, merge}), /Invalid evidence JSON.*source-summary\.json/);
+    put('coverage/source-summary.json', {percent: 77, minimum: 77, files: 1, lines: 1});
+    put('coverage/source-summary.json', {percent: 77, minimum: 76, files: 1, lines: 1});
+    assert.throws(() => validateEvidence(root, {source, target, merge}), /coverage receipt/);
+    put('coverage/source-summary.json', {percent: 77, minimum: 77, files: 1, lines: 1});
     put('cnb-browser/receipt.json', {sourceSha: source, targetSha: target, mergeSha: merge, testedSha: source, exitCode: 0, lingeringPorts: []});
     assert.throws(() => validateEvidence(root, {source, target, merge}), /merge SHA/);
   } finally { fs.rmSync(root, {recursive: true, force: true}); }

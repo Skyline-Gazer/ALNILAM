@@ -37,6 +37,7 @@ let regression;
 const {default: baseline} = await import('../../lighthouserc.cjs');
 const root = 'http://127.0.0.1:4323';
 const nested = 'http://127.0.0.1:4324/ALNILAM';
+// CNB bounds collection to representative demo routes at both supported base paths.
 const routes = ['/', '/posts/', '/posts/hello-alnilam/'];
 const urls = routes.flatMap(route => [`${root}${route}`, `${nested}${route}`]);
 const config = structuredClone(baseline.ci);

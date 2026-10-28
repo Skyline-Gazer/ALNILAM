@@ -29,6 +29,8 @@ $:
             max_comments: 10
             min_confidence: medium
             exclude_categories: style,nit
+            rules: |
+              Keep inline comment ranges at or below 20 lines; anchor each finding to the smallest relevant range.
             # The 30-file candidate exhausted the previous 20-turn review limit.
             max_turns: 40
             timeout_minutes: 10
@@ -58,7 +60,7 @@ $:
         - name: Verify native PR identity and test the exact merge commit
           timeout: 40m
           script: node scripts/ci/cnb-trusted-gate.mjs
-        - name: Enforce application source coverage
+        - name: Enforce Node source coverage
           type: testing:coverage
           options:
             pattern: artifacts/coverage/source.lcov.info

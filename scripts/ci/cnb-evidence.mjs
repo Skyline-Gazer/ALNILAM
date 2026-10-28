@@ -34,7 +34,7 @@ export function validateLighthouseRegression(reports, assertions, url, budget = 
   if (!Array.isArray(assertions) || !assertions.some(item => item.url === url && item.auditId === 'cumulative-layout-shift' && item.name === 'maxNumericValue' && item.passed === false && Number.isFinite(item.actual) && item.actual > budget)) throw Error('Expected a measured maxNumericValue failure, not a missing audit');
 }
 export function validateBrowserNegative(result, report, started, root) {
-  if (result.error || result.signal || !Number.isInteger(result.status) || result.status <= 0 || Date.parse(report?.stats?.startTime) < started || !Number.isFinite(Date.parse(report?.stats?.startTime)) || report.stats.unexpected !== 1) throw Error('Fresh intentional browser failure required');
+  if (result.error || result.signal || !Number.isInteger(result.status) || result.status <= 0 || Date.parse(report?.stats?.startTime) < started || !Number.isFinite(Date.parse(report?.stats?.startTime)) || report.stats.unexpected !== 1 || report.stats.expected !== 0) throw Error('Fresh intentional browser failure required');
   const specs = [];
   const collect = suites => {for (const suite of suites || []) {specs.push(...(suite.specs || []));collect(suite.suites);}};
   collect(report.suites);
