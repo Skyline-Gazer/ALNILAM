@@ -41,7 +41,7 @@ const clsBudget = baseline.ci.assert.assertions['cumulative-layout-shift']?.[1]?
 if (!Number.isFinite(clsBudget) || clsBudget < 0) throw Error('Lighthouse CLS budget must be finite and nonnegative');
 const root = 'http://127.0.0.1:4323';
 const nested = 'http://127.0.0.1:4324/ALNILAM';
-// CNB bounds collection to representative demo routes at both supported base paths.
+// lighthouserc.cjs measures the separate P1 external-Site fixture; share its budgets, not its routes.
 const routes = ['/', '/posts/', '/posts/hello-alnilam/'];
 const urls = routes.flatMap(route => [`${root}${route}`, `${nested}${route}`]);
 const config = structuredClone(baseline.ci);

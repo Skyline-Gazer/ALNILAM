@@ -32,8 +32,8 @@ $:
             rules: |
               Return only the required structured review JSON with every field; do not return Markdown prose.
               Keep inline comment ranges at or below 20 lines; anchor each finding to the smallest relevant range.
-            # The 30-file candidate exhausted the previous 20-turn review limit.
-            max_turns: 40
+            # The 31-file candidate exhausted 40 turns; keep the retry finite under the 10-minute timeout.
+            max_turns: 80
             timeout_minutes: 10
         - name: Record advisory Review JSON and native identity
           script: |
