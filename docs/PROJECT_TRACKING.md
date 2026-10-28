@@ -9,3 +9,7 @@
 - Current CLI can read and update the Project. Older statements that no Project API was available are historical. Only Issue #82 was added in P0; no milestone or hierarchy mutation was performed. The proposed hierarchy remains gated on Owner G0-F approval in Draft #77.
 
 Existing Issues are reused by [audit PR #85](https://github.com/Skyline-Gazer/ALNILAM/pull/85), merged into `dev` as `b36b61fff8377694f209fcc7488f7457251a2ce9`. ADS v0.4.1 adoption [PR #84](https://github.com/Skyline-Gazer/ALNILAM/pull/84) merged as `2555c4658599598bfed604fbf0d9b525d24c3ded`; post-merge dev CI [40321449502](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40321449502) passed. P0 evidence and pending Owner decisions are tracked in the [acceptance report](p0/P0-ACCEPTANCE.md); no item is declared Done from green CI alone.
+
+## P1 Project readback — 2026-10-27
+
+Authenticated Projects v2 GraphQL readback returned the same Project ID `PVT_kwDOEwGMMc4Bomrx`, title `Dev Contron`, and Status options Todo / In Progress / Done. The actual board has #37 and #49 In Progress, #50 Todo, and #47/#48 Done. Issue #79 is **not a Project item**. Issue metadata has no native milestone on #37/#49/#50/#79; #37 has no native parent or sub-issue links, and #49 has no native parent. Repository Issue text still describes #49/#50/#79 as children of #37; Markdown text is not a native relationship. No Project, milestone, parent or sub-issue mutation was made. The separate CNB #94 item is In Progress; this does not change GitHub as ALNILAM's primary provider.

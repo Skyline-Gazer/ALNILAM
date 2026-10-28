@@ -1,6 +1,6 @@
 # P1 #48 — Shirone frontend vertical slice
 
-**Status:** implementation candidate for review; this is not P1 closure and not a production release.
+**Status:** merged to `dev` by [PR #95](https://github.com/Skyline-Gazer/ALNILAM/pull/95) at `1f382aa72052eedbe8a2809011e5a36a82f697d0`; this is not P1 closure and not a production release.
 
 **Scope authorization:** [G0-F decision](../next/08-G0-F-DECISION.md), [Issue #48](https://github.com/Skyline-Gazer/ALNILAM/issues/48), parent [Issue #37](https://github.com/Skyline-Gazer/ALNILAM/issues/37).
 

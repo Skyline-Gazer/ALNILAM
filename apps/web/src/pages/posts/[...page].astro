@@ -4,13 +4,14 @@ import BaseLayout from "@alnilam/theme-shirone/BaseLayout.astro";
 import PostCard from "@alnilam/theme-shirone/PostCard.astro";
 import { loadSite } from "../../lib/site-source.mjs";
 import { canonicalUrl, postPath, withBase } from "../../lib/i18n.mjs";
+import { POSTS_PAGE_SIZE } from "../../lib/pagination.mjs";
 
 export async function getStaticPaths({ paginate }: { paginate: (items: CollectionEntry<"posts">[], opts: { pageSize: number; props: Record<string, unknown> }) => unknown[] }) {
   const { config } = loadSite();
   const posts = (await getCollection("posts", ({ data }) => !data.draft))
     .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
   return paginate(posts, {
-    pageSize: 5,
+    pageSize: POSTS_PAGE_SIZE,
     props: { layout: { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale, showBangumi: config.bangumi?.enabled ?? false } },
   });
 }
@@ -49,11 +50,11 @@ const canonicalPage = page.currentPage === 1 ? "/posts/" : `/posts/${page.curren
   {(page.url.prev || page.url.next) && (
     <nav class="pagination" aria-label="分页">
       <span>
-        {page.url.prev && <a href={page.url.prev} rel="prev" class="pill-link">← 上一页</a>}
+        {page.url.prev && <a href={page.url.prev.endsWith("/") ? page.url.prev : `${page.url.prev}/`} rel="prev" class="pill-link">← 上一页</a>}
       </span>
       <span>{page.currentPage} / {page.lastPage}</span>
       <span>
-        {page.url.next && <a href={page.url.next} rel="next" class="pill-link">下一页 →</a>}
+        {page.url.next && <a href={page.url.next.endsWith("/") ? page.url.next : `${page.url.next}/`} rel="next" class="pill-link">下一页 →</a>}
       </span>
     </nav>
   )}

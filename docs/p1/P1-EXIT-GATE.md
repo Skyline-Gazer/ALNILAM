@@ -1,6 +1,6 @@
-# P1 Exit Gate — 2026-10-27
+# P1 Candidate Evidence Ledger — 2026-10-27 (historical snapshot)
 
-**Disposition: `P1_CONDITIONAL_WITH_BLOCKERS`**
+**Historical 2026-10-27 disposition: `P1_CONDITIONAL_WITH_BLOCKERS`.** This records the pre-integration candidate state; references below to open PRs and unmerged heads are deliberately historical. The live post-integration phase verdict must be documented at [#37](https://github.com/Skyline-Gazer/ALNILAM/issues/37) and cannot be inferred from this snapshot.
 
 This is an evidence ledger for the current P1 candidates, not a phase approval. PRs #97, #98, and #99 are open against `dev`; #79 remains isolated on `chore/79-astro-compatibility-pilot`. No candidate is merged and no P1 PASS is claimed. The P1 parent, Issue #37, stays open.
 

@@ -1,10 +1,10 @@
 # ALNILAM — AI Agent Handoff
 
-## Current P1 implementation checkpoint — 2026-10-27
+## Current P1 integration checkpoint — 2026-10-28
 
-G0-F remains frozen at `e0ff5177b7cb5f4a7803325b5a552883f24cd61a`; the Shirone slice shipped in [PR #95](https://github.com/Skyline-Gazer/ALNILAM/pull/95) and retains the v1 Site contract, compose/provenance, Pagefind, optional modules, and Editorial rollback path. The live P1 candidates are [PR #97 / Issue #49](https://github.com/Skyline-Gazer/ALNILAM/pull/97), [PR #98 / Issue #50](https://github.com/Skyline-Gazer/ALNILAM/pull/98), and [PR #99 / Issue #79](https://github.com/Skyline-Gazer/ALNILAM/pull/99). Their current evidence and limits are recorded in the [P1 exit gate](p1/P1-EXIT-GATE.md), [PR #97](https://github.com/Skyline-Gazer/ALNILAM/pull/97), [PR #98](https://github.com/Skyline-Gazer/ALNILAM/pull/98), and the [#79 compatibility report](p1/79-ASTRO-COMPATIBILITY.md).
+P1 remains on existing GitHub `dev` until the separately authorized CNB Primary cutover. Owner-approved G0-F Plan/Spec remains frozen in merged [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77). Shirone PR #95 merged at `1f382aa72052eedbe8a2809011e5a36a82f697d0`; routing PR #97 merged at `95baf6bc04393f02bf89e2ea08e017c41da1fde3` ([post-merge verify](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40627761345) PASS); browser PR #98 merged at `b85ec1080ad9d5adb658b24a83a5389a68d0371f` (new-head required `verify` [40627932190](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40627932190) PASS; dedicated Lighthouse baseline still being collected at integration time). Compatibility PR #99 adds a separate Astro 7.4.2 evidence workflow and P1 ledger. The P1 parent #37 remains open until final post-integration verification, acceptance evidence and phase confirmation.
 
-The candidates remain unmerged and #37 remains open. The current gate is `P1_CONDITIONAL_WITH_BLOCKERS`; do not merge to `main`, create a release/tag, deploy production, close the phase, or start P2 without the separately required review and Owner confirmation. The earlier P0 records below are historical evidence.
+Do not merge to production `main`, create tag/release, deploy Pages, flip provider or mirror writes without separate Owner authorization. Cutover preflight is tracked in [Issue #100](https://github.com/Skyline-Gazer/ALNILAM/issues/100) / [PR #101](https://github.com/Skyline-Gazer/ALNILAM/pull/101). GitHub Issues and Project #17 remain the permanent planning truth. Existing Core/Site v1, compose/provenance, search, optional module boundaries, and Editorial rollback remain intact. The older P0 notes below are historical and may reference pre-P1 branches and v0.4.1; do not treat them as current state.
 
 ## Current P0 evidence checkpoint — 2026-10-26
 
@@ -113,14 +113,13 @@ See [P0 Acceptance & Decision Report](p0/P0-ACCEPTANCE.md), merged [PR #85](http
 - This entry records a tested revision; review the current PR HEAD and fresh CI on every continuation.
 
 ## First task for next agent
-1. Read `AGENTS.md`, `.ads/{AGENTS,STANDARD,SAFETY,QUALITY}.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`.
-2. Open the current bootstrap PR and relevant P0 Issue. Confirm exact SHA and CI logs.
-3. Resolve any bootstrap CI errors without modifying Site inputs or moving work to `main`.
-4. **Validate the generated pnpm-lock.yaml with `pnpm install --frozen-lockfile` and CI.** Do not claim deterministic builds before this passes.
-5. Validate packaged theme imports, Astro 7 integration, Svelte 5 island hydration, Tailwind 4 CSS scanning, Markdown/MDX rendering, and external Site assembly in real CI.
-6. Confirm two-version Core upgrade / same-Site acceptance, reject symlinks and unsafe output paths.
-7. Add browser-based smoke tests when a live build/Preview is available. Keep production deployment unmodified.
-8. Reconcile GitHub Project #17 with real Issues and PRs if authorized Project v2 tooling is available. Otherwise mark board item/status unverified.
+1. Read `AGENTS.md`, the pinned `.ads` policies when available, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, the #49–#50/#79 records and the exact PR heads.
+2. Verify PR #97's current head and `verify` result; preserve its branch history and do not treat it as merged.
+3. Continue #50 from its own branch/worktree and record root/nested, 1440/390, light/dark, external-Site, optional-module, motion, navigation and performance evidence.
+4. Continue #79 in a separate worktree, comparing pinned Shirone Astro 7.3.8 with the actual ALNILAM 7.4.2 lock resolution; do not change product versions incidentally.
+5. Run frozen install, Node/Python tests, Astro check, builds, artifact and production-boundary checks sequentially; retain exact CI/artifact links.
+6. Verify Project #17 through native API readback if available; otherwise keep `PROJECT_UNVERIFIED` and make no status claims.
+7. Keep PRs reviewable and issue-linked. Do not merge, tag, deploy, change ADS or start P2 without separate authorization.
 
 ## Project constraints
 - Only `dev` merges by reviewed PR (except separate authorized release PR to `main`). No direct write to `main`.

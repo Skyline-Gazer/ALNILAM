@@ -2,7 +2,7 @@
 
 > **G0-F OWNER APPROVED FOR P1** ([decision](08-G0-F-DECISION.md)). Requirement-to-Issue mapping is authoritative planning guidance, not evidence that native Project membership, child hierarchy or products PASS. Deferred modules remain OUT OF SCOPE.
 
-Traceability rule: requirement → selected source/implementation → atomic Issue → PR + changed files → CI/browser evidence → owner decision. Scope changes must revise Spec and keep the former decision/link.
+Traceability rule: requirement → selected source/implementation → atomic Issue → PR + changed files → CI/browser evidence → owner decision. G0-F froze the mapping and authorized P1 implementation only; row status never substitutes for current Issue, PR, CI or Project readback. Scope changes must revise Spec and keep the former decision/link.
 
 ## Proposed work-item traceability (all 39 active candidate atomic Issues)
 
@@ -14,11 +14,11 @@ Traceability rule: requirement → selected source/implementation → atomic Iss
 | P0 | #46 | PRD-01, CS-01, MOD-03, NFR-07 | Pending Spec freeze |
 | P0 | **#80** | **MIG-01, MIG-02; baseline KEEP/ADAPT/WRAP/REPLACE/RETIRE** | Pending Spec freeze |
 | P0 | **#82** | **NFR-09; ADS v0.4.1 full RTK/CodeGraph dev-only boundary** | Consumer adoption PASS; P0 Spec freeze pending |
-| P1 | #47 | PRD-02, NFR-01 | Pending Spec freeze |
-| P1 | #48 | PRD-01, PRD-02, PRD-04 | Pending Spec freeze |
-| P1 | #49 | PRD-02, PRD-06, NFR-01 | Pending Spec freeze |
-| P1 | #50 | PRD-04, PRD-05, NFR-05 | Pending Spec freeze |
-| P1 | **#79** | PRD-02, NFR-01, NFR-05; Astro 7.4 official-native feasibility | Pending Spec freeze |
+| P1 | #47 | PRD-02, NFR-01 | P1 authorized; completed evidence remains subject to P1 gate |
+| P1 | #48 | PRD-01, PRD-02, PRD-04 | PR #95 merged; P1 gate remains open |
+| P1 | #49 | PRD-02, PRD-06, NFR-01 | PR #97 open; final CI and review pending |
+| P1 | #50 | PRD-04, PRD-05, NFR-05 | Open; independent browser baseline pending |
+| P1 | **#79** | PRD-02, NFR-01, NFR-05; Astro 7.4 official-native feasibility | Open; isolated compatibility pilot pending |
 | P2 | #51 | CS-04, BLOG-01 | Pending Spec freeze |
 | P2 | #52 | CS-01, CS-02 | Pending Spec freeze |
 | P2 | #53 | CS-02, BLOG-05 | Pending Spec freeze |
