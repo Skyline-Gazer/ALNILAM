@@ -29,7 +29,8 @@ $:
             max_comments: 10
             min_confidence: medium
             exclude_categories: style,nit
-            max_turns: 20
+            # The 30-file candidate exhausted the previous 20-turn review limit.
+            max_turns: 40
             timeout_minutes: 10
         - name: Record advisory Review JSON and native identity
           script: |
