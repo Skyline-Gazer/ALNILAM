@@ -1,10 +1,10 @@
 # ALNILAM — AI Agent Handoff
 
-## Current P1 implementation checkpoint — 2026-10-27
+## Current P1 integration checkpoint — 2026-10-28
 
-G0-F Plan/Spec is frozen on `dev` at `e0ff5177b7cb5f4a7803325b5a552883f24cd61a` (merged [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77); post-merge `verify` [40326089246](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40326089246) PASS). The first authorized Shirone slice, [PR #95](https://github.com/Skyline-Gazer/ALNILAM/pull/95), is merged to `dev` at `1f382aa72052eedbe8a2809011e5a36a82f697d0`. [PR #97](https://github.com/Skyline-Gazer/ALNILAM/pull/97) is the open #49 review; its working record is [here](p1/49-UNIFIED-ROUTING-LIFECYCLE.md). Issues #50 and #79 require separate PRs and evidence, and must not be presented as tested on a merged #49 baseline.
+P1 remains on existing GitHub `dev` until the separately authorized CNB Primary cutover. Owner-approved G0-F Plan/Spec remains frozen in merged [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77). Shirone PR #95 merged at `1f382aa72052eedbe8a2809011e5a36a82f697d0`; routing PR #97 merged at `95baf6bc04393f02bf89e2ea08e017c41da1fde3` ([post-merge verify](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40627761345) PASS); browser PR #98 merged at `b85ec1080ad9d5adb658b24a83a5389a68d0371f` (new-head required `verify` [40627932190](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40627932190) PASS; dedicated Lighthouse baseline still being collected at integration time). Compatibility PR #99 adds a separate Astro 7.4.2 evidence workflow and P1 ledger. The P1 parent #37 remains open until final post-integration verification, acceptance evidence and phase confirmation.
 
-P1 and parent #37 remain open. Keep Site v1, compose/provenance, Pagefind, optional modules and the Editorial rollback package. Do not merge to `main`, create a release/tag, deploy production or start P2–P6 work without separate authorization. The earlier P0 record below remains historical evidence.
+Do not merge to production `main`, create tag/release, deploy Pages, flip provider or mirror writes without separate Owner authorization. Cutover preflight is tracked in [Issue #100](https://github.com/Skyline-Gazer/ALNILAM/issues/100) / [PR #101](https://github.com/Skyline-Gazer/ALNILAM/pull/101). GitHub Issues and Project #17 remain the permanent planning truth. Existing Core/Site v1, compose/provenance, search, optional module boundaries, and Editorial rollback remain intact. The older P0 notes below are historical and may reference pre-P1 branches and v0.4.1; do not treat them as current state.
 
 ## Current P0 evidence checkpoint — 2026-10-26
 

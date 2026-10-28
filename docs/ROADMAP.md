@@ -1,8 +1,8 @@
 # ALNILAM roadmap (Issue-driven)
 
-This is the historical v0.1.x P0–P4 roadmap. The ALNILAM Next Plan/Spec is frozen in the [G0-F decision](next/08-G0-F-DECISION.md), which authorizes P1 only. Shirone slice [PR #95](https://github.com/Skyline-Gazer/ALNILAM/pull/95) is merged to `dev`; #49, #50 and #79 continue under [#37](https://github.com/Skyline-Gazer/ALNILAM/issues/37). This is development evidence, not a release or P1 closure.
+The historical v0.1.x roadmap below is preserved as traceability, not the Next P1/P2 scope authority. Owner-approved Plan/Spec [G0-F](next/08-G0-F-DECISION.md) uses **Shirone-first**, retained Core/Site and Git history, and incremental PR work. PR #95 (Shirone), #97 (routing) and #98 (browser baseline) are merged to protected GitHub `dev`; PR #99 adds compatibility evidence. See [the historical P1 candidate gate](p1/P1-EXIT-GATE.md) and [P1 parent #37](https://github.com/Skyline-Gazer/ALNILAM/issues/37) for the actual final gate, not green old branch checks.
 
-**Tracker:** [Skyline-Gazer Project #17](https://github.com/orgs/Skyline-Gazer/projects/17/). Project v2 board status is **not verified** merely because a linked repository Issue exists.
+**Single work tracker:** [GitHub Project #17](https://github.com/orgs/Skyline-Gazer/projects/17/) and GitHub Issues remain authoritative after CNB code-primary cutover. Project V2 item status is not inferred from issue closure. First P2 issue: [#51](https://github.com/Skyline-Gazer/ALNILAM/issues/51) YAML-only Site v2 contract; start only after P1 final acceptance and established development authority.
 
 ## P0 · Bootstrap & Core/Site
 - Initial Monorepo, ADS v0.3 submodule, docs, Astro + Svelte + Tailwind baseline.

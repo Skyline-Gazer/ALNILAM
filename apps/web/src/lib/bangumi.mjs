@@ -11,7 +11,10 @@ const UA = "alnilam-static-build (https://github.com/Skyline-Gazer/ALNILAM)";
 export async function fetchBangumiCollections({ userId, subjectType = "anime", limit = 10 }) {
   const type = SUBJECT_TYPES[subjectType] ?? 2;
   const url = `https://api.bgm.tv/v0/users/${encodeURIComponent(userId)}/collections?type=${type}&limit=${limit}&offset=0`;
-  const res = await fetch(url, { headers: { "User-Agent": UA, Accept: "application/json" } });
+  const res = await fetch(url, {
+    headers: { "User-Agent": UA, Accept: "application/json" },
+    signal: AbortSignal.timeout(10_000),
+  });
   if (!res.ok) throw new Error(`Bangumi API ${res.status} for user ${userId}`);
   const body = await res.json();
   return (body.data ?? []).map((entry) => ({
