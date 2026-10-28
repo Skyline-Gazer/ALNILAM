@@ -1,6 +1,6 @@
 # CNB developer workflow acceptance
 
-Readback: 2026-10-29. **CNB is not yet the accepted development authority.** Initial refs and the Owner UI readback are verified, and Plan B settings are active on `dev`. The historical trusted target pipeline passed on a disposable branch at `98511ad`, before the current trusted-tool/test hardening. GitHub PR #96 is now at `4e37bdc`, but that head has no native CNB run because the current CLI Git credential cannot write a scratch branch. Scratch branch-protection testing found that a PR with zero statuses is considered mergeable, so strict Required Checks acceptance fails even though a failing existing status is blocked. The candidate pipeline is not installed on actual `dev`.
+Readback: 2026-10-29. **CNB is not yet the accepted development authority.** Initial refs and the Owner UI readback are verified, and Plan B settings are active on `dev`. The historical trusted target pipeline passed on a disposable branch at `98511ad`, before the current trusted-tool/test hardening. GitHub PR #96 is at `4e37bdc`; all six GitHub checks and exact-head local consumer/browser checks pass, but this head has no native CNB run because the current CLI Git credential cannot write a scratch branch. Scratch branch-protection testing found that a PR with zero statuses is considered mergeable, so strict Required Checks acceptance fails even though a failing existing status is blocked. The candidate pipeline is not installed on actual `dev`.
 
 ## Ref parity and current boundary
 
@@ -38,6 +38,7 @@ CNB `main` protection and GitHub `main` protection were not changed. GitHub rema
 | Organization/repository event triggers | **PASS (readback)** | Root controls on; four repos confirmed; secret repo inaccessible to this token |
 | Plan B `dev` rule | **PASS (readback only)** | PR/status toggle retained; reviewer toggle off; write and bypass prohibitions retained |
 | Official AI Review on candidate `98511ad` | **PASS (advisory)** | `cnb-kcp-1k61p09tu`, Review JSON `passed`, zero issues |
+| GitHub PR #96 current-head checks on `4e37bdc` | **PASS** | Six statuses; CI, Astro compatibility, P1 browser/Lighthouse, and ADS checks all passed |
 | Trusted target native E2E on `cba3353` | **PASS (scratch only)** | `cnb-oi5-1k61oiv57`, receipts and archive hash verified |
 | Trusted target native E2E on final `98511ad` | **PASS (scratch only)** | `cnb-iin-1k61q4mp4`, exact merge/tested SHA `c131e6d`, archive hash and receipts verified; PR #5 merged on scratch |
 | Hardened `4e37bdc` local acceptance | **PASS (local only)** | 42/42 tests, nine consumer stages, 18 browser passes/1 intentional skip, expected-red negative evidence, no-op scripts rejected; Site digest unchanged |
