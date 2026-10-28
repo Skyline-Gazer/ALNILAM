@@ -4,10 +4,19 @@ import BaseLayout from "@alnilam/theme-shirone/BaseLayout.astro";
 import Comments from "@alnilam/ui/Comments.svelte";
 import { loadSite } from "../../lib/site-source.mjs";
 import { canonicalUrl, postLang, postPath, translationAlternates, withBase } from "../../lib/i18n.mjs";
+import { POSTS_PAGE_SIZE } from "../../lib/pagination.mjs";
 
 export async function getStaticPaths() {
   const allPosts = await getCollection("posts", ({ data }) => !data.draft);
   const { config } = loadSite();
+  const lastPage = Math.ceil(allPosts.length / POSTS_PAGE_SIZE);
+  for (const post of allPosts) {
+    if (postLang(post, config.site.locale) !== config.site.locale) continue;
+    const page = Number(post.id);
+    if (String(page) === post.id && page >= 2 && page <= lastPage) {
+      throw new Error(`Post slug "${post.id}" conflicts with pagination route /posts/${page}/.`);
+    }
+  }
   return allPosts.map((post) => {
     const lang = postLang(post, config.site.locale);
     return {

@@ -17,9 +17,6 @@ importers:
       '@alnilam/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@alnilam/theme-editorial':
-        specifier: workspace:*
-        version: link:../../themes/editorial
       '@alnilam/theme-shirone':
         specifier: workspace:*
         version: link:../../themes/shirone
