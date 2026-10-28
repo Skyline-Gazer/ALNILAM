@@ -23,7 +23,11 @@ function run(name, command, args, extra = {}, output) {
   } finally { fs.closeSync(log); }
 }
 try {
-  run('unit-coverage', process.execPath, ['--experimental-test-coverage', '--test-reporter=lcov', '--test', ...fs.globSync('scripts/tests/*.test.mjs'), ...fs.globSync('scripts/ci/*.test.mjs')], {}, 'artifacts/coverage/lcov.info');
+  run('unit-coverage', process.execPath, [
+    '--experimental-test-coverage', '--test-reporter=spec', '--test-reporter-destination=stdout',
+    '--test-reporter=lcov', '--test-reporter-destination=artifacts/coverage/lcov.info',
+    '--test', ...fs.globSync('scripts/tests/*.test.mjs'), ...fs.globSync('scripts/ci/*.test.mjs'),
+  ]);
   run('coverage-content', process.execPath, [path.join(trustedRoot, 'scripts/ci/cnb-coverage.mjs'), 'artifacts/coverage/lcov.info']);
   run('check', 'pnpm', ['check']);
   run('demo-compose', process.execPath, ['scripts/compose.mjs', '--site', 'sites/demo', '--out', 'dist/demo']);
