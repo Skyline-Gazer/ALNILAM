@@ -29,7 +29,8 @@ export function validateLighthouseReports(manifest, load, urls, started, count =
     return report;
   });
 }
-export function validateLighthouseRegression(reports, assertions, url, count = 3, budget = 0.10) {
+export function validateLighthouseRegression(reports, assertions, url, count, budget) {
+  if (!Number.isSafeInteger(count) || count < 1 || !Number.isFinite(budget) || budget < 0) throw Error('Invalid Lighthouse regression expectation');
   if (reports.length !== count || reports.some(report => report.requestedUrl !== url || !Number.isFinite(report.audits?.['cumulative-layout-shift']?.numericValue) || report.audits['cumulative-layout-shift'].errorMessage || report.audits['cumulative-layout-shift'].numericValue <= budget)) throw Error(`Regression needs ${count} genuine excessive CLS measurements`);
   if (!Array.isArray(assertions) || !assertions.some(item => item.url === url && item.auditId === 'cumulative-layout-shift' && item.name === 'maxNumericValue' && item.passed === false && Number.isFinite(item.actual) && item.actual > budget)) throw Error('Expected a measured maxNumericValue failure, not a missing audit');
 }

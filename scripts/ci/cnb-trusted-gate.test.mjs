@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {validateNativePullRequest, assertMergeParents, assertLiveRefs, candidateEnvironment, inspectArtifactTree, safeFailureLogs, validateEvidence} from './cnb-trusted-gate.mjs';
+import {validateNativePullRequest, assertMergeParents, assertLiveRefs, candidateEnvironment, inspectArtifactTree, snapshotArtifactTree, safeFailureLogs, validateEvidence} from './cnb-trusted-gate.mjs';
 
 const source = 'a'.repeat(40), target = 'b'.repeat(40), merge = 'c'.repeat(40);
 const env = {
@@ -63,6 +63,28 @@ test('artifact collection rejects links and bounds regular file evidence', () =>
     fs.symlinkSync('/etc/passwd', path.join(root, 'leak'));
     assert.throws(() => inspectArtifactTree(root), /symlink/);
   } finally { fs.rmSync(root, {recursive: true, force: true}); }
+});
+
+test('verified evidence snapshot cannot be changed through the candidate tree', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cnb-evidence-snapshot-'));
+  const source = path.join(root, 'candidate', 'artifacts');
+  const destination = path.join(root, 'trusted', 'artifacts');
+  try {
+    fs.mkdirSync(path.join(source, 'cnb-browser'), {recursive: true});
+    fs.writeFileSync(path.join(source, 'cnb-browser', 'receipt.json'), 'verified');
+    assert.deepEqual(snapshotArtifactTree(source, destination), {bytes: 8, files: 1});
+    assert.equal(fs.statSync(path.join(destination, 'cnb-browser', 'receipt.json')).mode & 0o222, 0);
+    assert.equal(fs.statSync(path.join(destination, 'cnb-browser')).mode & 0o222, 0);
+    fs.writeFileSync(path.join(source, 'cnb-browser', 'receipt.json'), 'changed');
+    assert.equal(fs.readFileSync(path.join(destination, 'cnb-browser', 'receipt.json'), 'utf8'), 'verified');
+    fs.symlinkSync('/etc/passwd', path.join(source, 'linked'));
+    assert.throws(() => snapshotArtifactTree(source, path.join(root, 'linked-snapshot')), /symlink/);
+  } finally {
+    for (const directory of [destination, path.join(destination, 'cnb-browser')]) {
+      try { fs.chmodSync(directory, 0o755); } catch {}
+    }
+    fs.rmSync(root, {recursive: true, force: true});
+  }
 });
 
 test('failure diagnostics copy only small regular log files at any artifact depth', () => {

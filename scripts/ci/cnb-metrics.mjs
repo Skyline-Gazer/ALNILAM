@@ -1,3 +1,7 @@
+import lighthouse from '../../lighthouserc.cjs';
+
+export const CLS_BUDGET = lighthouse.ci.assert.assertions['cumulative-layout-shift'][1].maxNumericValue;
+
 export function calculateCLS(events) {
   let maximum = 0, total = 0, start, previous;
   for (const entry of [...events].sort((a, b) => a.startTime - b.startTime)) {
@@ -14,7 +18,7 @@ export function calculateCLS(events) {
   return maximum;
 }
 
-export function assertCLSBudget(events, maximum = 0.10) {
+export function assertCLSBudget(events, maximum = CLS_BUDGET) {
   const cls = calculateCLS(events);
   if (!Number.isFinite(maximum) || maximum < 0 || cls > maximum) throw Error(`CLS regression: ${cls} exceeds ${maximum}`);
   return cls;

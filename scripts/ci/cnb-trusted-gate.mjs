@@ -122,6 +122,25 @@ export function inspectArtifactTree(root, maximum = MAX_ARTIFACT_BYTES) {
   return {bytes, files};
 }
 
+export function snapshotArtifactTree(source, destination) {
+  const before = inspectArtifactTree(source);
+  fs.mkdirSync(path.dirname(destination), {recursive: true});
+  fs.cpSync(source, destination, {recursive: true, errorOnExist: true, force: false});
+  const after = inspectArtifactTree(destination);
+  if (before.bytes !== after.bytes || before.files !== after.files) throw Error('Evidence changed while being snapshotted');
+  const directories = [destination];
+  while (directories.length) {
+    const directory = directories.pop();
+    for (const entry of fs.readdirSync(directory, {withFileTypes: true})) {
+      const file = path.join(directory, entry.name);
+      if (entry.isDirectory()) directories.push(file);
+      else fs.chmodSync(file, 0o444);
+    }
+    fs.chmodSync(directory, 0o555);
+  }
+  return after;
+}
+
 export function safeFailureLogs(root) {
   try {
     const stat = fs.lstatSync(root);
@@ -239,9 +258,18 @@ function runAsCandidate(tempRoot, candidateRoot, harnessRoot, env) {
 }
 
 function stopCandidateProcesses() {
-  const result = spawnSync('pkill', ['-KILL', '-u', '65534'], {stdio: 'ignore'});
-  if (result.error) throw result.error;
-  if (result.status !== 0 && result.status !== 1) throw Error(`Could not stop isolated candidate processes (status ${result.status})`);
+  const pause = new Int32Array(new SharedArrayBuffer(4));
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const killed = spawnSync('pkill', ['-KILL', '-u', '65534'], {stdio: 'ignore'});
+    if (killed.error) throw killed.error;
+    if (killed.status !== 0 && killed.status !== 1) throw Error(`Could not stop isolated candidate processes (status ${killed.status})`);
+    const remaining = spawnSync('pkill', ['-0', '-u', '65534'], {stdio: 'ignore'});
+    if (remaining.error) throw remaining.error;
+    if (remaining.status === 1) return;
+    if (remaining.status !== 0) throw Error(`Could not verify candidate process shutdown (status ${remaining.status})`);
+    Atomics.wait(pause, 0, 0, 50);
+  }
+  throw Error('Isolated candidate processes remain after termination');
 }
 
 function runCandidate(candidateRoot, harnessRoot) {
@@ -327,11 +355,13 @@ async function main() {
     const result = runAsCandidate(tempRoot, candidateRoot, harnessRoot, env);
     stopCandidateProcesses();
     if (result.status !== 0) throw Error(`Isolated candidate checks failed (status ${result.status}, signal ${result.signal || 'none'})`);
-    validateEvidence(candidateRoot, identity);
+    const evidenceRoot = path.join(tempRoot, 'verified');
+    snapshotArtifactTree(path.join(candidateRoot, 'artifacts'), path.join(evidenceRoot, 'artifacts'));
+    validateEvidence(evidenceRoot, identity);
     verifyLiveRefs(identity);
     const after = await fetchPullRequest(env);
     validateNativePullRequest(after, env, checkoutSha);
-    archiveEvidence(candidateRoot, identity);
+    archiveEvidence(evidenceRoot, identity);
   } catch (error) {
     stopCandidateProcesses();
     failure = error;

@@ -37,6 +37,8 @@ let regression;
 const {default: baseline} = await import('../../lighthouserc.cjs');
 const runsPerURL = baseline.ci.collect.numberOfRuns;
 if (!Number.isSafeInteger(runsPerURL) || runsPerURL < 1) throw Error('Lighthouse numberOfRuns must be a positive integer');
+const clsBudget = baseline.ci.assert.assertions['cumulative-layout-shift']?.[1]?.maxNumericValue;
+if (!Number.isFinite(clsBudget) || clsBudget < 0) throw Error('Lighthouse CLS budget must be finite and nonnegative');
 const root = 'http://127.0.0.1:4323';
 const nested = 'http://127.0.0.1:4324/ALNILAM';
 // CNB bounds collection to representative demo routes at both supported base paths.
@@ -63,17 +65,19 @@ try {
   receipt.normalStatus = 'BASELINE_RECORDED';
   regression = http.createServer((request, response) => response.end('<!doctype html><title>CNB regression</title><h1>Visible content shifts</h1><p>Deterministic severe regression.</p><script>setTimeout(()=>{const e=document.createElement("div");e.style.height="700px";document.body.prepend(e)},900)</script>'));
   await new Promise(resolve => regression.listen(0, '127.0.0.1', resolve));
-  const config = {ci: {collect: {url: [`http://127.0.0.1:${regression.address().port}/`], numberOfRuns: runsPerURL, settings: {chromeFlags: '--headless --no-sandbox --disable-dev-shm-usage'}},
-    assert: {assertions: {'cumulative-layout-shift': ['error', {maxNumericValue: 0.10}]}}, upload: {target: 'filesystem', outputDir: regressionDir}}};
-  fs.writeFileSync(`.tmp/cnb/lighthouse-regression-${formFactor}.json`, JSON.stringify(config));
+  const regressionConfig = structuredClone(baseline.ci);
+  regressionConfig.collect.url = [`http://127.0.0.1:${regression.address().port}/`];
+  regressionConfig.upload.outputDir = regressionDir;
+  regressionConfig.assert.assertions['cumulative-layout-shift'][0] = 'error';
+  fs.writeFileSync(`.tmp/cnb/lighthouse-regression-${formFactor}.json`, JSON.stringify({ci: regressionConfig}));
   if (await run(['collect', `--config=.tmp/cnb/lighthouse-regression-${formFactor}.json`]) !== 0) throw Error('Regression fixture failed to collect');
   const code = await run(['assert', `--config=.tmp/cnb/lighthouse-regression-${formFactor}.json`]);
   const assertions = JSON.parse(fs.readFileSync('.lighthouseci/assertion-results.json', 'utf8'));
   if (code !== 1) throw Error('Regression assertion did not return its expected failure');
   if (await run(['upload', `--config=.tmp/cnb/lighthouse-regression-${formFactor}.json`]) !== 0) throw Error('Regression evidence upload failed');
   const regressionManifest = JSON.parse(fs.readFileSync(path.join(regressionDir, 'manifest.json'), 'utf8'));
-  const reports = validateLighthouseReports(regressionManifest, item => JSON.parse(fs.readFileSync(item.jsonPath, 'utf8')), config.ci.collect.url, started, runsPerURL);
-  validateLighthouseRegression(reports, assertions, config.ci.collect.url[0], runsPerURL);
+  const reports = validateLighthouseReports(regressionManifest, item => JSON.parse(fs.readFileSync(item.jsonPath, 'utf8')), regressionConfig.collect.url, started, runsPerURL);
+  validateLighthouseRegression(reports, assertions, regressionConfig.collect.url[0], runsPerURL, clsBudget);
   fs.copyFileSync('.lighthouseci/assertion-results.json', path.join(regressionDir, 'assertion-results.json'));
   receipt.regressionStatus = 'EXPECTED_RED_VERIFIED';
 } catch (error) {receipt.error = error.message;console.error(error);process.exitCode = 1;}

@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {calculateCLS, assertCLSBudget, observeLayoutShifts} from '../../scripts/ci/cnb-metrics.mjs';
+import {CLS_BUDGET, calculateCLS, assertCLSBudget, observeLayoutShifts} from '../../scripts/ci/cnb-metrics.mjs';
 
 test.use({trace: 'on'});
 const origins = ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'];
@@ -119,7 +119,7 @@ test('deterministic consent, ads, GA4, comments and adblock fixtures', async ({p
   await expect(page.locator('article')).toBeVisible();
   expect((await page.locator('#slot').boundingBox())!.height).toBe(250);
   const events = await page.evaluate('window.__cnbShifts || []');
-  expect(assertCLSBudget(events)).toBeLessThanOrEqual(0.10);
+  expect(assertCLSBudget(events)).toBeLessThanOrEqual(CLS_BUDGET);
   await info.attach('optional-fixtures.json', {body: JSON.stringify({calls, events, cls: calculateCLS(events)}), contentType: 'application/json'});
 });
 
@@ -157,7 +157,7 @@ test('large shift is detected and the CLS gate rejects it', async ({page}) => {
   await page.evaluate(() => {const slot = document.createElement('div');slot.style.height = '600px';document.body.prepend(slot);});
   await page.waitForTimeout(500);
   const events = await page.evaluate('window.__cnbShifts || []');
-  expect(calculateCLS(events)).toBeGreaterThan(0.10);
+  expect(calculateCLS(events)).toBeGreaterThan(CLS_BUDGET);
   expect(() => assertCLSBudget(events)).toThrow(/CLS regression/);
 });
 
