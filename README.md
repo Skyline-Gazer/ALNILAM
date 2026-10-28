@@ -4,7 +4,7 @@
 
 Apache-2.0 licensed, static-first Astro 7 / Svelte 5 / Tailwind CSS 4 blogging platform, with a strict Core/Site ownership boundary. Released v0.1.3 uses the Editorial theme; the P1 preview on `dev` uses the Shirone-derived theme.
 
-> **Status: v0.1.3 released; the first authorized P1 Shirone vertical slice is under review on `dev`, not released or deployed.** Core/Site composition, two-version upgrade/rollback acceptance, RSS/sitemap/robots/SEO, archives, tags, local search (Pagefind), i18n with hreflang, and paginated streams remain implemented. The Editorial package remains the immediate rollback path. See [the P1 slice record](docs/p1/48-SHIRONE-VERTICAL-SLICE.md) and [CHANGELOG.md](CHANGELOG.md).
+> **Status: v0.1.3 is released; Shirone slice PR #95 is merged to `dev`, but is not released or deployed.** P1 remains open under #37 while #49, #50 and #79 are reviewed. Core/Site composition, two-version upgrade/rollback acceptance, RSS/sitemap/robots/SEO, archives, tags, local search (Pagefind), i18n with hreflang, and paginated streams remain implemented. The Editorial package remains the rollback path. See [the P1 slice record](docs/p1/48-SHIRONE-VERTICAL-SLICE.md), [the #49 record](docs/p1/49-UNIFIED-ROUTING-LIFECYCLE.md) and [CHANGELOG.md](CHANGELOG.md).
 
 ## Quickstart
 
@@ -17,7 +17,7 @@ git switch dev
 corepack enable
 pnpm install --frozen-lockfile
 pnpm dev            # dev server against the demo Site
-pnpm test           # contract tests (14)
+pnpm test           # contract tests (15)
 pnpm check          # astro check
 pnpm build          # compose demo Site + artifact budget checks
 ```
@@ -66,7 +66,7 @@ CI runs this acceptance on every PR (two revisions, one unchanged external Site,
 - Docs: [Architecture](docs/ARCHITECTURE.md) · [Site onboarding](docs/SITE_ONBOARDING.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/HANDOFF.md)
 - Attribution: [CREDITS.md](CREDITS.md) · [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) · [NOTICE](NOTICE)
 - GitHub Project #17: https://github.com/orgs/Skyline-Gazer/projects/17/
-- ALNILAM Next: the G0-F Plan/Spec was frozen through [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77). The first P1 Shirone vertical slice is tracked by [#48](https://github.com/Skyline-Gazer/ALNILAM/issues/48) under [#37](https://github.com/Skyline-Gazer/ALNILAM/issues/37). Reusable ALNILAM behavior (immutable Site build, v1 contract, CI, Pagefind and optional modules) is retained; production release remains separately gated. Future Astro build acceleration stays out of release scope until official stabilization.
+- ALNILAM Next: G0-F froze the P1 Plan/Spec through [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77). Shirone slice [PR #95](https://github.com/Skyline-Gazer/ALNILAM/pull/95) is merged to `dev`; P1 remains open under [#37](https://github.com/Skyline-Gazer/ALNILAM/issues/37), with #49 routing/lifecycle, #50 browser evidence and #79 Astro compatibility still under review. Reusable ALNILAM behavior (immutable Site build, v1 contract, CI, Pagefind and optional modules) is retained; production release remains separately gated. Future Astro build acceleration stays out of release scope until official stabilization.
 - ADS consumer v0.4.1: [release](https://github.com/Skyline-Gazer/ADS/releases/tag/v0.4.1) and [mandatory development-only CodeGraph/full RTK policy](https://github.com/Skyline-Gazer/ADS/blob/v0.4.1/docs/consumer-dev-toolchain.md). This project remains Apache-2.0; ADS's MIT license does not relicense ALNILAM.
 
 ## License

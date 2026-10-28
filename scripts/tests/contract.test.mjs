@@ -93,6 +93,27 @@ test("nested-base output keeps canonical and internal links inside /ALNILAM/", (
   assert.match(posts, /<a href="\/ALNILAM\/posts\/2" rel="next"/);
   assert.doesNotMatch(posts, /\/ALNILAM\/ALNILAM\//);
 });
+test("compose rejects a post slug that collides with a pagination route without changing the Site", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-post-route-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site-source");
+  fs.cpSync("sites/demo", site, { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "2.md"),
+    ["---", 'title: "Numeric slug"', 'description: "Pagination collision fixture."', "pubDate: 2026-10-25", 'tags: ["Test"]', "---", "", "Numeric slug fixture.", ""].join("\n"),
+  );
+  const digest = validateSiteRoot(site).digest;
+  const output = path.join(root, "output");
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", output], {
+    env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" },
+    encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr + result.stdout, /Post slug "2" conflicts with pagination route \/posts\/2\//);
+  assert.equal(validateSiteRoot(site).digest, digest);
+  assert.equal(fs.existsSync(output), false);
+  assert.deepEqual(fs.readdirSync(root).filter((entry) => entry.startsWith(".alnilam-build-")), []);
+});
 test("output paths cannot overlap the Site source", () => {
   assert.throws(() => assertExternalOutput("sites/demo", "sites/demo/dist"));
   assert.throws(() => assertExternalOutput("sites/demo", "sites"));

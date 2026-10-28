@@ -7,7 +7,7 @@ This file is the binding repository-level operating entrypoint. ADS is pinned as
 - **Core owns program; Site owns content, configuration and assets.** No production operation may mutate Site.
 - Core is a pnpm Monorepo; `sites/demo` is a fixture, not a user's real Site.
 - Astro 7 + Svelte 5 + Tailwind CSS 4; SSR/backend/database are not baseline dependencies.
-- **Released v0.1.3** uses the original Editorial UI. G0-F froze the Plan/Spec in PR #77 and authorized **P1 only**; the first Shirone-derived vertical slice is in review on `dev`. P1 keeps the same repo/history and preserves ALNILAM's Core/Site v1, CI, assets and Editorial rollback path. Do not delete and recreate functioning subsystems; Fuwari-style single-row post list remains the target.
+- **Released v0.1.3** uses the original Editorial UI. G0-F froze the Plan/Spec in PR #77 and authorized **P1 only**; Shirone slice PR #95 is merged to `dev` at `1f382aa72052eedbe8a2809011e5a36a82f697d0`. P1 continues through Issues #49, #50 and #79. It keeps the same repo/history and preserves ALNILAM's Core/Site v1, CI, assets and Editorial rollback path. Do not delete and recreate functioning subsystems; Fuwari-style single-row post list remains the target.
 - Reference project code must not be copied without auditing source licenses, notices, and assets; record reused code in THIRD_PARTY_NOTICES.md.
 - Core/Site external composition must remain functional independent of the demo profile.
 
