@@ -30,6 +30,7 @@ $:
             min_confidence: medium
             exclude_categories: style,nit
             rules: |
+              Return only the required structured review JSON with every field; do not return Markdown prose.
               Keep inline comment ranges at or below 20 lines; anchor each finding to the smallest relevant range.
             # The 30-file candidate exhausted the previous 20-turn review limit.
             max_turns: 40
