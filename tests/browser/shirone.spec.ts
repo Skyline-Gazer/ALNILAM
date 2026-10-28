@@ -36,6 +36,7 @@ async function assertListGeometry(page: Page, width: number) {
 }
 
 test("root and nested-base pages navigate, theme, and search", async ({ browser }) => {
+  // The combined root/nested case exceeded the shared 90s limit on the 2-CPU CNB runner.
   test.setTimeout(180_000);
   const results: Record<string, unknown>[] = [];
   for (const [name, origin, width, height] of [
