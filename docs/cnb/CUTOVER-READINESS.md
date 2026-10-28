@@ -56,4 +56,4 @@ No CNB Primary declaration, first CNB-to-GitHub mirror write, GitHub `main` prot
 - [Automatic Review and NPC evidence](CNB-REVIEW.md)
 - [Mirror policy, manifest and dry-run](MIRROR.md)
 
-ADS v0.4.2 remains pinned at `.ads` commit `375fc71f977c40c2053140c34431cc60a6d42883`. The private ADS instructions were not materialized; ADS source was not modified and generic ADS acceptance was not rerun.
+ADS v0.4.2 remains pinned and materialized at `.ads` commit `375fc71f977c40c2053140c34431cc60a6d42883`; the five required ADS guidance files were read before changes. ADS source was not modified and generic ADS acceptance was not rerun.
