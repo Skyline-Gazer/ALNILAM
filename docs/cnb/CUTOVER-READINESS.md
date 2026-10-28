@@ -26,7 +26,7 @@ The 2026-10-29 signed-in UI readback confirmed root organization event/cron/NPC 
 - The separate missing-check test used disposable PR #6 and build `cnb-if2-1k61pq4p0`: zero-status PR readback was `blocked_on=unblocked` / `mergeable_state=mergeable`; after an intentional failing status, PR was `blocked_on=status_check` and the merge attempt returned HTTP 409. The same scratch protection rule rejected direct push. The temporary rule, PR and refs were removed after capture.
 - `@CodeBuddy` is **FAIL / not executed**. CNB Prepare recursively checked out private `.ads` and failed before the model stage, despite a source-level `git.submodules: false`. The current trusted target pipeline also sets `git.submodules: false`; its successful Prepare and target run did not fetch private ADS. No private token was exposed.
 - The isolated Critical fixture review (source `077fcfa40f1768c31345c4e76383dd0221d25e1e`, target `78d63d9bf9d78b1e4f64640fedfc7c079256ef4f`) produced model output classified `critical`, but the response was invalid JSON, no PR comment was posted, and the Review stage/build still succeeded. AI Review therefore remains advisory and is not a Critical Required Check.
-- Issues #94 and #100 remain open; Project #17 last readback kept both In Progress and #51 Todo. No board change was made. P2 code was not started.
+- Issues #94 and #100 remain open. Current Project #17 readback: #94 and #100 In Progress, #51 Todo. The board readback found #100 missing; it was added to Project #17 and set to In Progress on 2026-10-29. P2 code was not started.
 
 ## Acceptance result
 
