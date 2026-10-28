@@ -1,6 +1,12 @@
 # P1 Evidence Ledger
 
-## Live integrated readback — 2026-10-28
+## Current Owner decision — 2026-10-28
+
+**Verdict: `P1_ACCEPTED`.** The Owner accepted the existing P1 evidence and recorded non-blocking limitations in [Issue #37 comment 6465764925](https://github.com/Skyline-Gazer/ALNILAM/issues/37#issuecomment-6465764925). Issue #37 is closed as completed and Project #17 marks it `Done`. GitHub `dev` is `78d63d9bf9d78b1e4f64640fedfc7c079256ef4f`; GitHub `main` is `285a62cecd87f8f20276c7cc989537a391f488c8`. PR #104 is merged and the `main` Pages workflow is dispatch-only. P1 implementation/evidence remains based on `3f354ecb66a50e693b8c5ef7db4dd2518e3992cb`; acceptance does not authorize a production release or CNB cutover. CNB readiness is tracked separately in [Issue #100](https://github.com/Skyline-Gazer/ALNILAM/issues/100) and [the CNB readiness record](../cnb/CUTOVER-READINESS.md).
+
+## Pre-acceptance evidence snapshot — 2026-10-28
+
+The following status and governance snapshot predates the Owner's acceptance above and is retained as the contemporaneous pre-signoff record.
 
 **Verdict: `P1_ACCEPTANCE_READY / OWNER_PHASE_SIGNOFF_PENDING`.** The integrated implementation and mandatory remote evidence are ready for one independent Owner phase decision. Latest issue readback: [#37 comment 6463405458](https://github.com/Skyline-Gazer/ALNILAM/issues/37#issuecomment-6463405458). Pre-PR live GitHub `dev` was `489e58096ca416124e9a74e7d11891c5cafc3188`; docs-only PR #109 checks [40649905042](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40649905042) / [40649905077](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40649905077) passed and do not change P1 implementation evidence. Issue #37 remains open and Project `In Progress` until Owner signoff; this report does not close P1 or authorize P2 code, a production release, or provider cutover.
 
