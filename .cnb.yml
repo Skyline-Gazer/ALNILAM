@@ -101,7 +101,7 @@ $:
       failStages:
         - name: Preserve available test diagnostics
           script: |
-            for file in artifacts/build.log artifacts/browser.log artifacts/lighthouse.log; do
+            for file in artifacts/*.log; do
               if [ -f "$file" ]; then
                 echo "----- $file -----"
                 tail -n 80 "$file"

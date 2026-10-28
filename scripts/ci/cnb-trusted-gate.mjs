@@ -121,6 +121,19 @@ export function inspectArtifactTree(root, maximum = MAX_ARTIFACT_BYTES) {
   return {bytes, files};
 }
 
+export function safeFailureLogs(root) {
+  try {
+    const stat = fs.lstatSync(root);
+    if (!stat.isDirectory() || stat.isSymbolicLink()) return [];
+    return fs.readdirSync(root, {withFileTypes: true}).flatMap(entry => {
+      if (!entry.isFile() || !/^[A-Za-z0-9._-]+\.log$/.test(entry.name)) return [];
+      const file = path.join(root, entry.name);
+      const stat = fs.lstatSync(file);
+      return stat.isFile() && !stat.isSymbolicLink() && stat.size <= 2 * 1024 * 1024 ? [entry.name] : [];
+    });
+  } catch { return []; }
+}
+
 function readJson(file) {
   if (!fs.lstatSync(file).isFile()) throw Error(`Evidence is not a regular file: ${file}`);
   return JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -242,13 +255,8 @@ function copyFailureLogs(candidateRoot, message, status) {
   const destination = path.join(ROOT, 'artifacts');
   fs.rmSync(destination, {recursive: true, force: true});
   fs.mkdirSync(destination, {recursive: true});
-  for (const name of ['build.log', 'browser.log', 'lighthouse.log']) {
-    const source = path.join(candidateRoot, 'artifacts', name);
-    try {
-      const stat = fs.lstatSync(source);
-      if (stat.isFile() && !stat.isSymbolicLink() && stat.size <= 2 * 1024 * 1024) fs.copyFileSync(source, path.join(destination, name));
-    } catch {}
-  }
+  const sourceRoot = path.join(candidateRoot, 'artifacts');
+  for (const name of safeFailureLogs(sourceRoot)) fs.copyFileSync(path.join(sourceRoot, name), path.join(destination, name));
   fs.writeFileSync(path.join(destination, 'platform.json'), JSON.stringify({status, error: message}, null, 2) + '\n');
 }
 

@@ -27,10 +27,10 @@ try {
   run('unit-coverage', process.execPath, ['--experimental-test-coverage', '--test-reporter=lcov', '--test', ...fs.globSync('scripts/tests/*.test.mjs'), ...fs.globSync('scripts/ci/*.test.mjs')], {}, 'artifacts/coverage/lcov.info');
   run('coverage-content', process.execPath, [path.join(trustedRoot, 'scripts/ci/cnb-coverage.mjs'), 'artifacts/coverage/lcov.info']);
   run('check', 'pnpm', ['check']);
-  run('demo-compose', process.execPath, [path.join(trustedRoot, 'scripts/compose.mjs'), '--site', 'sites/demo', '--out', 'dist/demo']);
+  run('demo-compose', process.execPath, ['scripts/compose.mjs', '--site', 'sites/demo', '--out', 'dist/demo']);
   run('demo-artifact', process.execPath, [path.join(trustedRoot, 'scripts/artifact-check.mjs'), 'dist/demo']);
   for (const [name, url] of [['site', 'https://example.com/'], ['nested-base', 'https://example.com/ALNILAM/']]) {
-    run(`compose-${name}`, process.execPath, [path.join(trustedRoot, 'scripts/compose.mjs'), '--site', site, '--out', `dist/${name}`], {ALNILAM_SITE_URL: url});
+    run(`compose-${name}`, process.execPath, ['scripts/compose.mjs', '--site', site, '--out', `dist/${name}`], {ALNILAM_SITE_URL: url});
     run(`artifact-${name}`, process.execPath, [path.join(trustedRoot, 'scripts/artifact-check.mjs'), `dist/${name}`]);
   }
   if (validateSiteRoot(site).digest !== before) throw Error('External Site mutated');

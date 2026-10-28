@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {validateNativePullRequest, assertMergeParents, assertLiveRefs, candidateEnvironment, inspectArtifactTree, validateEvidence} from './cnb-trusted-gate.mjs';
+import {validateNativePullRequest, assertMergeParents, assertLiveRefs, candidateEnvironment, inspectArtifactTree, safeFailureLogs, validateEvidence} from './cnb-trusted-gate.mjs';
 
 const source = 'a'.repeat(40), target = 'b'.repeat(40), merge = 'c'.repeat(40);
 const env = {
@@ -62,6 +62,18 @@ test('artifact collection rejects links and bounds regular file evidence', () =>
     assert.throws(() => inspectArtifactTree(root, 1), /bounded/);
     fs.symlinkSync('/etc/passwd', path.join(root, 'leak'));
     assert.throws(() => inspectArtifactTree(root), /symlink/);
+  } finally { fs.rmSync(root, {recursive: true, force: true}); }
+});
+
+test('failure diagnostics copy only small regular root-level log files', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cnb-failure-logs-'));
+  try {
+    fs.writeFileSync(path.join(root, 'demo-artifact.log'), 'failure detail');
+    fs.writeFileSync(path.join(root, 'large.log'), Buffer.alloc(2 * 1024 * 1024 + 1));
+    fs.symlinkSync('/etc/passwd', path.join(root, 'linked.log'));
+    fs.mkdirSync(path.join(root, 'nested.log'));
+    assert.deepEqual(safeFailureLogs(root), ['demo-artifact.log']);
+    assert.deepEqual(safeFailureLogs(path.join(root, 'missing')), []);
   } finally { fs.rmSync(root, {recursive: true, force: true}); }
 });
 
