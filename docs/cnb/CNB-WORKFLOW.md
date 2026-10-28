@@ -1,69 +1,52 @@
 # CNB developer workflow acceptance
 
-Readback date: 2026-10-28. **The CNB developer workflow is not accepted.** CNB is a verified public repository with matching imported refs, but its event CI is disabled and the single-member repository cannot meet independent approval.
+Readback: 2026-10-29. **CNB is not yet the accepted development authority.** Initial refs and CLI/Git operations are verified, and Owner-approved Plan B settings are active on `dev`. A full disposable trusted target pipeline passed on candidate `cba3353`. The first final-head run failed at the live-ref check after cleanup removed its refs; the exact SHAs were restored and the rerun is pending after Prepare/install. Scratch branch-protection testing also found that a PR with zero statuses is considered mergeable, so strict Required Checks acceptance fails even though a failing existing status is blocked. The candidate is not installed on `dev`.
 
-## Ref parity
+## Ref parity and current boundary
 
-The GitHub (`origin`) and CNB (`cnb`) remote reads matched:
+Initial GitHub (`origin`) and CNB (`cnb`) readbacks matched:
 
-| Ref | GitHub SHA/OID | CNB SHA/OID |
-| --- | --- | --- |
-| `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` | `285a62cecd87f8f20276c7cc989537a391f488c8` |
-| `dev` | `78d63d9bf9d78b1e4f64640fedfc7c079256ef4f` | `78d63d9bf9d78b1e4f64640fedfc7c079256ef4f` |
-| `v0.1.0` annotated tag object | `4452ed2013237e620e2a0cff64b31e31e6292fe6` | same |
-| `v0.1.0` peeled commit | `52a5d13f98c981fdf5aaed1ae217c85d65c0a345` | same |
-| `v0.1.1` annotated tag object | `d7d689f70548d1c8cdc8d8a5068e7937f02559aa` | same |
-| `v0.1.1` peeled commit | `0591e4b4e9680dca2e46bec4b44ca86674ee0b4e` | same |
-| `v0.1.2` annotated tag object | `ed97dd7ca225fd3d442e11f60d038becec4db2bd` | same |
-| `v0.1.2` peeled commit | `b6fac6ac2442f28454c2694a59f5b55533d325fc` | same |
-| `v0.1.3` annotated tag object | `283230a566a7186bfde27ab6255a185baaf8a122` | same |
-| `v0.1.3` peeled commit | `07fac43cba0c3d303c930c098b6e2124b2c79e4a` | same |
+| Ref | SHA/OID |
+| --- | --- |
+| `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` |
+| `dev` | `78d63d9bf9d78b1e4f64640fedfc7c079256ef4f` |
+| `v0.1.0`–`v0.1.3` | Annotated tag object OIDs and peeled commits match |
 
-The existing checkout's local `main` is stale at `282459adb69f903a0eea4ded35ebf619c7387a31`; do not use it for a mirror run. The `.ads` gitlink on `dev` is the v0.4.2 peeled commit `375fc71f977c40c2053140c34431cc60a6d42883` (annotated tag object `44811ab1d7c3f9c11798b1f11efcfaac47113d52` is not the gitlink).
+CNB `main` protection and GitHub `main` protection were not changed. GitHub remains the current code authority. No production refs were written.
 
-## CNB protection and trigger readback
+## Trigger and branch-protection readback
 
-CNB protection readback for both `main` and `dev` reports: PR required; one approval required; status checks required; direct push, force push and deletion disabled; no Owner bypass; no auto-merge; and approval by an author's own NPC forbidden. Rule IDs are `b28b7af69320201d1cf206ebf28373980add1451` (`main`) and `34c6fceca75e456f25e7e99531e2425c6c1de443` (`dev`). These are configuration readbacks, not negative tests of enforcement. No protected-ref push or merge attempt was made.
+- Repository `auto_trigger=true`. Root organization event, cron, and NPC switches were already on. Event triggers were confirmed on for `ALNILAM`, `ads-cnb-acceptance-20261027`, `AiringCal`, and `airingcal-control`. `airingcal-secrets` settings API access returns 403, so that repository's trigger state is unverified. The Owner selected organization-level event scope; no root or repository trigger setting needed mutation. Untrusted-event and scheduled-task cross-repository access remain off.
+- CNB `dev` rule `34c6fceca75e456f25e7e99531e2425c6c1de443` implements the Owner-approved Plan B: PR required, manual reviewer approval disabled, status checks required, direct push/force push/deletion and Owner/admin bypass disabled, auto-merge off, and NPC self-approval forbidden. The original values and rollback steps are in [CNB-DEV-SETTINGS.md](CNB-DEV-SETTINGS.md).
+- The dev rule has no named-check setting; the UI says checks must pass “if there are status checks.” On a disposable branch with matching rule values, a PR with zero statuses was `unblocked`/`mergeable`, while an intentionally failing status was blocked and a merge attempt returned HTTP 409. Direct push to that scratch target was rejected. This is **not sufficient for strict Required Checks acceptance**. Actual `dev` behavior remains untested; no protected `dev` or `main` write was attempted. The official [CNB trigger documentation](https://docs.cnb.cool/zh/build/trigger-rule.html) describes the same conditional behavior.
+- The repository has one human Owner. Formal merge of candidate CNB PR #4 into `dev` requires the Owner's explicit authorization even though mandatory independent approval is disabled.
 
-The repository currently has only one member (Owner). There is no independent human who can approve a test PR. The status-check flag is enabled, but no required check names or successful CNB PR check run were observed.
+## Native disposable acceptance
 
-CNB pipeline settings read back as:
-
-```text
-auto_trigger: false
-auto_trigger_by_npc: true
-cron_auto_trigger: true
-forked_repo_auto_trigger: false
-```
-
-Consequently, PR event jobs did not run. NPC event triggering remained enabled. The CLI token could not change these settings because it lacks `repo-manage:rw`; no trigger was enabled during this task.
-
-## Isolated PR lifecycle
-
-- CNB PR #1 ([link](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/1)) was created against an isolated target branch and read back as conflicted. It was closed without merge.
-- CNB PR #2 ([link](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/2)) was created against the corrected isolated target, read back as mergeable at source `6287c39a78940c27a58ef55fff9427d39693d82b`, and closed without merge.
-- PR details/status queries worked. PR #2 had no submitted reviews. No independent approval, required check pass, protected merge, or merge SHA was produced.
-- All three temporary CNB branches and their clean local probe worktrees were removed. No production ref changed.
+- Candidate CNB PR [#4](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/4) is open/unmerged at `98511ad526c0d77ede979e88ebe5b9c4f584a739`. Its official advisory Review completed on this head with Review JSON `passed` and zero issues. The final-head target rerun is in progress on disposable PR #5.
+- Trusted target build [`cnb-oi5-1k61oiv57`](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-oi5-1k61oiv57) passed on candidate `cba3353613402646440858f9298af87b8450ba74`, exact merge/tested SHA `434e4a66eb6566c478810851dbd83ffc982da4b5`, and source marker `78fd54a80be70aebdc1b9b891d68937fede76373`. Its 9,830,956-byte archive SHA-256 is `417daf4a53e954e692975990505a1bd60ff7c2fc50e1e6037c7fd552577423c6`; 126 bounded entries and all source/target/merge/tested receipts were checked.
+- Final candidate target build `cnb-iin-1k61q4mp4` was triggered by `pull_request.target` against target head `98511ad526c0d77ede979e88ebe5b9c4f584a739`, with source marker `54f043d806e346aca7fb42ce5e2ba3f3aff4ecc3`; it is pending after Prepare/install passed. The latest source-side event build `cnb-pln-1k61q4mp3` passed. An earlier run failed the live-ref guard after premature scratch-ref cleanup; the refs were restored at the exact SHAs before this rerun.
+- The passing target pipeline covered Node-source coverage, Astro check/build, root and nested-base composition, Playwright at 390/1440, mobile/desktop Lighthouse and CLS expected-red fixtures, SCA, bounded evidence upload, and receipt validation. Coverage was 79.02% (388/491 lines; 77% minimum); the archive held 42 Lighthouse JSON reports, screenshots and trace, and native receipts.
+- `@CodeBuddy` failed during private `.ads` checkout in platform Prepare, before NPC/model execution. The target trusted runner sets `git.submodules: false`; the passing scratch run proves it reaches the actual deterministic gate without fetching private ADS.
 
 ## Acceptance matrix
 
 | Check | Result | Evidence boundary |
 | --- | --- | --- |
-| CLI authentication and HTTPS Git | **PASS** | Logged-in CLI; explicit `cnb` helper authenticated `ls-remote`, test pushes and cleanup |
-| CNB/GitHub `main`, `dev`, historical tag parity | **PASS** | Exact SHA and annotated-tag OID/peeled-commit table above |
-| CNB PR create/read/close | **PASS** | Isolated PRs #1/#2; neither merged |
-| CNB PR event CI auto-trigger | **FAIL / NOT RUN** | `auto_trigger=false`; no PR event build could start |
-| Required-check enforcement | **UNVERIFIED** | Config flag is on, but check identity/presence and denial behavior were not exercised |
-| Independent human review | **BLOCKED** | One repository member; PR #2 had zero reviews |
-| Protected direct-push/merge denial | **NOT TESTED** | No safe scratch protection could be created; no risky protected-ref write attempted |
-| Review rejection / new-SHA invalidation | **NOT TESTED** | No native trusted Review build/status existed |
-| CNB Playwright at 390px / 1440px with retained screenshots/traces | **NOT RUN** | PR-event auto-trigger was off; GitHub browser runs are separate evidence |
-| CNB Lighthouse, CLS positive/negative, coverage and security/SCA | **NOT RUN** | No consumer runner reached these jobs |
-| Native critical finding / malformed output / missing or timed-out Review blocks merge | **NOT TESTED** | Parser negatives are local unit tests only; no required Review status existed |
-| New push creates a fresh current-SHA check | **NOT TESTED** | No PR event CI was enabled |
-| No independent approval blocks merge | **BLOCKED / NOT TESTED** | Only one repository member; merge was not attempted |
-| Direct push or merge without permission is rejected | **NOT TESTED** | No safe isolated protection rule was available; protected production refs were not targeted |
-| Parallel-agent conflict recovery | **PARTIAL** | Separate scratch refs avoided local collisions; no concurrent CNB merge was attempted |
-| Auto-merge disabled | **PASS (readback only)** | Both rules showed auto-merge disabled; no behavior test |
+| CNB CLI authentication and HTTPS Git | **PASS** | Owner CLI; explicit helper; disposable pushes and cleanup |
+| GitHub/CNB `main`, `dev`, historical tag parity | **PASS** | Exact SHA/OID readback |
+| Organization/repository event triggers | **PASS (readback)** | Root controls on; four repos confirmed; secret repo inaccessible to this token |
+| Plan B `dev` rule | **PASS (readback only)** | PR/status toggle retained; reviewer toggle off; write and bypass prohibitions retained |
+| Official AI Review on candidate `98511ad` | **PASS (advisory)** | `cnb-kcp-1k61p09tu`, Review JSON `passed`, zero issues |
+| Trusted target native E2E on `cba3353` | **PASS (scratch only)** | `cnb-oi5-1k61oiv57`, receipts and archive hash verified |
+| Trusted target native E2E on final `98511ad` | **PENDING** | `cnb-iin-1k61q4mp4`; Prepare/install passed, exact-merge stage running |
+| Candidate workflow installed on `dev` | **NO** | CNB PR #4 remains unmerged |
+| Scratch protected target direct push | **PASS** | CNB rejected direct push; temporary rule and refs were removed |
+| Scratch failing-check merge denial | **PASS** | PR blocked on status_check; merge attempt HTTP 409 |
+| Scratch missing-check merge denial | **FAIL** | Zero-status PR reported unblocked/mergeable; CNB docs say checks apply if present |
+| Required-check behavior on actual `dev` | **NOT TESTED** | Protected target was not attempted; strict required-check acceptance fails on scratch behavior |
+| NPC model execution and write-denial behavior | **FAIL / NOT TESTED** | Platform Prepare stopped before model stage |
+| Consumer acceptance / workflow readiness | **NO** | Final-head rerun pending; missing-check gap and actual target enforcement unresolved |
+| Auto-merge disabled | **PASS (readback)** | No behavior test |
 
-The event and actor trust boundary is described in [CNB-REVIEW.md](CNB-REVIEW.md). The synced-code and Project #17 state is in [CUTOVER-READINESS.md](CUTOVER-READINESS.md).
+Workflow trust and review semantics are in [CNB-REVIEW.md](CNB-REVIEW.md); cutover and mirror boundaries are in [CUTOVER-READINESS.md](CUTOVER-READINESS.md).
