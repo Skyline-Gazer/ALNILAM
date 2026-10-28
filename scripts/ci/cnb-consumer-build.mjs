@@ -4,8 +4,13 @@ import path from 'node:path';
 import {spawnSync, execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {validateSiteRoot} from '../site-contract.mjs';
+import {trustedAstroCheckArgs, trustedTestFiles} from './cnb-trusted-gate.mjs';
 
 const trustedRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const trustedSourceRoot = process.env.CNB_TRUSTED_SOURCE_ROOT;
+const trustedTestRoot = process.env.CNB_TRUSTED_TEST_ROOT;
+if (!trustedSourceRoot || !trustedTestRoot) throw Error('Trusted source and test roots are required');
+const tests = trustedTestFiles(trustedTestRoot);
 fs.mkdirSync('artifacts/coverage', {recursive: true});
 fs.mkdirSync('.tmp/cnb', {recursive: true});
 const site = fs.mkdtempSync(path.join(os.tmpdir(), 'alnilam-cnb-site-'));
@@ -26,14 +31,16 @@ try {
   run('unit-coverage', process.execPath, [
     '--experimental-test-coverage', '--test-reporter=spec', '--test-reporter-destination=stdout',
     '--test-reporter=lcov', '--test-reporter-destination=artifacts/coverage/lcov.info',
-    '--test', ...fs.globSync('scripts/tests/*.test.mjs'), ...fs.globSync('scripts/ci/*.test.mjs'),
+    '--test', ...tests,
   ]);
   run('coverage-content', process.execPath, [path.join(trustedRoot, 'scripts/ci/cnb-coverage.mjs'), 'artifacts/coverage/lcov.info']);
-  run('check', 'pnpm', ['check']);
-  run('demo-compose', process.execPath, ['scripts/compose.mjs', '--site', 'sites/demo', '--out', 'dist/demo']);
+  run('check', 'pnpm', trustedAstroCheckArgs(trustedSourceRoot, process.cwd()));
+  run('demo-compose', process.execPath, [path.join(trustedRoot, 'scripts/compose.mjs'), '--site', 'sites/demo', '--out', 'dist/demo'],
+    {ALNILAM_REPO_ROOT: process.cwd(), ALNILAM_TOOLCHAIN_ROOT: trustedSourceRoot});
   run('demo-artifact', process.execPath, [path.join(trustedRoot, 'scripts/artifact-check.mjs'), 'dist/demo']);
   for (const [name, url] of [['site', 'https://example.com/'], ['nested-base', 'https://example.com/ALNILAM/']]) {
-    run(`compose-${name}`, process.execPath, ['scripts/compose.mjs', '--site', site, '--out', `dist/${name}`], {ALNILAM_SITE_URL: url});
+    run(`compose-${name}`, process.execPath, [path.join(trustedRoot, 'scripts/compose.mjs'), '--site', site, '--out', `dist/${name}`],
+      {ALNILAM_REPO_ROOT: process.cwd(), ALNILAM_TOOLCHAIN_ROOT: trustedSourceRoot, ALNILAM_SITE_URL: url});
     run(`artifact-${name}`, process.execPath, [path.join(trustedRoot, 'scripts/artifact-check.mjs'), `dist/${name}`]);
   }
   if (validateSiteRoot(site).digest !== before) throw Error('External Site mutated');

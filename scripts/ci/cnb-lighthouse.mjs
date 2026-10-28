@@ -5,7 +5,9 @@ import {spawn, execFileSync} from 'node:child_process';
 import {setTimeout as delay} from 'node:timers/promises';
 import {chromium} from '@playwright/test';
 import {trackChild, stopChildren, assertSuccessfulResponses, validateLighthouseReports, validateLighthouseRegression} from './cnb-evidence.mjs';
-const cli = 'node_modules/@lhci/cli/src/cli.js';
+const trustedSourceRoot = process.env.CNB_TRUSTED_SOURCE_ROOT;
+if (!trustedSourceRoot) throw Error('Trusted dependency root is required');
+const cli = path.join(trustedSourceRoot, 'node_modules/@lhci/cli/src/cli.js');
 const env = {...process.env, CHROME_PATH: chromium.executablePath(), ALNILAM_CHROME_PATH: chromium.executablePath()};
 const children = [];
 const formFactor = process.env.ALNILAM_LHCI_FORM_FACTOR || 'mobile';
@@ -54,7 +56,8 @@ const stop = () => stopChildren(children);
 process.once('SIGTERM', async () => {await stop(); process.exit(1);});
 try {
   for (const [port, output, base] of [[4323, 'dist/site', '/'], [4324, 'dist/nested-base', '/ALNILAM/']]) {
-    const child = spawn(process.execPath, ['scripts/preview-server.mjs', '--port', String(port), '--root', output, '--base', base], {stdio: 'inherit'});
+    const child = spawn(process.execPath, [path.join(trustedSourceRoot, 'scripts/preview-server.mjs'), '--port', String(port),
+      '--root', path.resolve(output), '--base', base], {stdio: 'inherit'});
     children.push(trackChild(child));
     await ready(`http://127.0.0.1:${port}${base}`, child);
   }

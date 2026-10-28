@@ -15,8 +15,10 @@ const ROOT = process.cwd();
 const SCRIPT = fileURLToPath(import.meta.url);
 const HARNESS_FILES = [
   'lighthouserc.cjs',
+  'playwright.config.ts',
   'scripts/artifact-check.mjs',
   'scripts/compose.mjs',
+  'scripts/preview-server.mjs',
   'scripts/site-contract.mjs',
   'scripts/ci/cnb-browser-audit.mjs',
   'scripts/ci/cnb-browser-negative.mjs',
@@ -100,6 +102,19 @@ export function candidateEnvironment(env, home, temp) {
   return child;
 }
 
+export function trustedTestFiles(testRoot) {
+  const files = [
+    ...fs.globSync(path.join(testRoot, 'scripts/tests/*.test.mjs')),
+    ...fs.globSync(path.join(testRoot, 'scripts/ci/*.test.mjs')),
+  ].sort();
+  if (!files.length) throw Error('Trusted test suite is empty');
+  return files;
+}
+
+export function trustedAstroCheckArgs(sourceRoot, candidateRoot) {
+  return ['--dir', path.join(sourceRoot, 'apps/web'), 'exec', 'astro', 'check', '--root', path.join(candidateRoot, 'apps/web')];
+}
+
 export function inspectArtifactTree(root, maximum = MAX_ARTIFACT_BYTES) {
   const rootStat = fs.lstatSync(root);
   if (!rootStat.isDirectory() || rootStat.isSymbolicLink()) throw Error('Evidence root must be a real directory');
@@ -181,9 +196,19 @@ export function validateEvidence(root, identity) {
     throw Error('Consumer build receipt is missing, stale, or failed');
   }
   const browser = readJson(path.join(artifacts, 'cnb-browser', 'receipt.json'));
+  const browserReportPath = path.join(artifacts, 'cnb-browser', 'results.json');
+  const browserReport = readJson(browserReportPath);
+  const browserReportBytes = fs.readFileSync(browserReportPath);
+  const browserStats = browserReport.stats;
   if (browser.sourceSha !== identity.source || browser.targetSha !== identity.target ||
       browser.mergeSha !== identity.merge || browser.testedSha !== identity.merge ||
-      browser.exitCode !== 0 || browser.lingeringPorts?.length) throw Error('Browser receipt is not bound to the tested merge SHA');
+      browser.exitCode !== 0 || browser.lingeringPorts?.length ||
+      !Number.isSafeInteger(browserStats?.expected) || browserStats.expected < 1 ||
+      browserStats.unexpected !== 0 || !Number.isSafeInteger(browserStats.skipped) || browserStats.skipped > 1 ||
+      browser.testCount !== browserStats.expected ||
+      browser.reportSha256 !== createHash('sha256').update(browserReportBytes).digest('hex')) {
+    throw Error('Browser receipt is not bound to a successful trusted Playwright report');
+  }
   for (const formFactor of ['mobile', 'desktop']) {
     const lighthouse = readJson(path.join(artifacts, 'lighthouse', formFactor, 'receipt.json'));
     if (lighthouse.coreSha !== identity.merge || lighthouse.formFactor !== formFactor ||
@@ -224,6 +249,39 @@ function verifyLiveRefs(identity) {
   assertLiveRefs(git(['ls-remote', '--refs', 'origin', ...refs]), identity);
 }
 
+function copyTree(sourceRoot, destinationRoot) {
+  fs.mkdirSync(destinationRoot, {recursive: true, mode: 0o755});
+  for (const entry of fs.readdirSync(sourceRoot, {withFileTypes: true})) {
+    const source = path.join(sourceRoot, entry.name);
+    const destination = path.join(destinationRoot, entry.name);
+    const stat = fs.lstatSync(source);
+    if (stat.isSymbolicLink()) throw Error(`Trusted input contains a symlink: ${source}`);
+    if (stat.isDirectory()) {
+      fs.mkdirSync(destination, {recursive: true, mode: 0o755});
+      copyTree(source, destination);
+    } else if (stat.isFile()) {
+      fs.copyFileSync(source, destination, fs.constants.COPYFILE_EXCL);
+      fs.chmodSync(destination, 0o444);
+    } else throw Error(`Trusted input is not a regular file: ${source}`);
+  }
+}
+
+function prepareTrustedTests(harnessRoot, candidateRoot) {
+  // Keep the test and browser control plane outside the writable candidate tree.
+  const testRoot = path.join(harnessRoot, 'trusted-tests');
+  fs.mkdirSync(path.join(testRoot, 'scripts'), {recursive: true});
+  copyTree(path.join(ROOT, 'scripts/tests'), path.join(testRoot, 'scripts/tests'));
+  copyTree(path.join(ROOT, 'scripts/ci'), path.join(testRoot, 'scripts/ci'));
+  copyTree(path.join(ROOT, 'tests/browser'), path.join(harnessRoot, 'tests/browser'));
+  for (const directory of ['apps', 'packages', 'sites', 'themes', 'features']) {
+    const source = path.join(candidateRoot, directory);
+    if (fs.existsSync(source)) fs.symlinkSync(source, path.join(testRoot, directory), 'dir');
+  }
+  fs.symlinkSync(path.join(candidateRoot, 'scripts/site-contract.mjs'), path.join(testRoot, 'scripts/site-contract.mjs'));
+  fs.symlinkSync(path.join(candidateRoot, 'scripts/p1'), path.join(testRoot, 'scripts/p1'), 'dir');
+  return testRoot;
+}
+
 function copyTrustedHarness(harnessRoot, candidateRoot) {
   for (const relative of HARNESS_FILES) {
     const source = path.join(ROOT, relative);
@@ -234,7 +292,8 @@ function copyTrustedHarness(harnessRoot, candidateRoot) {
     fs.copyFileSync(source, destination, fs.constants.COPYFILE_EXCL);
     fs.chmodSync(destination, 0o444);
   }
-  fs.symlinkSync(path.join(candidateRoot, 'node_modules'), path.join(harnessRoot, 'node_modules'), 'dir');
+  fs.symlinkSync(path.join(ROOT, 'node_modules'), path.join(harnessRoot, 'node_modules'), 'dir');
+  prepareTrustedTests(harnessRoot, candidateRoot);
   const freeze = directory => {
     for (const entry of fs.readdirSync(directory, {withFileTypes: true})) {
       const file = path.join(directory, entry.name);
@@ -254,6 +313,8 @@ function runAsCandidate(tempRoot, candidateRoot, harnessRoot, env) {
   fs.mkdirSync(temp, {recursive: true});
   execFileSync('chown', ['-R', '65534:65534', candidateRoot, home]);
   const safeEnv = candidateEnvironment(env, home, temp);
+  safeEnv.CNB_TRUSTED_SOURCE_ROOT = ROOT;
+  safeEnv.CNB_TRUSTED_TEST_ROOT = path.join(harnessRoot, 'trusted-tests');
   const result = spawnSync('setpriv', [
     '--reuid=65534', '--regid=65534', '--clear-groups', '--bounding-set=-all',
     '--inh-caps=-all', '--ambient-caps=-all', '--no-new-privs', '--',
@@ -285,7 +346,7 @@ function runCandidate(candidateRoot, harnessRoot) {
     if (result.status !== 0) throw Error(`${name} failed (status ${result.status}, signal ${result.signal || 'none'})`);
   };
   const ci = path.join(harnessRoot, 'scripts', 'ci');
-  run('frozen dependency install', 'pnpm', ['install', '--frozen-lockfile']);
+  run('frozen dependency install without candidate hooks', 'pnpm', ['install', '--frozen-lockfile', '--ignore-scripts', '--ignore-pnpmfile']);
   run('consumer build and unit coverage', process.execPath, [path.join(ci, 'cnb-consumer-build.mjs')]);
   run('Playwright browser audit', process.execPath, [path.join(ci, 'cnb-browser-audit.mjs')]);
   for (const formFactor of ['mobile', 'desktop']) {
@@ -347,14 +408,28 @@ async function main() {
   const harnessRoot = path.join(tempRoot, 'harness');
   fs.chmodSync(tempRoot, 0o755);
   fs.mkdirSync(harnessRoot, {mode: 0o755});
-  execFileSync('git', ['clone', '--quiet', '--no-hardlinks', '--no-checkout', '--no-recurse-submodules', ROOT, candidateRoot]);
-  execFileSync('git', ['-C', candidateRoot, 'fetch', '--quiet', '--no-tags', '--no-recurse-submodules', 'origin', identity.merge]);
-  const candidateParents = git(['-C', candidateRoot, 'rev-list', '--parents', '-n', '1', identity.merge]).split(/\s+/);
-  assertMergeParents(candidateParents.shift(), identity.source, identity.target, candidateParents);
-  execFileSync('git', ['-C', candidateRoot, 'checkout', '--quiet', '--detach', identity.merge]);
-  execFileSync('git', ['-C', candidateRoot, 'remote', 'remove', 'origin']);
-  execFileSync('git', ['-C', candidateRoot, 'config', '--local', 'core.hooksPath', '/dev/null']);
-  copyTrustedHarness(harnessRoot, candidateRoot);
+  const trustedHome = path.join(tempRoot, 'trusted-home');
+  const trustedTemp = path.join(tempRoot, 'trusted-tmp');
+  fs.mkdirSync(trustedHome, {recursive: true, mode: 0o755});
+  fs.mkdirSync(trustedTemp, {recursive: true, mode: 0o755});
+  try {
+    execFileSync('pnpm', ['install', '--frozen-lockfile'], {
+      cwd: ROOT,
+      env: candidateEnvironment(env, trustedHome, trustedTemp),
+      stdio: 'inherit',
+    });
+    execFileSync('git', ['clone', '--quiet', '--no-hardlinks', '--no-checkout', '--no-recurse-submodules', ROOT, candidateRoot]);
+    execFileSync('git', ['-C', candidateRoot, 'fetch', '--quiet', '--no-tags', '--no-recurse-submodules', 'origin', identity.merge]);
+    const candidateParents = git(['-C', candidateRoot, 'rev-list', '--parents', '-n', '1', identity.merge]).split(/\s+/);
+    assertMergeParents(candidateParents.shift(), identity.source, identity.target, candidateParents);
+    execFileSync('git', ['-C', candidateRoot, 'checkout', '--quiet', '--detach', identity.merge]);
+    execFileSync('git', ['-C', candidateRoot, 'remote', 'remove', 'origin']);
+    execFileSync('git', ['-C', candidateRoot, 'config', '--local', 'core.hooksPath', '/dev/null']);
+    copyTrustedHarness(harnessRoot, candidateRoot);
+  } catch (error) {
+    fs.rmSync(tempRoot, {recursive: true, force: true});
+    throw error;
+  }
 
   let failure;
   try {

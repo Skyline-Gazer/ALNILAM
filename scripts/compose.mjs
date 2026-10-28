@@ -6,7 +6,12 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { validateSiteRoot, assertExternalOutput } from "./site-contract.mjs";
 
-const repoRoot = fileURLToPath(new URL("../", import.meta.url));
+const repoRoot = process.env.ALNILAM_REPO_ROOT
+  ? path.resolve(process.env.ALNILAM_REPO_ROOT)
+  : fileURLToPath(new URL("../", import.meta.url));
+const toolchainRoot = process.env.ALNILAM_TOOLCHAIN_ROOT
+  ? path.resolve(process.env.ALNILAM_TOOLCHAIN_ROOT)
+  : repoRoot;
 const argv = process.argv.slice(2);
 function option(flag, fallback) {
   const idx = argv.indexOf(flag);
@@ -47,7 +52,7 @@ try {
   };
   const result = spawnSync(
     process.platform === "win32" ? "pnpm.cmd" : "pnpm",
-    ["--filter", "@alnilam/web", "build"],
+    ["--dir", path.join(toolchainRoot, "apps/web"), "exec", "astro", "build", "--root", path.join(repoRoot, "apps/web")],
     {
       cwd: repoRoot,
       stdio: "inherit",
@@ -68,7 +73,7 @@ try {
   // fails the compose so CI never ships a stale or missing index.
   const pf = spawnSync(
     process.platform === "win32" ? "pnpm.cmd" : "pnpm",
-    ["--filter", "@alnilam/web", "exec", "pagefind", "--site", stage],
+    ["--dir", path.join(toolchainRoot, "apps/web"), "exec", "pagefind", "--site", stage],
     { cwd: repoRoot, stdio: "inherit", env: { ...process.env, SOURCE_DATE_EPOCH: process.env.SOURCE_DATE_EPOCH } },
   );
   if (pf.error) throw pf.error;

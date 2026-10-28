@@ -160,13 +160,3 @@ test('large shift is detected and the CLS gate rejects it', async ({page}) => {
   expect(calculateCLS(events)).toBeGreaterThan(CLS_BUDGET);
   expect(() => assertCLSBudget(events)).toThrow(/CLS regression/);
 });
-
-test('intentional browser failure probe', async ({page}, info) => {
-  test.skip(process.env.CNB_BROWSER_FORCE_FAILURE !== '1', 'Run separately with CNB_BROWSER_FORCE_FAILURE=1 to prove nonzero exit');
-  await page.goto(`${origins[0]}/`);
-  await expect(page.locator('.home-hero')).toBeVisible();
-  const screenshot = info.outputPath('negative-browser.png');
-  await page.screenshot({path: screenshot});
-  await info.attach('negative-browser', {path: screenshot, contentType: 'image/png'});
-  expect(false, 'CNB_INTENTIONAL_BROWSER_FAILURE').toBe(true);
-});
