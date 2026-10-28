@@ -2,6 +2,8 @@
 
 **Status: PREPARED / NOT CUT OVER — 2026-10-28.** GitHub remains the current code authority. This is an isolated dev PR supporting [Issue #100](https://github.com/Skyline-Gazer/ALNILAM/issues/100), not a production authorization. Source of implementation: [ADS v0.4.2](https://github.com/Skyline-Gazer/ADS/releases/tag/v0.4.2) Mode A, [ADS #63](https://github.com/Skyline-Gazer/ADS/issues/63); no new adapter or synchronization code.
 
+Current readback: GitHub `dev` is `faf2f08a7d47ab0202cf69e6069ef5c37b1ae824`; integrated CI [40629124139](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40629124139) passes. P1 is ready for independent Owner signoff, not yet phase-accepted. Consumer verdict is **NOT ACCEPTED / NOT VERIFIED**. In the connected CNB account, `https://cnb.cool/KoolingMachine/ALNILAM` returned “page does not exist or you do not have access”; the visible org listing contains five repositories and only the isolated private ADS/ALNILAM acceptance fixture. This does not establish whether an inaccessible target exists; no actual ALNILAM CNB repository was verified.
+
 ## Immutable consumer adoption
 
 - `.ads` submodule gitlink: ADS **v0.4.2 peeled COMMIT** `375fc71f977c40c2053140c34431cc60a6d42883`; annotated tag object is `44811ab1d7c3f9c11798b1f11efcfaac47113d52`. The tag object is not a gitlink target.
@@ -10,25 +12,24 @@
 
 ## Protected authority and evidence
 
-CNB target repository URL, membership, actual protected dev/main, native CI source/merge status, Review-Fix-Recheck, branch permission and consumer artifact download: **UNVERIFIED for the actual ALNILAM CNB repository.** The prior [#96 draft Pilot](https://github.com/Skyline-Gazer/ALNILAM/pull/96), [#94](https://github.com/Skyline-Gazer/ALNILAM/issues/94), and isolated ADS Mode A fixture are reusable evidence but are not actual ALNILAM repository acceptance. Do not invent a CNB repo path from the fixture.
+CNB target repository URL, membership, actual protected dev/main, native CI source/merge status, Review-Fix-Recheck, branch permission and consumer artifact download: **UNVERIFIED for the actual ALNILAM CNB repository.** Draft [PR #96](https://github.com/Skyline-Gazer/ALNILAM/pull/96) is at `c549ab8a5ca0ede71ace74f63d5aab54c9fc8e2f`; its GitHub CI passes, but no current source-bound CNB native review/run is verified. Its earlier native run used a stale source SHA; prior native Review/SCA findings were not revalidated on the current head. Optional CodeBuddy, automatic-fix rounds and auto-tag are not required blockers. The prior [#94](https://github.com/Skyline-Gazer/ALNILAM/issues/94) pilot and isolated ADS Mode A fixture are reusable evidence, not actual ALNILAM consumer acceptance. Do not invent a CNB repo path from the fixture.
 
-GitHub current-authority checkpoint before work: `dev` `1f382aa72052eedbe8a2809011e5a36a82f697d0`, `main` `07fac43cba0c3d303c930c098b6e2124b2c79e4a`; #97 merged into dev `95baf6bc04393f02bf89e2ea08e017c41da1fde3`. **Not migration freeze SHAs**; reread actual refs and tags immediately before authorized cutover.
+GitHub current-authority checkpoint: `dev` `faf2f08a7d47ab0202cf69e6069ef5c37b1ae824`, `main` `07fac43cba0c3d303c930c098b6e2124b2c79e4a`; ADS `.ads` gitlink on `dev` is the v0.4.2 peeled commit `375fc71f977c40c2053140c34431cc60a6d42883`. **These are not migration freeze SHAs**; reread refs and tags immediately before any separately authorized cutover.
 
 ## GitHub Workflow trigger side effects
 
-| Workflow | Present trigger(s) before this PR | Mirror `main` push risk |
+| Workflow | GitHub `main` today | Mirror `main` push risk |
 | --- | --- | --- |
-| `.github/workflows/deploy.yml` | `push: main` plus `workflow_dispatch` | **PRODUCTION DEPLOY**; this PR removes the push trigger in the *dev candidate only* |
-| `ads-devtools-boundary.yml` | `pull_request: main`, `push: main`, `workflow_dispatch` | Read-only production-boundary verification; continues to run |
-| `ci.yml` | `push: dev/feat/fix/chore`, PR into dev/main, dispatch | No matching main push on current source |
-| `ads-devtools-latest.yml` | `push: dev/feat/fix/chore`, PR dev, dispatch | No matching main push |
-| `p0-evidence.yml` | PR dev and specific chore branch | No matching main push |
+| `.github/workflows/deploy.yml` | `push: main` plus `workflow_dispatch` | **PRODUCTION DEPLOY**. On `dev`, PR #101 changed this to dispatch-only; the guard has not reached `main`. |
+| `ci.yml` | Push only to `dev`/`feat/**`/`fix/**`/`chore/**`; PR into `dev`/`main`; dispatch | No CI push run on current `main`; inspect any mirrored workflow tree before writing. |
+| `ads-devtools-boundary.yml` | Absent from current `main`; present on `dev` with read-only `push: main` check | A production-clean release tree must omit this dev-only workflow; if retained on a mirrored commit it will run on `main`. |
+| `ads-devtools-latest.yml`, `p0-evidence.yml` | Absent from current `main` | Dev-only workflows; exclude from the production release tree and audit any new triggers. |
 
-Also enumerate any newly added workflows/triggers before first mirror write. A **reviewed dev PR is not sufficient proof that the GitHub main production workflow is guarded**. Confirm `deploy.yml` is dispatch-only on **GitHub main** and verify that changes in the mirror source cannot reintroduce push-to-deploy; if the old GitHub main still contains the push trigger, do not write main without a separate safe approved mechanism.
+Also enumerate all workflows in the production-clean candidate before first mirror write. A **reviewed dev PR is not sufficient proof that GitHub main is guarded**. `origin/main:.github/workflows/deploy.yml` still includes `push: main`; the first mirror write can deploy production unless an Owner-authorized guard is first applied to `main` and read back. No guard or write was applied here.
 
 ## Precutover runbook (dry preparation only)
 
-1. Finish P1 #97/#98/#99 and record final dev SHA, P1 gate evidence, independent required checks, exact ADS pin.
+1. Record P1 integrated evidence at `faf2f08a7d47ab0202cf69e6069ef5c37b1ae824`, final CI [40629124139](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40629124139), exact ADS pin, and obtain independent Owner phase signoff. PRs #97/#98/#99 are already merged.
 2. Identify and authenticate the **actual** CNB ALNILAM repository. Check repo owner/permissions, existing refs/PRs, branch rules, native runner/Review/bot identities, secrets scopes and quota; do not confuse the fixture repo with ALNILAM.
 3. Audit GitHub authoritative `dev`, `main`, all tags, PRs and release history. Freeze only after explicit Owner authorization; capture SHA/OID snapshots and protections.
 4. After explicit authorization, import full Git history to CNB, verify exact dev/main SHA and approved tags, protect dev/main, enable native Issue-URL-linked PR+CI+review. GitHub Issues and Project #17 remain the sole work tracker.
@@ -41,13 +42,13 @@ Also enumerate any newly added workflows/triggers before first mirror write. A *
 
 ## Current cutover blocker list
 
-- Actual CNB ALNILAM repo URL/access/protections and consumer native CI/Review: not verified.
-- P1 final baseline and dev SHA: pending P1 completion.
+- Actual CNB ALNILAM repo URL/access/protections and current-head consumer native CI/Review: not verified; #96's GitHub checks do not replace CNB native evidence.
+- P1 implementation and current dev baseline: integrated and green; independent phase signoff is pending on #37.
 - GitHub main dispatch-only guard: **not yet in effect**; this PR only prepares the change for later release.
-- GitHub **main Ruleset [25809753](https://github.com/Skyline-Gazer/ALNILAM/rules/25809753)**: ACTIVE, requires PR + strict `verify` and resolved threads, with **no bypass actors** (`bypass_actors=[]`). This is an independent likely **mirror main write blocker**: normal CNB Mirror tokens cannot simply fast-forward through a mandatory PR rule. Do not relax protection or expand token authority by this PR. Before cutover, Owner must approve a narrowly scoped, actually supported mirror identity/policy exception or another rigorously verified release flow consistent with CNB Primary; prove it in an isolated real provider fixture and re-read the resulting Ruleset. A dry-run/credential scope claim alone is insufficient.
+- GitHub **main Ruleset [25809753](https://github.com/Skyline-Gazer/ALNILAM/rules/25809753)**: ACTIVE, requires PR + strict `verify` and resolved threads, with **no bypass actors** (`bypass_actors=[]`). ADS v0.4.2 `scripts/sync_cnb_release.py` directly pushes the approved SHA to `refs/heads/main`; its dry-run does not bypass or satisfy the required-PR rule. The direct Mode A write is therefore blocked by policy. A candidate minimal route is a dedicated single-repository GitHub App with content-write permission, available only to a trusted release job, and an explicitly Owner-approved bypass actor on the mirror ruleset; this would bypass the PR/check path for mirrored commits and must be tested and risk-approved. A PR-based mirror would preserve the current ruleset but is not implemented by the pinned ADS Mode A synchronizer. Do not change the ruleset, add an actor, or expand token authority here.
 - CNB mirror token and source/target scope: not provisioned or verified.
 - Release manifest, Owner release authorization, production deploy authorization: absent by design.
-- #96 pilot required consumer gates: not automatically satisfied by ADS #63 generic acceptance.
-- Project #17 field writes: require actual Projects v2 API/permissions readback; never claim board sync from Issue comments.
+- #96 pilot required consumer gates: not automatically satisfied by ADS #63 generic Mode A fixture PASS.
+- Project #17 readback is verified: #37 `In Progress`, #47/#48/#49/#50/#79 `Done`, #100 `In Progress`, #38/#51 `Todo`; parents #37 → #47/#48/#49/#50/#79/#100 and #38 → #51. No milestones exist.
 
 **No CNB repo migration, authority flip, GitHub main/tag writes, provider sync, production deployment or destructive rollback performed here.**
