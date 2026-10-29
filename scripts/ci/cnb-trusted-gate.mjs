@@ -26,6 +26,7 @@ export const HARNESS_FILES = [
   'scripts/ci/cnb-coverage.mjs',
   'scripts/ci/cnb-evidence.mjs',
   'scripts/ci/cnb-lighthouse.mjs',
+  'scripts/ci/cnb-metrics.mjs',
   'scripts/ci/cnb-release-tag-dry-run.mjs',
   'scripts/ci/cnb-trusted-gate.mjs',
 ];
