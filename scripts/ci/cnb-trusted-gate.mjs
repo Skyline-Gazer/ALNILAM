@@ -274,12 +274,19 @@ function prepareTrustedTests(harnessRoot, candidateRoot) {
   copyTree(path.join(ROOT, 'scripts/tests'), path.join(testRoot, 'scripts/tests'));
   copyTree(path.join(ROOT, 'scripts/ci'), path.join(testRoot, 'scripts/ci'));
   copyTree(path.join(ROOT, 'tests/browser'), path.join(harnessRoot, 'tests/browser'));
+  fs.symlinkSync(path.join(harnessRoot, 'lighthouserc.cjs'), path.join(testRoot, 'lighthouserc.cjs'), 'file');
   for (const directory of ['apps', 'packages', 'sites', 'themes', 'features']) {
     const source = path.join(candidateRoot, directory);
     if (fs.existsSync(source)) fs.symlinkSync(source, path.join(testRoot, directory), 'dir');
   }
   fs.symlinkSync(path.join(candidateRoot, 'scripts/site-contract.mjs'), path.join(testRoot, 'scripts/site-contract.mjs'));
   fs.symlinkSync(path.join(candidateRoot, 'scripts/p1'), path.join(testRoot, 'scripts/p1'), 'dir');
+  const upgradeCheck = path.join(candidateRoot, 'scripts/upgrade-check.mjs');
+  const upgradeCheckStat = fs.lstatSync(upgradeCheck);
+  if (!upgradeCheckStat.isFile() || upgradeCheckStat.isSymbolicLink()) {
+    throw Error('Candidate upgrade-check input is not a regular file');
+  }
+  fs.symlinkSync(upgradeCheck, path.join(testRoot, 'scripts/upgrade-check.mjs'), 'file');
   return testRoot;
 }
 

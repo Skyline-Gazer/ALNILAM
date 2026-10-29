@@ -73,7 +73,7 @@ test('trusted checks select target test files and bypass candidate package scrip
 });
 
 test('copied trusted harness contains each local dependency of its scripts', () => {
-  const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
+  const root = process.env.CNB_TRUSTED_SOURCE_ROOT || path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
   for (const relative of HARNESS_FILES) {
     const source = fs.readFileSync(path.join(root, relative), 'utf8');
     for (const [, , specifier] of source.matchAll(/(?:from\s*|import\s*\()(['"])(\.{1,2}\/[^'"]+)\1/g)) {
