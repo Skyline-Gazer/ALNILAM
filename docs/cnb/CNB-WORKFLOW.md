@@ -1,16 +1,8 @@
 # CNB developer workflow acceptance
 
-## Current Owner decision — Agent-governed PRs (2026-10-30)
+## Current workflow decision — 2026-10-30
 
-This decision supersedes the independent Gatekeeper proposal and its acceptance blockers below. The Agent must verify complete current-version CI plus actual CodeBuddy review, resolve blocking findings, re-read the live PR head, and actively perform a normal merge. No independent approval identity, fixed required Reviewer or CNB Auto Merge is required. CNB zero-status mergeability remains a disclosed platform risk; it has not been repaired. Production main, the first production mirror, formal tags/releases and deployments are excluded from this authorization.
-
-Native system CodeBuddy now runs on real isolated PR #18 with Work Mode off. The minimal private-submodule fix is update=none in .gitmodules; the immutable ADS gitlink is unchanged and explicit authorized checkout still works. The first real review, comment 2116007303258533888, bound head f8f56e9927bc62fc40eccbf6bbb8c16ba3ce0ce4 and found a Critical eval issue; the unchanged ADS validator rejected it and no merge was attempted. After repair, old evidence was rejected as STALE_REVIEW. Native re-review comment 2116008620634898432 reports passed on head f1ae3bd736e10adbc587a81ece04b9f2340a0e4c. The Agent is still waiting for current CI before any merge. Historical Gatekeeper and NPC failures remain evidence for their original versions only.
-
-
-> Current update (2026-10-30): GitHub PR #96 has advanced to `911fe4327ecb81179df2ee5bccabd47f2cb5b48e`. The 2026-10-29 native evidence below applies to the earlier `7f080e02cc56f49d066cc4036a6d4c914f4b367a` target. Current-head trusted target validation passed in PR #17; archive and SHA evidence are in CUTOVER-READINESS.md. A separately trusted Gatekeeper identity, stale-approval rejection and automatic merge remain unverified.
-
-Historical readback: 2026-10-29. **CNB is not yet the accepted development authority.** GitHub PR #96 then pointed to `7f080e02cc56f49d066cc4036a6d4c914f4b367a`; its GitHub checks passed 6/6, and that candidate SHA passed native positive `pull_request.target` E2E on scratch. The negative no-op-script test failed closed as designed. CNB's zero-status rule still permits merge, so strict Required Checks fails and the workflow is not installed on actual `dev` because PR #4 remains unmerged.
-
+The Owner selected Agent-governed PRs: current CI plus actual CodeBuddy review, followed by an Agent-initiated normal merge. Independent Gatekeeper, fixed Reviewer and CNB Auto Merge prerequisites are canceled; zero-status platform risk remains disclosed. PR #96 merged at 400290acadca8a0417d41792f17fedb842993d1f. See [current decision and native evidence](CUTOVER-READINESS.md). The checkpoints below retain their historical SHA scope.
 
 ## 2026-10-30 isolated reviewer probe
 
