@@ -13,11 +13,12 @@
     "compose": "node scripts/compose.mjs",
     "artifact-check": "node scripts/artifact-check.mjs",
     "check": "pnpm --filter @alnilam/web check",
-    "test": "node --test scripts/tests/*.test.mjs",
+    "test": "node --test scripts/tests/*.test.mjs scripts/ci/*.test.mjs",
     "browser": "playwright test",
     "verify": "pnpm test && pnpm check && pnpm build"
   },
   "devDependencies": {
-    "@playwright/test": "1.64.1"
+    "@playwright/test": "1.64.1",
+    "@lhci/cli": "0.15.1"
   }
 }
