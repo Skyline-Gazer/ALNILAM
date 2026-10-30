@@ -4,6 +4,7 @@ import {EventEmitter} from 'node:events';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import {createHash} from 'node:crypto';
 import {trackChild, stopChildren, assertSuccessfulResponses, validateLighthouseReports, validateLighthouseRegression, validateBrowserNegative} from './cnb-evidence.mjs';
 
 test('teardown handles an already-signalled child without waiting for a past event', async () => {
@@ -45,11 +46,23 @@ test('browser negative rejects stale, signalled and unrelated failures', () => {
     const started = Date.now();
     for (const file of ['shot.png', 'trace.zip']) fs.writeFileSync(path.join(root, file), 'fixture');
     const report = {stats: {startTime: new Date(started).toISOString(), unexpected: 1, expected: 0}, suites: [{specs: [{title: 'intentional browser failure probe', tests: [{results: [{status: 'failed', errors: [{message: 'CNB_INTENTIONAL_BROWSER_FAILURE'}], attachments: ['shot.png', 'trace.zip'].map(file => ({path: path.join(root, file)}))}]}]}]}]};
-    assert.deepEqual(validateBrowserNegative({status: 1, signal: null}, report, started, root), {screenshotBytes: 7, traceBytes: 7});
+    const hash = createHash('sha256').update('fixture').digest('hex');
+    assert.deepEqual(validateBrowserNegative({status: 1, signal: null}, report, started, root), {
+      screenshotBytes: 7,
+      traceBytes: 7,
+      attachments: {
+        screenshot: {path: 'shot.png', sha256: hash},
+        trace: {path: 'trace.zip', sha256: hash},
+      },
+    });
     assert.throws(() => validateBrowserNegative({status: 1}, {...report, stats: {...report.stats, expected: 1}}, started, root));
     assert.throws(() => validateBrowserNegative({status: null, signal: 'SIGTERM'}, report, started, root));
     assert.throws(() => validateBrowserNegative({status: 1}, report, started + 1, root));
     const unrelated = structuredClone(report);unrelated.suites[0].specs[0].tests[0].results[0].errors[0].message = 'Server unavailable';
     assert.throws(() => validateBrowserNegative({status: 1}, unrelated, started, root));
+    const old = new Date(started - 1000);
+    fs.utimesSync(path.join(root, 'shot.png'), old, old);
+    fs.utimesSync(path.join(root, 'trace.zip'), old, old);
+    assert.throws(() => validateBrowserNegative({status: 1}, report, started, root), /stale/);
   } finally {fs.rmSync(root, {recursive: true, force: true});}
 });

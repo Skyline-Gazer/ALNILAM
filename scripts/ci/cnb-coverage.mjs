@@ -6,7 +6,15 @@ export const MIN_SOURCE_COVERAGE = 77;
 const sourceKey = source => {
   const normalized = source?.replaceAll('\\', '/');
   if (!normalized?.endsWith('.mjs')) return null;
-  return normalized.match(/(?:^|\/)(packages\/core\/src\/.*\.mjs|apps\/web\/src\/lib\/.*\.mjs|scripts\/(?:site-contract|upgrade-check|compose)\.mjs)$/)?.[1] || null;
+  const candidates = [
+    /(?:^|\/)(packages\/core\/src\/.*\.mjs)$/,
+    /(?:^|\/)(apps\/web\/src\/lib\/.*\.mjs)$/,
+    /(?:^|\/)(scripts\/(?:site-contract|upgrade-check|compose)\.mjs)$/,
+  ].flatMap(pattern => {
+    const match = pattern.exec(normalized);
+    return match ? [{index: match.index, source: match[1]}] : [];
+  });
+  return candidates.sort((left, right) => left.index - right.index)[0]?.source || null;
 };
 const sourceRecords = text => {
   const files = new Map();

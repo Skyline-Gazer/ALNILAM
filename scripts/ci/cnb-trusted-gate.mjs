@@ -203,7 +203,8 @@ export function validateEvidence(root, identity) {
   const browserStats = browserReport.stats;
   if (browser.sourceSha !== identity.source || browser.targetSha !== identity.target ||
       browser.mergeSha !== identity.merge || browser.testedSha !== identity.merge ||
-      browser.exitCode !== 0 || browser.lingeringPorts?.length ||
+      browser.status !== 'PASS' || !Array.isArray(browser.diagnostics) || browser.diagnostics.length ||
+      browser.reportPresent !== true || browser.exitCode !== 0 || browser.lingeringPorts?.length ||
       !Number.isSafeInteger(browserStats?.expected) || browserStats.expected < 1 ||
       browserStats.unexpected !== 0 || !Number.isSafeInteger(browserStats.skipped) || browserStats.skipped > 1 ||
       browser.testCount !== browserStats.expected ||
@@ -217,9 +218,36 @@ export function validateEvidence(root, identity) {
       throw Error(`Lighthouse ${formFactor} receipt is missing, stale, or failed`);
     }
   }
+  const negativeReportPath = path.join(artifacts, 'cnb-browser', 'negative.json');
+  const negativeReport = readJson(negativeReportPath);
+  const negativeReportBytes = fs.readFileSync(negativeReportPath);
   const negative = readJson(path.join(artifacts, 'cnb-browser', 'negative-receipt.json'));
   if (negative.status !== 'EXPECTED_RED_VERIFIED' || negative.exitCode <= 0 ||
-      !negative.screenshotBytes || !negative.traceBytes) throw Error('Browser negative evidence is incomplete');
+      !Array.isArray(negative.diagnostics) || negative.diagnostics.length || negative.reportPresent !== true ||
+      !/^[0-9a-f-]{36}$/.test(negative.runId || '') ||
+      negative.outputRoot !== `artifacts/cnb-browser/negative-artifacts/${negative.runId}` ||
+      negative.reportSha256 !== createHash('sha256').update(negativeReportBytes).digest('hex') ||
+      negativeReport?.stats?.unexpected !== 1 || negativeReport.stats.expected !== 0 ||
+      !negative.screenshotBytes || !negative.traceBytes ||
+      !negative.attachments?.screenshot?.sha256 || !negative.attachments?.trace?.sha256) {
+    throw Error('Browser negative evidence is incomplete');
+  }
+  const negativeRoot = path.resolve(root, negative.outputRoot);
+  for (const [name, expectedBytes] of [['screenshot', negative.screenshotBytes], ['trace', negative.traceBytes]]) {
+    const attachment = negative.attachments[name];
+    const filename = path.resolve(negativeRoot, attachment.path || '');
+    if (!filename.startsWith(negativeRoot + path.sep)) throw Error('Browser negative attachment escapes its run directory');
+    let bytes;
+    try {
+      if (!fs.lstatSync(filename).isFile()) throw Error('not a file');
+      bytes = fs.readFileSync(filename);
+    } catch (error) {
+      throw new Error(`Browser negative ${name} is missing`, {cause: error});
+    }
+    if (bytes.length !== expectedBytes || createHash('sha256').update(bytes).digest('hex') !== attachment.sha256) {
+      throw Error(`Browser negative ${name} does not match its receipt`);
+    }
+  }
   const coverage = readJson(path.join(artifacts, 'coverage', 'source-summary.json'));
   if (!Number.isFinite(coverage.percent) || coverage.minimum !== MIN_SOURCE_COVERAGE ||
       coverage.percent < coverage.minimum || coverage.files < 1 || coverage.lines < 1) {

@@ -1,5 +1,28 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {createHash} from 'node:crypto';
+
+export function readPlaywrightReport(filename) {
+  const label = path.relative(process.cwd(), filename) || filename;
+  let stat;
+  try {
+    stat = fs.lstatSync(filename);
+  } catch (error) {
+    if (error?.code === 'ENOENT') throw new Error(`REPORT_MISSING: Playwright JSON report was not written: ${label}`, {cause: error});
+    throw new Error(`REPORT_INVALID: Playwright JSON report could not be inspected: ${label}`, {cause: error});
+  }
+  if (!stat.isFile()) throw Error(`REPORT_INVALID: Playwright JSON report is not a regular file: ${label}`);
+  try {
+    return JSON.parse(fs.readFileSync(filename, 'utf8'));
+  } catch (error) {
+    throw new Error(`REPORT_INVALID: Playwright JSON report is not valid JSON: ${label}`, {cause: error});
+  }
+}
+
+export function evidenceDiagnostic(error, fallback = 'EVIDENCE_INVALID') {
+  const message = error?.message || String(error);
+  return /^[A-Z_]+:/.test(message) ? message : `${fallback}: ${message}`;
+}
 
 export function trackChild(child) {
   const ended = child.exitCode !== null || child.signalCode !== null ? Promise.resolve() : new Promise(resolve => {child.once('exit', resolve);child.once('error', resolve);});
@@ -42,12 +65,21 @@ export function validateBrowserNegative(result, report, started, root) {
   const spec = specs.find(item => item.title === 'intentional browser failure probe');
   const failed = spec?.tests?.flatMap(test => test.results || []).find(test => test.status === 'failed' && test.errors?.some(error => error.message?.includes('CNB_INTENTIONAL_BROWSER_FAILURE')));
   if (!failed) throw Error('Expected browser assertion did not fail');
-  const evidence = {};
+  const evidence = {attachments: {}};
   for (const extension of ['.png', '.zip']) {
     const attachment = failed.attachments?.find(item => item.path?.endsWith(extension));
     const filename = attachment?.path && path.resolve(attachment.path);
-    if (!filename || !filename.startsWith(path.resolve(root) + path.sep) || !fs.lstatSync(filename).isFile() || !fs.statSync(filename).size) throw Error('Fresh browser screenshot/trace is missing');
-    evidence[extension === '.png' ? 'screenshotBytes' : 'traceBytes'] = fs.statSync(filename).size;
+    if (!filename || !filename.startsWith(path.resolve(root) + path.sep)) throw Error('Fresh browser screenshot/trace is outside the run-specific evidence directory');
+    let stat;
+    try { stat = fs.lstatSync(filename); } catch { throw Error('Fresh browser screenshot/trace is missing'); }
+    if (!stat.isFile() || !stat.size || stat.mtimeMs < started) throw Error('Fresh browser screenshot/trace is missing or stale');
+    const bytes = fs.readFileSync(filename);
+    const name = extension === '.png' ? 'screenshot' : 'trace';
+    evidence[`${name}Bytes`] = stat.size;
+    evidence.attachments[name] = {
+      path: path.relative(path.resolve(root), filename).split(path.sep).join('/'),
+      sha256: createHash('sha256').update(bytes).digest('hex'),
+    };
   }
   return evidence;
 }

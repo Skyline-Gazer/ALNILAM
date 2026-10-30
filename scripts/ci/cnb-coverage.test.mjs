@@ -36,3 +36,22 @@ test('coverage merges duplicate harness records by logical source and line', () 
   assert.match(normalized, /^DA:3,1$/m);
   assert.equal([...normalized.matchAll(/^SF:/gm)].length, 1);
 });
+
+test('coverage canonicalizes POSIX, Windows, relative and nested harness paths by the earliest source root', () => {
+  const input = [
+    report('./packages/core/src/a.mjs'),
+    report('C:\\checkout\\apps\\web\\src\\lib\\b.mjs'),
+    report('/tmp/trusted-harness/scripts/compose.mjs'),
+    report('/tmp/checkout/apps/web/src/lib/public/packages/core/src/c.mjs'),
+  ].join('');
+  assert.deepEqual(
+    [...nodeSourceLCOV(input).matchAll(/^SF:(.+)$/gm)].map(match => match[1]),
+    [
+      'apps/web/src/lib/b.mjs',
+      'apps/web/src/lib/public/packages/core/src/c.mjs',
+      'packages/core/src/a.mjs',
+      'scripts/compose.mjs',
+    ],
+  );
+  assert.equal(sourceCoverage(input).files, 4);
+});

@@ -172,12 +172,28 @@ test('verified evidence requires exact SHA receipts, browser negative evidence, 
     const browserReport = {stats: {expected: 2, unexpected: 0, skipped: 1}};
     put('cnb-browser/results.json', browserReport);
     const reportSha256 = createHash('sha256').update(JSON.stringify(browserReport)).digest('hex');
-    put('cnb-browser/receipt.json', {sourceSha: source, targetSha: target, mergeSha: merge, testedSha: merge, exitCode: 0,
-      lingeringPorts: [], testCount: 2, reportSha256});
+    put('cnb-browser/receipt.json', {sourceSha: source, targetSha: target, mergeSha: merge, testedSha: merge,
+      status: 'PASS', diagnostics: [], reportPresent: true, exitCode: 0, lingeringPorts: [], testCount: 2, reportSha256});
     for (const formFactor of ['mobile', 'desktop']) put(`lighthouse/${formFactor}/receipt.json`, {
       coreSha: merge, formFactor, normalStatus: 'BASELINE_RECORDED', regressionStatus: 'EXPECTED_RED_VERIFIED',
     });
-    put('cnb-browser/negative-receipt.json', {status: 'EXPECTED_RED_VERIFIED', exitCode: 1, screenshotBytes: 1, traceBytes: 1});
+    const runId = '11111111-1111-4111-8111-111111111111';
+    const outputRoot = `artifacts/cnb-browser/negative-artifacts/${runId}`;
+    const negativeReport = {stats: {unexpected: 1, expected: 0}};
+    put('cnb-browser/negative.json', negativeReport);
+    fs.mkdirSync(path.join(root, outputRoot), {recursive: true});
+    const screenshot = Buffer.from('png'), trace = Buffer.from('zip');
+    fs.writeFileSync(path.join(root, outputRoot, 'shot.png'), screenshot);
+    fs.writeFileSync(path.join(root, outputRoot, 'trace.zip'), trace);
+    put('cnb-browser/negative-receipt.json', {
+      status: 'EXPECTED_RED_VERIFIED', diagnostics: [], reportPresent: true, exitCode: 1, runId, outputRoot,
+      reportSha256: createHash('sha256').update(JSON.stringify(negativeReport)).digest('hex'),
+      screenshotBytes: screenshot.length, traceBytes: trace.length,
+      attachments: {
+        screenshot: {path: 'shot.png', sha256: createHash('sha256').update(screenshot).digest('hex')},
+        trace: {path: 'trace.zip', sha256: createHash('sha256').update(trace).digest('hex')},
+      },
+    });
     put('coverage/source-summary.json', {percent: 77, minimum: 77, files: 1, lines: 1});
     assert.equal(validateEvidence(root, {source, target, merge}).coverage.percent, 77);
     fs.writeFileSync(path.join(root, 'artifacts/coverage/source-summary.json'), '{');
@@ -186,8 +202,11 @@ test('verified evidence requires exact SHA receipts, browser negative evidence, 
     put('coverage/source-summary.json', {percent: 77, minimum: 76, files: 1, lines: 1});
     assert.throws(() => validateEvidence(root, {source, target, merge}), /coverage receipt/);
     put('coverage/source-summary.json', {percent: 77, minimum: 77, files: 1, lines: 1});
-    put('cnb-browser/receipt.json', {sourceSha: source, targetSha: target, mergeSha: merge, testedSha: source, exitCode: 0,
-      lingeringPorts: [], testCount: 2, reportSha256});
+    fs.writeFileSync(path.join(root, outputRoot, 'shot.png'), 'tampered');
+    assert.throws(() => validateEvidence(root, {source, target, merge}), /negative screenshot/);
+    fs.writeFileSync(path.join(root, outputRoot, 'shot.png'), screenshot);
+    put('cnb-browser/receipt.json', {sourceSha: source, targetSha: target, mergeSha: merge, testedSha: source,
+      status: 'PASS', diagnostics: [], reportPresent: true, exitCode: 0, lingeringPorts: [], testCount: 2, reportSha256});
     assert.throws(() => validateEvidence(root, {source, target, merge}), /trusted Playwright report/);
   } finally { fs.rmSync(root, {recursive: true, force: true}); }
 });
