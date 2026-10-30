@@ -2,14 +2,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {spawnSync, execFileSync} from 'node:child_process';
-import {fileURLToPath} from 'node:url';
-import {validateSiteRoot} from '../site-contract.mjs';
+import {fileURLToPath, pathToFileURL} from 'node:url';
 import {trustedAstroCheckArgs, trustedTestFiles} from './cnb-trusted-gate.mjs';
 
 const trustedRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const trustedSourceRoot = process.env.CNB_TRUSTED_SOURCE_ROOT;
 const trustedTestRoot = process.env.CNB_TRUSTED_TEST_ROOT;
 if (!trustedSourceRoot || !trustedTestRoot) throw Error('Trusted source and test roots are required');
+const {validateSiteRoot} = await import(pathToFileURL(path.join(process.cwd(), 'scripts/site-contract.mjs')).href);
 const tests = trustedTestFiles(trustedTestRoot);
 fs.mkdirSync('artifacts/coverage', {recursive: true});
 fs.mkdirSync('.tmp/cnb', {recursive: true});
@@ -48,6 +48,6 @@ try {
 } catch (error) { console.error(error.message); process.exitCode = 1; }
 finally {
   fs.writeFileSync('artifacts/build-receipt.json', JSON.stringify({coreSha: execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim(),
-    siteDigestBefore: before, siteDigestAfter: validateSiteRoot(site).digest, fixtureContract: 'legacy-v1-TOML; no future compatibility promise', node: process.version, steps}, null, 2) + '\n');
+    siteDigestBefore: before, siteDigestAfter: validateSiteRoot(site).digest, fixtureContract: 'schema-v2-YAML-only', node: process.version, steps}, null, 2) + '\n');
   fs.rmSync(site, {recursive: true, force: true});
 }
