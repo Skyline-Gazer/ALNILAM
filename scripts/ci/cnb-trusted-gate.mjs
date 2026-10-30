@@ -268,8 +268,18 @@ function copyTree(sourceRoot, destinationRoot) {
   }
 }
 
+function copyReadonlyFile(source, destination) {
+  const stat = fs.lstatSync(source);
+  if (!stat.isFile() || stat.isSymbolicLink()) throw Error(`Trusted test input is not a regular file: ${source}`);
+  fs.mkdirSync(path.dirname(destination), {recursive: true, mode: 0o755});
+  fs.copyFileSync(source, destination, fs.constants.COPYFILE_EXCL);
+  fs.chmodSync(destination, 0o444);
+}
+
 function prepareTrustedTests(harnessRoot, candidateRoot) {
   // Keep the test and browser control plane outside the writable candidate tree.
+  // Candidate modules used for coverage remain in an immutable test view and are
+  // executed only inside the unprivileged runCandidate child.
   const testRoot = path.join(harnessRoot, 'trusted-tests');
   fs.mkdirSync(path.join(testRoot, 'scripts'), {recursive: true});
   copyTree(path.join(ROOT, 'scripts/tests'), path.join(testRoot, 'scripts/tests'));
@@ -280,14 +290,10 @@ function prepareTrustedTests(harnessRoot, candidateRoot) {
     const source = path.join(candidateRoot, directory);
     if (fs.existsSync(source)) fs.symlinkSync(source, path.join(testRoot, directory), 'dir');
   }
-  fs.symlinkSync(path.join(candidateRoot, 'scripts/site-contract.mjs'), path.join(testRoot, 'scripts/site-contract.mjs'));
-  fs.symlinkSync(path.join(candidateRoot, 'scripts/p1'), path.join(testRoot, 'scripts/p1'), 'dir');
+  copyReadonlyFile(path.join(candidateRoot, 'scripts/site-contract.mjs'), path.join(testRoot, 'scripts/site-contract.mjs'));
+  copyTree(path.join(candidateRoot, 'scripts/p1'), path.join(testRoot, 'scripts/p1'));
   const upgradeCheck = path.join(candidateRoot, 'scripts/upgrade-check.mjs');
-  const upgradeCheckStat = fs.lstatSync(upgradeCheck);
-  if (!upgradeCheckStat.isFile() || upgradeCheckStat.isSymbolicLink()) {
-    throw Error('Candidate upgrade-check input is not a regular file');
-  }
-  fs.symlinkSync(upgradeCheck, path.join(testRoot, 'scripts/upgrade-check.mjs'), 'file');
+  copyReadonlyFile(upgradeCheck, path.join(testRoot, 'scripts/upgrade-check.mjs'));
   return testRoot;
 }
 

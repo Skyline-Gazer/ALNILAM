@@ -1,5 +1,6 @@
 // Run target-owned browser tests against candidate output without candidate scripts.
 import fs from 'node:fs';
+import net from 'node:net';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {spawnSync, execFileSync} from 'node:child_process';
@@ -17,8 +18,21 @@ const result = spawnSync(process.execPath, [cli, 'test', '--config', path.join(t
     CNB_TRUSTED_SOURCE_ROOT: trustedSourceRoot, PLAYWRIGHT_JSON_OUTPUT_FILE: reportPath},
 });
 const lingering = [];
+const isListening = port => new Promise(resolve => {
+  const socket = net.createConnection({host: '127.0.0.1', port});
+  let settled = false;
+  const finish = value => {
+    if (settled) return;
+    settled = true;
+    socket.destroy();
+    resolve(value);
+  };
+  socket.once('connect', () => finish(true));
+  socket.once('error', () => finish(false));
+  socket.setTimeout(1000, () => finish(false));
+});
 for (const port of [4323, 4324]) {
-  try { await fetch(`http://127.0.0.1:${port}/`, {signal: AbortSignal.timeout(1000)}); lingering.push(port); } catch {}
+  if (await isListening(port)) lingering.push(port);
 }
 const report = result.status === 0 ? JSON.parse(fs.readFileSync(reportPath, 'utf8')) : null;
 const stats = report?.stats;
