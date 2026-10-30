@@ -16,7 +16,7 @@ fs.mkdirSync('.tmp/cnb', {recursive: true});
 const site = fs.mkdtempSync(path.join(os.tmpdir(), 'alnilam-cnb-site-'));
 fs.cpSync('sites/demo', site, {recursive: true});
 const before = validateSiteRoot(site).digest;
-const env = {...process.env, TMPDIR: path.resolve('.tmp/cnb'), SOURCE_DATE_EPOCH: '1700000000'};
+const env = {...process.env, TMPDIR: path.resolve('.tmp/cnb'), SOURCE_DATE_EPOCH: '1700000000', ALNILAM_TOOLCHAIN_ROOT: trustedSourceRoot};
 const steps = [];
 function run(name, command, args, extra = {}, output) {
   const started = Date.now();
