@@ -12,6 +12,8 @@ Docs-only PR #106 merged at `d1d39a889531a1642ce5b8360464eca3269aaca9` with same
 
 Historical pre-PR readback (2026-10-28): `dev` was `489e58096ca416124e9a74e7d11891c5cafc3188`, with docs-only PR #109 checks [40649905042](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40649905042) / [40649905077](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40649905077) passing; `main` was `07fac43cba0c3d303c930c098b6e2124b2c79e4a`. This snapshot predates docs-only PR #110, P1 Owner acceptance, and PR #104's merge. The current P2/T01 baseline and handoff are in [#51 comment 6463406977](https://github.com/Skyline-Gazer/ALNILAM/issues/51#issuecomment-6463406977).
 
+CNB Gatekeeper remains blocked on independently trusted identity and approval invalidation; GitHub Primary continues. PR #96 now contains the trusted pnpm module-resolution repair at `911fe4327ecb81179df2ee5bccabd47f2cb5b48e`. Mirror work is limited to existing verify compatibility (PR #112) and a local candidate preparer (PR #113); full platform acceptance is outstanding. See [current cutover evidence](cnb/CUTOVER-READINESS.md).
+
 ## P0 · Bootstrap & Core/Site
 - Initial Monorepo, ADS v0.3 submodule, docs, Astro + Svelte + Tailwind baseline.
 - External Site composition, config schema, non-mutation checks, separately reproducible Core/Site inputs.

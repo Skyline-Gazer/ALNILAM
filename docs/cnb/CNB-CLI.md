@@ -1,6 +1,6 @@
 # CNB CLI and native E2E
 
-> Current update (2026-10-30): PR #96 is at `94b11375dcf01aed816b10d83205e0646c18a438`; native runs described below tested earlier SHAs. No independent Gatekeeper identity or current-head CNB acceptance is claimed.
+> Current update (2026-10-30): PR #96 is at `911fe4327ecb81179df2ee5bccabd47f2cb5b48e`; native runs described below tested earlier SHAs. No independent Gatekeeper identity or current-head CNB acceptance is claimed.
 
 Readback date: 2026-10-29. This is an evidence record, not permission to switch code authority or write GitHub release refs.
 
