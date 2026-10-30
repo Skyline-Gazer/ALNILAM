@@ -36,6 +36,8 @@ async function assertListGeometry(page: Page, width: number) {
 }
 
 test("root and nested-base pages navigate, theme, and search", async ({ browser }) => {
+  // The combined root/nested case exceeded the shared 90s limit on the 2-CPU CNB runner.
+  test.setTimeout(180_000);
   const results: Record<string, unknown>[] = [];
   for (const [name, origin, width, height] of [
     ["root", ROOT, 1440, 1000],
@@ -101,8 +103,8 @@ test("root and nested-base pages navigate, theme, and search", async ({ browser 
       results.push({ name, errors, status: "FAIL", error: String(error) });
       throw error;
     } finally {
-      expect(errors, `${name} page errors`).toEqual([]);
       await context.close();
+      expect(errors, `${name} page errors`).toEqual([]);
     }
   }
   await test.info().attach("browser-results.json", {
@@ -129,8 +131,8 @@ test("mobile cards place the cover before content", async ({ browser }) => {
     await page.getByRole("link", { name: "← 返回全部文章" }).click();
     await expect(page.locator(".post-list")).toBeVisible();
   } finally {
-    expect(errors, "mobile page errors").toEqual([]);
     await context.close();
+    expect(errors, "mobile page errors").toEqual([]);
   }
 });
 

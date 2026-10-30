@@ -1,0 +1,113 @@
+# Public pilot only. Never publish, mirror, tag, or deploy from CNB.
+# "$" covers dev and disposable acceptance branches without modifying main.
+$:
+  pull_request:
+    - name: alnilam-ai-review-advisory
+      breakIfModify: true
+      retry: 0
+      runner:
+        tags: cnb:arch:amd64
+        cpus: 2
+      docker:
+        image: node:24-bookworm@sha256:e2007d1f4e652444f88d9bb196256d2d035269015e3d27a0d47c1d0cb5192a98
+      git:
+        submodules: false
+      stages:
+        - name: Prepare isolated review output
+          script: |
+            set -eu
+            case "$CNB_BUILD_ID" in ''|*[!a-zA-Z0-9-]*) exit 1;; esac
+            test ! -L .tmp
+            mkdir -p .tmp
+            mkdir ".tmp/cnb-review-${CNB_BUILD_ID}"
+        - name: Official Code Review (advisory comment only)
+          image: cnbcool/code-review:v1.22.2@sha256:d0af9a2e683488e2424d42d3e0bffe478c87b37d44903d4f5b8b2288480704eb
+          settings:
+            output: .tmp/cnb-review-${CNB_BUILD_ID}/review.json
+            comment: true
+            review_event: comment
+            max_comments: 10
+            min_confidence: medium
+            exclude_categories: style,nit
+            rules: |
+              Return only the required structured review JSON with every field; do not return Markdown prose.
+              Keep inline comment ranges at or below 20 lines; anchor each finding to the smallest relevant range.
+            # The 31-file candidate exhausted 40 turns; keep the retry finite under the 10-minute timeout.
+            max_turns: 80
+            timeout_minutes: 10
+        - name: Record advisory Review JSON and native identity
+          script: |
+            set -eu
+            test -s ".tmp/cnb-review-${CNB_BUILD_ID}/review.json"
+            printf 'build=%s event=%s source=%s target=%s merge=%s\n' \
+              "$CNB_BUILD_ID" "$CNB_EVENT" "$CNB_PULL_REQUEST_SHA" \
+              "$CNB_PULL_REQUEST_TARGET_SHA" "$CNB_PULL_REQUEST_MERGE_SHA"
+            cat ".tmp/cnb-review-${CNB_BUILD_ID}/review.json"
+
+  pull_request.target:
+    - name: alnilam-trusted-consumer
+      breakIfModify: true
+      retry: 0
+      runner:
+        tags: cnb:arch:amd64
+        cpus: 2
+      docker:
+        image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
+      git:
+        submodules: false
+      stages:
+        - name: Install pinned pnpm without CNB credentials
+          script: env -u CNB_TOKEN -u TWINE_PASSWORD npm install --global --ignore-scripts pnpm@10.19.0
+        - name: Verify native PR identity and test the exact merge commit
+          timeout: 40m
+          script: node scripts/ci/cnb-trusted-gate.mjs
+        - name: Enforce Node source coverage
+          type: testing:coverage
+          options:
+            pattern: artifacts/coverage/source.lcov.info
+            allowExts: .mjs
+            lines: 77
+            breakIfNoCoverage: true
+        - name: New High and Critical vulnerability gate
+          image: cnbcool/sca-vulnerability@sha256:422900af42cc94bb8bf1295210647b9ef1676a27e6ab3c388fb8e0e66f31a05a
+          settings:
+            scanMode: diff
+            failOnSeverity: high
+            publish: true
+        - name: New High license risk gate
+          image: cnbcool/sca-license@sha256:06661e7f220de8064670b5dfe3b995a86cfa7a6778d17db7731a5b66690afa4a
+          settings:
+            scanMode: diff
+            failOnSeverity: high
+            publish: true
+        - name: Retained SBOM delta
+          image: cnbcool/sca-sbom@sha256:b1c8ef55ec9d800aded0aaad94e84e58594ea6dd7c50217ffc27dc7cfe58a8ca
+          settings:
+            scanMode: diff
+            format: cyclonedx-json
+            publish: true
+        - name: Upload source-bound consumer evidence
+          image: cnbcool/attachments:v1.1.5@sha256:3112e2ee5c562dc508ed2d51706ecccb1770781a105c488cc7620b53d6bf5442
+          settings:
+            attachments:
+              - artifacts/cnb-evidence-${CNB_BUILD_ID}.tgz
+            ttl: 14
+          exports:
+            FILES: CNB_EVIDENCE_FILES
+        - name: Require evidence upload receipt
+          script: test "$CNB_EVIDENCE_FILES" = "artifacts/cnb-evidence-${CNB_BUILD_ID}.tgz"
+        - name: Native security summary (scanner gates remain authoritative)
+          image: cnbcool/cnb-sechook@sha256:b31a19d033a70c327db3f9484d5ac8944e3e2c9e001afe18e5c8fc71f412ca0e
+          settings:
+            scanning_disabled: false
+            sensitive_disabled: false
+            max_display_authors: 5
+      failStages:
+        - name: Preserve available test diagnostics
+          script: |
+            find artifacts -type f -name '*.log' -exec sh -c '
+              for file do
+                echo "----- $file -----"
+                tail -n 80 "$file"
+              done
+            ' sh {} +

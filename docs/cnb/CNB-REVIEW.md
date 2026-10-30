@@ -1,6 +1,8 @@
 # CNB Review and NPC acceptance
 
-Readback: 2026-10-29. **The latest GitHub candidate is `7f080e02cc56f49d066cc4036a6d4c914f4b367a`.** It passed the native target-owned trusted gate on an isolated CNB PR; an adversarial no-op-script PR failed closed. This does not make AI Review or NPC a required gate, and it does not resolve the platform's zero-status merge gap. Formal merge to `dev` still requires explicit Owner authorization.
+> Current update (2026-10-30): PR #96 is at `988ed0405085401bba6160366d6eaf9877dfac09`; native runs described below tested earlier SHAs. No independent Gatekeeper identity or current-head CNB acceptance is claimed.
+
+Readback: 2026-10-29. **The GitHub candidate at that readback was `7f080e02cc56f49d066cc4036a6d4c914f4b367a`.** It passed the native target-owned trusted gate on an isolated CNB PR; an adversarial no-op-script PR failed closed. This does not make AI Review or NPC a required gate, and it does not resolve the platform's zero-status merge gap. Formal merge to `dev` still requires explicit Owner authorization.
 
 ## Latest native E2E and review boundary
 
@@ -53,9 +55,9 @@ A successful scratch run does not establish that the workflow or its required ch
 | Trusted target pipeline on scratch candidate `cba3353` | **PASS (historical)** — complete source-bound run and downloaded archive verified |
 | Trusted target pipeline on historical head `98511ad` | **PASS (historical scratch only)** — build `cnb-iin-1k61q4mp4`; source/target/merge/tested identity and archive verified; PR #5 merged only to a disposable target |
 | Prior hardened head `4e37bdc` local browser/no-op evidence | **PASS (local only)** — 18 browser passes/1 intentional skip, expected-red negative receipt, one-off local no-op fixture failed closed; receipt ignored/local only |
-| Current PR #96 head `7f080e0` GitHub checks | **PASS (6/6)** — latest head confirmed with `gh pr checks 96` |
-| Current PR #96 head `7f080e0` native positive PR | **PASS (scratch only)** — `cnb-jhf-1k6423aiu`; all 14 stages and evidence archive verified |
-| Current head no-op-script adversarial PR | **EXPECTED FAIL-CLOSED** — `cnb-phj-1k642341e`; injected invalid Astro failed the trusted merge/test stage; later gates skipped |
+| Historical PR #96 head `7f080e0` GitHub checks | **PASS (6/6)** — that head was confirmed with `gh pr checks 96` |
+| Historical PR #96 head `7f080e0` native positive PR | **PASS (scratch only)** — `cnb-jhf-1k6423aiu`; all 14 stages and evidence archive verified |
+| Historical `7f080e0` no-op-script adversarial PR | **EXPECTED FAIL-CLOSED** — `cnb-phj-1k642341e`; injected invalid Astro failed the trusted merge/test stage; later gates skipped |
 | Source-side test fixture pull_request | **FAIL IN PREPARE** — private `.ads` clone lacked GitHub credentials; this did not prevent the target-owned test events |
 | Trusted gate installed on CNB `dev` | **NO** — PR #4 remains open/unmerged |
 | Scratch missing check blocks merge | **FAIL** — zero statuses were treated as unblocked/mergeable |

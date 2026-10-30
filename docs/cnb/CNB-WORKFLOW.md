@@ -1,8 +1,17 @@
 # CNB developer workflow acceptance
 
-Readback: 2026-10-29. **CNB is not yet the accepted development authority.** GitHub PR #96 now points to `7f080e02cc56f49d066cc4036a6d4c914f4b367a`; its current GitHub checks pass 6/6, and its exact candidate SHA has now passed native positive `pull_request.target` E2E on scratch. The negative no-op-script test failed closed as designed. CNB's zero-status rule still permits merge, so strict Required Checks fails and the workflow is not installed on actual `dev` because PR #4 remains unmerged.
+> Current update (2026-10-30): GitHub PR #96 has advanced to `988ed0405085401bba6160366d6eaf9877dfac09`. The 2026-10-29 native evidence below applies to the earlier `7f080e02cc56f49d066cc4036a6d4c914f4b367a` target. Current-head CNB native validation, a separately trusted Gatekeeper identity, stale-approval rejection, and automatic merge are unverified.
 
-## Latest final acceptance evidence
+Historical readback: 2026-10-29. **CNB is not yet the accepted development authority.** GitHub PR #96 then pointed to `7f080e02cc56f49d066cc4036a6d4c914f4b367a`; its GitHub checks passed 6/6, and that candidate SHA passed native positive `pull_request.target` E2E on scratch. The negative no-op-script test failed closed as designed. CNB's zero-status rule still permits merge, so strict Required Checks fails and the workflow is not installed on actual `dev` because PR #4 remains unmerged.
+
+
+## 2026-10-30 isolated reviewer probe
+
+The UI exposes “require necessary reviewers”, although it does not select a fixed identity in the branch-rule form and the branch-protection API response does not return that option. An isolated rule on `codex/gatekeeper-probe-20261030-a` enabled that option, required one review, status checks and auto-merge-only, without owner/admin exceptions. [PR #13](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/13) had zero statuses and reported `waiting_review`, but also had a merge conflict. Its author was a human account. The author's `approve` request returned HTTP 403, error 2003024, with a message about self-owned NPC approval; the review list remained empty. This proves only that this specific request was rejected, not that named reviewers are immutable or that stale approvals and otherwise-mergeable zero-status PRs are blocked. The PR was closed without merge and both scratch branches and the rule were deleted. Actual protected rules were unchanged.
+
+The new target-toolchain fix is being tested on [PR #14](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/14): target `988ed0405085401bba6160366d6eaf9877dfac09`, source `253a3bc70454fccb7d7d64d301aca590aed1c1ac`, tested merge `c1814c5df7b145904c5745b3782a37e73feddb32`, [target run](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-fo0-1k65812fr). A pending run is not acceptance.
+
+## Historical 2026-10-29 acceptance evidence
 
 - Credential preflight: macOS `osxkeychain` supplied the existing `cnb` HTTPS credential for `cnb.cool/KoolingMachine/ALNILAM`; a sanitized read confirmed presence without printing it. `git ls-remote` and isolated pushes succeeded using `https://cnb.cool/KoolingMachine/ALNILAM` without `.git`. No global helper, host setting, protected ref, or token file changed.
 - Positive [native build `cnb-jhf-1k6423aiu`](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-jhf-1k6423aiu) on PR #11 `pull_request.target`: source `5f3f03b09453c5a892ffc27f99c4b70d7c8444d3`; target `7f080e02cc56f49d066cc4036a6d4c914f4b367a`; merge/tested `f39faf197ccbd9078a60192c0de11bc9cfdc3b37`. The target-owned pipeline ran, all 14 stages passed, and its downloaded [evidence archive](https://cnb.cool/KoolingMachine/ALNILAM/-/commit/7f080e02cc56f49d066cc4036a6d4c914f4b367a?tab=attachments) matched CNB SHA-256 metadata: `e8d29826daca486bd1809f7d96cc463527d1959956c6196dfbd9ed7599072b9a` (29,184,087 bytes; 187 safe entries).
@@ -33,7 +42,7 @@ CNB `main` protection and GitHub `main` protection were not changed. GitHub rema
 
 ## Native disposable acceptance
 
-- Candidate CNB PR [#4](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/4) remains open/unmerged at `98511ad526c0d77ede979e88ebe5b9c4f584a739`. GitHub PR [#96](https://github.com/Skyline-Gazer/ALNILAM/pull/96) is Draft at `7f080e02cc56f49d066cc4036a6d4c914f4b367a`. Historical advisory Review and target runs on `98511ad` remain historical; current-head native evidence is documented above.
+- Candidate CNB PR [#4](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/4) remains open/unmerged at `98511ad526c0d77ede979e88ebe5b9c4f584a739`. GitHub PR [#96](https://github.com/Skyline-Gazer/ALNILAM/pull/96) was Draft at `7f080e02cc56f49d066cc4036a6d4c914f4b367a` during these runs. The current head is recorded at the top of this document.
 - Positive target run [`cnb-jhf-1k6423aiu`](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-jhf-1k6423aiu) proves `pull_request.target` actually fired and ran the target-owned trusted gate. Source/target/merge/tested SHAs are `5f3f03b09453c5a892ffc27f99c4b70d7c8444d3` / `7f080e02cc56f49d066cc4036a6d4c914f4b367a` / `f39faf197ccbd9078a60192c0de11bc9cfdc3b37` / `f39faf197ccbd9078a60192c0de11bc9cfdc3b37`. All 14 stages passed. Attachment size/hash and path inspection are recorded in [CNB-CLI.md](CNB-CLI.md).
 - Adversarial target run [`cnb-phj-1k642341e`](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-phj-1k642341e) failed closed after the no-op-script candidate also introduced an invalid Astro page; later security and archive stages did not run. Both scratch target events used target-owned `.cnb.yml` and did not require private `.ads` content.
 - Trusted target build [`cnb-oi5-1k61oiv57`](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-oi5-1k61oiv57) passed on candidate `cba3353613402646440858f9298af87b8450ba74`, exact merge/tested SHA `434e4a66eb6566c478810851dbd83ffc982da4b5`, and source marker `78fd54a80be70aebdc1b9b891d68937fede76373`. Its 9,830,956-byte archive SHA-256 is `417daf4a53e954e692975990505a1bd60ff7c2fc50e1e6037c7fd552577423c6`; 126 bounded entries and all source/target/merge/tested receipts were checked.
@@ -54,8 +63,8 @@ CNB `main` protection and GitHub `main` protection were not changed. GitHub rema
 | Trusted target native E2E on `cba3353` | **PASS (scratch only)** | `cnb-oi5-1k61oiv57`, receipts and archive hash verified |
 | Trusted target native E2E on final `98511ad` | **PASS (scratch only)** | `cnb-iin-1k61q4mp4`, exact merge/tested SHA `c131e6d`, archive hash and receipts verified; PR #5 merged on scratch |
 | Earlier `00651cc` local checks | **PASS (historical)** | 43/43 tests, Astro check, build, and unchanged Site digest on that prior head |
-| Latest GitHub PR #96 checks on `7f080e0` | **PASS (6/6)** | Read back with `gh pr checks 96`; the trusted-gate fixes are on the current head |
-| Trusted target native E2E on current `7f080e0` | **PASS (scratch only)** | `cnb-jhf-1k6423aiu`; exact source/target/merge/tested receipts and downloaded archive hash verified |
+| Historical GitHub PR #96 checks on `7f080e0` | **PASS (6/6)** | Read back with `gh pr checks 96`; results apply only to that head |
+| Trusted target native E2E on historical `7f080e0` | **PASS (scratch only)** | `cnb-jhf-1k6423aiu`; exact source/target/merge/tested receipts and downloaded archive hash verified |
 | No-op-script native adversarial test | **EXPECTED FAIL-CLOSED** | `cnb-phj-1k642341e`; target gate failed on injected invalid Astro; security and archive stages skipped |
 | Source-side fixture `pull_request` setup | **FAIL IN PREPARE** | Private `.ads` checkout attempted without GitHub credentials; target-side trusted run did not fetch the private submodule |
 | Candidate workflow installed on `dev` | **NO** | CNB PR #4 remains unmerged |

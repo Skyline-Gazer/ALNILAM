@@ -1,11 +1,13 @@
 # CNB CLI and native E2E
 
+> Current update (2026-10-30): PR #96 is at `988ed0405085401bba6160366d6eaf9877dfac09`; native runs described below tested earlier SHAs. No independent Gatekeeper identity or current-head CNB acceptance is claimed.
+
 Readback date: 2026-10-29. This is an evidence record, not permission to switch code authority or write GitHub release refs.
 
 ## Final acceptance snapshot
 
 - Git HTTPS credential preflight passed using the existing macOS `osxkeychain` entry for host `cnb.cool`, path `KoolingMachine/ALNILAM`, username `cnb`. The credential was verified present without displaying it. `git ls-remote` and isolated-ref pushes succeeded with the no-suffix URL `https://cnb.cool/KoolingMachine/ALNILAM`; no helper, global setting, protected ref, or token-bearing file was changed.
-- GitHub PR #96 now points to `7f080e02cc56f49d066cc4036a6d4c914f4b367a`. Repair commits `d0f3b2b`, `7fe4a92`, and `7f080e0` fix copied-harness dependencies, candidate checkout isolation, and a missing metrics module. The PR remains Draft and unmerged; all six current GitHub checks pass.
+- On 2026-10-29 GitHub PR #96 pointed to `7f080e02cc56f49d066cc4036a6d4c914f4b367a`. Repair commits `d0f3b2b`, `7fe4a92`, and `7f080e0` fix copied-harness dependencies, candidate checkout isolation, and a missing metrics module. The PR remains Draft and unmerged; all six GitHub checks passed on that head.
 - Positive native [CNB build `cnb-jhf-1k6423aiu`](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-jhf-1k6423aiu), triggered by PR #11 `pull_request.target`, passed all 14 stages on candidate target `7f080e02cc56f49d066cc4036a6d4c914f4b367a`. Source `5f3f03b09453c5a892ffc27f99c4b70d7c8444d3`, target `7f080e02cc56f49d066cc4036a6d4c914f4b367a`, and merge/tested `f39faf197ccbd9078a60192c0de11bc9cfdc3b37` agree in the native gate and archived receipts.
 - Its evidence attachment [`cnb-evidence-cnb-jhf-1k6423aiu.tgz`](https://cnb.cool/KoolingMachine/ALNILAM/-/commit/7f080e02cc56f49d066cc4036a6d4c914f4b367a?tab=attachments) is 29,184,087 bytes. CNB metadata and a local download agree on SHA-256 `e8d29826daca486bd1809f7d96cc463527d1959956c6196dfbd9ed7599072b9a`; archive inspection found 187 regular-file/directory entries and no unsafe paths or special entries. Nine deterministic build receipts passed; external Site digests match before/after; Node source coverage is 79.23% (393/496, 77% minimum); browser tests are 18 passed/one intentional skip; the negative browser and mobile/desktop Lighthouse regression probes are recorded as expected-red. Vulnerability and component-license gates passed; SourceSCA is not configured.
 - Adversarial [CNB build `cnb-phj-1k642341e`](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-phj-1k642341e), PR #12 `pull_request.target`, failed in the trusted merge/test stage on the deliberately invalid candidate Astro page while candidate pipeline scripts were no-ops. Later gates and archive upload were skipped. This is the expected fail-closed result; no success archive was produced.
@@ -51,7 +53,7 @@ This is a **FAIL** for strict Required Checks: the API exposes no named required
 
 ## PR and permission boundary
 
-- CNB bootstrap PR [#4](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/4) remains open and unmerged to `dev` at `98511ad526c0d77ede979e88ebe5b9c4f584a739`. GitHub PR #96 is now at `7f080e02cc56f49d066cc4036a6d4c914f4b367a`; that SHA was pushed only to scratch CNB refs, never to `dev` or `main`.
+- CNB bootstrap PR [#4](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/4) remains open and unmerged to `dev` at `98511ad526c0d77ede979e88ebe5b9c4f584a739`. GitHub PR #96 was then at `7f080e02cc56f49d066cc4036a6d4c914f4b367a`; that SHA was pushed only to scratch CNB refs, never to `dev` or `main`.
 - Disposable CNB PR [#5](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/5) was merged only into its scratch target after the final-head run passed; scratch merge SHA is `730b63df81ce37f0db17b20b5ec15220d4cc7420`, and both scratch refs have been deleted. This does not authorize the formal candidate PR #4 merge into actual `dev`.
 - CNB `dev` Plan B readback keeps PRs and the status-check toggle enabled, disables mandatory reviewer approval, and prohibits direct/force pushes, deletion, bypass, auto-merge, and NPC self-approval. Scratch testing showed a failed existing check and direct push are rejected, but a PR with zero checks is mergeable. Strict Required Checks therefore fails; do not change the approved Plan B without an Owner decision.
 - Root organization event/cron/NPC switches and configured event triggers were already enabled. Owner-selected organization scope required no trigger mutation; untrusted-event and scheduled cross-repository access stay disabled. `airingcal-secrets` state remains unreadable to this token (403).
@@ -60,9 +62,9 @@ This is a **FAIL** for strict Required Checks: the API exposes no named required
 
 The CLI exposes read, branch-protection, PR, build, asset, and review operations; write scope is limited by the active token. The native and local evidence is recorded in [CNB-REVIEW.md](CNB-REVIEW.md), [CNB-WORKFLOW.md](CNB-WORKFLOW.md), and [CUTOVER-READINESS.md](CUTOVER-READINESS.md).
 
-### Owner decisions after final acceptance
+### Historical decisions after the 2026-10-29 acceptance
 
 - Keep CNB non-primary until it can require the trusted named check to exist and remain pending/failed until success. The current CNB protection API has no named-check field, and zero-status mergeability is confirmed on an isolated protected PR. If CNB cannot provide a platform-native gate, decide separately whether to authorize a compensating control such as mandatory reviewer approval; no Plan B setting was changed here.
 - Do not merge CNB PR #4 while strict protection fails. Once an acceptable gate exists, the suggested review order is GitHub PR #96 (native gate fixes), PR #111 (this consolidated evidence), then refresh/review CNB PR #4 against the then-current `dev` and merge only with explicit Owner authorization. No PR was merged in this pass.
-- Decide whether the first Release Mirror must use a PR against GitHub `main` or whether a narrowly scoped Ruleset change is authorized. The active Ruleset requires a PR and `verify` status and has no bypass; no Ruleset or mirror ref was changed.
+- The Owner subsequently selected a PR-based mirror without a Ruleset bypass. The active Ruleset requires a PR and `verify`; no Ruleset or mirror ref was changed.
 - Continue treating AI Review as advisory, keep NPC unavailable until the private-submodule failure is safely resolved, and leave SourceSCA unconfigured/unclaimed. No additional token is requested.
