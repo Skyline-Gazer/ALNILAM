@@ -162,7 +162,6 @@ export function safeFailureEvidence(root) {
   try {
     const stat = fs.lstatSync(root);
     if (!stat.isDirectory() || stat.isSymbolicLink()) return [];
-    const allowedReceipt = new Set(['build-receipt.json', 'receipt.json', 'negative-receipt.json', 'source-summary.json']);
     const files = [], directories = [root];
     let bytes = 0, inspected = 0;
     while (directories.length) {
@@ -173,7 +172,7 @@ export function safeFailureEvidence(root) {
         const stat = fs.lstatSync(file);
         if (stat.isDirectory() && !stat.isSymbolicLink()) directories.push(file);
         else if (stat.isFile() && !stat.isSymbolicLink() &&
-          (/^[A-Za-z0-9._-]+\.log$/.test(entry.name) || allowedReceipt.has(entry.name)) &&
+          /^[A-Za-z0-9._-]+\.log$/.test(entry.name) &&
           stat.size <= 2 * 1024 * 1024 && files.length < 64 && bytes + stat.size <= 10 * 1024 * 1024) {
           files.push(path.relative(root, file));
           bytes += stat.size;
@@ -278,8 +277,8 @@ function copyReadonlyFile(source, destination) {
 
 function prepareTrustedTests(harnessRoot, candidateRoot) {
   // Keep the test and browser control plane outside the writable candidate tree.
-  // Candidate modules used for coverage remain in an immutable test view and are
-  // executed only inside the unprivileged runCandidate child.
+  // Control scripts used by the trusted tests come from the target-owned tree;
+  // candidate product modules remain limited to the unprivileged test inputs.
   const testRoot = path.join(harnessRoot, 'trusted-tests');
   fs.mkdirSync(path.join(testRoot, 'scripts'), {recursive: true});
   copyTree(path.join(ROOT, 'scripts/tests'), path.join(testRoot, 'scripts/tests'));
@@ -290,10 +289,9 @@ function prepareTrustedTests(harnessRoot, candidateRoot) {
     const source = path.join(candidateRoot, directory);
     if (fs.existsSync(source)) fs.symlinkSync(source, path.join(testRoot, directory), 'dir');
   }
-  copyReadonlyFile(path.join(candidateRoot, 'scripts/site-contract.mjs'), path.join(testRoot, 'scripts/site-contract.mjs'));
-  copyTree(path.join(candidateRoot, 'scripts/p1'), path.join(testRoot, 'scripts/p1'));
-  const upgradeCheck = path.join(candidateRoot, 'scripts/upgrade-check.mjs');
-  copyReadonlyFile(upgradeCheck, path.join(testRoot, 'scripts/upgrade-check.mjs'));
+  copyReadonlyFile(path.join(ROOT, 'scripts/site-contract.mjs'), path.join(testRoot, 'scripts/site-contract.mjs'));
+  copyTree(path.join(ROOT, 'scripts/p1'), path.join(testRoot, 'scripts/p1'));
+  copyReadonlyFile(path.join(ROOT, 'scripts/upgrade-check.mjs'), path.join(testRoot, 'scripts/upgrade-check.mjs'));
   return testRoot;
 }
 

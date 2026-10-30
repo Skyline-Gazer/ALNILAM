@@ -117,7 +117,7 @@ test('verified evidence snapshot cannot be changed through the candidate tree', 
   }
 });
 
-test('failure diagnostics copy only bounded regular logs and known receipts', () => {
+test('failure diagnostics copy only bounded regular logs', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cnb-failure-logs-'));
   try {
     fs.writeFileSync(path.join(root, 'demo-artifact.log'), 'failure detail');
@@ -129,7 +129,7 @@ test('failure diagnostics copy only bounded regular logs and known receipts', ()
     fs.writeFileSync(path.join(root, 'cnb-browser', 'negative-receipt.json'), '{"status":"failed"}');
     fs.writeFileSync(path.join(root, 'cnb-browser', 'untrusted.json'), '{"unexpected":true}');
     fs.symlinkSync('/etc/passwd', path.join(root, 'cnb-browser', 'linked.log'));
-    assert.deepEqual(safeFailureEvidence(root), ['cnb-browser/negative-receipt.json', 'cnb-browser/negative.log', 'demo-artifact.log']);
+    assert.deepEqual(safeFailureEvidence(root), ['cnb-browser/negative.log', 'demo-artifact.log']);
     assert.deepEqual(safeFailureEvidence(path.join(root, 'missing')), []);
   } finally { fs.rmSync(root, {recursive: true, force: true}); }
 });

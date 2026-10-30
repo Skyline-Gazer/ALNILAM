@@ -16,7 +16,7 @@ export async function assertSuccessfulResponses(urls, request = fetch) {
     if (!response.ok) throw Error(`Target returned HTTP ${response.status}: ${url}`);
   }
 }
-export function validateLighthouseReports(manifest, load, urls, started, count = 3) {
+export function validateLighthouseReports(manifest, load, urls, started, count) {
   if (!Array.isArray(manifest) || manifest.length !== urls.length * count) throw Error('Missing repeated Lighthouse manifest');
   const seen = new Map(urls.map(url => [url, 0]));
   return manifest.map(item => {

@@ -19,12 +19,12 @@ test('Lighthouse rejects old exports, missing audits and unbalanced per-URL coun
   const now = Date.now(), url = 'http://fixture/';
   const lhr = {requestedUrl: url, fetchTime: new Date(now).toISOString(), audits: {'cumulative-layout-shift': {numericValue: 0.5}}};
   const manifest = Array.from({length: 3}, () => ({url}));
-  assert.equal(validateLighthouseReports(manifest, () => lhr, [url], now).length, 3);
-  assert.throws(() => validateLighthouseReports(manifest, () => ({...lhr, fetchTime: new Date(now - 1).toISOString()}), [url], now), /Stale/);
-  assert.throws(() => validateLighthouseReports(manifest, () => ({...lhr, audits: {}}), [url], now), /CLS/);
+  assert.equal(validateLighthouseReports(manifest, () => lhr, [url], now, 3).length, 3);
+  assert.throws(() => validateLighthouseReports(manifest, () => ({...lhr, fetchTime: new Date(now - 1).toISOString()}), [url], now, 3), /Stale/);
+  assert.throws(() => validateLighthouseReports(manifest, () => ({...lhr, audits: {}}), [url], now, 3), /CLS/);
   const other = 'http://other/';
   const unbalanced = [...Array.from({length: 4}, () => ({url})), ...Array.from({length: 2}, () => ({url: other}))];
-  assert.throws(() => validateLighthouseReports(unbalanced, item => ({...lhr, requestedUrl: item.url}), [url, other], now), /Missing per-URL repeated Lighthouse reports/);
+  assert.throws(() => validateLighthouseReports(unbalanced, item => ({...lhr, requestedUrl: item.url}), [url, other], now, 3), /Missing per-URL repeated Lighthouse reports/);
 });
 test('expected Lighthouse red needs measured excessive CLS, not auditRan failure', () => {
   const url = 'http://regression/';

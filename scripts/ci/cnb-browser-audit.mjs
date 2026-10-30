@@ -34,6 +34,7 @@ const isListening = port => new Promise(resolve => {
 for (const port of [4323, 4324]) {
   if (await isListening(port)) lingering.push(port);
 }
+if (result.status === 0 && !fs.existsSync(reportPath)) throw Error('Playwright exited 0 without writing its JSON report');
 const report = result.status === 0 ? JSON.parse(fs.readFileSync(reportPath, 'utf8')) : null;
 const stats = report?.stats;
 const reportBytes = fs.existsSync(reportPath) ? fs.readFileSync(reportPath) : Buffer.alloc(0);
