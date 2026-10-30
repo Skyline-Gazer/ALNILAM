@@ -20,3 +20,19 @@ test('coverage receipt and CNB .mjs gate use the same source extensions', () => 
   assert.equal(actual.lines, 2);
   assert.deepEqual([...nodeSourceLCOV(input).matchAll(/^SF:(.+)$/gm)].map(match => match[1]), ['packages/core/src/index.mjs']);
 });
+
+test('coverage merges duplicate harness records by logical source and line', () => {
+  const input = [
+    'SF:scripts/upgrade-check.mjs\nDA:1,1\nDA:2,0\nDA:3,1\nend_of_record\n',
+    'SF:../../private/tmp/trusted-harness/scripts/upgrade-check.mjs\nDA:1,0\nDA:2,1\nDA:3,0\nend_of_record\n',
+  ].join('');
+  const normalized = nodeSourceLCOV(input);
+  assert.equal(sourceCoverage(input).files, 1);
+  assert.equal(sourceCoverage(input).lines, 3);
+  assert.equal(sourceCoverage(input).hit, 3);
+  assert.match(normalized, /^SF:scripts\/upgrade-check\.mjs$/m);
+  assert.match(normalized, /^DA:1,1$/m);
+  assert.match(normalized, /^DA:2,1$/m);
+  assert.match(normalized, /^DA:3,1$/m);
+  assert.equal([...normalized.matchAll(/^SF:/gm)].length, 1);
+});
