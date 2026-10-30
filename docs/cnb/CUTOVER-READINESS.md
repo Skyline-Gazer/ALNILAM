@@ -9,6 +9,8 @@ Native system CodeBuddy now runs on real isolated PR #18 with Work Mode off. The
 
 ## Agent merge lifecycle acceptance — PR #18
 
+[Native trusted consumer run](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-9q2-1k65dadhi); [retained CNB evidence attachment](https://cnb.cool/KoolingMachine/ALNILAM/-/commit/b240a7ce465956da5b2727d49578f34182d804e3?tab=attachments). Tested commit 5640a56884388fe63f27ed8b48c6d4736bab4963 is a CNB-generated pre-merge object; absence from the GitHub object store is not contradictory evidence. The main Agent independently downloaded and validated the retained archive with its existing credential; a reviewer token lacking build-history scopes must disclose that limit without requesting wider credentials.
+
 - Source f1ae3bd736e10adbc587a81ece04b9f2340a0e4c; target b240a7ce465956da5b2727d49578f34182d804e3; tested merge 5640a56884388fe63f27ed8b48c6d4736bab4963; Agent-created merge d89d9ba34d6edfc5c1462afe09fff5af5c46473d. Merged/tested/source tree is 579f10f4047fe185f19b798eb71a82dc64295624.
 - Native review comment 2116008620634898432 completed successfully in read/comment mode and passed the unchanged ADS validator. The earlier real Critical review was rejected; reusing its old head produced STALE_REVIEW. An invalid-schema follow-up audit was also rejected until CodeBuddy issued a valid result.
 - Native trusted consumer run and source-side official advisory both passed on the repaired source. Downloaded archive is 29,070,797 bytes, SHA-256 682dc9d9e7c9e5427ceeb2ac49cd47dab8c2c5b3902d70606a9c0577facd0e08 (matched platform metadata); 187 entries passed path/type validation; nine build steps passed and Site digest was unchanged.
