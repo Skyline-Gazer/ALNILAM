@@ -1,5 +1,9 @@
 # CNB Review and NPC acceptance
 
+## PR96 native review disposition — 2026-10-30
+
+Native CodeBuddy audit comment 2116008723135295488 initially raised two Critical path findings, a receipt-control warning and two informational claims on head 911fe4327ecb81179df2ee5bccabd47f2cb5b48e. They were not ignored: comment 2116010054050873344 independently re-traced ROOT, trustedSourceRoot and harnessRoot, identified copied/frozen test controls versus candidate product inputs, and withdrew the findings. Its output schema was invalid, so it did not pass the ADS validator. Final native comment 2116010758895271936 re-read the GitHub PR metadata, confirmed the unchanged head and PR17 tested-tree equivalence, and returned valid status=passed with one informational observation about the trusted target test glob. The immutable ADS review validator accepted that actual review. The main Agent had separately downloaded and hashed the PR17 archive; CodeBuddy accurately disclosed its inability to download it with its narrower token. No credential scope was expanded. PR96 merged normally to GitHub dev as 400290acadca8a0417d41792f17fedb842993d1f after all six checks passed; merged tree equals the reviewed head tree 6d3afdd68d2ecfa8bb7f745fb2e42e472fb4808d.
+
 ## Current Owner decision — Agent-governed PRs (2026-10-30)
 
 This decision supersedes the independent Gatekeeper proposal and its acceptance blockers below. The Agent must verify complete current-version CI plus actual CodeBuddy review, resolve blocking findings, re-read the live PR head, and actively perform a normal merge. No independent approval identity, fixed required Reviewer or CNB Auto Merge is required. CNB zero-status mergeability remains a disclosed platform risk; it has not been repaired. Production main, the first production mirror, formal tags/releases and deployments are excluded from this authorization.
