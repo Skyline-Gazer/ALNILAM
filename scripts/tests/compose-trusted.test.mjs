@@ -17,6 +17,7 @@ test('external trusted toolchain runs its own CLI from the candidate workspace',
   try {
     fs.mkdirSync(path.join(site, 'content/posts'), {recursive: true});
     fs.mkdirSync(path.join(candidate, 'apps/web'), {recursive: true});
+    const candidateCwd = fs.realpathSync(path.join(candidate, 'apps/web'));
     fs.writeFileSync(path.join(site, 'alnilam.config.toml'), 'fixture');
     const astro = path.join(tools, 'apps/web/node_modules/astro/bin/astro.mjs');
     const pagefind = path.join(tools, 'apps/web/node_modules/pagefind/lib/runner/bin.cjs');
@@ -38,7 +39,7 @@ fs.appendFileSync(process.env.TOOL_LOG, JSON.stringify({tool:'pagefind', cwd:pro
     assert.equal(result.status, 0, result.stderr);
     const calls = fs.readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse);
     assert.deepEqual(calls.map(call => call.tool), ['astro', 'pagefind']);
-    assert.ok(calls.every(call => call.cwd === path.join(candidate, 'apps/web')));
+    assert.ok(calls.every(call => call.cwd === candidateCwd));
     assert.ok(calls.every(call => call.nodePath === path.join(tools, 'node_modules/.pnpm/node_modules')));
     assert.deepEqual(calls[0].args, ['build', '--root', path.join(candidate, 'apps/web')]);
     assert.equal(fs.readFileSync(path.join(output, 'index.html'), 'utf8'), 'fixture');

@@ -3,6 +3,7 @@ import http from 'node:http';
 import path from 'node:path';
 import {spawn, execFileSync} from 'node:child_process';
 import {setTimeout as delay} from 'node:timers/promises';
+import {pathToFileURL} from 'node:url';
 import {chromium} from '@playwright/test';
 import {trackChild, stopChildren, assertSuccessfulResponses, validateLighthouseReports, validateLighthouseRegression} from './cnb-evidence.mjs';
 const trustedSourceRoot = process.env.CNB_TRUSTED_SOURCE_ROOT;
@@ -14,6 +15,7 @@ const formFactor = process.env.ALNILAM_LHCI_FORM_FACTOR || 'mobile';
 if (!['mobile', 'desktop'].includes(formFactor)) throw Error('Unsupported Lighthouse form factor');
 const reportDir = `artifacts/lighthouse/${formFactor}`;
 const regressionDir = `artifacts/lighthouse-regression/${formFactor}`;
+const assertionResultsPath = path.resolve('.lighthouseci/assertion-results.json');
 function run(args) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [cli, ...args], {env, stdio: 'inherit'});
@@ -36,7 +38,8 @@ fs.mkdirSync(reportDir, {recursive: true});
 fs.mkdirSync('.tmp/cnb', {recursive: true});
 const started = Date.now();
 let regression;
-const {default: baseline} = await import('../../lighthouserc.cjs');
+const baselinePath = path.join(trustedSourceRoot, 'lighthouserc.cjs');
+const {default: baseline} = await import(pathToFileURL(baselinePath).href);
 const runsPerURL = baseline.ci.collect.numberOfRuns;
 if (!Number.isSafeInteger(runsPerURL) || runsPerURL < 1) throw Error('Lighthouse numberOfRuns must be a positive integer');
 const clsBudget = baseline.ci.assert.assertions['cumulative-layout-shift']?.[1]?.maxNumericValue;
@@ -73,15 +76,17 @@ try {
   regressionConfig.upload.outputDir = regressionDir;
   regressionConfig.assert.assertions['cumulative-layout-shift'][0] = 'error';
   fs.writeFileSync(`.tmp/cnb/lighthouse-regression-${formFactor}.json`, JSON.stringify({ci: regressionConfig}));
+  fs.rmSync(assertionResultsPath, {force: true});
   if (await run(['collect', `--config=.tmp/cnb/lighthouse-regression-${formFactor}.json`]) !== 0) throw Error('Regression fixture failed to collect');
   const code = await run(['assert', `--config=.tmp/cnb/lighthouse-regression-${formFactor}.json`]);
-  const assertions = JSON.parse(fs.readFileSync('.lighthouseci/assertion-results.json', 'utf8'));
+  if (!fs.existsSync(assertionResultsPath)) throw Error('Lighthouse regression assertion did not write assertion-results.json');
+  const assertions = JSON.parse(fs.readFileSync(assertionResultsPath, 'utf8'));
   if (code !== 1) throw Error('Regression assertion did not return its expected failure');
   if (await run(['upload', `--config=.tmp/cnb/lighthouse-regression-${formFactor}.json`]) !== 0) throw Error('Regression evidence upload failed');
   const regressionManifest = JSON.parse(fs.readFileSync(path.join(regressionDir, 'manifest.json'), 'utf8'));
   const reports = validateLighthouseReports(regressionManifest, item => JSON.parse(fs.readFileSync(item.jsonPath, 'utf8')), regressionConfig.collect.url, started, runsPerURL);
   validateLighthouseRegression(reports, assertions, regressionConfig.collect.url[0], runsPerURL, clsBudget);
-  fs.copyFileSync('.lighthouseci/assertion-results.json', path.join(regressionDir, 'assertion-results.json'));
+  fs.copyFileSync(assertionResultsPath, path.join(regressionDir, 'assertion-results.json'));
   receipt.regressionStatus = 'EXPECTED_RED_VERIFIED';
 } catch (error) {receipt.error = error.message;console.error(error);process.exitCode = 1;}
 finally {

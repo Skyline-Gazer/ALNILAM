@@ -15,6 +15,7 @@ test('consumer builds use target-owned tools even when the candidate supplies an
   const sourceRoot = process.env.CNB_TRUSTED_SOURCE_ROOT || path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
   try {
     fs.mkdirSync(path.join(candidate, 'sites/demo/content/posts'), {recursive: true});
+    const expectedRepo = fs.realpathSync(candidate);
     fs.writeFileSync(path.join(candidate, 'sites/demo/alnilam.config.toml'), 'fixture');
     fs.mkdirSync(path.join(tests, 'scripts/tests'), {recursive: true});
     fs.mkdirSync(path.join(tests, 'scripts/ci'), {recursive: true});
@@ -46,7 +47,7 @@ syncBuiltinESMExports();
       assert.equal(result.status, 0, result.stderr);
       const calls = fs.readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse);
       assert.equal(calls.length, 3);
-      for (const call of calls) assert.deepEqual(call, {repo: candidate, tools: target});
+      for (const call of calls) assert.deepEqual(call, {repo: expectedRepo, tools: target});
     }
   } finally { fs.rmSync(root, {recursive: true, force: true}); }
 });

@@ -1,6 +1,12 @@
 # P1 Evidence Ledger
 
-## Live integrated readback — 2026-10-28
+## Current Owner decision — 2026-10-28
+
+**Verdict: `P1_ACCEPTED`.** The Owner accepted the existing P1 evidence and recorded non-blocking limitations in [Issue #37 comment 6465764925](https://github.com/Skyline-Gazer/ALNILAM/issues/37#issuecomment-6465764925). Issue #37 is closed as completed and Project #17 marks it `Done`. The acceptance-time GitHub `dev` snapshot was `78d63d9bf9d78b1e4f64640fedfc7c079256ef4f`; #96 subsequently merged at `400290acadca8a0417d41792f17fedb842993d1f`. GitHub `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`. Query live refs for subsequent development merges. PR #104 is merged and the `main` Pages workflow is dispatch-only. P1 implementation/evidence remains based on `3f354ecb66a50e693b8c5ef7db4dd2518e3992cb`; acceptance does not authorize a production release or CNB cutover. CNB readiness is tracked separately in [Issue #100](https://github.com/Skyline-Gazer/ALNILAM/issues/100) and [the CNB readiness record](../cnb/CUTOVER-READINESS.md).
+
+## Pre-acceptance evidence snapshot — 2026-10-28
+
+The following status and governance snapshot predates the Owner's acceptance above and is retained as the contemporaneous pre-signoff record.
 
 **Verdict: `P1_ACCEPTANCE_READY / OWNER_PHASE_SIGNOFF_PENDING`.** The integrated implementation and mandatory remote evidence are ready for one independent Owner phase decision. Latest live GitHub `dev` is `78d63d9bf9d78b1e4f64640fedfc7c079256ef4f` after docs-only PR #110; same-SHA verify [40653559681](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40653559681) / ADS check [40653559711](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40653559711) passed and do not change P1 implementation evidence. Issue #37 remains open and Project `In Progress` until Owner signoff; this report does not close P1 or authorize P2 code, a production release, or provider cutover.
 
@@ -17,11 +23,13 @@ P1 implementation/evidence remains based on `3f354ecb66a50e693b8c5ef7db4dd2518e3
 | Toolchain | **PARTIAL — host hook not verified** | Explicit official full RTK `1.1.0` passed 151/151 `verify` checks, but reported **SKIP — host hook not installed**; default PATH resolves RTK `1.0.1`. An explicit `rtk run` preserved stderr and exit `7`, verifying the CLI wrapper only. CodeGraph's primary-checkout MCP query and current index passed using the authorized immutable MIT source fallback `bb11bc1226db30233ac9e66a2670c4b16dfa85fa` (metadata 1.1.1, not a published stable release) under existing Node `22.23.4`; default Node `26.12.0` is incompatible. The managed task worktree has no CodeGraph index. No tool, PATH, hook or global host setting was changed. |
 | Project governance | **PASS — read back** | #37 `In Progress`; #47/#48/#49/#50/#79 `Done`; #100 `In Progress`; #38/#51 `Todo`. Parents #37 → #47/#48/#49/#50/#79/#100 and #38 → #51. No milestones exist. |
 
-The CNB consumer pilot is a separate cutover gate and is **NOT ACCEPTED / NOT VERIFIED**: draft #96 remains open; its GitHub checks are not current-head CNB native CI/Review/SCA evidence, and the actual ALNILAM CNB repository could not be confirmed (the page reported nonexistent or no access). The generic ADS Mode A fixture had already passed and was not rerun; it does not substitute for consumer evidence. Keep P1's ready-for-signoff result separate from CNB cutover readiness. Main guard PR #104 is open with green CI but has not changed `main`.
+**Historical pre-acceptance CNB snapshot (superseded by the Owner decisions and current CNB record):** At that snapshot the consumer pilot was NOT ACCEPTED / NOT VERIFIED, draft #96 was open, and native current-head CI/Review/SCA and repository access had not been confirmed. The generic ADS fixture was separate evidence. PR #104 was then open and its guard had not reached main. These facts describe that earlier observation only; #96 subsequently merged at `400290acadca8a0417d41792f17fedb842993d1f`, #104 merged at `285a62cecd87f8f20276c7cc989537a391f488c8`, and native CodeBuddy/CI/Agent merge evidence is now recorded in [CNB readiness](../cnb/CUTOVER-READINESS.md).
 
 ## Historical candidate snapshot — 2026-10-27
 
 **Historical 2026-10-27 disposition: `P1_CONDITIONAL_WITH_BLOCKERS`.** This records the pre-integration candidate state; references below to open PRs and unmerged heads are deliberately historical. The live post-integration phase verdict must be documented at [#37](https://github.com/Skyline-Gazer/ALNILAM/issues/37) and cannot be inferred from this snapshot.
+
+Every section from **A** through **I** below is part of this dated 2026-10-27 candidate snapshot. Its ref values, open-PR descriptions, gate table and exit result are retained for traceability and are superseded by the current `P1_ACCEPTED` verdict above.
 
 This is an evidence ledger for the current P1 candidates, not a phase approval. PRs #97, #98, and #99 are open against `dev`; #79 remains isolated on `chore/79-astro-compatibility-pilot`. No candidate is merged and no P1 PASS is claimed. The P1 parent, Issue #37, stays open.
 

@@ -162,7 +162,6 @@ export function safeFailureEvidence(root) {
   try {
     const stat = fs.lstatSync(root);
     if (!stat.isDirectory() || stat.isSymbolicLink()) return [];
-    const allowedReceipt = new Set(['build-receipt.json', 'receipt.json', 'negative-receipt.json', 'source-summary.json']);
     const files = [], directories = [root];
     let bytes = 0, inspected = 0;
     while (directories.length) {
@@ -173,7 +172,7 @@ export function safeFailureEvidence(root) {
         const stat = fs.lstatSync(file);
         if (stat.isDirectory() && !stat.isSymbolicLink()) directories.push(file);
         else if (stat.isFile() && !stat.isSymbolicLink() &&
-          (/^[A-Za-z0-9._-]+\.log$/.test(entry.name) || allowedReceipt.has(entry.name)) &&
+          /^[A-Za-z0-9._-]+\.log$/.test(entry.name) &&
           stat.size <= 2 * 1024 * 1024 && files.length < 64 && bytes + stat.size <= 10 * 1024 * 1024) {
           files.push(path.relative(root, file));
           bytes += stat.size;
@@ -204,7 +203,8 @@ export function validateEvidence(root, identity) {
   const browserStats = browserReport.stats;
   if (browser.sourceSha !== identity.source || browser.targetSha !== identity.target ||
       browser.mergeSha !== identity.merge || browser.testedSha !== identity.merge ||
-      browser.exitCode !== 0 || browser.lingeringPorts?.length ||
+      browser.status !== 'PASS' || !Array.isArray(browser.diagnostics) || browser.diagnostics.length ||
+      browser.reportPresent !== true || browser.exitCode !== 0 || browser.lingeringPorts?.length ||
       !Number.isSafeInteger(browserStats?.expected) || browserStats.expected < 1 ||
       browserStats.unexpected !== 0 || !Number.isSafeInteger(browserStats.skipped) || browserStats.skipped > 1 ||
       browser.testCount !== browserStats.expected ||
@@ -218,9 +218,36 @@ export function validateEvidence(root, identity) {
       throw Error(`Lighthouse ${formFactor} receipt is missing, stale, or failed`);
     }
   }
+  const negativeReportPath = path.join(artifacts, 'cnb-browser', 'negative.json');
+  const negativeReport = readJson(negativeReportPath);
+  const negativeReportBytes = fs.readFileSync(negativeReportPath);
   const negative = readJson(path.join(artifacts, 'cnb-browser', 'negative-receipt.json'));
   if (negative.status !== 'EXPECTED_RED_VERIFIED' || negative.exitCode <= 0 ||
-      !negative.screenshotBytes || !negative.traceBytes) throw Error('Browser negative evidence is incomplete');
+      !Array.isArray(negative.diagnostics) || negative.diagnostics.length || negative.reportPresent !== true ||
+      !/^[0-9a-f-]{36}$/.test(negative.runId || '') ||
+      negative.outputRoot !== `artifacts/cnb-browser/negative-artifacts/${negative.runId}` ||
+      negative.reportSha256 !== createHash('sha256').update(negativeReportBytes).digest('hex') ||
+      negativeReport?.stats?.unexpected !== 1 || negativeReport.stats.expected !== 0 ||
+      !negative.screenshotBytes || !negative.traceBytes ||
+      !negative.attachments?.screenshot?.sha256 || !negative.attachments?.trace?.sha256) {
+    throw Error('Browser negative evidence is incomplete');
+  }
+  const negativeRoot = path.resolve(root, negative.outputRoot);
+  for (const [name, expectedBytes] of [['screenshot', negative.screenshotBytes], ['trace', negative.traceBytes]]) {
+    const attachment = negative.attachments[name];
+    const filename = path.resolve(negativeRoot, attachment.path || '');
+    if (!filename.startsWith(negativeRoot + path.sep)) throw Error('Browser negative attachment escapes its run directory');
+    let bytes;
+    try {
+      if (!fs.lstatSync(filename).isFile()) throw Error('not a file');
+      bytes = fs.readFileSync(filename);
+    } catch (error) {
+      throw new Error(`Browser negative ${name} is missing`, {cause: error});
+    }
+    if (bytes.length !== expectedBytes || createHash('sha256').update(bytes).digest('hex') !== attachment.sha256) {
+      throw Error(`Browser negative ${name} does not match its receipt`);
+    }
+  }
   const coverage = readJson(path.join(artifacts, 'coverage', 'source-summary.json'));
   if (!Number.isFinite(coverage.percent) || coverage.minimum !== MIN_SOURCE_COVERAGE ||
       coverage.percent < coverage.minimum || coverage.files < 1 || coverage.lines < 1) {
@@ -268,8 +295,18 @@ function copyTree(sourceRoot, destinationRoot) {
   }
 }
 
+function copyReadonlyFile(source, destination) {
+  const stat = fs.lstatSync(source);
+  if (!stat.isFile() || stat.isSymbolicLink()) throw Error(`Trusted test input is not a regular file: ${source}`);
+  fs.mkdirSync(path.dirname(destination), {recursive: true, mode: 0o755});
+  fs.copyFileSync(source, destination, fs.constants.COPYFILE_EXCL);
+  fs.chmodSync(destination, 0o444);
+}
+
 function prepareTrustedTests(harnessRoot, candidateRoot) {
   // Keep the test and browser control plane outside the writable candidate tree.
+  // Control scripts used by the trusted tests come from the target-owned tree;
+  // candidate product modules remain limited to the unprivileged test inputs.
   const testRoot = path.join(harnessRoot, 'trusted-tests');
   fs.mkdirSync(path.join(testRoot, 'scripts'), {recursive: true});
   copyTree(path.join(ROOT, 'scripts/tests'), path.join(testRoot, 'scripts/tests'));
@@ -280,14 +317,9 @@ function prepareTrustedTests(harnessRoot, candidateRoot) {
     const source = path.join(candidateRoot, directory);
     if (fs.existsSync(source)) fs.symlinkSync(source, path.join(testRoot, directory), 'dir');
   }
-  fs.symlinkSync(path.join(candidateRoot, 'scripts/site-contract.mjs'), path.join(testRoot, 'scripts/site-contract.mjs'));
-  fs.symlinkSync(path.join(candidateRoot, 'scripts/p1'), path.join(testRoot, 'scripts/p1'), 'dir');
-  const upgradeCheck = path.join(candidateRoot, 'scripts/upgrade-check.mjs');
-  const upgradeCheckStat = fs.lstatSync(upgradeCheck);
-  if (!upgradeCheckStat.isFile() || upgradeCheckStat.isSymbolicLink()) {
-    throw Error('Candidate upgrade-check input is not a regular file');
-  }
-  fs.symlinkSync(upgradeCheck, path.join(testRoot, 'scripts/upgrade-check.mjs'), 'file');
+  copyReadonlyFile(path.join(ROOT, 'scripts/site-contract.mjs'), path.join(testRoot, 'scripts/site-contract.mjs'));
+  copyTree(path.join(ROOT, 'scripts/p1'), path.join(testRoot, 'scripts/p1'));
+  copyReadonlyFile(path.join(ROOT, 'scripts/upgrade-check.mjs'), path.join(testRoot, 'scripts/upgrade-check.mjs'));
   return testRoot;
 }
 
@@ -365,6 +397,12 @@ function runCandidate(candidateRoot, harnessRoot) {
   run('isolated tag dry run', process.execPath, [path.join(ci, 'cnb-release-tag-dry-run.mjs')]);
 }
 
+function ensureFailurePlatform(message, status) {
+  const destination = path.join(ROOT, 'artifacts');
+  fs.mkdirSync(destination, {recursive: true});
+  fs.writeFileSync(path.join(destination, 'platform.json'), JSON.stringify({status, error: message}, null, 2) + '\n');
+}
+
 function copyFailureEvidence(candidateRoot, message, status) {
   const destination = path.join(ROOT, 'artifacts');
   fs.rmSync(destination, {recursive: true, force: true});
@@ -375,7 +413,7 @@ function copyFailureEvidence(candidateRoot, message, status) {
     fs.mkdirSync(path.dirname(file), {recursive: true});
     fs.copyFileSync(path.join(sourceRoot, name), file);
   }
-  fs.writeFileSync(path.join(destination, 'platform.json'), JSON.stringify({status, error: message}, null, 2) + '\n');
+  ensureFailurePlatform(message, status);
 }
 
 function archiveEvidence(candidateRoot, identity) {
@@ -467,5 +505,10 @@ if (process.argv[2] === '--run-candidate') {
   try { runCandidate(path.resolve(process.argv[3]), path.resolve(process.argv[4])); }
   catch (error) { console.error(`CANDIDATE_CHECKS_FAILED: ${error.message}`); process.exitCode = 1; }
 } else if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
-  main().catch(error => { console.error(`CNB_TRUSTED_GATE_BLOCKED: ${error.message}`); process.exitCode = 1; });
+  main().catch(error => {
+    try { ensureFailurePlatform(error.message, 'FAIL'); }
+    catch (evidenceError) { console.error(`CNB_FAILURE_EVIDENCE_ERROR: ${evidenceError.message}`); }
+    console.error(`CNB_TRUSTED_GATE_BLOCKED: ${error.message}`);
+    process.exitCode = 1;
+  });
 }
