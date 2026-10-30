@@ -1,5 +1,28 @@
 # ALNILAM — AI Agent Handoff
 
+## Current development authority — 2026-10-30
+
+CNB `KoolingMachine/ALNILAM` is now the development code authority. Verified refs at cutover acceptance:
+
+- CNB `dev`: `e602e29a1fc9cff20e438b29251fec4482eba64b`
+- GitHub `dev`: `0d11757e111a4a5169d3a473b736ed2918bd3d2e`
+- Shared Git tree: `5530addc6e4d719229641e9e2cd0828d78256e78`
+
+New feature branches start from CNB `dev`. CNB PRs require current-head CI and actual CodeBuddy review before an Agent normal Merge Commit. GitHub Issues and Project #17 remain the task-management authority; GitHub code is a mirror target only and does not accept new feature PRs. GitHub `dev` history is not rewritten and the two remotes do not require identical commit SHAs.
+
+Accepted residual risk remains: CNB can still expose zero-status mergeability and the recheck/merge window is not atomic. Independent Gatekeeper, fixed Reviewer, Auto Merge, force push and bypass are not part of the accepted workflow.
+
+## Current P2/T01 checkpoint — Issue #51
+
+Implementation branch: `feat/51-site-v2-yaml-contract` from CNB `dev`.
+
+Scope in this slice:
+
+- Site v2 is YAML-only via `alnilam.config.yaml`.
+- No TOML/TS/JS/JSON config fallback and no v1 auto-migration engine.
+- Schema v2 fails closed on unknown fields and validates locale, routing and taxonomy metadata.
+- Demo Site, onboarding docs and contract tests move to v2 while historical v1 fixtures remain under `tests/fixtures/site-v1-legacy` for negative compatibility evidence.
+
 ## Current workflow decision — 2026-10-30
 
 The Owner selected Agent-governed PRs: current CI plus actual CodeBuddy review, followed by an Agent-initiated normal merge. Independent Gatekeeper, fixed Reviewer and CNB Auto Merge prerequisites are canceled; zero-status platform risk remains disclosed. PR #96 merged at 400290acadca8a0417d41792f17fedb842993d1f. See [current decision and native evidence](cnb/CUTOVER-READINESS.md). The checkpoints below retain their historical SHA scope.
@@ -18,9 +41,9 @@ P1 browser/Lighthouse evidence: the PR #103 baseline run [40641080507](https://g
 
 Developer-tool preflight used the primary checkout. Explicit official full RTK `1.1.0` passed 151/151 `verify` checks, but reported **SKIP — host hook not installed**; the earlier default PATH resolved RTK `1.0.1`. An explicit `rtk run` operation preserved stderr and exit code `7`, which verifies the CLI wrapper, not host-hook integration. CodeGraph uses the authorized immutable MIT source fallback `bb11bc1226db30233ac9e66a2670c4b16dfa85fa` (metadata 1.1.1; not a published stable release); its existing index is current and a host MCP query succeeded under already-installed Node `22.23.4`. The default Node `26.12.0` is incompatible with that CLI, and the managed task worktree has no CodeGraph index. No tool, PATH, hook or global host setting was changed; RTK host integration is **NOT VERIFIED**.
 
-Project #17 readback: #37 `Done`, #100 `In Progress`, and #51 `Todo`; #47/#48/#49/#50/#79 are `Done`. Issue #100 is an independent CNB cutover gate, not a P1 prerequisite. P2 code remains unstarted pending the project's phase/development authority gates; its planning handoff is [Issue #51 comment 6463406977](https://github.com/Skyline-Gazer/ALNILAM/issues/51#issuecomment-6463406977).
+Project #17 readback: #37 `Done`, #100 `In Progress`, and #51 `Todo`; #47/#48/#49/#50/#79 are `Done`. Issue #100 is an independent CNB cutover gate, not a P1 prerequisite. P2/T01 schema v2 implementation is in progress on CNB dev pending the project's phase/development authority gates; its planning handoff is [Issue #51 comment 6463406977](https://github.com/Skyline-Gazer/ALNILAM/issues/51#issuecomment-6463406977).
 
-CNB Agent-governed lifecycle acceptance has now completed on real isolated PR #18: current native CI and CodeBuddy review passed; Critical and stale evidence were blocked before the repair; the Agent merged normally to the disposable target as `d89d9ba34d6edfc5c1462afe09fff5af5c46473d`. The source is an ancestor and merged tree matches tested merge `5640a56884388fe63f27ed8b48c6d4736bab4963`, recorded by the [retained CNB trusted consumer run](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-9q2-1k65dadhi) and [CNB target-commit evidence attachments](https://cnb.cool/KoolingMachine/ALNILAM/-/commit/b240a7ce465956da5b2727d49578f34182d804e3?tab=attachments). This tested SHA belongs to CNB, not GitHub; the main Agent downloaded and verified its SHA-bound build/browser receipts before merge. Actual CNB dev installation via refreshed PR #4 is still in progress; isolated GitHub Mirror acceptance passed two rounds plus a repeat NOOP, and failed/missing-check PRs #116/#117 remain unmerged. Independent Gatekeeper, fixed Reviewer and CNB Auto Merge are canceled prerequisites. GitHub PR #96 is merged; the previous failed NPC and zero-status tests remain historical evidence and residual platform risk.
+CNB Agent-governed lifecycle acceptance has now completed on real isolated PR #18: current native CI and CodeBuddy review passed; Critical and stale evidence were blocked before the repair; the Agent merged normally to the disposable target as `d89d9ba34d6edfc5c1462afe09fff5af5c46473d`. The source is an ancestor and merged tree matches tested merge `5640a56884388fe63f27ed8b48c6d4736bab4963`, recorded by the [retained CNB trusted consumer run](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-9q2-1k65dadhi) and [CNB target-commit evidence attachments](https://cnb.cool/KoolingMachine/ALNILAM/-/commit/b240a7ce465956da5b2727d49578f34182d804e3?tab=attachments). This tested SHA belongs to CNB, not GitHub; the main Agent downloaded and verified its SHA-bound build/browser receipts before merge. Actual CNB dev workflow is installed on CNB dev at e602e29a1fc9cff20e438b29251fec4482eba64b; isolated GitHub Mirror acceptance passed two rounds plus a repeat NOOP, and failed/missing-check PRs #116/#117 remain unmerged. Independent Gatekeeper, fixed Reviewer and CNB Auto Merge are canceled prerequisites. GitHub PR #96 is merged; the previous failed NPC and zero-status tests remain historical evidence and residual platform risk.
 
 The Owner selected a history-preserving GitHub PR mirror through `sync/cnb-main`, subject to separate production authorization. The local preparer from [PR #113](https://github.com/Skyline-Gazer/ALNILAM/pull/113) and production-clean pin repair from [PR #112](https://github.com/Skyline-Gazer/ALNILAM/pull/112) are integrated into #111 for review. Actual isolated PRs #114/#115 passed existing verify and ordinary Merge Commits; #116 failed verify and #117 has zero checks, so the Agent issued no merge request for either. See [mirror evidence](cnb/MIRROR.md). GitHub main Ruleset is unchanged; the first production mirror, tags/releases and deployments remain unexecuted. Read live refs before the next action; these are explicitly pre-integration snapshots.
 
@@ -59,7 +82,7 @@ See [P0 Acceptance & Decision Report](p0/P0-ACCEPTANCE.md), merged [PR #85](http
 - Ops notes: the github-pages environment policy now includes `gh-pages`, `main`, `v*`; tag-ref deploys remain unreliable (main-push is the supported path).
 
 ## Continuation 6: v0.1.0 released (2026-10-25) — Issues #7, #8 closed
-- **PR #19** (merged to `dev`, head `2fccecb`, CI 40181608439/40181511458 success): secret-pattern sweep clean; `pnpm audit` clean; unused `@pagefind/default-ui` removed; npm dependency license table in THIRD_PARTY_NOTICES; legacy-Site fixture `sites/legacy-demo` (no schemaVersion/no i18n) verified building against current + P0 (7cbcef0) + P1 (cbf16ab) cores with Site digest preserved; a11y floor + 64KiB page-weight budgets added to artifact-check (negative-tested); README quickstart rewrite; `docs/MAINTAINERS.md` (release procedure, tagging rules, CI inventory); `CHANGELOG.md`.
+- **PR #19** (merged to `dev`, head `2fccecb`, CI 40181608439/40181511458 success): secret-pattern sweep clean; `pnpm audit` clean; unused `@pagefind/default-ui` removed; npm dependency license table in THIRD_PARTY_NOTICES; legacy-Site fixture `tests/fixtures/site-v1-legacy` (no schemaVersion/no i18n) verified building against current + P0 (7cbcef0) + P1 (cbf16ab) cores with Site digest preserved; a11y floor + 64KiB page-weight budgets added to artifact-check (negative-tested); README quickstart rewrite; `docs/MAINTAINERS.md` (release procedure, tagging rules, CI inventory); `CHANGELOG.md`.
 - **Release PR #20** (`dev` → `main`, owner-authorized): merged `52a5d13`. Ruleset `alnilam-main` enforced (PR-only + `verify` strict — PR checks SUCCESS). Dispatch-run CI on main: run 40182055037 **success**.
 - **Tag `v0.1.0`** annotated on the main merge commit; GitHub Release published; `ALNILAM_OLD_CORE_SHA` repo variable set to `52a5d13f…` per docs/MAINTAINERS.md — CI upgrade/rollback now targets the real previous release going forward.
 - **Issues #7 and #8 closed** (with evidence comments). Board read-back: all items **Done** except #6 (P3 optional modules, Todo).
@@ -89,7 +112,7 @@ See [P0 Acceptance & Decision Report](p0/P0-ACCEPTANCE.md), merged [PR #85](http
 - `dev` HEAD: merge of PR #15. `main` still `282459a`; release PR requires separate authorization.
 
 ## Continuation 3: Issue #3 closed + artifact budgets (2026-10-25)
-- **PR #12** (merged `564d3f1`, head `5c6587b`, CI runs 40172044941/40171978532 success): Site **schema v1 frozen** — `schemaVersion` validated against `[1]`, absent = 1, `null`/`2`/`"1"` fail closed (10 contract tests incl. version matrix); **deterministic provenance** — output gains `alnilam-provenance.json` binding Core revision + Site SHA-256 digest, `SOURCE_DATE_EPOCH`-pinnable, digest mismatch refuses to publish; `docs/SITE_ONBOARDING.md` (schema contract, slug-as-path stability, private-Site two-checkout CI strategy with provenance gating). Reproducibility proven: repo-vs-worktree same-revision builds byte-identical (caught & removed an absolute-path leak from provenance).
+- **PR #12** (merged `564d3f1`, head `5c6587b`, CI runs 40172044941/40171978532 success): Site **schema v2 frozen** — `schemaVersion` validated against `[1]`, absent = 1, `null`/`2`/`"1"` fail closed (10 contract tests incl. version matrix); **deterministic provenance** — output gains `alnilam-provenance.json` binding Core revision + Site SHA-256 digest, `SOURCE_DATE_EPOCH`-pinnable, digest mismatch refuses to publish; `docs/SITE_ONBOARDING.md` (schema contract, slug-as-path stability, private-Site two-checkout CI strategy with provenance gating). Reproducibility proven: repo-vs-worktree same-revision builds byte-identical (caught & removed an absolute-path leak from provenance).
 - **PR #13** (merged `5b75aea`, head `a6387eb`, CI runs 40172457608/40172439110 + dev run 40172587261 success): `scripts/artifact-check.mjs` wired into `pnpm build` — posts pages zero runtime scripts, ≤1 island/page, all `<img>` with explicit dimensions (CLS), provenance integrity. **Immediately caught two regressions**: P1 rewrite had silently dropped the Status island (restored, PRODUCT.md v0.1 requires the hydration demo) and the article cover `<img>` lacked dimensions (fixed). Negative-tested (injected script → build fails).
 - Issue #3: **all acceptance items now evidenced** (schema freeze + provenance this PR; git-Site immutability, symlink/path rejection, no-mutation across upgrade/rollback from PR #9 chain). Board: #1/#2/#3/#4/#9/#10/#12/#13 Done, #8 In Progress, #5/#6/#7 Todo.
 - `dev` HEAD `5b75aea`; `main` still `282459a` (release PR needs owner authorization; first tag then enables real `ALNILAM_OLD_CORE_SHA`).

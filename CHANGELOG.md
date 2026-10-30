@@ -7,6 +7,13 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 ## [Unreleased]
 
 ### Added
+- **Site schema v2 (Issue #51)**: YAML-only `alnilam.config.yaml` with strict validation for schema version, unknown fields, locales, routing and taxonomy metadata; demo Site migrated; historical v1 TOML retained under `tests/fixtures/site-v1-legacy` for negative compatibility evidence.
+
+### Removed
+- Runtime TOML Site config parsing (`smol-toml`) and in-repo `sites/legacy-demo` fixture path (v1 legacy moved to tests).
+
+
+### Added
 - **P1 Shirone frontend vertical slice (candidate, #48):** local Shirone-derived M3E home/list/article/archive/tag presentation with the retained ALNILAM Core/Site v1, Pagefind, optional-module and rollback contracts. Not released or deployed.
 
 ### Fixed
@@ -46,8 +53,8 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 First tagged release: Core/Site platform baseline through P2 essentials.
 
 ### Added
-- **Core/Site composition**: independent Site ownership (`alnilam.config.toml`, `content/posts/`, optional `assets/`, `data/`); non-mutating staged builds with pre/post digest checks; `alnilam-provenance.json` binding Core revision + Site SHA-256; safe output placement (no overlap with Site, no symlinks in Site inputs).
-- **Schema v1 (frozen)**: explicit `schemaVersion` validation, fails closed on unknown versions; additive i18n fields `lang` (BCP-47) and `translationKey`.
+- **Core/Site composition**: independent Site ownership (`alnilam.config.yaml`, `content/posts/`, optional `assets/`, `data/`); non-mutating staged builds with pre/post digest checks; `alnilam-provenance.json` binding Core revision + Site SHA-256; safe output placement (no overlap with Site, no symlinks in Site inputs).
+- **Schema v2 (frozen)**: explicit `schemaVersion` validation, fails closed on unknown versions; additive i18n fields `lang` (BCP-47) and `translationKey`.
 - **Upgrade/rollback acceptance**: two Core revisions build one unchanged external Site; Site digest verified identical across upgrade and rollback; CI-enforced (`scripts/upgrade-check.mjs`).
 - **Editorial theme**: original design-token system with true dark/light palettes; Fuwari-style one-post-per-row cards (text left / cover right ~28% desktop, cover-top mobile); cinematic homepage hero with original constellation artwork; semantic prose typography; keyboard accessibility, focus-visible, prefers-reduced-motion.
 - **Content discovery**: archives by year, tags index, per-tag listings, paginated post stream (`/posts/`, pageSize 5).

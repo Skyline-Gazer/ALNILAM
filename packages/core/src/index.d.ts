@@ -1,3 +1,8 @@
+export interface TaxonomyEntry {
+  id: string;
+  slug: string;
+  label: Readonly<Record<string, string>>;
+}
 export interface CommentsConfig {
   enabled: boolean;
   provider: "giscus";
@@ -17,7 +22,16 @@ export interface SiteConfig {
   schemaVersion: number;
   site: { title: string; description: string; url: string; locale: string };
   theme: { appearance: "dark" | "light" };
+  routing: { prefixDefaultLocale: boolean };
+  locales: readonly string[];
+  categories: readonly TaxonomyEntry[];
+  tags: readonly TaxonomyEntry[];
   comments: Readonly<CommentsConfig>;
   bangumi: Readonly<BangumiConfig>;
+  llms: { enabled: boolean };
 }
 export declare function normalizeSiteConfig(input: unknown): Readonly<SiteConfig>;
+export declare function parseSiteConfigDocument(
+  raw: string,
+  options?: { filename?: string },
+): unknown;

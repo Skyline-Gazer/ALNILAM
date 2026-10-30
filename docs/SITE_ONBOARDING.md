@@ -4,20 +4,20 @@ An ALNILAM **Site** is an independent directory (usually its own Git repository)
 your content, configuration and assets. Core never writes into it, fetches it, or checks
 it out — you pin the Site revision yourself.
 
-## Site layout (schema v1 — frozen)
+## Site layout (schema v2 — frozen)
 
 ```
 yoursite/
-├── alnilam.config.toml      # required — site configuration
+├── alnilam.config.yaml      # required — site configuration
 ├── content/posts/           # required — Markdown/MDX posts
 ├── assets/                  # optional — copied verbatim to /site-assets/ in output
 └── data/                    # optional — reserved, not yet read
 ```
 
-### `alnilam.config.toml` (schema v1)
+### `alnilam.config.yaml` (schema v2)
 
 ```toml
-schemaVersion = 1            # optional; only 1 is supported. Old Core + new Site fails closed.
+schemaVersion: 2            # optional; only 1 is supported. Old Core + new Site fails closed.
 
 [site]
 title = "My Blog"            # required, non-empty

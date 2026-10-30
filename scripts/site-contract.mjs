@@ -2,22 +2,28 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 
+export const SITE_CONFIG_FILENAME = "alnilam.config.yaml";
+
 const isWithin = (child, parent) => child === parent || child.startsWith(parent + path.sep);
+
+export function siteConfigPath(root) {
+  return path.join(root, SITE_CONFIG_FILENAME);
+}
 
 export function validateSiteRoot(site) {
   const root = path.resolve(site);
   if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) {
     throw new Error("Site directory does not exist: " + root);
   }
-  for (const required of ["alnilam.config.toml", "content/posts"]) {
+  for (const required of [SITE_CONFIG_FILENAME, "content/posts"]) {
     const file = path.join(root, required);
     if (!fs.existsSync(file)) throw new Error("Site missing required input: " + required);
   }
-  if (!fs.statSync(path.join(root, "alnilam.config.toml")).isFile()) {
+  if (!fs.statSync(siteConfigPath(root)).isFile()) {
     throw new Error("Site config must be a regular file");
   }
   const sha = crypto.createHash("sha256");
-  const paths = ["alnilam.config.toml", "content", "assets", "data"];
+  const paths = [SITE_CONFIG_FILENAME, "content", "assets", "data"];
   function visit(abs, relative) {
     const stat = fs.lstatSync(abs);
     if (stat.isSymbolicLink()) throw new Error("Site cannot contain symlinks: " + relative);
@@ -47,4 +53,3 @@ export function assertExternalOutput(site, output) {
   if (dest === path.parse(dest).root) throw new Error("Output must not be filesystem root");
   return dest;
 }
-

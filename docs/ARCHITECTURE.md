@@ -6,7 +6,7 @@ Status: v0.1 implementation baseline; not a framework-neutral CMS.
 1. **Core is source-controlled software** in this Monorepo; Site is user-owned config, content, data and assets.
 2. The Site is an immutable input to build. The builder MUST NOT write into the original Site directory.
 3. `sites/demo` is a reference fixture only. A user's Site may live in any external directory/repository.
-4. Site is accepted through one stable contract: `alnilam.config.toml`, `content/posts/`, optional `assets/`, optional `data/`. Assets are copied to `/site-assets/` after building.
+4. Site is accepted through one stable contract: `alnilam.config.yaml`, `content/posts/`, optional `assets/`, optional `data/`. Assets are copied to `/site-assets/` after building.
 5. No hosting API, database or runtime server is required to serve output. Astro produces static HTML.
 6. Core upgrade must not require merging Core files with Site content. Any content schema changes must be versioned, validated and accompanied by a migration strategy.
 7. No secret is stored in a public Site config, or supplied through `PUBLIC_*` variables.

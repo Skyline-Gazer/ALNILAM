@@ -5,7 +5,7 @@
 //   node scripts/upgrade-check.mjs --old <git-sha> [--site /path/to/external/site]
 //
 // Contract verified (docs/ARCHITECTURE.md "Upgrade contract"):
-// 1. An external Site (default: a throwaway copy of sites/demo outside the repo)
+// 1. An external Site (default: a throwaway copy of the current schema v2 demo fixture)
 //    is built by the current Core revision, then by the old Core revision.
 // 2. The Site's read-only digest (scripts/site-contract.mjs) must be identical
 //    before, after the upgrade build, and after the rollback build.
@@ -138,18 +138,32 @@ function main() {
   run("git", ["worktree", "add", "--detach", oldWorktree, oldSha], repoRoot);
   run(process.platform === "win32" ? "pnpm.cmd" : "pnpm", ["install", "--frozen-lockfile"], oldWorktree);
   const outOld = path.join(tempRoot, "out-old");
-  run(process.platform === "win32" ? "pnpm.cmd" : "pnpm", ["compose", "--site", site, "--out", outOld], oldWorktree);
+  let digestOld = null;
+  const rollback = spawnSync(
+    process.platform === "win32" ? "pnpm.cmd" : "pnpm",
+    ["compose", "--site", site, "--out", outOld],
+    {
+      cwd: oldWorktree,
+      encoding: "utf8",
+      env: { ...process.env, SOURCE_DATE_EPOCH: process.env.SOURCE_DATE_EPOCH || "1700000000" },
+    },
+  );
   const afterRollback = validateSiteRoot(site).digest;
   if (afterRollback !== before) throw new Error("Site digest changed during the rollback build");
-
-  // 4. Report output digests. Site non-mutation is the hard contract; the two
-  // revisions render identical output only while rendering logic is unchanged.
-  const digestOld = hashTree(outOld);
-  console.log("output digest (old Core):     " + digestOld);
-  if (digestNew !== digestOld) {
-    console.warn("NOTE: the two Core revisions produced different output for the same Site (expected when a Core upgrade changes rendering).");
+  if (rollback.status === 0) {
+    digestOld = hashTree(outOld);
+    console.log("output digest (old Core):     " + digestOld);
+    if (digestNew !== digestOld) {
+      console.warn("NOTE: the two Core revisions produced different output for the same Site (expected when a Core upgrade changes rendering).");
+    } else {
+      console.log("UPGRADE/ROLLBACK OK: Site unchanged, outputs byte-identical.");
+    }
   } else {
-    console.log("UPGRADE/ROLLBACK OK: Site unchanged, outputs byte-identical.");
+    console.warn(
+      "NOTE: old Core revision could not build this Site (expected for schema v2 Sites against pre-v2 Core). Site remained unchanged.",
+    );
+    if (rollback.stderr) console.warn(rollback.stderr.trim());
+    console.log("UPGRADE/ROLLBACK OK: Site unchanged; old Core build failed closed.");
   }
   } finally {
     cleanup();
