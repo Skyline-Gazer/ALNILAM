@@ -34,7 +34,7 @@ Required Site layout (schema v2 — frozen):
 
 ```
 my-site/
-  alnilam.config.yaml     # schemaVersion: 2, [site] title/url, [theme] appearance
+  alnilam.config.yaml     # schemaVersion: 2, site.title/url, theme.appearance
   content/posts/          # *.md / *.mdx
   assets/                 # optional → served at /site-assets/
   data/                   # optional, reserved

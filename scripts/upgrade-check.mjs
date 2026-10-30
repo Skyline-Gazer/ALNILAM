@@ -148,6 +148,7 @@ function main() {
       env: { ...process.env, SOURCE_DATE_EPOCH: process.env.SOURCE_DATE_EPOCH || "1700000000" },
     },
   );
+  const rollbackOutput = `${rollback.stdout || ""}${rollback.stderr || ""}`;
   const afterRollback = validateSiteRoot(site).digest;
   if (afterRollback !== before) throw new Error("Site digest changed during the rollback build");
   if (rollback.status === 0) {
@@ -159,10 +160,16 @@ function main() {
       console.log("UPGRADE/ROLLBACK OK: Site unchanged, outputs byte-identical.");
     }
   } else {
+    const expectedSchemaFailure = /unsupported schemaVersion/i.test(rollbackOutput);
+    if (!expectedSchemaFailure) {
+      throw new Error(
+        "Old Core revision failed to build the Site for an unexpected reason:\n" + rollbackOutput.trim(),
+      );
+    }
     console.warn(
       "NOTE: old Core revision could not build this Site (expected for schema v2 Sites against pre-v2 Core). Site remained unchanged.",
     );
-    if (rollback.stderr) console.warn(rollback.stderr.trim());
+    if (rollbackOutput.trim()) console.warn(rollbackOutput.trim());
     console.log("UPGRADE/ROLLBACK OK: Site unchanged; old Core build failed closed.");
   }
   } finally {

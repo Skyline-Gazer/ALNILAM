@@ -16,17 +16,17 @@ yoursite/
 
 ### `alnilam.config.yaml` (schema v2)
 
-```toml
-schemaVersion: 2            # optional; only 1 is supported. Old Core + new Site fails closed.
+```yaml
+schemaVersion: 2            # required; only 2 is supported. Old Core + new Site fails closed.
 
-[site]
-title = "My Blog"            # required, non-empty
-description = "About this blog"
-url = "https://blog.example.com"   # required, absolute http(s) URL
-locale = "zh-CN"             # optional, default zh-CN
+site:
+  title: "My Blog"            # required, non-empty
+  description: "About this blog"
+  url: "https://blog.example.com"   # required, absolute http(s) URL
+  locale: "zh-CN"             # optional, default zh-CN
 
-[theme]
-appearance = "dark"          # "dark" | "light", default dark
+theme:
+  appearance: "dark"          # "dark" | "light", default dark
 ```
 
 ### Posts and slugs
@@ -62,27 +62,27 @@ Both modules are feature-flagged: **disabled modules ship nothing** — no page,
 
 ### Comments (`[comments]`)
 
-```toml
-[comments]
-enabled = true
-provider = "giscus"            # only provider
-repo = "you/your-repo"         # public GitHub repo hosting Discussions
-repoId = "R_..."               # from giscus.app
-category = "Announcements"
-categoryId = "DIC_..."
-# mapping = "pathname"         # optional: pathname | specific | number
+```yaml
+comments:
+  enabled: true
+  provider: "giscus"            # only provider
+  repo: "you/your-repo"         # public GitHub repo hosting Discussions
+  repoId: "R_..."               # from giscus.app
+  category: "Announcements"
+  categoryId: "DIC_..."
+  # mapping: "pathname"         # optional: pathname | specific | number
 ```
 
 Renders on post pages as a lazy `client:visible` island; the giscus script loads only after the section scrolls into view. Requires GitHub Discussions on the repo. Theme (dark/light) and language follow your Site config.
 
 ### Bangumi (`[bangumi]`)
 
-```toml
-[bangumi]
-enabled = true
-userId = "your-bgm-name"
-subjectType = "anime"          # anime | book | music | game
-limit = 10                     # 1–50
+```yaml
+bangumi:
+  enabled: true
+  userId: "your-bgm-name"
+  subjectType: "anime"          # anime | book | music | game
+  limit: 10                     # 1–50
 ```
 
 Adds `/bangumi/` (nav + footer links appear automatically). Data is fetched **once at build time** from `api.bgm.tv` and embedded as static HTML — visitors make **zero** third-party data requests. Cover images hotlink `lain.bgm.tv` with `referrerpolicy="no-referrer"` (fetching covers into your output would redistribute upstream artwork). If the API is unreachable at build time the page renders an inline warning; the rest of the Site is unaffected.
