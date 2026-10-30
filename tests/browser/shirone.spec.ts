@@ -12,6 +12,15 @@ async function selectTheme(page: Page, theme: Theme) {
   await expect(page.locator("html")).toHaveCSS("color-scheme", theme);
 }
 
+async function captureScreenshot(page: Page, path: string) {
+  await page.screenshot({
+    path,
+    fullPage: true,
+    animations: "disabled",
+    timeout: 5_000,
+  });
+}
+
 async function assertListGeometry(page: Page, width: number) {
   const cards = page.locator('[data-post-card][data-cover="true"]');
   await expect(cards.first()).toBeVisible();
@@ -35,27 +44,24 @@ async function assertListGeometry(page: Page, width: number) {
   }
 }
 
-test("root and nested-base pages navigate, theme, and search", async ({ browser }) => {
-  // The combined root/nested case exceeded the shared 90s limit on the 2-CPU CNB runner.
-  test.setTimeout(180_000);
-  const results: Record<string, unknown>[] = [];
-  for (const [name, origin, width, height] of [
-    ["root", ROOT, 1440, 1000],
-    ["nested", NESTED, 1440, 1000],
-  ] as const) {
+for (const [name, origin, width, height] of [
+  ["root", ROOT, 1440, 1000],
+  ["nested", NESTED, 1440, 1000],
+] as const) {
+  test(`${name}-base pages navigate, theme, and search`, async ({ browser }) => {
     const context = await browser.newContext({ viewport: { width, height } });
     const page = await context.newPage();
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(String(error)));
     try {
-      await page.goto(`${origin}/`, { waitUntil: "networkidle" });
+      await page.goto(`${origin}/`, { waitUntil: "domcontentloaded" });
       await expect(page.locator("h1")).toHaveCount(1);
       await expect(page.locator(".home-hero")).toBeVisible();
       await expect(page.locator(".post-card").first()).toBeVisible();
       await selectTheme(page, "light");
-      await page.screenshot({ path: `browser-results/${name}-desktop-light.png`, fullPage: true });
+      await captureScreenshot(page, `browser-results/${name}-desktop-light.png`);
       await selectTheme(page, "dark");
-      await page.screenshot({ path: `browser-results/${name}-desktop-dark.png`, fullPage: true });
+      await captureScreenshot(page, `browser-results/${name}-desktop-dark.png`);
       await assertListGeometry(page, width);
       const firstPost = page.locator("[data-post-card] h2 a").first();
       const href = await firstPost.getAttribute("href");
@@ -71,13 +77,14 @@ test("root and nested-base pages navigate, theme, and search", async ({ browser 
         );
       });
       await expect(page.locator(".prose-post th").first()).toHaveCSS("border-top-style", "solid");
-      await page.screenshot({ path: `browser-results/${name}-article-dark.png`, fullPage: true });
+      await captureScreenshot(page, `browser-results/${name}-article-dark.png`);
       await selectTheme(page, "light");
-      await page.screenshot({ path: `browser-results/${name}-article-light.png`, fullPage: true });
+      await captureScreenshot(page, `browser-results/${name}-article-light.png`);
       await page.getByRole("link", { name: "文章" }).first().click();
+      await expect(page.locator(".post-list")).toBeVisible();
       await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
       await expect(page.getByRole("radio", { name: "浅色" })).toBeChecked();
-      await page.goBack({ waitUntil: "networkidle" });
+      await page.goBack({ waitUntil: "domcontentloaded" });
       await expect(page.locator(".article-view")).toBeVisible();
       await page.getByRole("link", { name: "← 返回全部文章" }).click();
       await expect(page.locator(".post-list")).toBeVisible();
@@ -97,21 +104,27 @@ test("root and nested-base pages navigate, theme, and search", async ({ browser 
       await search.locator("a[href]").first().click();
       await expect(page.locator("h1")).toHaveCount(1);
       await expect(page).toHaveURL(new URL(resultHref!, origin).href);
-      results.push({ name, href, resultHref, errors, status: "PASS" });
+      expect(errors, `${name} page errors`).toEqual([]);
+      await test.info().attach(`${name}-browser-result.json`, {
+        body: JSON.stringify({ name, href, resultHref, errors, status: "PASS" }, null, 2),
+        contentType: "application/json",
+      });
     } catch (error) {
-      await page.screenshot({ path: `browser-results/${name}-failure.png`, fullPage: true });
-      results.push({ name, errors, status: "FAIL", error: String(error) });
+      try {
+        await captureScreenshot(page, `browser-results/${name}-failure.png`);
+      } catch {
+        // Preserve the original failure when the test timeout has already closed the page.
+      }
+      await test.info().attach(`${name}-browser-result.json`, {
+        body: JSON.stringify({ name, errors, status: "FAIL", error: String(error) }, null, 2),
+        contentType: "application/json",
+      });
       throw error;
     } finally {
       await context.close();
-      expect(errors, `${name} page errors`).toEqual([]);
     }
-  }
-  await test.info().attach("browser-results.json", {
-    body: JSON.stringify(results, null, 2),
-    contentType: "application/json",
   });
-});
+}
 
 test("mobile cards place the cover before content", async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
