@@ -1,6 +1,6 @@
 # CNB developer workflow acceptance
 
-> Current update (2026-10-30): GitHub PR #96 has advanced to `911fe4327ecb81179df2ee5bccabd47f2cb5b48e`. The 2026-10-29 native evidence below applies to the earlier `7f080e02cc56f49d066cc4036a6d4c914f4b367a` target. Current-head CNB native validation, a separately trusted Gatekeeper identity, stale-approval rejection, and automatic merge are unverified.
+> Current update (2026-10-30): GitHub PR #96 has advanced to `911fe4327ecb81179df2ee5bccabd47f2cb5b48e`. The 2026-10-29 native evidence below applies to the earlier `7f080e02cc56f49d066cc4036a6d4c914f4b367a` target. Current-head trusted target validation passed in PR #17; archive and SHA evidence are in CUTOVER-READINESS.md. A separately trusted Gatekeeper identity, stale-approval rejection and automatic merge remain unverified.
 
 Historical readback: 2026-10-29. **CNB is not yet the accepted development authority.** GitHub PR #96 then pointed to `7f080e02cc56f49d066cc4036a6d4c914f4b367a`; its GitHub checks passed 6/6, and that candidate SHA passed native positive `pull_request.target` E2E on scratch. The negative no-op-script test failed closed as designed. CNB's zero-status rule still permits merge, so strict Required Checks fails and the workflow is not installed on actual `dev` because PR #4 remains unmerged.
 

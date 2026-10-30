@@ -1,6 +1,6 @@
 # CNB Review and NPC acceptance
 
-> Current update (2026-10-30): PR #96 is at `911fe4327ecb81179df2ee5bccabd47f2cb5b48e`; native runs described below tested earlier SHAs. No independent Gatekeeper identity or current-head CNB acceptance is claimed.
+> Current update (2026-10-30): PR #96 is at `911fe4327ecb81179df2ee5bccabd47f2cb5b48e`; current trusted native target validation passed in PR #17, as recorded in CUTOVER-READINESS.md. Earlier runs retain their original SHA scope. Independent Gatekeeper identity and consumer acceptance remain unverified.
 
 Readback: 2026-10-29. **The GitHub candidate at that readback was `7f080e02cc56f49d066cc4036a6d4c914f4b367a`.** It passed the native target-owned trusted gate on an isolated CNB PR; an adversarial no-op-script PR failed closed. This does not make AI Review or NPC a required gate, and it does not resolve the platform's zero-status merge gap. Formal merge to `dev` still requires explicit Owner authorization.
 
