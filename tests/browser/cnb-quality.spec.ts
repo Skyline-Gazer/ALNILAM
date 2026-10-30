@@ -1,8 +1,14 @@
-import {test, expect} from '@playwright/test';
+import {test, expect, type Page} from '@playwright/test';
 import {CLS_BUDGET, calculateCLS, assertCLSBudget, observeLayoutShifts} from '../../scripts/ci/cnb-metrics.mjs';
 
 test.use({trace: 'on'});
 const origins = ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'];
+const captureScreenshot = async (page: Page, path: string) => page.screenshot({
+  path,
+  fullPage: true,
+  animations: 'disabled',
+  timeout: 5_000,
+});
 for (const origin of origins) for (const width of [390, 1440]) {
   test(`CNB navigation and CLS ${new URL(origin).pathname} ${width}`, async ({browser}, info) => {
     const context = await browser.newContext({viewport: {width, height: 900}, reducedMotion: 'reduce', hasTouch: width === 390});
@@ -20,10 +26,10 @@ for (const origin of origins) for (const width of [390, 1440]) {
       const events = await page.evaluate('window.__cnbShifts || []');
       samples.push({url: page.url(), action, cls: calculateCLS(events), events});
       // Baselines are recorded before a mandatory normal-page budget is chosen.
-      await page.screenshot({path: info.outputPath(`${action}.png`), fullPage: true});
+      await captureScreenshot(page, info.outputPath(`${action}.png`));
     };
     try {
-      await page.goto(`${origin}/`, {waitUntil: 'networkidle'});
+      await page.goto(`${origin}/`, {waitUntil: 'domcontentloaded'});
       await sample('home');
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await page.locator('[data-theme-choice="light"]').click();
@@ -39,15 +45,15 @@ for (const origin of origins) for (const width of [390, 1440]) {
       const scrollPosition = await page.evaluate(() => scrollY);
       expect(scrollPosition).toBeGreaterThan(0);
       for (let round = 0; round < 10; round++) {
-        await page.goBack({waitUntil: 'networkidle'});
+        await page.goBack({waitUntil: 'domcontentloaded'});
         await expect(page.locator('.home-hero')).toBeVisible();
-        await page.goForward({waitUntil: 'networkidle'});
+        await page.goForward({waitUntil: 'domcontentloaded'});
         await expect(page.locator('.article-view')).toBeVisible();
         await expect.poll(async () => Math.abs(await page.evaluate(() => scrollY) - scrollPosition)).toBeLessThanOrEqual(2);
         expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('light');
       }
       await sample('restoration');
-      await page.goto(`${origin}/tags/`, {waitUntil: 'networkidle'});
+      await page.goto(`${origin}/tags/`, {waitUntil: 'domcontentloaded'});
       await expect(page.locator('main h1')).toBeVisible();
       const tag = page.locator('main a[href*="/tags/"]').first();
       await expect(tag).toBeVisible();
@@ -74,7 +80,7 @@ for (const origin of origins) for (const width of [390, 1440]) {
 test('optional integrations remain absent on disabled product pages', async ({page}) => {
   const related: string[] = [];
   page.on('request', request => { if (/giscus|googletagmanager|google-analytics|googlesyndication|doubleclick/i.test(request.url())) related.push(request.url()); });
-  await page.goto(`${origins[0]}/`, {waitUntil: 'networkidle'});
+  await page.goto(`${origins[0]}/`, {waitUntil: 'domcontentloaded'});
   await page.locator('[data-post-card] h2 a').first().click();
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await page.waitForTimeout(650);
