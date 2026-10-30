@@ -1,6 +1,9 @@
 # CNB to GitHub PR mirror
 
-Status: **design only; not implemented or executed** (2026-10-30). GitHub remains primary. The Owner selected CNB Primary + an independent Gatekeeper + a GitHub PR release mirror, but CNB acceptance and a later release authorization remain prerequisites. GitHub Issues and Project #17 remain the task tracker.
+Status: **partially implemented locally; full mirror not implemented or executed** (2026-10-30). GitHub remains primary. The Owner selected CNB Primary + an independent Gatekeeper + a GitHub PR release mirror, but CNB acceptance and a later release authorization remain prerequisites. GitHub Issues and Project #17 remain the task tracker.
+
+
+[PR #113](https://github.com/Skyline-Gazer/ALNILAM/pull/113) proposes a local-only Git candidate preparer. It preserves both parents, verifies the candidate tree equals the supplied source tree, detects conflicts and GitHub-only tree drift, rejects an unrelated unmerged sync candidate, and reuses or no-ops on repeated inputs. A temporary bare repository prevents repository-configured merge drivers from executing. Six disposable Git-history tests cover two release rounds, a retry and a no-op, conflicts, drift, stale sync, and a custom merge driver. These are local mechanics, not GitHub PR/CI/Auto-merge or release acceptance. The helper does not validate a manifest or live refs, push a branch, create a PR, or sync a tag.
 
 ## Minimal release path
 
