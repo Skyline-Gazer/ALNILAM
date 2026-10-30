@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {validateNativePullRequest, assertMergeParents, assertLiveRefs, candidateEnvironment, inspectArtifactTree, snapshotArtifactTree, safeFailureEvidence, validateEvidence, trustedTestFiles, trustedAstroCheckArgs, HARNESS_FILES} from './cnb-trusted-gate.mjs';
 
 const source = 'a'.repeat(40), target = 'b'.repeat(40), merge = 'c'.repeat(40);
@@ -139,6 +141,22 @@ test('failure evidence scanning stops after 5000 entries', () => {
   try {
     for (let i = 0; i < 5001; i++) fs.writeFileSync(path.join(root, `ignored-${i}`), '');
     assert.deepEqual(safeFailureEvidence(root), []);
+  } finally { fs.rmSync(root, {recursive: true, force: true}); }
+});
+
+test('setup failures preserve fail-closed platform evidence', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cnb-setup-failure-'));
+  const script = path.join(path.dirname(fileURLToPath(import.meta.url)), 'cnb-trusted-gate.mjs');
+  try {
+    const result = spawnSync(process.execPath, [script], {
+      cwd: root,
+      encoding: 'utf8',
+      env: {PATH: process.env.PATH, HOME: process.env.HOME},
+    });
+    assert.notEqual(result.status, 0);
+    const evidence = JSON.parse(fs.readFileSync(path.join(root, 'artifacts', 'platform.json'), 'utf8'));
+    assert.equal(evidence.status, 'FAIL');
+    assert.ok(evidence.error);
   } finally { fs.rmSync(root, {recursive: true, force: true}); }
 });
 

@@ -20,7 +20,13 @@ const result = spawnSync(process.execPath, [cli, 'test', spec, '--config', path.
     CNB_TRUSTED_SOURCE_ROOT: trustedSourceRoot, PLAYWRIGHT_JSON_OUTPUT_FILE: reportPath},
   encoding: 'utf8', timeout: 120000,
 });
-fs.writeFileSync('artifacts/cnb-browser/negative.log', result.stdout + result.stderr);
+const log = Buffer.concat([Buffer.from(result.stdout || ''), Buffer.from(result.stderr || '')]);
+const maxLogBytes = 2 * 1024 * 1024;
+const truncationMarker = Buffer.from(`[truncated ${Math.max(0, log.length - maxLogBytes)} leading bytes]\n`);
+const logOutput = log.length <= maxLogBytes
+  ? log
+  : Buffer.concat([truncationMarker, log.subarray(-(maxLogBytes - truncationMarker.length))]);
+fs.writeFileSync('artifacts/cnb-browser/negative.log', logOutput);
 if (result.error || result.signal || result.status === null) {
   throw Error(`Browser negative probe did not exit normally (signal ${result.signal || 'none'}; ${result.error?.message || 'no process error'})`);
 }

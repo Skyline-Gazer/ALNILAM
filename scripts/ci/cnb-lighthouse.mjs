@@ -79,6 +79,7 @@ try {
   fs.rmSync(assertionResultsPath, {force: true});
   if (await run(['collect', `--config=.tmp/cnb/lighthouse-regression-${formFactor}.json`]) !== 0) throw Error('Regression fixture failed to collect');
   const code = await run(['assert', `--config=.tmp/cnb/lighthouse-regression-${formFactor}.json`]);
+  if (!fs.existsSync(assertionResultsPath)) throw Error('Lighthouse regression assertion did not write assertion-results.json');
   const assertions = JSON.parse(fs.readFileSync(assertionResultsPath, 'utf8'));
   if (code !== 1) throw Error('Regression assertion did not return its expected failure');
   if (await run(['upload', `--config=.tmp/cnb/lighthouse-regression-${formFactor}.json`]) !== 0) throw Error('Regression evidence upload failed');

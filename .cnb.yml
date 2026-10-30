@@ -105,6 +105,13 @@ $:
       failStages:
         - name: Preserve available test diagnostics
           script: |
+            if test -f artifacts/platform.json; then
+              cat artifacts/platform.json
+            fi
+            if test ! -d artifacts; then
+              echo "No retained artifacts"
+              exit 0
+            fi
             find artifacts -type f -name '*.log' -exec sh -c '
               for file do
                 echo "----- $file -----"

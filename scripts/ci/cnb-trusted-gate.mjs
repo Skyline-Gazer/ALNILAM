@@ -369,6 +369,12 @@ function runCandidate(candidateRoot, harnessRoot) {
   run('isolated tag dry run', process.execPath, [path.join(ci, 'cnb-release-tag-dry-run.mjs')]);
 }
 
+function ensureFailurePlatform(message, status) {
+  const destination = path.join(ROOT, 'artifacts');
+  fs.mkdirSync(destination, {recursive: true});
+  fs.writeFileSync(path.join(destination, 'platform.json'), JSON.stringify({status, error: message}, null, 2) + '\n');
+}
+
 function copyFailureEvidence(candidateRoot, message, status) {
   const destination = path.join(ROOT, 'artifacts');
   fs.rmSync(destination, {recursive: true, force: true});
@@ -379,7 +385,7 @@ function copyFailureEvidence(candidateRoot, message, status) {
     fs.mkdirSync(path.dirname(file), {recursive: true});
     fs.copyFileSync(path.join(sourceRoot, name), file);
   }
-  fs.writeFileSync(path.join(destination, 'platform.json'), JSON.stringify({status, error: message}, null, 2) + '\n');
+  ensureFailurePlatform(message, status);
 }
 
 function archiveEvidence(candidateRoot, identity) {
@@ -471,5 +477,10 @@ if (process.argv[2] === '--run-candidate') {
   try { runCandidate(path.resolve(process.argv[3]), path.resolve(process.argv[4])); }
   catch (error) { console.error(`CANDIDATE_CHECKS_FAILED: ${error.message}`); process.exitCode = 1; }
 } else if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
-  main().catch(error => { console.error(`CNB_TRUSTED_GATE_BLOCKED: ${error.message}`); process.exitCode = 1; });
+  main().catch(error => {
+    try { ensureFailurePlatform(error.message, 'FAIL'); }
+    catch (evidenceError) { console.error(`CNB_FAILURE_EVIDENCE_ERROR: ${evidenceError.message}`); }
+    console.error(`CNB_TRUSTED_GATE_BLOCKED: ${error.message}`);
+    process.exitCode = 1;
+  });
 }
