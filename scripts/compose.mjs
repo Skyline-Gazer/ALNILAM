@@ -13,6 +13,7 @@ const toolchainRoot = process.env.ALNILAM_TOOLCHAIN_ROOT
   ? path.resolve(process.env.ALNILAM_TOOLCHAIN_ROOT)
   : repoRoot;
 const externalToolchain = toolchainRoot !== repoRoot;
+const toolchainCwd = externalToolchain ? path.join(repoRoot, "apps/web") : repoRoot;
 const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const argv = process.argv.slice(2);
 function option(flag, fallback) {
@@ -58,7 +59,7 @@ try {
       ? [path.join(toolchainRoot, "apps/web/node_modules/astro/bin/astro.mjs"), "build", "--root", path.join(repoRoot, "apps/web")]
       : ["--dir", path.join(repoRoot, "apps/web"), "exec", "astro", "build", "--root", path.join(repoRoot, "apps/web")],
     {
-      cwd: repoRoot,
+      cwd: toolchainCwd,
       stdio: "inherit",
       env: {
         ...process.env,
@@ -80,7 +81,7 @@ try {
     externalToolchain
       ? [path.join(toolchainRoot, "apps/web/node_modules/pagefind/lib/runner/bin.cjs"), "--site", stage]
       : ["--dir", path.join(repoRoot, "apps/web"), "exec", "pagefind", "--site", stage],
-    { cwd: repoRoot, stdio: "inherit", env: { ...process.env, SOURCE_DATE_EPOCH: process.env.SOURCE_DATE_EPOCH } },
+    { cwd: toolchainCwd, stdio: "inherit", env: { ...process.env, SOURCE_DATE_EPOCH: process.env.SOURCE_DATE_EPOCH } },
   );
   if (pf.error) throw pf.error;
   if (pf.status !== 0) throw new Error("Pagefind indexing failed: exit " + pf.status);
