@@ -24,7 +24,7 @@ const contentTypes = {
   ".xml": "application/xml; charset=utf-8",
 };
 
-http.createServer((request, response) => {
+const server = http.createServer((request, response) => {
   const url = new URL(request.url ?? "/", "http://localhost");
   requests.push({ path: url.pathname, status: 0 });
   const record = requests.at(-1);
@@ -33,7 +33,9 @@ http.createServer((request, response) => {
     response.writeHead(404).end("Not found");
     return;
   }
-  let relative = decodeURIComponent(url.pathname.slice(base.length));
+  let relative;
+  try { relative = decodeURIComponent(url.pathname.slice(base.length)); }
+  catch { response.writeHead(400).end("Malformed URL"); return; }
   if (!relative || relative.endsWith("/")) relative += "index.html";
   const file = path.resolve(root, relative);
   if (!file.startsWith(root + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
@@ -45,7 +47,7 @@ http.createServer((request, response) => {
   response.setHeader("Content-Type", contentTypes[path.extname(file)] ?? "application/octet-stream");
   fs.createReadStream(file).pipe(response);
 }).listen(port, "127.0.0.1", () => {
-  console.log(`Serving ${root} at http://127.0.0.1:${port}${base}`);
+  console.log(`Serving ${root} at http://127.0.0.1:${server.address().port}${base}`);
 });
 
 if (journal) {

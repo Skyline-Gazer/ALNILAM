@@ -5,6 +5,7 @@ const nested = "http://127.0.0.1:4324/ALNILAM";
 const root = "http://127.0.0.1:4323";
 const routes = ["/", "/posts/", "/posts/cover-story/", "/tags/"];
 const mobile = formFactor === "mobile";
+const clsBudget = 0.1;
 
 module.exports = {
   ci: {
@@ -26,7 +27,7 @@ module.exports = {
     },
     assert: {
       assertions: {
-        "cumulative-layout-shift": ["warn", { maxNumericValue: 0.1 }],
+        "cumulative-layout-shift": ["warn", { maxNumericValue: clsBudget }],
         "largest-contentful-paint": ["warn", { maxNumericValue: 4000 }],
       },
     },

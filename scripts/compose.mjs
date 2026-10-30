@@ -6,7 +6,17 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { validateSiteRoot, assertExternalOutput } from "./site-contract.mjs";
 
-const repoRoot = fileURLToPath(new URL("../", import.meta.url));
+const repoRoot = process.env.ALNILAM_REPO_ROOT
+  ? path.resolve(process.env.ALNILAM_REPO_ROOT)
+  : fileURLToPath(new URL("../", import.meta.url));
+const toolchainRoot = process.env.ALNILAM_TOOLCHAIN_ROOT
+  ? path.resolve(process.env.ALNILAM_TOOLCHAIN_ROOT)
+  : repoRoot;
+const externalToolchain = toolchainRoot !== repoRoot;
+const toolchainCwd = externalToolchain ? path.join(repoRoot, "apps/web") : repoRoot;
+// Match pnpm’s trusted virtual-store resolution without consulting candidate executables.
+const toolchainEnv = externalToolchain ? { NODE_PATH: path.join(toolchainRoot, "node_modules/.pnpm/node_modules") } : {};
+const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const argv = process.argv.slice(2);
 function option(flag, fallback) {
   const idx = argv.indexOf(flag);
@@ -46,13 +56,16 @@ try {
       : new Date().toISOString(),
   };
   const result = spawnSync(
-    process.platform === "win32" ? "pnpm.cmd" : "pnpm",
-    ["--filter", "@alnilam/web", "build"],
+    externalToolchain ? process.execPath : pnpm,
+    externalToolchain
+      ? [path.join(toolchainRoot, "apps/web/node_modules/astro/bin/astro.mjs"), "build", "--root", path.join(repoRoot, "apps/web")]
+      : ["--dir", path.join(repoRoot, "apps/web"), "exec", "astro", "build", "--root", path.join(repoRoot, "apps/web")],
     {
-      cwd: repoRoot,
+      cwd: toolchainCwd,
       stdio: "inherit",
       env: {
         ...process.env,
+        ...toolchainEnv,
         ALNILAM_SITE_DIR: site,
         ALNILAM_OUTPUT_DIR: stage,
       },
@@ -67,9 +80,11 @@ try {
   // Local search index (Pagefind). Runs over the staged static output; failure
   // fails the compose so CI never ships a stale or missing index.
   const pf = spawnSync(
-    process.platform === "win32" ? "pnpm.cmd" : "pnpm",
-    ["--filter", "@alnilam/web", "exec", "pagefind", "--site", stage],
-    { cwd: repoRoot, stdio: "inherit", env: { ...process.env, SOURCE_DATE_EPOCH: process.env.SOURCE_DATE_EPOCH } },
+    externalToolchain ? process.execPath : pnpm,
+    externalToolchain
+      ? [path.join(toolchainRoot, "apps/web/node_modules/pagefind/lib/runner/bin.cjs"), "--site", stage]
+      : ["--dir", path.join(repoRoot, "apps/web"), "exec", "pagefind", "--site", stage],
+    { cwd: toolchainCwd, stdio: "inherit", env: { ...process.env, ...toolchainEnv, SOURCE_DATE_EPOCH: process.env.SOURCE_DATE_EPOCH } },
   );
   if (pf.error) throw pf.error;
   if (pf.status !== 0) throw new Error("Pagefind indexing failed: exit " + pf.status);

@@ -20,7 +20,7 @@ themes/editorial/      # released visual layout + rollback surface
 themes/shirone/        # P1 Shirone-derived layout, tokens and Post card
 sites/demo/            # Core-repo Site fixture (only for tests & preview)
 scripts/compose.mjs    # non-mutating external Site builder
-.ads/                  # optional private ADS v0.4.1 gitlink; not cloned by public CI
+.ads/                  # optional private ADS v0.4.2 gitlink; not cloned by public CI
 ```
 
 ## Build algorithm

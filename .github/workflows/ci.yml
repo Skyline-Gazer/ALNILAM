@@ -125,6 +125,8 @@ jobs:
           echo "old Core revision: $old"
           node scripts/upgrade-check.mjs --old "$old"
       - name: Confirm ADS version pin
-        run: |
-          test "$(git rev-parse HEAD:.ads)" = "375fc71f977c40c2053140c34431cc60a6d42883"
+        env:
+          PR_BASE: ${{ github.base_ref }}
+          REF_NAME: ${{ github.ref_name }}
+        run: sh scripts/check-ads-pin.sh "${PR_BASE:-$REF_NAME}"
 
