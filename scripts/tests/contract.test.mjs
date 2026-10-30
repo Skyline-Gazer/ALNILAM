@@ -3,9 +3,13 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { normalizeSiteConfig, parseSiteConfigDocument } from "../../packages/core/src/index.mjs";
-import { assertExternalOutput, validateSiteRoot } from "../site-contract.mjs";
 import { spawnSync } from "node:child_process";
+
+const { assertExternalOutput, validateSiteRoot } = await import(
+  pathToFileURL(path.join(process.cwd(), "scripts/site-contract.mjs")).href,
+);
 
 const validYaml = `
 schemaVersion: 2

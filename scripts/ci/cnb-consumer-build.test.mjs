@@ -16,6 +16,13 @@ test('consumer builds use target-owned tools even when the candidate supplies an
   try {
     fs.mkdirSync(path.join(candidate, 'sites/demo/content/posts'), {recursive: true});
     const expectedRepo = fs.realpathSync(candidate);
+    fs.mkdirSync(path.join(candidate, 'scripts'), {recursive: true});
+    fs.writeFileSync(path.join(candidate, 'scripts/site-contract.mjs'), `
+export const SITE_CONFIG_FILENAME = 'alnilam.config.yaml';
+export function siteConfigPath(root) { return root + '/alnilam.config.yaml'; }
+export function validateSiteRoot(site) { return { root: site, digest: 'demo-digest' }; }
+export function assertExternalOutput(site, output) { return output; }
+`);
     fs.writeFileSync(path.join(candidate, 'sites/demo/alnilam.config.yaml'), 'schemaVersion: 2\nsite:\n  title: Demo\n  url: https://example.com\n  locale: zh-CN\nlocales:\n  - zh-CN\ntheme:\n  appearance: dark\n');
     fs.mkdirSync(path.join(tests, 'scripts/tests'), {recursive: true});
     fs.mkdirSync(path.join(tests, 'scripts/ci'), {recursive: true});
