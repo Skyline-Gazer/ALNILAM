@@ -1,9 +1,15 @@
 # CNB to GitHub PR mirror
 
-Status: **partially implemented locally; full mirror not implemented or executed** (2026-10-30). GitHub remains primary. The Owner selected CNB Agent-governed PRs plus a GitHub PR release mirror; production release authorization remains separate. Independent Gatekeeper and CNB Auto Merge prerequisites were canceled on 2026-10-30. GitHub Issues and Project #17 remain the task tracker.
+Status: **operator-driven isolated PR mirror verified for two rounds and a repeat no-op; production mirror not executed** (2026-10-30). GitHub remains primary. The Owner selected CNB Agent-governed PRs plus a GitHub PR release mirror; production release authorization remains separate. Independent Gatekeeper and CNB Auto Merge prerequisites were canceled on 2026-10-30. GitHub Issues and Project #17 remain the task tracker.
 
 
 [PR #113](https://github.com/Skyline-Gazer/ALNILAM/pull/113) proposes a local-only Git candidate preparer. It preserves both parents, verifies the candidate tree equals the supplied source tree, detects conflicts and GitHub-only tree drift, rejects an unrelated unmerged sync candidate, and reuses or no-ops on repeated inputs. A temporary bare repository prevents repository-configured merge drivers from executing. Six disposable Git-history tests cover two release rounds, a retry and a no-op, conflicts, drift, stale sync, and a custom merge driver. These are local mechanics, not GitHub PR/CI/Auto-merge or release acceptance. The helper does not validate a manifest or live refs, push a branch, create a PR, or sync a tag.
+
+## Isolated platform evidence — 2026-10-30
+
+[PR #114](https://github.com/Skyline-Gazer/ALNILAM/pull/114) passed the existing verify (GitHub Actions App 15368) and Agent merge produced `eea6767858db2f7006c22e241f7495002cbac85a`. CNB fixture source `86a3e1ab11d21c63c3d7da45e263c0833e7160ec`, sync `a0d7dd01a2ecc0fd7fc6f06d3203cf1c1cd269e4`, tree `65ab31876fb349446ca327403579e2fcc157c691` were verified. [PR #115](https://github.com/Skyline-Gazer/ALNILAM/pull/115) then passed verify on incremental source `6df9e0eb5d9330d0ff60cd37bac0d861a5dc07df`, sync `63fabff84cfae689ddcedaf96fba61cc93fafbe5`, and Agent merge `bb6cc46a77adf3a5fc8581849055a63c1e6c8ebe`; tree is `ee5807119d81e4ae93b27783491917e6f4e8bf87`. Both original CNB commits remain ancestors; fixed sync updates were fast-forward. A third run with the same source returned NOOP.
+
+The disposable target is codex/mirror-main-acceptance-20261030. Its fixture reuses CI/verify with that temporary PR trigger and forces the existing production-main guard/pin semantics. The production-clean trees omit private ADS and developer integration; the required production guard, Site immutability, browser and rollback checks ran. This verifies isolated protocol behavior, not production main Ruleset enforcement or release authorization. Real main and its Ruleset were unchanged. No extra CI system, approval bot, GitHub App or credential was introduced. [PR #116](https://github.com/Skyline-Gazer/ALNILAM/pull/116) is the intentional failing-CI candidate and must not be merged.
 
 ## Minimal release path
 

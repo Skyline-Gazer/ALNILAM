@@ -55,7 +55,7 @@ Adversarial build [cnb-phj-1k642341e](https://cnb.cool/KoolingMachine/ALNILAM/-/
 
 Cleanup: scratch PRs #8–#12 were closed without merge, and all seven isolated test refs were deleted. The existing CNB bootstrap ref for PR #4 was retained; `dev` and `main` were untouched.
 
-## Verified configuration and refs
+## Historical verified configuration and refs — 2026-10-29
 
 | Ref | GitHub | CNB |
 | --- | --- | --- |
@@ -69,7 +69,7 @@ The 2026-10-29 signed-in UI readback confirmed root organization event/cron/NPC 
 
 ## Candidate and native evidence
 
-- CNB bootstrap PR [#4](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/4) remains open/unmerged to `dev` at `98511ad526c0d77ede979e88ebe5b9c4f584a739`. GitHub PR [#96](https://github.com/Skyline-Gazer/ALNILAM/pull/96) was Draft at `7f080e02cc56f49d066cc4036a6d4c914f4b367a`; all six GitHub checks then passed. The current CNB `dev` branch was not advanced. No formal merge was attempted.
+- At the historical 2026-10-29 snapshot, CNB bootstrap PR [#4](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/4) was open/unmerged to dev at `98511ad526c0d77ede979e88ebe5b9c4f584a739`; read its live API head for current integration. GitHub PR [#96](https://github.com/Skyline-Gazer/ALNILAM/pull/96) was Draft at `7f080e02cc56f49d066cc4036a6d4c914f4b367a`; all six GitHub checks then passed. The current CNB `dev` branch was not advanced. No formal merge was attempted.
 - Official advisory AI Review build [`cnb-kcp-1k61p09tu`](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-kcp-1k61p09tu) completed on `98511ad`; Review JSON returned `passed` with zero issues and native source/target/merge identity was recorded. AI Review remains advisory and cannot authorize or block a formal merge.
 - Full trusted target build [`cnb-oi5-1k61oiv57`](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-oi5-1k61oiv57) passed all stages on candidate `cba3353613402646440858f9298af87b8450ba74`, with source marker `78fd54a80be70aebdc1b9b891d68937fede76373` and exact merge/tested SHA `434e4a66eb6566c478810851dbd83ffc982da4b5`. Its 9,830,956-byte evidence archive was downloaded and SHA-256 verified as `417daf4a53e954e692975990505a1bd60ff7c2fc50e1e6037c7fd552577423c6`. The bounded archive held 126 entries, 42 Lighthouse JSON reports, all exact SHA receipts, 9 passing build steps, 79.02% Node-source coverage, browser positive/expected-negative evidence, and successful SCA gates.
 - Historical target run [`cnb-iin-1k61q4mp4`](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-iin-1k61q4mp4) passed all stages on candidate `98511ad526c0d77ede979e88ebe5b9c4f584a739`, source marker `54f043d806e346aca7fb42ce5e2ba3f3aff4ecc3`, and exact merge/tested SHA `c131e6d560db8dab395ee201e7a517d4b620e498`. It predates the `4e37bdc`/`00651cc` trusted-tool/test hardening and is not current-head acceptance. Its 10,050,080-byte archive matched the CNB asset SHA-256 `c4ad40391cac5b795681b49fa51e1f28b1f0a9ca8a3fdff8b4ceecde90156e21`; 127 safe entries contained nine successful deterministic receipts, 79.02% coverage, 36 Lighthouse JSON reports, browser negative screenshot/trace, and mobile/desktop CLS expected-red receipts. Vulnerability and component-license diff gates reported zero new risk findings; source license scanning was unavailable because SourceSCA was not configured. The latest source-side event build `cnb-pln-1k61q4mp3` passed on the earlier candidate. Disposable PR #5 was merged only to its scratch target at `730b63df81ce37f0db17b20b5ec15220d4cc7420`, then both scratch refs were deleted.
@@ -79,7 +79,7 @@ The 2026-10-29 signed-in UI readback confirmed root organization event/cron/NPC 
 - The isolated Critical fixture review (source `077fcfa40f1768c31345c4e76383dd0221d25e1e`, target `78d63d9bf9d78b1e4f64640fedfc7c079256ef4f`) produced model output classified `critical`, but the response was invalid JSON, no PR comment was posted, and the Review stage/build still succeeded. AI Review therefore remains advisory and is not a Critical Required Check.
 - Issues #94 and #100 remain open. Current Project #17 readback: #94 and #100 In Progress, #51 Todo. The board readback found #100 missing; it was added to Project #17 and set to In Progress on 2026-10-29. P2 code was not started.
 
-## Acceptance result
+## Historical acceptance result — before Agent-governed PR adoption
 
 | Gate | Result |
 | --- | --- |
@@ -94,7 +94,7 @@ The 2026-10-29 signed-in UI readback confirmed root organization event/cron/NPC 
 | `CNB_CUTOVER_READY` | **NO** |
 | `FIRST_MIRROR_EXECUTED` | **NO** |
 
-## Owner action and boundaries
+## Historical Owner actions and boundaries — superseded by the current decision
 
 A previously demonstrated blocking technical control is strict required-check existence: CNB branch-protection reads expose a boolean `required_status_checks`, with no named required-check context. A disposable PR on a matching protected rule was actually tested: zero statuses gave `blocked_on=unblocked`/`mergeable_state=mergeable`; a failing status blocked merge with HTTP 409; direct push was rejected. A pending status was not separately tested. CNB's [trigger documentation](https://docs.cnb.cool/en/build/trigger-rule.html) likewise describes checks as conditional on statuses being present. Do not report this as PASS or alter the Owner-approved Plan B. A minimum Owner decision is whether to keep CNB non-primary until CNB provides a native check-must-exist control, or separately authorize testing a compensating control such as mandatory Reviewer Approval. No compensation was configured here.
 
