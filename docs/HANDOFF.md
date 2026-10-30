@@ -1,5 +1,46 @@
 # ALNILAM — AI Agent Handoff
 
+## P2/T01 preservation snapshot — 2026-10-30
+
+This is a preservation readback, not implementation acceptance. It supersedes older P2/T01 status statements below for the live refs recorded here. The PR was not merged and Issue #51 was not closed.
+
+### Live refs and tracker state
+
+- CNB [PR #23](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/23) targets `dev` and was **OPEN** at readback. Its source branch was `feat/51-site-v2-yaml-contract` at `43da96a953954902b7d78c42fd625a64b3a28dce`; a fresh fetch showed the local branch and CNB source ref at the same SHA. The PR page showed no conflicts and 1/2 checks passing.
+- CNB `dev` was `9ac9db41c897ada12431faad39ac5939139229a6`. CNB PR #24 is merged there at that commit.
+- GitHub Issue [#51](https://github.com/Skyline-Gazer/ALNILAM/issues/51) is **Open**, Project #17 status is **Todo**, no milestone is set, and all four acceptance checklist items remain unchecked.
+- The code branch contains a YAML-only Site v2 candidate, but T01 is **implemented, not accepted**. This branch is not an authorization to merge, close #51, or publish.
+
+### CI and CodeBuddy readback
+
+- Latest linked trusted-consumer run: [cnb-kqo-1k65vtl6n](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-kqo-1k65vtl6n), triggered by `pull_request.target` against `dev` `9ac9db41c897ada12431faad39ac5939139229a6` for source branch `feat/51-site-v2-yaml-contract`. It failed in **Verify native PR identity and test the exact merge commit**: `unit-coverage failed; see artifacts/unit-coverage.log`; the gate reported consumer build and unit coverage failed with status 1. Later stages were skipped. The detailed artifact failure was not diagnosed in this preservation task.
+- PR #23 showed trusted consumer **FAIL** and AI review advisory **SUCCESS** (1/2 checks). The CodeBuddy/NPC review comments are still unresolved and are attached to source SHA `43da96a953954902b7d78c42fd625a64b3a28dce`. Findings include: candidate-controlled `scripts/site-contract.mjs` and `scripts/upgrade-check.mjs` weaken the trusted test root; locale tests are not based on the shared valid fixture and several comments negatives were removed; rollback accepts a broad error substring and ignores process-launch errors; YAML scalar/sequence roots are not rejected at the parse boundary; unrelated nested-base, temp cleanup, provenance and hash-tree regression assertions were removed; onboarding omits `locales` and accepted root fields; historical HANDOFF fixture provenance was rewritten; CHANGELOG repeats `### Added`; locale normalization duplicates its default and has an unnecessary label parameter; and unused `routing.prefixDefaultLocale` / `llms.enabled` fields enlarge the public schema.
+- The initial PR description records `pnpm test` 51/51, `pnpm check`, and `pnpm build` passing on `d5cab7f`. These are earlier candidate results and do **not** verify the later source SHA. No project tests or builds were run during this handoff.
+
+### Fixes already attempted
+
+- `d5cab7f` introduced the schema v2 YAML contract and initial tests/docs.
+- `7f77859` addressed earlier review findings and adjusted the trusted CI harness.
+- `3a1d9a2` changed the trusted consumer build to prefer the candidate Site contract.
+- `43da96a` retriggered the trusted consumer pipeline. The latest run still failed as described above, and CodeBuddy left findings on that same head. This task made no CI or review repairs.
+- PR #24's trusted consumer fix was merged to `dev` at `9ac9db41`; it does not make PR #23 accepted.
+
+### Phase A documentation governance
+
+The existing normative governance record is [Reuse-first migration and document governance](next/06-REUSE-DOC-GOVERNANCE.md), marked G0-F approved on 2026-10-26. No separate repository record named “Phase A” was found. T01 documentation changes remain part of the unaccepted PR #23; the current CodeBuddy review specifically flags the onboarding example, historical HANDOFF wording, and duplicate CHANGELOG heading. Do not describe T01 documentation governance as accepted until those findings and current-head evidence are resolved.
+
+### Preservation and toolchain notes
+
+- Before this handoff edit, the P2 branch working tree was clean, it had no commits ahead of its CNB tracking ref, and `git stash list` was empty. Other worktrees were clean except the separate Issue #94 branch `chore/94-cnb-browser-ci-pilot`, which has local CI-pilot changes and remains outside this P2 branch.
+- The handoff-only commit advances PR #23's source head. CI and CodeBuddy evidence above is bound to pre-handoff source `43da96a` and must be treated as stale for the new head; this task did not inspect or act on any newly triggered result.
+- RTK preflight: official full RTK `1.1.0` is the latest stable release at this readback, and the installed binary checksum matches the recorded official binary. `rtk init --show --codex` found global and local hook configuration files; `rtk verify` passed 151/151 self-checks but reported `SKIP RTK hook not installed`, so host hook execution remains unverified. `rtk run` preserved sentinel stdout/stderr and exit code 7. CodeGraph CLI reports `1.1.1`; the [official npm latest endpoint](https://registry.npmjs.org/@andysom25%2Fcodegraph/latest) returned 404 and [official GitHub Releases](https://github.com/andysom25/codegraph/releases) lists no releases, so the authorized `SOURCE_FALLBACK` pin `bb11bc1226db30233ac9e66a2670c4b16dfa85fa` (MIT) remains documented as a fallback, not a stable release. A CodeGraph MCP query returned source from the current checkout. No tools or host settings were installed or changed.
+
+### Minimum continuation steps for the next agent
+
+1. Fetch CNB and check out `feat/51-site-v2-yaml-contract`; read the live PR #23 head, Issue #51 and this handoff before acting.
+2. Treat the prior CI and CodeBuddy results as stale after the handoff commit. Review the unresolved findings, then obtain current-head trusted CI and actual CodeBuddy review evidence.
+3. Keep #51 open and do not merge until current CI and review requirements are satisfied under the repository workflow.
+
 ## Current development authority — 2026-10-30
 
 CNB `KoolingMachine/ALNILAM` is now the development code authority. Verified refs at cutover acceptance:
