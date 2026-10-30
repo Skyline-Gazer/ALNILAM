@@ -3,7 +3,7 @@ on:
   push:
     branches: [dev, "chore/**", "feat/**", "fix/**"]
   pull_request:
-    branches: [codex/mirror-main-acceptance-20261030]
+    branches: [codex/no-ci-trigger-fixture]
   workflow_dispatch:
 permissions:
   contents: read
