@@ -1,5 +1,12 @@
 # ALNILAM roadmap (Issue-driven)
 
+## Current Owner decision — Agent-governed PRs (2026-10-30)
+
+This decision supersedes the independent Gatekeeper proposal and its acceptance blockers below. The Agent must verify complete current-version CI plus actual CodeBuddy review, resolve blocking findings, re-read the live PR head, and actively perform a normal merge. No independent approval identity, fixed required Reviewer or CNB Auto Merge is required. CNB zero-status mergeability remains a disclosed platform risk; it has not been repaired. Production main, the first production mirror, formal tags/releases and deployments are excluded from this authorization.
+
+Native system CodeBuddy now runs on real isolated PR #18 with Work Mode off. The minimal private-submodule fix is update=none in .gitmodules; the immutable ADS gitlink is unchanged and explicit authorized checkout still works. The first real review, comment 2116007303258533888, bound head f8f56e9927bc62fc40eccbf6bbb8c16ba3ce0ce4 and found a Critical eval issue; the unchanged ADS validator rejected it and no merge was attempted. After repair, old evidence was rejected as STALE_REVIEW. Native re-review comment 2116008620634898432 reports passed on head f1ae3bd736e10adbc587a81ece04b9f2340a0e4c. The Agent is still waiting for current CI before any merge. Historical Gatekeeper and NPC failures remain evidence for their original versions only.
+
+
 2026-10-30: GitHub remains primary while CNB Gatekeeper identity and stale-approval guarantees are unverified. The Owner selected a future GitHub PR mirror with a fixed `sync/cnb-main` branch and Merge Commit, without a ruleset bypass; neither cutover nor the first mirror is authorized. [PR #112](https://github.com/Skyline-Gazer/ALNILAM/pull/112) proposes the required `verify` compatibility fix; [PR #113](https://github.com/Skyline-Gazer/ALNILAM/pull/113) proposes local candidate construction only. P2 planning remains independent of CNB cutover; implementation requires its own development authority.
 
 Latest status readback (2026-10-28): GitHub/CNB `dev` = `78d63d9bf9d78b1e4f64640fedfc7c079256ef4f`; GitHub/CNB `main` = `285a62cecd87f8f20276c7cc989537a391f488c8`; historical tags `v0.1.0`–`v0.1.3` match. Owner accepted P1; Issue #37 is closed and Project #17 marks it `Done`. PR #104 merged to `main` at `285a62…`, making Pages dispatch-only. CNB cutover remains a separate, unaccepted Issue #100 workstream; see [CNB readiness](cnb/CUTOVER-READINESS.md).

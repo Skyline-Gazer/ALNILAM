@@ -62,7 +62,7 @@ CI runs this acceptance on every PR (two revisions, one unchanged external Site,
 
 - Primary development: `dev` with Issue-linked PRs; `main` is release-only (rulesets `alnilam-dev` / `alnilam-main`: PR-only + required `verify` check, no force pushes/deletion).
 - Tagging: `vX.Y.Z` on `main` only, annotated, created by the release PR merge. See [CHANGELOG.md](CHANGELOG.md) for versioning rules (SemVer; `lang`/`translationKey` are schema-v1 additive fields).
-- ADS v0.4.1 pinned at `.ads` (commit `3abf6025657a5d716476029cc8cbf5239543210b`; private — optional for public users, `git submodule update --init --recursive` requires authorized access). CI never clones it.
+- ADS v0.4.1 pinned at `.ads` (commit `3abf6025657a5d716476029cc8cbf5239543210b`; private — optional for public users, `git submodule update --init --recursive --checkout .ads` requires authorized access). CI never clones it.
 - Docs: [Architecture](docs/ARCHITECTURE.md) · [Site onboarding](docs/SITE_ONBOARDING.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/HANDOFF.md)
 - Attribution: [CREDITS.md](CREDITS.md) · [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) · [NOTICE](NOTICE)
 - GitHub Project #17: https://github.com/orgs/Skyline-Gazer/projects/17/

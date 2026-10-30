@@ -1,5 +1,12 @@
 # CNB Review and NPC acceptance
 
+## Current Owner decision — Agent-governed PRs (2026-10-30)
+
+This decision supersedes the independent Gatekeeper proposal and its acceptance blockers below. The Agent must verify complete current-version CI plus actual CodeBuddy review, resolve blocking findings, re-read the live PR head, and actively perform a normal merge. No independent approval identity, fixed required Reviewer or CNB Auto Merge is required. CNB zero-status mergeability remains a disclosed platform risk; it has not been repaired. Production main, the first production mirror, formal tags/releases and deployments are excluded from this authorization.
+
+Native system CodeBuddy now runs on real isolated PR #18 with Work Mode off. The minimal private-submodule fix is update=none in .gitmodules; the immutable ADS gitlink is unchanged and explicit authorized checkout still works. The first real review, comment 2116007303258533888, bound head f8f56e9927bc62fc40eccbf6bbb8c16ba3ce0ce4 and found a Critical eval issue; the unchanged ADS validator rejected it and no merge was attempted. After repair, old evidence was rejected as STALE_REVIEW. Native re-review comment 2116008620634898432 reports passed on head f1ae3bd736e10adbc587a81ece04b9f2340a0e4c. The Agent is still waiting for current CI before any merge. Historical Gatekeeper and NPC failures remain evidence for their original versions only.
+
+
 > Current update (2026-10-30): PR #96 is at `911fe4327ecb81179df2ee5bccabd47f2cb5b48e`; current trusted native target validation passed in PR #17, as recorded in CUTOVER-READINESS.md. Earlier runs retain their original SHA scope. Independent Gatekeeper identity and consumer acceptance remain unverified.
 
 Readback: 2026-10-29. **The GitHub candidate at that readback was `7f080e02cc56f49d066cc4036a6d4c914f4b367a`.** It passed the native target-owned trusted gate on an isolated CNB PR; an adversarial no-op-script PR failed closed. This does not make AI Review or NPC a required gate, and it does not resolve the platform's zero-status merge gap. Formal merge to `dev` still requires explicit Owner authorization.

@@ -1,5 +1,12 @@
 # ALNILAM — AI Agent Handoff
 
+## Current Owner decision — Agent-governed PRs (2026-10-30)
+
+This decision supersedes the independent Gatekeeper proposal and its acceptance blockers below. The Agent must verify complete current-version CI plus actual CodeBuddy review, resolve blocking findings, re-read the live PR head, and actively perform a normal merge. No independent approval identity, fixed required Reviewer or CNB Auto Merge is required. CNB zero-status mergeability remains a disclosed platform risk; it has not been repaired. Production main, the first production mirror, formal tags/releases and deployments are excluded from this authorization.
+
+Native system CodeBuddy now runs on real isolated PR #18 with Work Mode off. The minimal private-submodule fix is update=none in .gitmodules; the immutable ADS gitlink is unchanged and explicit authorized checkout still works. The first real review, comment 2116007303258533888, bound head f8f56e9927bc62fc40eccbf6bbb8c16ba3ce0ce4 and found a Critical eval issue; the unchanged ADS validator rejected it and no merge was attempted. After repair, old evidence was rejected as STALE_REVIEW. Native re-review comment 2116008620634898432 reports passed on head f1ae3bd736e10adbc587a81ece04b9f2340a0e4c. The Agent is still waiting for current CI before any merge. Historical Gatekeeper and NPC failures remain evidence for their original versions only.
+
+
 ## Current P1 integration checkpoint — 2026-10-30
 
 Current native repair evidence: [CNB PR #17](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/17) trusted target pipeline **PASS**, target `911fe4327ecb81179df2ee5bccabd47f2cb5b48e`, source `e5ab2e50ee6494f8d493836c33f55872e896d4fe`, merge/tested `e2ed40ba6a61b4f63d88f6ebaa2e5460b4c3457f`. Nine build steps, Astro checks, 18 browser tests (one intentional skip), mobile/desktop Lighthouse normal and negative probes, coverage, vulnerability/license gates, SBOM and upload receipt passed. Downloaded evidence is 29,350,458 bytes, SHA-256 `aed34057e6f0bbae50d96b589ef442b7669580667f38f3f24f2629460a4d6f86`, matching CNB metadata; 187 archive entries passed path/type inspection and build/browser receipts bind these SHAs with unchanged Site digest. Source-side empty-diff advisory failed to emit JSON; this is a successful trusted target run, not a green combined PR or Gatekeeper acceptance. PR #17 was closed unmerged and both scratch refs deleted. GitHub PR #96 checks passed 6/6 on the target SHA.
@@ -149,7 +156,7 @@ See [P0 Acceptance & Decision Report](p0/P0-ACCEPTANCE.md), merged [PR #85](http
 
 ## Validation commands
 ```bash
-git submodule update --init --recursive  # authorized ADS access required
+git submodule update --init --recursive --checkout .ads  # authorized ADS access required
 corepack enable
 pnpm install --frozen-lockfile
 pnpm test
