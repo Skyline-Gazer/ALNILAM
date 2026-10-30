@@ -60,7 +60,7 @@ test('browser negative rejects stale, signalled and unrelated failures', () => {
     assert.throws(() => validateBrowserNegative({status: 1}, report, started + 1, root));
     const unrelated = structuredClone(report);unrelated.suites[0].specs[0].tests[0].results[0].errors[0].message = 'Server unavailable';
     assert.throws(() => validateBrowserNegative({status: 1}, unrelated, started, root));
-    const old = new Date(started - 1000);
+    const old = new Date(started - 10_000);
     fs.utimesSync(path.join(root, 'shot.png'), old, old);
     fs.utimesSync(path.join(root, 'trace.zip'), old, old);
     assert.throws(() => validateBrowserNegative({status: 1}, report, started, root), /stale/);

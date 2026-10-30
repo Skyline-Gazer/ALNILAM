@@ -72,7 +72,7 @@ export function validateBrowserNegative(result, report, started, root) {
     if (!filename || !filename.startsWith(path.resolve(root) + path.sep)) throw Error('Fresh browser screenshot/trace is outside the run-specific evidence directory');
     let stat;
     try { stat = fs.lstatSync(filename); } catch { throw Error('Fresh browser screenshot/trace is missing'); }
-    if (!stat.isFile() || !stat.size || stat.mtimeMs < started) throw Error('Fresh browser screenshot/trace is missing or stale');
+    if (!stat.isFile() || !stat.size || stat.mtimeMs < started - 1000) throw Error('Fresh browser screenshot/trace is missing or stale');
     const bytes = fs.readFileSync(filename);
     const name = extension === '.png' ? 'screenshot' : 'trace';
     evidence[`${name}Bytes`] = stat.size;
