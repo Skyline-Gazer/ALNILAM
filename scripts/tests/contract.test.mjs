@@ -3,23 +3,75 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { normalizeSiteConfig } from "../../packages/core/src/index.mjs";
-import { assertExternalOutput, validateSiteRoot } from "../site-contract.mjs";
 import { spawnSync } from "node:child_process";
 
+// The trusted suite runs against the candidate product code but is owned by the
+// target branch. It therefore asserts whichever Site contract the shipped demo
+// fixture declares, so a versioned contract migration can be reviewed without
+// letting the candidate weaken the assertions for the contract it ships.
+const core = await import("../../packages/core/src/index.mjs");
+const { normalizeSiteConfig } = core;
+const { assertExternalOutput, validateSiteRoot } = await import("../site-contract.mjs");
+
+const DEMO = "sites/demo";
+const YAML_CONFIG = "alnilam.config.yaml";
+const TOML_CONFIG = "alnilam.config.toml";
+const declared = [YAML_CONFIG, TOML_CONFIG].filter((name) => fs.existsSync(path.join(DEMO, name)));
+if (declared.length !== 1) {
+  throw new Error(`demo Site must carry exactly one of ${YAML_CONFIG} / ${TOML_CONFIG}`);
+}
+const YAML_ONLY = declared[0] === YAML_CONFIG;
+const SCHEMA_VERSION = YAML_ONLY ? 2 : 1;
+const parseConfigDocument = YAML_ONLY ? core.parseSiteConfigDocument : null;
+
+const validYaml = `
+schemaVersion: 2
+site:
+  title: ALNILAM
+  url: https://example.com
+  locale: zh-CN
+locales:
+  - zh-CN
+  - en
+theme:
+  appearance: dark
+`;
+
+function parseYamlConfig(text) {
+  return normalizeSiteConfig(parseConfigDocument(text, { filename: YAML_CONFIG }));
+}
+
 test("valid configuration is normalized", () => {
-  const x = normalizeSiteConfig({
-    site: { title: "ALNILAM", url: "https://example.com" },
-    theme: { appearance: "dark" },
-  });
-  assert.equal(x.site.title, "ALNILAM");
-  assert.equal(x.schemaVersion, 1);
+  const value = YAML_ONLY
+    ? parseYamlConfig(validYaml)
+    : normalizeSiteConfig({ site: { title: "ALNILAM", url: "https://example.com" }, theme: { appearance: "dark" } });
+  assert.equal(value.site.title, "ALNILAM");
+  assert.equal(value.schemaVersion, SCHEMA_VERSION);
 });
+
 test("reject malformed site and URL schemes", () => {
+  if (YAML_ONLY) {
+    assert.throws(() => parseYamlConfig(`schemaVersion: 2\nsite:\n  title: ""\n  url: https://example.com\n`), /site\.title/);
+    assert.throws(() => parseYamlConfig(`schemaVersion: 2\nsite:\n  title: hi\n  url: file:///x\n`), /site\.url/);
+    return;
+  }
   assert.throws(() => normalizeSiteConfig({ site: { title: "", url: "https://example.com" } }));
   assert.throws(() => normalizeSiteConfig({ site: { title: "hi", url: "file:///x" } }));
 });
-test("schema v1 is the only supported version and fails closed on unknown versions", () => {
+
+test("only the declared schema version is accepted and unknown versions fail closed", () => {
+  if (YAML_ONLY) {
+    assert.equal(parseYamlConfig(validYaml).schemaVersion, 2);
+    // A missing version must not be silently upgraded to the current schema.
+    assert.throws(() => parseYamlConfig(`site:\n  title: t\n  url: https://e.com\n`), /schemaVersion/);
+    for (const bad of [1, 0, -1, 1.5, "2", null, true]) {
+      assert.throws(
+        () => parseYamlConfig(`schemaVersion: ${bad}\nsite:\n  title: t\n  url: https://e.com\n`),
+        /schemaVersion/,
+      );
+    }
+    return;
+  }
   // Absent and explicit 1 are accepted and normalized to 1.
   assert.equal(normalizeSiteConfig({ site: { title: "t", url: "https://e.com" } }).schemaVersion, 1);
   assert.equal(normalizeSiteConfig({ schemaVersion: 1, site: { title: "t", url: "https://e.com" } }).schemaVersion, 1);
@@ -28,7 +80,54 @@ test("schema v1 is the only supported version and fails closed on unknown versio
     assert.throws(() => normalizeSiteConfig({ schemaVersion: bad, site: { title: "t", url: "https://e.com" } }), /schemaVersion/);
   }
 });
+
+test("unknown config fields fail closed", () => {
+  // Schema v1 is additive: only schema v2 promises closed-world validation.
+  if (!YAML_ONLY) return;
+  assert.throws(() => parseYamlConfig(`${validYaml}\nlegacy: true\n`), /unknown config field "legacy"/);
+  assert.throws(
+    () => parseYamlConfig(`schemaVersion: 2\nsite:\n  title: t\n  url: https://e.com\n  timezone: UTC\n`),
+    /unknown site field "timezone"/,
+  );
+});
+
+test("taxonomy and locale fields are validated", () => {
+  if (!YAML_ONLY) return;
+  assert.throws(() => parseYamlConfig(`${validYaml}\ncategories:\n  - id: Tech\n    slug: tech\n`), /id must be a stable lowercase ASCII slug/);
+  assert.throws(
+    () => parseYamlConfig(`${validYaml}\ntags:\n  - id: astro\n    slug: astro\n  - id: astro\n    slug: duplicate\n`),
+    /duplicate tags id "astro"/,
+  );
+  assert.throws(
+    () => parseYamlConfig(validYaml.replace("  - zh-CN\n  - en", "  - en")),
+    /site\.locale must appear in locales/,
+  );
+  assert.throws(() => parseYamlConfig(`${validYaml}\nrouting:\n  prefixDefaultLocale: maybe\n`), /prefixDefaultLocale must be a boolean/);
+});
+
 test("comments module: disabled by default, giscus fields validated when enabled", () => {
+  if (YAML_ONLY) {
+    const off = parseYamlConfig(validYaml);
+    assert.equal(off.comments.enabled, false);
+    assert.equal(off.comments.provider, "giscus");
+    assert.throws(() => parseYamlConfig(`${validYaml}\ncomments:\n  enabled: true\n`), /comments\.repo/);
+    assert.throws(
+      () => parseYamlConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R\n  category: C\n`),
+      /comments\.categoryId/,
+    );
+    assert.throws(
+      () => parseYamlConfig(`${validYaml}\ncomments:\n  enabled: true\n  provider: disqus\n  repo: o/r\n  repoId: R\n  category: C\n  categoryId: D\n`),
+      /giscus/,
+    );
+    assert.throws(
+      () => parseYamlConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R\n  category: C\n  categoryId: D\n  mapping: bogus\n`),
+      /mapping/,
+    );
+    const on = parseYamlConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R_1\n  category: Announcements\n  categoryId: DIC_1\n`);
+    assert.equal(on.comments.enabled, true);
+    assert.equal(on.comments.mapping, "pathname");
+    return;
+  }
   // Disabled by default — no fields required, no behavior.
   const off = normalizeSiteConfig({ site: { title: "t", url: "https://e.com" } });
   assert.equal(off.comments.enabled, false);
@@ -55,30 +154,22 @@ test("comments module: disabled by default, giscus fields validated when enabled
     comments: { enabled: true, repo: "o/r", repoId: "R", category: "C", categoryId: "D", mapping: "bogus" },
   }), /mapping/);
 });
+
 test("demo Site is valid and the read-only digest is stable", () => {
-  const a = validateSiteRoot("sites/demo");
-  const b = validateSiteRoot("sites/demo");
+  const a = validateSiteRoot(DEMO);
+  const b = validateSiteRoot(DEMO);
   assert.equal(a.digest, b.digest);
   assert.match(a.digest, /^[a-f0-9]{64}$/);
 });
+
 test("nested-base output keeps canonical and internal links inside /ALNILAM/", (t) => {
   const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-base-"));
   t.after(() => fs.rmSync(out, { recursive: true, force: true }));
   const site = path.join(out, "site-source");
-  fs.cpSync("sites/demo", site, { recursive: true });
+  fs.cpSync(DEMO, site, { recursive: true });
   fs.writeFileSync(
     path.join(site, "content", "posts", "pagination-regression.md"),
-    [
-      "---",
-      'title: "Pagination regression"',
-      'description: "Sixth post exercises page two under a nested base."',
-      "pubDate: 2026-10-24",
-      'tags: ["Test"]',
-      "---",
-      "",
-      "Pagination regression fixture.",
-      "",
-    ].join("\n"),
+    ["---", 'title: "Pagination regression"', 'description: "Sixth post exercises page two under a nested base."', "pubDate: 2026-10-24", 'tags: ["Test"]', "---", "", "Pagination regression fixture.", ""].join("\n"),
   );
   const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(out, "site")], {
     env: { ...process.env, ALNILAM_SITE_URL: "https://example.com/ALNILAM/", SOURCE_DATE_EPOCH: "1700000000" },
@@ -93,11 +184,12 @@ test("nested-base output keeps canonical and internal links inside /ALNILAM/", (
   assert.match(posts, /<a href="\/ALNILAM\/posts\/2\/" rel="next"/);
   assert.doesNotMatch(posts, /\/ALNILAM\/ALNILAM\//);
 });
+
 test("compose rejects a post slug that collides with a pagination route without changing the Site", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-post-route-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const site = path.join(root, "site-source");
-  fs.cpSync("sites/demo", site, { recursive: true });
+  fs.cpSync(DEMO, site, { recursive: true });
   fs.writeFileSync(
     path.join(site, "content", "posts", "2.md"),
     ["---", 'title: "Numeric slug"', 'description: "Pagination collision fixture."', "pubDate: 2026-10-25", 'tags: ["Test"]', "---", "", "Numeric slug fixture.", ""].join("\n"),
@@ -114,39 +206,55 @@ test("compose rejects a post slug that collides with a pagination route without 
   assert.equal(fs.existsSync(output), false);
   assert.deepEqual(fs.readdirSync(root).filter((entry) => entry.startsWith(".alnilam-build-")), []);
 });
+
 test("output paths cannot overlap the Site source", () => {
-  assert.throws(() => assertExternalOutput("sites/demo", "sites/demo/dist"));
-  assert.throws(() => assertExternalOutput("sites/demo", "sites"));
+  assert.throws(() => assertExternalOutput(DEMO, path.join(DEMO, "dist")));
+  assert.throws(() => assertExternalOutput(DEMO, "sites"));
 });
+
 test("compose writes deterministic provenance binding Core rev and Site digest", (t) => {
   const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-prov-"));
   t.after(() => fs.rmSync(out, { recursive: true, force: true }));
-  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", "sites/demo", "--out", path.join(out, "site")], {
-    env: { ...process.env, ALNILAM_CORE_REV: "test-core-rev-1234" },
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", DEMO, "--out", path.join(out, "site")], {
+    env: { ...process.env, ALNILAM_CORE_REV: "test-core-rev-1234", SOURCE_DATE_EPOCH: "1700000000" },
   });
   assert.equal(result.status, 0, "compose failed: " + result.stderr);
   const prov = JSON.parse(fs.readFileSync(path.join(out, "site", "alnilam-provenance.json"), "utf8"));
   assert.equal(prov.core.revision, "test-core-rev-1234");
-  assert.equal(prov.site.digest, validateSiteRoot("sites/demo").digest);
+  assert.equal(prov.site.digest, validateSiteRoot(DEMO).digest);
   assert.equal(prov.schema, 1);
   assert.match(prov.generatedAt, /^\d{4}-\d{2}-\d{2}T/);
 });
+
 test("symlinks in Site inputs are rejected", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-contract-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   fs.mkdirSync(path.join(root, "content/posts"), { recursive: true });
-  fs.writeFileSync(path.join(root, "alnilam.config.toml"), "[site]\n");
+  const config = path.join(root, declared[0]);
+  fs.writeFileSync(config, YAML_ONLY ? validYaml : "[site]\n");
   try {
-    fs.symlinkSync(path.join(root, "alnilam.config.toml"), path.join(root, "content/posts/unsafe.md"));
+    fs.symlinkSync(config, path.join(root, "content/posts/unsafe.md"));
   } catch {
     t.skip("symlinks unavailable");
     return;
   }
   assert.throws(() => validateSiteRoot(root), /symlinks/);
 });
-test("legacy Site (no schemaVersion, no i18n fields) builds and gets provenance", (t) => {
+
+test("legacy Site contract follows the declared schema version", (t) => {
   const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-legacy-"));
   t.after(() => fs.rmSync(out, { recursive: true, force: true }));
+  if (YAML_ONLY) {
+    // Product composition must reject v1 TOML input with an actionable message.
+    const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", "tests/fixtures/site-v1-legacy", "--out", path.join(out, "site")], {
+      env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" },
+      encoding: "utf8",
+    });
+    assert.notEqual(result.status, 0, "legacy TOML Site must fail the YAML-only contract");
+    assert.match(result.stderr + result.stdout, /Site missing required input: alnilam\.config\.yaml/);
+    assert.equal(fs.existsSync(path.join(out, "site")), false);
+    return;
+  }
   const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", "sites/legacy-demo", "--out", path.join(out, "site")], {
     env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" },
   });
@@ -159,11 +267,21 @@ test("legacy Site (no schemaVersion, no i18n fields) builds and gets provenance"
   assert.equal(prov.schema, 1);
   assert.equal(prov.site.digest, validateSiteRoot("sites/legacy-demo").digest);
 });
+
 test("legacy Site digest is stable across reads", () => {
+  if (YAML_ONLY) return;
   const a = validateSiteRoot("sites/legacy-demo");
   const b = validateSiteRoot("sites/legacy-demo");
   assert.equal(a.digest, b.digest);
 });
+
+test("YAML root documents must be mappings", () => {
+  if (!YAML_ONLY) return;
+  for (const text of ["42\n", "text\n", "- a\n- b\n", "---\n"]) {
+    assert.throws(() => parseConfigDocument(text), /must contain a YAML mapping/);
+  }
+});
+
 test("upgrade-check hashTree is content-addressed and filename-insensitive to order", async (t) => {
   const { hashTree } = await import("../upgrade-check.mjs");
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-hash-"));
@@ -184,12 +302,14 @@ test("upgrade-check hashTree is content-addressed and filename-insensitive to or
   fs.writeFileSync(path.join(root, "a.txt"), "alphA");
   assert.notEqual(hashTree(root), base);
 });
+
 test("upgrade-check rejects missing or malformed --old revision", () => {
   for (const args of [[], ["--old", "not-a-sha"], ["--old", "zzzz"]]) {
     const result = spawnSync(process.execPath, ["scripts/upgrade-check.mjs", ...args]);
     assert.equal(result.status, 2, "expected exit 2 for args: " + args.join(" "));
   }
 });
+
 test("upgrade-check resolveRevision verifies known local commits", async (t) => {
   const { execFileSync } = await import("node:child_process");
   const repoTop = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
@@ -201,4 +321,3 @@ test("upgrade-check resolveRevision verifies known local commits", async (t) => 
   // Unresolvable revision throws; no worktree side effects.
   assert.throws(() => resolveRevision("zzzzzzz", repoTop), /fetch/);
 });
-
