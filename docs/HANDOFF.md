@@ -1,6 +1,47 @@
 # ALNILAM — AI Agent Handoff
 
-## P2/T01 preservation snapshot — 2026-10-30
+## P2/T01 current state — 2026-10-31
+
+Read live refs before acting. This section supersedes the 2026-10-30 preservation
+snapshot below; that snapshot is retained only for traceability.
+
+### Refs and tracker at this readback
+
+- CNB [PR #23](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/23) targets `dev` from
+  `feat/51-site-v2-yaml-contract`. Read the live head, checks and review before any
+  merge decision.
+- CNB [PR #25](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/25) restored the
+  target-owned trusted harness and merged into `dev` at
+  `d8ee0b9efb87c7d39629da2dc62ccf44ab9ef169` (parents `9ac9db41c897ada12431faad39ac5939139229a6`
+  and `f507146ad5bd43648d52cb287974867c31d1173d`).
+- GitHub Issue [#51](https://github.com/Skyline-Gazer/ALNILAM/issues/51) remains Open and
+  Project #17 still shows `Todo` until PR #23 lands and the acceptance evidence is recorded.
+
+### State of the T01 implementation
+
+- YAML-only Site v2 is implemented on the branch: strict `schemaVersion: 2`,
+  closed-world unknown-field rejection, locale/routing/taxonomy validation,
+  plain-data-only YAML parsing (duplicate keys, unresolved tags and `!!binary`
+  values fail closed) and an actionable rejection for TOML-only Sites.
+- The branch carries a v2-only contract suite. The migration-window suite merged on
+  `dev` by PR #25 is what the trusted gate uses to review this PR; it selects the
+  contract declared by the candidate demo and is replaced by the v2-only suite after
+  this migration lands.
+- CodeBuddy findings from the 2026-10-30/31 rounds are either fixed or carry a recorded
+  disposition; false positives are evidenced by the green trusted run and local runs.
+
+### Evidence
+
+- Local on `7ac63ad69c0ba962966db07606b23d67ee95ca7e`: `pnpm install --frozen-lockfile`,
+  `pnpm test` 55/55, `pnpm check` 0 errors, `pnpm build` OK, and
+  `python3 -m unittest discover -s scripts/tests -p '*_test.py'` 31 OK.
+- Trusted gate on the `486a756` merge: unit coverage, all 20 browser tests, the
+  expected-red Lighthouse probes and the tag dry-run passed; the pipeline failed only
+  the final live-ref guard because a newer push moved the source ref.
+- The merge SHA, final CI run and review evidence are recorded in the PR merge
+  decision and in the ADS adoption PR that follows this migration.
+
+## P2/T01 preservation snapshot — 2026-10-30 (historical, superseded)
 
 This is a preservation readback, not implementation acceptance. It supersedes older P2/T01 status statements below for the live refs recorded here. The PR was not merged and Issue #51 was not closed.
 

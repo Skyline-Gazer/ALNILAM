@@ -99,12 +99,12 @@ jobs:
           set -euo pipefail
           site="$RUNNER_TEMP/alnilam-p1-bangumi-site"
           cp -a "$RUNNER_TEMP/alnilam-p1-site" "$site"
-          cat >> "$site/alnilam.config.toml" <<'EOF'
+          cat >> "$site/alnilam.config.yaml" <<'EOF'
 
-          [bangumi]
-          enabled = true
-          userId = "p1-fixture-user"
-          subjectType = "anime"
+          bangumi:
+            enabled: true
+            userId: "p1-fixture-user"
+            subjectType: "anime"
           EOF
           export NODE_OPTIONS="--import=$GITHUB_WORKSPACE/tests/browser/bangumi-fetch-fixture.mjs"
           ALNILAM_BANGUMI_FIXTURE=success node scripts/compose.mjs --site "$site" --out dist/bangumi-root
