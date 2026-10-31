@@ -29,7 +29,7 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Contract tests
         run: pnpm test
-      - name: Governance fixtures and offline two-round release DAG
+      - name: ADS pin fixtures and offline two-round release DAG
         run: python3 -m unittest discover -s scripts/tests -p '*_test.py'
       - name: Astro type and content checks
         run: pnpm check

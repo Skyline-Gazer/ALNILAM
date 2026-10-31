@@ -17,7 +17,7 @@ class ReleaseDagTests(unittest.TestCase):
                 if ok:
                     self.assertEqual(result.returncode, 0, result.stderr)
                 else:
-                    self.assertNotEqual(result.returncode, 0, 'expected the git command to fail')
+                    self.assertNotEqual(result.returncode, 0, f'expected the git command to fail, got rc={result.returncode} stdout={result.stdout!r} stderr={result.stderr!r}')
                 return result.stdout.strip()
 
             git('init', '-q', '-b', 'main')

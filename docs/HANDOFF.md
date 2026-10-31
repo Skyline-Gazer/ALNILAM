@@ -42,13 +42,9 @@ snapshot below; that snapshot is retained only for traceability.
 
 ### ADS pin update — 2026-10-31
 
-- Pin advanced from v0.4.2 `375fc71f977c40c2053140c34431cc60a6d42883` to ADS
-  `cnb/dev` `6e5a7dfd1b717a03ed5b33c66707f47aab7f76b9` (a development commit, not a
-  release tag); `ads-pin.txt` is the single source enforced by
-  `scripts/check-ads-pin.sh`.
-- Adoption follows Lite defaults: root `AGENTS.md` rewritten with project facts;
-  CodeGraph/RTK tooling, devtool workflows/scripts and `.ads-devtools.json`
-  removed; optional ADS profiles are not enabled.
+- The ADS gitlink advanced to the `cnb/dev` development line (authoritative pin and
+  history: "Identity and baseline" below plus `ads-pin.txt`); this update is part of
+  the Lite adoption recorded in `AGENTS.md` and `README.md`.
 - The v0.4.1-era developer-tool sections below and in `docs/p0/P0-ACCEPTANCE.md`
   are historical and superseded by this update.
 
