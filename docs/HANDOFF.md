@@ -40,6 +40,23 @@ snapshot below; that snapshot is retained only for traceability.
   merge SHA and the current-head CodeBuddy review. Results bound to earlier heads are
   stale and are not acceptance evidence.
 
+### ADS pin update — 2026-10-31
+
+- Previous pin: v0.4.2 `375fc71f977c40c2053140c34431cc60a6d42883`.
+- New pin: ADS `cnb/dev` `6e5a7dfd1b717a03ed5b33c66707f47aab7f76b9` (not a release tag;
+  includes the v0.5.0 Lite spec plus v0.6 development semantics; the ADS `validate`
+  check run on this commit succeeded).
+- v0.5.0 (`9bd8b115fa7a3bff19c0d69c22c0423c7141e63f`) is not an ancestor of `cnb/dev`;
+  their trees differ only by the additive v0.6 docs/skills/tests (12 files), and both
+  carry the v0.5.0 Lite standard.
+- Adoption follows Lite defaults: root `AGENTS.md` rewritten with project facts;
+  CodeGraph/RTK tooling, devtool workflows/scripts and `.ads-devtools.json` removed;
+  optional ADS profiles are not enabled.
+- Verification: private submodule checkout at the exact SHA, ADS docs readable,
+  `pnpm test`/`check`/`build`, Python tests and the CNB PR gate. The adoption merge SHA
+  is recorded in the following development update.
+
+
 ## Legacy environment work still not recovered (#94/#100)
 
 - Issue #94 (`chore/94-cnb-browser-ci-pilot`): uncommitted worktree changes in the old

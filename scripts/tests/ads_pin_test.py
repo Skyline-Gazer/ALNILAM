@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 SCRIPT = Path(__file__).resolve().parents[1] / "check-ads-pin.sh"
-PIN = "375fc71f977c40c2053140c34431cc60a6d42883"
+PIN = "6e5a7dfd1b717a03ed5b33c66707f47aab7f76b9"
 OLD_PIN = "1e07d6c4bbd296b7d37dcd31934cfc70426f73ac"
 
 
