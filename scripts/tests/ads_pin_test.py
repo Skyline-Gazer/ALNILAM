@@ -4,8 +4,9 @@ import subprocess
 import tempfile
 import unittest
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = Path(__file__).resolve().parents[1] / "check-ads-pin.sh"
-PIN = "6e5a7dfd1b717a03ed5b33c66707f47aab7f76b9"
+PIN = (REPO_ROOT / "ads-pin.txt").read_text(encoding="utf-8").strip()
 OLD_PIN = "1e07d6c4bbd296b7d37dcd31934cfc70426f73ac"
 
 
@@ -52,6 +53,13 @@ class AdsPinTests(unittest.TestCase):
     def test_non_gitlink_ads_path_is_rejected_on_production(self):
         self.assertNotEqual(self.check_candidate("main", regular_file=True).returncode, 0)
 
+
+    def test_repository_gitlink_matches_the_pin_manifest(self):
+        entry = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "ls-tree", "HEAD", "--", ".ads"],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        self.assertEqual(entry, f"160000 commit {PIN}\t.ads")
 
 if __name__ == "__main__":
     unittest.main()

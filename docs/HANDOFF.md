@@ -42,20 +42,19 @@ snapshot below; that snapshot is retained only for traceability.
 
 ### ADS pin update — 2026-10-31
 
-- Previous pin: v0.4.2 `375fc71f977c40c2053140c34431cc60a6d42883`.
-- New pin: ADS `cnb/dev` `6e5a7dfd1b717a03ed5b33c66707f47aab7f76b9` (not a release tag;
-  includes the v0.5.0 Lite spec plus v0.6 development semantics; the ADS `validate`
-  check run on this commit succeeded).
-- v0.5.0 (`9bd8b115fa7a3bff19c0d69c22c0423c7141e63f`) is not an ancestor of `cnb/dev`;
-  their trees differ only by the additive v0.6 docs/skills/tests (12 files), and both
-  carry the v0.5.0 Lite standard.
+- Pin advanced from v0.4.2 `375fc71f977c40c2053140c34431cc60a6d42883` to ADS
+  `cnb/dev` `6e5a7dfd1b717a03ed5b33c66707f47aab7f76b9`; `ads-pin.txt` is the
+  single source enforced by `scripts/check-ads-pin.sh` and the Python tests.
+- The target is a development commit, not a release tag. It carries the complete
+  v0.5.0 Lite spec; v0.5.0 is not its ancestor, and the tree difference is the
+  additive v0.6 development content. Details are in the adoption PR.
 - Adoption follows Lite defaults: root `AGENTS.md` rewritten with project facts;
-  CodeGraph/RTK tooling, devtool workflows/scripts and `.ads-devtools.json` removed;
-  optional ADS profiles are not enabled.
+  CodeGraph/RTK tooling, devtool workflows/scripts and `.ads-devtools.json`
+  removed; optional ADS profiles are not enabled. The v0.4.1-era
+  developer-tool descriptions later in this file and in `docs/p0/P0-ACCEPTANCE.md`
+  are historical and superseded by this update.
 - Verification: private submodule checkout at the exact SHA, ADS docs readable,
-  `pnpm test`/`check`/`build`, Python tests and the CNB PR gate. The adoption merge SHA
-  is recorded in the following development update.
-
+  `pnpm test`/`check`/`build`, Python tests and the CNB PR gate.
 
 ## Legacy environment work still not recovered (#94/#100)
 
@@ -134,7 +133,7 @@ See [P0 Acceptance & Decision Report](p0/P0-ACCEPTANCE.md), merged [PR #85](http
 - Development baseline: `dev` created from initial `main`.
 - Bootstrap branch: `chore/initial-platform-bootstrap` (PR into `dev`, pending review).
 - ADS is a **private repository**; the public CI checkout intentionally omits recursive submodule cloning (no cross-repo credentials). Maintainers with ADS access can materialize it and verify the full rule set.
-- Current ADS release `v0.4.2` gitlink: `375fc71f977c40c2053140c34431cc60a6d42883`, located at `.ads`. Historical `v0.3` gitlink was `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`.
+- Current ADS gitlink: `6e5a7dfd1b717a03ed5b33c66707f47aab7f76b9` (ADS `cnb/dev`, not a release tag), located at `.ads` and enforced by `ads-pin.txt`. Historical pins: `v0.4.2` `375fc71f977c40c2053140c34431cc60a6d42883`, `v0.3` `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`.
 - Do **not** infer latest bootstrap branch HEAD, CI result or Project item status from this document. Query GitHub at start of task.
 
 ## Continuation 7: deployment live + P3 modules shipped (2026-10-25) — Issues #6 closed

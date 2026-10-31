@@ -108,6 +108,11 @@ Performance/security limits: upstream default modules/network fonts, substantial
 
 ## E. ADS governance
 
+> Historical (2026-10-26). Superseded on 2026-10-31 by the ADS `cnb/dev` Lite
+> adoption (Issue #118): the CodeGraph/RTK consumer profile, devtool workflows,
+> copied production-boundary guard and `.ads-devtools.json` were removed. The
+> rows below describe the v0.4.1-era state and are retained as evidence history.
+
 | Capability | State / test | Evidence and action |
 | --- | --- | --- |
 | Stable Gitlink | VERIFIED / PASS | #84 pins exact v0.4.1 commit `3abf6025657a5d716476029cc8cbf5239543210b`; merged as `2555c4658599598bfed604fbf0d9b525d24c3ded`; post-merge dev CI [40321449502](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40321449502) PASS |
