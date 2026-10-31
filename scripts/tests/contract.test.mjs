@@ -186,7 +186,7 @@ if (YAML_ONLY) {
   test("schema v2 is the only supported version and fails closed on unknown versions", () => {
     // A missing version must not be silently upgraded to the current schema.
     assert.throws(() => parseYamlConfig(`site:\n  title: t\n  url: https://e.com\n`), /schemaVersion/);
-    for (const bad of [1, 0, -1, 1.5, "2", null, true]) {
+    for (const bad of [1, 0, -1, 1.5, '"2"', null, true]) {
       assert.throws(
         () => parseYamlConfig(`schemaVersion: ${bad}\nsite:\n  title: t\n  url: https://e.com\n`),
         /schemaVersion/,
