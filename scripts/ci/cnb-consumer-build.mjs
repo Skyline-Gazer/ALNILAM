@@ -2,14 +2,15 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {spawnSync, execFileSync} from 'node:child_process';
-import {fileURLToPath, pathToFileURL} from 'node:url';
+import {fileURLToPath} from 'node:url';
 import {trustedAstroCheckArgs, trustedTestFiles} from './cnb-trusted-gate.mjs';
+import {siteConfigPath, validateSiteRoot} from '../site-contract.mjs';
 
 const trustedRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const trustedSourceRoot = process.env.CNB_TRUSTED_SOURCE_ROOT;
 const trustedTestRoot = process.env.CNB_TRUSTED_TEST_ROOT;
 if (!trustedSourceRoot || !trustedTestRoot) throw Error('Trusted source and test roots are required');
-const {validateSiteRoot} = await import(pathToFileURL(path.join(process.cwd(), 'scripts/site-contract.mjs')).href);
+
 const tests = trustedTestFiles(trustedTestRoot);
 fs.mkdirSync('artifacts/coverage', {recursive: true});
 fs.mkdirSync('.tmp/cnb', {recursive: true});
@@ -18,6 +19,7 @@ fs.cpSync('sites/demo', site, {recursive: true});
 const before = validateSiteRoot(site).digest;
 const env = {...process.env, TMPDIR: path.resolve('.tmp/cnb'), SOURCE_DATE_EPOCH: '1700000000'};
 const composeEnv = {ALNILAM_REPO_ROOT: process.cwd(), ALNILAM_TOOLCHAIN_ROOT: trustedSourceRoot};
+const fixtureContract = path.basename(siteConfigPath(site)) === 'alnilam.config.yaml' ? 'schema-v2-YAML-only' : 'schema-v1-TOML';
 const steps = [];
 function run(name, command, args, extra = {}, output) {
   const started = Date.now();
@@ -48,6 +50,6 @@ try {
 } catch (error) { console.error(error.message); process.exitCode = 1; }
 finally {
   fs.writeFileSync('artifacts/build-receipt.json', JSON.stringify({coreSha: execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8'}).trim(),
-    siteDigestBefore: before, siteDigestAfter: validateSiteRoot(site).digest, fixtureContract: 'schema-v2-YAML-only', node: process.version, steps}, null, 2) + '\n');
+    siteDigestBefore: before, siteDigestAfter: validateSiteRoot(site).digest, fixtureContract, node: process.version, steps}, null, 2) + '\n');
   fs.rmSync(site, {recursive: true, force: true});
 }
