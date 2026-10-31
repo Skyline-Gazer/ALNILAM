@@ -1,5 +1,76 @@
 # ALNILAM — AI Agent Handoff
 
+## P2/T01 current state — 2026-10-31
+
+Read live refs before acting. This section supersedes the 2026-10-30 preservation
+snapshot below; that snapshot is retained only for traceability.
+
+### Refs and tracker at this readback
+
+- CNB [PR #23](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/23) targets `dev` from
+  `feat/51-site-v2-yaml-contract`. Read the live head, checks and review before any
+  merge decision.
+- CNB [PR #25](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/25) restored the
+  target-owned trusted harness and merged into `dev` at
+  `d8ee0b9efb87c7d39629da2dc62ccf44ab9ef169` (parents `9ac9db41c897ada12431faad39ac5939139229a6`
+  and `f507146ad5bd43648d52cb287974867c31d1173d`).
+- GitHub Issue [#51](https://github.com/Skyline-Gazer/ALNILAM/issues/51) remains Open and
+  Project #17 still shows `Todo` until PR #23 lands and the acceptance evidence is recorded.
+
+### State of the T01 implementation
+
+- YAML-only Site v2 is implemented on the branch: strict `schemaVersion: 2`,
+  closed-world unknown-field rejection, locale/routing/taxonomy validation,
+  plain-data-only YAML parsing (duplicate keys, unresolved tags and `!!binary`
+  values fail closed) and an actionable rejection for TOML-only Sites.
+- The branch carries a v2-only contract suite. The migration-window suite merged on
+  `dev` by PR #25 is what the trusted gate uses to review this PR; it selects the
+  contract declared by the candidate demo and is replaced by the v2-only suite after
+  this migration lands.
+- CodeBuddy findings from the 2026-10-30/31 rounds are either fixed or carry a recorded
+  disposition; false positives are evidenced by the green trusted run and local runs.
+
+### Evidence
+
+- Local checks on each pushed head: `pnpm install --frozen-lockfile`, `pnpm test` 56/56,
+  `pnpm check` 0 errors, `pnpm build` OK, `python3 -m unittest discover -s scripts/tests
+  -p '*_test.py'` 31 OK, and `upgrade-check --old 07fac43` exits 0 after printing the
+  released Core's contract rejection.
+- The PR #23 merge decision records the exact final-head trusted-gate run, the tested
+  merge SHA and the current-head CodeBuddy review. Results bound to earlier heads are
+  stale and are not acceptance evidence.
+
+## Legacy environment work still not recovered (#94/#100)
+
+- Issue #94 (`chore/94-cnb-browser-ci-pilot`): uncommitted worktree changes in the old
+  environment were never recovered into this clone; do not treat them as present.
+- Issue #100: the unpushed commits `4e481ff` and `a715fe2` exist only in the old
+  environment. Do not blind-redevelop them, do not mix them into PR #23 or the ADS PR,
+  and do not overwrite or delete that worktree — it remains the only copy.
+
+## Current development authority — 2026-10-30
+
+CNB `KoolingMachine/ALNILAM` is now the development code authority. Verified refs at cutover acceptance:
+
+- CNB `dev`: `e602e29a1fc9cff20e438b29251fec4482eba64b`
+- GitHub `dev`: `0d11757e111a4a5169d3a473b736ed2918bd3d2e`
+- Shared Git tree: `5530addc6e4d719229641e9e2cd0828d78256e78`
+
+New feature branches start from CNB `dev`. CNB PRs require current-head CI and actual CodeBuddy review before an Agent normal Merge Commit. GitHub Issues and Project #17 remain the task-management authority; GitHub code is a mirror target only and does not accept new feature PRs. GitHub `dev` history is not rewritten and the two remotes do not require identical commit SHAs.
+
+Accepted residual risk remains: CNB can still expose zero-status mergeability and the recheck/merge window is not atomic. Independent Gatekeeper, fixed Reviewer, Auto Merge, force push and bypass are not part of the accepted workflow.
+
+## Current P2/T01 checkpoint — Issue #51
+
+Implementation branch: `feat/51-site-v2-yaml-contract` from CNB `dev`.
+
+Scope in this slice:
+
+- Site v2 is YAML-only via `alnilam.config.yaml`.
+- No TOML/TS/JS/JSON config fallback and no v1 auto-migration engine.
+- Schema v2 fails closed on unknown fields and validates locale, routing and taxonomy metadata.
+- Demo Site, onboarding docs and contract tests move to v2 while historical v1 fixtures remain under `tests/fixtures/site-v1-legacy` for negative compatibility evidence.
+
 ## Current workflow decision — 2026-10-30
 
 The Owner selected Agent-governed PRs: current CI plus actual CodeBuddy review, followed by an Agent-initiated normal merge. Independent Gatekeeper, fixed Reviewer and CNB Auto Merge prerequisites are canceled; zero-status platform risk remains disclosed. PR #96 merged at 400290acadca8a0417d41792f17fedb842993d1f. See [current decision and native evidence](cnb/CUTOVER-READINESS.md). The checkpoints below retain their historical SHA scope.
@@ -18,9 +89,9 @@ P1 browser/Lighthouse evidence: the PR #103 baseline run [40641080507](https://g
 
 Developer-tool preflight used the primary checkout. Explicit official full RTK `1.1.0` passed 151/151 `verify` checks, but reported **SKIP — host hook not installed**; the earlier default PATH resolved RTK `1.0.1`. An explicit `rtk run` operation preserved stderr and exit code `7`, which verifies the CLI wrapper, not host-hook integration. CodeGraph uses the authorized immutable MIT source fallback `bb11bc1226db30233ac9e66a2670c4b16dfa85fa` (metadata 1.1.1; not a published stable release); its existing index is current and a host MCP query succeeded under already-installed Node `22.23.4`. The default Node `26.12.0` is incompatible with that CLI, and the managed task worktree has no CodeGraph index. No tool, PATH, hook or global host setting was changed; RTK host integration is **NOT VERIFIED**.
 
-Project #17 readback: #37 `Done`, #100 `In Progress`, and #51 `Todo`; #47/#48/#49/#50/#79 are `Done`. Issue #100 is an independent CNB cutover gate, not a P1 prerequisite. P2 code remains unstarted pending the project's phase/development authority gates; its planning handoff is [Issue #51 comment 6463406977](https://github.com/Skyline-Gazer/ALNILAM/issues/51#issuecomment-6463406977).
+Project #17 readback: #37 `Done`, #100 `In Progress`, and #51 `Todo`; #47/#48/#49/#50/#79 are `Done`. Issue #100 is an independent CNB cutover gate, not a P1 prerequisite. P2/T01 schema v2 implementation is in progress on CNB dev pending the project's phase/development authority gates; its planning handoff is [Issue #51 comment 6463406977](https://github.com/Skyline-Gazer/ALNILAM/issues/51#issuecomment-6463406977).
 
-CNB Agent-governed lifecycle acceptance has now completed on real isolated PR #18: current native CI and CodeBuddy review passed; Critical and stale evidence were blocked before the repair; the Agent merged normally to the disposable target as `d89d9ba34d6edfc5c1462afe09fff5af5c46473d`. The source is an ancestor and merged tree matches tested merge `5640a56884388fe63f27ed8b48c6d4736bab4963`, recorded by the [retained CNB trusted consumer run](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-9q2-1k65dadhi) and [CNB target-commit evidence attachments](https://cnb.cool/KoolingMachine/ALNILAM/-/commit/b240a7ce465956da5b2727d49578f34182d804e3?tab=attachments). This tested SHA belongs to CNB, not GitHub; the main Agent downloaded and verified its SHA-bound build/browser receipts before merge. Actual CNB dev installation via refreshed PR #4 is still in progress; isolated GitHub Mirror acceptance passed two rounds plus a repeat NOOP, and failed/missing-check PRs #116/#117 remain unmerged. Independent Gatekeeper, fixed Reviewer and CNB Auto Merge are canceled prerequisites. GitHub PR #96 is merged; the previous failed NPC and zero-status tests remain historical evidence and residual platform risk.
+CNB Agent-governed lifecycle acceptance has now completed on real isolated PR #18: current native CI and CodeBuddy review passed; Critical and stale evidence were blocked before the repair; the Agent merged normally to the disposable target as `d89d9ba34d6edfc5c1462afe09fff5af5c46473d`. The source is an ancestor and merged tree matches tested merge `5640a56884388fe63f27ed8b48c6d4736bab4963`, recorded by the [retained CNB trusted consumer run](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-9q2-1k65dadhi) and [CNB target-commit evidence attachments](https://cnb.cool/KoolingMachine/ALNILAM/-/commit/b240a7ce465956da5b2727d49578f34182d804e3?tab=attachments). This tested SHA belongs to CNB, not GitHub; the main Agent downloaded and verified its SHA-bound build/browser receipts before merge. Actual CNB dev workflow is installed on CNB dev at e602e29a1fc9cff20e438b29251fec4482eba64b; isolated GitHub Mirror acceptance passed two rounds plus a repeat NOOP, and failed/missing-check PRs #116/#117 remain unmerged. Independent Gatekeeper, fixed Reviewer and CNB Auto Merge are canceled prerequisites. GitHub PR #96 is merged; the previous failed NPC and zero-status tests remain historical evidence and residual platform risk.
 
 The Owner selected a history-preserving GitHub PR mirror through `sync/cnb-main`, subject to separate production authorization. The local preparer from [PR #113](https://github.com/Skyline-Gazer/ALNILAM/pull/113) and production-clean pin repair from [PR #112](https://github.com/Skyline-Gazer/ALNILAM/pull/112) are integrated into #111 for review. Actual isolated PRs #114/#115 passed existing verify and ordinary Merge Commits; #116 failed verify and #117 has zero checks, so the Agent issued no merge request for either. See [mirror evidence](cnb/MIRROR.md). GitHub main Ruleset is unchanged; the first production mirror, tags/releases and deployments remain unexecuted. Read live refs before the next action; these are explicitly pre-integration snapshots.
 

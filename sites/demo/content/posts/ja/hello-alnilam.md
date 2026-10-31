@@ -15,5 +15,5 @@ Core は独立してアップグレードできます。Site が記事とアセ�
 ## Core / Site の構成
 
 1. コンテンツは `content/posts/` に置きます。
-2. 設定は `alnilam.config.toml` に書きます。
+2. 設定は `alnilam.config.yaml` に書きます。
 3. `pnpm compose --site /path/to/site --out /path/to/output` でビルドします。

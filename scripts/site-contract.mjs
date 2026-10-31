@@ -2,28 +2,23 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 
+export const SITE_CONFIG_FILENAME = "alnilam.config.yaml";
+
 const isWithin = (child, parent) => child === parent || child.startsWith(parent + path.sep);
 
-// Transitional target-owned contract reader: the trusted gate must be able to
-// validate both the released v1 TOML fixture and the v2 YAML fixture while a
-// contract migration is under review. Exactly one config file must exist.
-export const SITE_CONFIG_FILENAMES = ["alnilam.config.yaml", "alnilam.config.toml"];
-
-export function siteConfigPath(site) {
-  const root = path.resolve(site);
-  const found = SITE_CONFIG_FILENAMES
-    .map((name) => path.join(root, name))
-    .filter((file) => fs.existsSync(file));
-  if (found.length === 0) {
-    throw new Error("Site missing required input: " + SITE_CONFIG_FILENAMES.join(" or "));
+export function siteConfigPath(root) {
+  const config = path.join(root, SITE_CONFIG_FILENAME);
+  const legacy = path.join(root, "alnilam.config.toml");
+  if (fs.existsSync(config) && fs.existsSync(legacy)) {
+    throw new Error("Site must not contain both alnilam.config.yaml and alnilam.config.toml");
   }
-  if (found.length > 1) {
+  if (!fs.existsSync(config)) {
     throw new Error(
-      "Site must declare exactly one config file, found: " +
-        found.map((file) => path.basename(file)).join(", "),
+      "Site missing required input: " + SITE_CONFIG_FILENAME +
+        (fs.existsSync(legacy) ? " (alnilam.config.toml is no longer read; see docs/SITE_ONBOARDING.md)" : ""),
     );
   }
-  return found[0];
+  return config;
 }
 
 export function validateSiteRoot(site) {
@@ -39,7 +34,7 @@ export function validateSiteRoot(site) {
     throw new Error("Site missing required input: content/posts");
   }
   const sha = crypto.createHash("sha256");
-  const paths = [path.basename(config), "content", "assets", "data"];
+  const paths = [SITE_CONFIG_FILENAME, "content", "assets", "data"];
   function visit(abs, relative) {
     const stat = fs.lstatSync(abs);
     if (stat.isSymbolicLink()) throw new Error("Site cannot contain symlinks: " + relative);

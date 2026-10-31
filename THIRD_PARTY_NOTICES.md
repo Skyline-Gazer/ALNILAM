@@ -49,7 +49,7 @@ no vendor code is copied into this repository. Summary at v0.1.0 (see
 | svelte | MIT | island runtime (search, status) |
 | tailwindcss, @tailwindcss/vite | MIT | styling engine |
 | pagefind | MIT | local search indexer + lazy runtime |
-| smol-toml | MIT | Site config parsing |
+| yaml | MIT | Site config parsing |
 | typescript | Apache-2.0 | type checking |
 
 The composed static output embeds: the Svelte island runtime (client JS),

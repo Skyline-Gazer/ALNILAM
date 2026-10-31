@@ -6,7 +6,7 @@ Status: v0.1 implementation baseline; not a framework-neutral CMS.
 1. **Core is source-controlled software** in this Monorepo; Site is user-owned config, content, data and assets.
 2. The Site is an immutable input to build. The builder MUST NOT write into the original Site directory.
 3. `sites/demo` is a reference fixture only. A user's Site may live in any external directory/repository.
-4. Site is accepted through one stable contract: `alnilam.config.toml`, `content/posts/`, optional `assets/`, optional `data/`. Assets are copied to `/site-assets/` after building.
+4. Site is accepted through one stable contract: `alnilam.config.yaml`, `content/posts/`, optional `assets/`, optional `data/`. Assets are copied to `/site-assets/` after building.
 5. No hosting API, database or runtime server is required to serve output. Astro produces static HTML.
 6. Core upgrade must not require merging Core files with Site content. Any content schema changes must be versioned, validated and accompanied by a migration strategy.
 7. No secret is stored in a public Site config, or supplied through `PUBLIC_*` variables.
@@ -30,6 +30,10 @@ scripts/compose.mjs    # non-mutating external Site builder
 4. Copy optional Site assets into the staged static output (not back into Core or Site).
 5. Hash the Site inputs again and abort on changes.
 6. Replace the final destination from staging; retain/restore the existing output if staging fails.
+
+The staged output also carries `alnilam-provenance.json`. Its `schema` field versions
+the **provenance document format** and is independent of the Site `schemaVersion`:
+changing the Site contract does not relabel already-published provenance records.
 
 **Current limits**: Do not treat this as an OS sandbox. Trusted MDX can execute build-time code. Relative asset paths and site configuration compatibility require further P0 checks. Concurrency/locking of two builds to the same output path and crash recovery are not yet fully specified; do not claim atomicity across power loss. Browser/performance and cross-platform behavior are not verified until CI and browser tests complete.
 

@@ -11,7 +11,7 @@ ALNILAM splits **what you write** (Site) from **the software that renders it** (
 
 ## Your first Site
 
-1. Create a directory with `alnilam.config.toml` and `content/posts/`.
+1. Create a directory with `alnilam.config.yaml` and `content/posts/`.
 2. Write Markdown or MDX posts with `title`, `description`, `pubDate` frontmatter.
 3. Compose: `node scripts/compose.mjs --site /path/to/site --out dist/`.
 

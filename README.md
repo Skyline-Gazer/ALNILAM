@@ -4,7 +4,7 @@
 
 Apache-2.0 licensed, static-first Astro 7 / Svelte 5 / Tailwind CSS 4 blogging platform, with a strict Core/Site ownership boundary. Released v0.1.3 uses the Editorial theme; the P1 preview on `dev` uses the Shirone-derived theme.
 
-> **Status: v0.1.3 is released; Shirone slice PR #95 is merged to `dev`, but is not released or deployed.** P1 is accepted: the Owner closed #37 on 2026-10-28 after the implementation and evidence PRs for #49, #50 and #79 merged. P2 planning is ready; P2 code has not started. Core/Site composition, two-version upgrade/rollback acceptance, RSS/sitemap/robots/SEO, archives, tags, local search (Pagefind), i18n with hreflang, and paginated streams remain implemented. The Editorial package remains the rollback path. See [the P1 slice record](docs/p1/48-SHIRONE-VERTICAL-SLICE.md), [the #49 record](docs/p1/49-UNIFIED-ROUTING-LIFECYCLE.md) and [CHANGELOG.md](CHANGELOG.md).
+> **Status: v0.1.3 is released; Shirone slice PR #95 is merged to `dev`, but is not released or deployed.** P1 is accepted: the Owner closed #37 on 2026-10-28 after the implementation and evidence PRs for #49, #50 and #79 merged. P2 planning is ready; P2/T01 schema v2 implementation is in progress on CNB dev. Core/Site composition, two-version upgrade/rollback acceptance, RSS/sitemap/robots/SEO, archives, tags, local search (Pagefind), i18n with hreflang, and paginated streams remain implemented. The Editorial package remains the rollback path. See [the P1 slice record](docs/p1/48-SHIRONE-VERTICAL-SLICE.md), [the #49 record](docs/p1/49-UNIFIED-ROUTING-LIFECYCLE.md) and [CHANGELOG.md](CHANGELOG.md).
 
 ## Quickstart
 
@@ -30,15 +30,18 @@ The default Site fixture lives in `sites/demo` (three locales, two articles) —
 node scripts/compose.mjs --site /absolute/path/to/my-site --out /absolute/path/to/dist
 ```
 
-Required Site layout (schema v1 — frozen):
+Required Site layout (schema v2 — frozen):
 
 ```
 my-site/
-  alnilam.config.toml     # schemaVersion = 1, [site] title/url, [theme] appearance
+  alnilam.config.yaml     # schemaVersion: 2, site: {title, url, locale}, locales, theme: {appearance}
   content/posts/          # *.md / *.mdx
   assets/                 # optional → served at /site-assets/
   data/                   # optional, reserved
 ```
+
+See [Site onboarding](docs/SITE_ONBOARDING.md) for the complete, copy-ready
+configuration including `locales`, taxonomy and module blocks.
 
 - The Site is hashed before and after building; **any mutation aborts the build**.
 - Output is staged, then atomically swapped; `alnilam-provenance.json` binds the Core revision + Site SHA-256 digest.
@@ -60,7 +63,7 @@ CI runs this acceptance on every PR (two revisions, one unchanged external Site,
 
 ## Development and governance
 
-- Primary development: `dev` with Issue-linked PRs; `main` is release-only (rulesets `alnilam-dev` / `alnilam-main`: PR-only + required `verify` check, no force pushes/deletion).
+- Primary development: CNB `dev` with Issue-linked CNB PRs; GitHub Issues/Project remain the task tracker; `main` is release-only (rulesets `alnilam-dev` / `alnilam-main`: PR-only + required `verify` check, no force pushes/deletion).
 - Tagging: `vX.Y.Z` on `main` only, annotated, created by the release PR merge. See [CHANGELOG.md](CHANGELOG.md) for versioning rules (SemVer; `lang`/`translationKey` are schema-v1 additive fields).
 - ADS v0.4.2 pinned at `.ads` (commit `375fc71f977c40c2053140c34431cc60a6d42883`; private — optional for public users, `git submodule update --init --recursive --checkout .ads` requires authorized access). CI never clones it.
 - Docs: [Architecture](docs/ARCHITECTURE.md) · [Site onboarding](docs/SITE_ONBOARDING.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/HANDOFF.md)

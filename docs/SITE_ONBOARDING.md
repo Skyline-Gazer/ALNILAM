@@ -4,30 +4,41 @@ An ALNILAM **Site** is an independent directory (usually its own Git repository)
 your content, configuration and assets. Core never writes into it, fetches it, or checks
 it out — you pin the Site revision yourself.
 
-## Site layout (schema v1 — frozen)
+## Site layout (schema v2 — frozen)
 
 ```
 yoursite/
-├── alnilam.config.toml      # required — site configuration
+├── alnilam.config.yaml      # required — site configuration
 ├── content/posts/           # required — Markdown/MDX posts
 ├── assets/                  # optional — copied verbatim to /site-assets/ in output
 └── data/                    # optional — reserved, not yet read
 ```
 
-### `alnilam.config.toml` (schema v1)
+### `alnilam.config.yaml` (schema v2)
 
-```toml
-schemaVersion = 1            # optional; only 1 is supported. Old Core + new Site fails closed.
+```yaml
+schemaVersion: 2            # required; only 2 is supported. Old Core + new Site fails closed.
 
-[site]
-title = "My Blog"            # required, non-empty
-description = "About this blog"
-url = "https://blog.example.com"   # required, absolute http(s) URL
-locale = "zh-CN"             # optional, default zh-CN
+site:
+  title: "My Blog"            # required, non-empty
+  description: "About this blog"
+  url: "https://blog.example.com"   # required, absolute http(s) URL
+  locale: "zh-CN"             # optional, default zh-CN; must appear in locales
 
-[theme]
-appearance = "dark"          # "dark" | "light", default dark
+locales:                      # optional, defaults to [site.locale]; list every content locale
+  - "zh-CN"
+
+theme:
+  appearance: "dark"          # "dark" | "light", default dark
 ```
+
+Unknown top-level or nested keys fail the build, and so do malformed YAML, duplicate
+keys, unresolved YAML tags and non-plain YAML values. The `comments` and `bangumi`
+module blocks are documented below.
+
+**Reserved fields:** `routing`, `categories` and `tags` are accepted and validated for
+forward compatibility, but this Core revision has no consumer for them — do not rely on
+them in Sites. Tag pages derive from post frontmatter.
 
 ### Posts and slugs
 
@@ -62,27 +73,27 @@ Both modules are feature-flagged: **disabled modules ship nothing** — no page,
 
 ### Comments (`[comments]`)
 
-```toml
-[comments]
-enabled = true
-provider = "giscus"            # only provider
-repo = "you/your-repo"         # public GitHub repo hosting Discussions
-repoId = "R_..."               # from giscus.app
-category = "Announcements"
-categoryId = "DIC_..."
-# mapping = "pathname"         # optional: pathname | specific | number
+```yaml
+comments:
+  enabled: true
+  provider: "giscus"            # only provider
+  repo: "you/your-repo"         # public GitHub repo hosting Discussions
+  repoId: "R_..."               # from giscus.app
+  category: "Announcements"
+  categoryId: "DIC_..."
+  # mapping: "pathname"         # optional: pathname | specific | number
 ```
 
 Renders on post pages as a lazy `client:visible` island; the giscus script loads only after the section scrolls into view. Requires GitHub Discussions on the repo. Theme (dark/light) and language follow your Site config.
 
 ### Bangumi (`[bangumi]`)
 
-```toml
-[bangumi]
-enabled = true
-userId = "your-bgm-name"
-subjectType = "anime"          # anime | book | music | game
-limit = 10                     # 1–50
+```yaml
+bangumi:
+  enabled: true
+  userId: "your-bgm-name"
+  subjectType: "anime"          # anime | book | music | game
+  limit: 10                     # 1–50
 ```
 
 Adds `/bangumi/` (nav + footer links appear automatically). Data is fetched **once at build time** from `api.bgm.tv` and embedded as static HTML — visitors make **zero** third-party data requests. Cover images hotlink `lain.bgm.tv` with `referrerpolicy="no-referrer"` (fetching covers into your output would redistribute upstream artwork). If the API is unreachable at build time the page renders an inline warning; the rest of the Site is unaffected.
