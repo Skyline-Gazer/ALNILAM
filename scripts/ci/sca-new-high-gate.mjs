@@ -81,8 +81,9 @@ export function blockingFindings(doc) {
       const record = {module: advisory.module_name, version, advisory: key, ghsa, cve, severity,
         title: String(advisory.title || '').slice(0, 200), vulnerableVersions: String(advisory.vulnerable_versions || '')};
       const triple = `${record.module}@${record.version}|${key}`;
+      if (byTriple.has(triple)) fail('SCA_GATE_OUTPUT_INVALID', `duplicate advisory-version row ${triple} for ${advisory.id}; audit shape changed`);
       entries.push(record);
-      if (!byTriple.has(triple)) byTriple.set(triple, record);
+      byTriple.set(triple, record);
     }
   }
   const declared = Number(doc.metadata.vulnerabilities.high) + Number(doc.metadata.vulnerabilities.critical);
@@ -161,19 +162,13 @@ export function parseLockfileImporters(lockText) {
   return importers;
 }
 
-export function assertImporterCoverage(importers, manifests, gitlinks) {
+export function assertImporterCoverage(importers, manifests) {
   const discovered = manifests.filter(file => file.endsWith('package.json'))
     .map(file => file === 'package.json' ? '.' : path.posix.dirname(file)).sort();
-  const declared = importers.map(item => item === '.' ? '.' : item).sort();
+  const declared = importers.slice().sort();
   if (discovered.join(',') !== declared.join(',')) {
     fail('SCA_GATE_COVERAGE_INCOMPLETE', `workspace manifests ${discovered} do not match lockfile importers ${declared}`);
   }
-  for (const gitlink of gitlinks) {
-    if (importers.includes(gitlink) || importers.some(item => item.startsWith(`${gitlink}/`))) {
-      fail('SCA_GATE_COVERAGE_INCOMPLETE', `gitlink ${gitlink} unexpectedly appears as a lockfile importer`);
-    }
-  }
-  return {proof: 'submodule gitlinks (mode 160000) carry no tracked manifests in this object DB; workspace globs never cover them; importer parity proves no gitlink entered lockfile importers'};
 }
 
 export function validateGateIdentity(env, event) {
@@ -286,7 +281,7 @@ export async function auditSide(label, sha, deps, registry, parentEnv) {
   const workspaceText = deps.git(['show', `${sha}:pnpm-workspace.yaml`]);
   const globs = parseWorkspaceGlobs(workspaceText);
   const {manifests, gitlinks} = classifyTreeEntries(deps.git(['ls-tree', '-r', sha]), globs);
-  const {proof} = assertImporterCoverage(parseLockfileImporters(deps.git(['show', `${sha}:pnpm-lock.yaml`])), manifests, gitlinks);
+  assertImporterCoverage(parseLockfileImporters(deps.git(['show', `${sha}:pnpm-lock.yaml`])), manifests);
   const sideRoot = materializeSide(sha, manifests, deps.git);
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'sca-gate-home-'));
   const env = gateEnvironment(parentEnv, home, registry);
@@ -300,7 +295,7 @@ export async function auditSide(label, sha, deps, registry, parentEnv) {
     fs.rmSync(home, {recursive: true, force: true});
   }
   const doc = validateAuditDocument(readJsonDocument(stdout, `${label} audit`), `${label} audit`);
-  return {sha, manifests, gitlinks, exclusionProof: proof, findings: blockingFindings(doc),
+  return {sha, manifests, gitlinks, findings: blockingFindings(doc),
     totalDependencies: doc.metadata.totalDependencies, counts: doc.metadata.vulnerabilities};
 }
 
@@ -327,7 +322,7 @@ export function buildReport(identity, event, registry, baseSide, headSide, diff)
     identity: {prNumber: Number(identity.iid), baseSha: identity.base, headSha: identity.head,
       sourceBranch: identity.sourceBranch, targetBranch: identity.targetBranch, checkoutSha: identity.commit, mergeSha: identity.merge},
     coverage: {
-      gitlinkExclusionProof: baseSide.exclusionProof,
+      gitlinkHandling: 'mode-160000 entries are recorded and skipped from Node dependency discovery (gitlinks expose no child blobs to ls-tree); importers parity above proves no submodule path entered the audited dependency graph',
       base: {manifests: baseSide.manifests, gitlinksExcludedFromNodeDiscovery: baseSide.gitlinks, totalDependencies: baseSide.totalDependencies, counts: baseSide.counts},
       head: {manifests: headSide.manifests, gitlinksExcludedFromNodeDiscovery: headSide.gitlinks, totalDependencies: headSide.totalDependencies, counts: headSide.counts},
     },

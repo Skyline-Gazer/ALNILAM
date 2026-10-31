@@ -166,9 +166,10 @@ test('classifyTreeEntries excludes gitlinks, requires root inputs, and fails on 
 });
 
 test('assertImporterCoverage requires exact manifest/importer parity and never imports a gitlink', () => {
-  assert.ok(assertImporterCoverage(IMPORTERS, MANIFESTS, ['.ads']).proof);
-  gateError('SCA_GATE_COVERAGE_INCOMPLETE', () => assertImporterCoverage(['.', 'apps/web'], MANIFESTS, []));
-  gateError('SCA_GATE_COVERAGE_INCOMPLETE', () => assertImporterCoverage([...IMPORTERS, '.ads'], MANIFESTS, ['.ads']));
+  assert.equal(assertImporterCoverage(IMPORTERS, MANIFESTS), undefined);
+  gateError('SCA_GATE_COVERAGE_INCOMPLETE', () => assertImporterCoverage(['.', 'apps/web'], MANIFESTS));
+  gateError('SCA_GATE_COVERAGE_INCOMPLETE', () => assertImporterCoverage([...IMPORTERS, '.ads'], MANIFESTS));
+  
 });
 
 test('parseLockfileImporters extracts all importer keys from the lockfile', () => {
@@ -349,4 +350,11 @@ test('real captured pnpm 10.19.0 audit output yields exactly the six inherited t
     'zod@3.25.76|GHSA-mrhx-c7xc-m3w5',
   ]);
   assert.ok(real.metadata.totalDependencies > 1);
+});
+
+test('blockingFindings fails explicitly on duplicate advisory-version rows', () => {
+  const doc = auditDoc(INHERITED);
+  doc.advisories['1120654'].findings.push({version: '0.0.33'});
+  doc.metadata.vulnerabilities.high = 7;
+  gateError('SCA_GATE_OUTPUT_INVALID', () => blockingFindings(doc));
 });
