@@ -167,6 +167,9 @@ function main() {
     ["compose", "--site", site, "--out", outOld],
     {
       cwd: oldWorktree,
+      // compose runs its children with `stdio: "inherit"`, so they inherit
+      // these pipes and the Core rejection reaches `rollbackOutput`.
+      stdio: ["ignore", "pipe", "pipe"],
       encoding: "utf8",
       env: { ...process.env, SOURCE_DATE_EPOCH: process.env.SOURCE_DATE_EPOCH || "1700000000" },
     },

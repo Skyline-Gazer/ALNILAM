@@ -32,7 +32,7 @@ snapshot below; that snapshot is retained only for traceability.
 
 ### Evidence
 
-- Local checks on each pushed head: `pnpm install --frozen-lockfile`, `pnpm test` 55/55,
+- Local checks on each pushed head: `pnpm install --frozen-lockfile`, `pnpm test` 56/56,
   `pnpm check` 0 errors, `pnpm build` OK, `python3 -m unittest discover -s scripts/tests
   -p '*_test.py'` 31 OK, and `upgrade-check --old 07fac43` exits 0 after printing the
   released Core's contract rejection.
@@ -40,13 +40,7 @@ snapshot below; that snapshot is retained only for traceability.
   merge SHA and the current-head CodeBuddy review. Results bound to earlier heads are
   stale and are not acceptance evidence.
 
-## Historical preservation snapshot — 2026-10-30
-
-The earlier readback (PR #23 open at `43da96a`, trusted consumer failing at
-`unit-coverage` because the target suite asserted schema v1, Issue #51 unaccepted) is
-superseded by the section above and retained only in Git history.
-
-### Legacy environment work still not recovered
+## Legacy environment work still not recovered (#94/#100)
 
 - Issue #94 (`chore/94-cnb-browser-ci-pilot`): uncommitted worktree changes in the old
   environment were never recovered into this clone; do not treat them as present.
