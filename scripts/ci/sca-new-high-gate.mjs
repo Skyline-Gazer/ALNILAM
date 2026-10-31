@@ -322,7 +322,7 @@ export function buildReport(identity, event, registry, baseSide, headSide, diff)
     identity: {prNumber: Number(identity.iid), baseSha: identity.base, headSha: identity.head,
       sourceBranch: identity.sourceBranch, targetBranch: identity.targetBranch, checkoutSha: identity.commit, mergeSha: identity.merge},
     coverage: {
-      gitlinkHandling: 'mode-160000 entries are recorded and skipped from Node dependency discovery (gitlinks expose no child blobs to ls-tree); importers parity above proves no submodule path entered the audited dependency graph',
+      gitlinkHandling: 'mode-160000 gitlinks are recorded from ls-tree and skipped from Node dependency discovery; submodule contents are not audited here; the importer-parity check above fails closed if any recorded gitlink path were nevertheless declared as a lockfile importer',
       base: {manifests: baseSide.manifests, gitlinksExcludedFromNodeDiscovery: baseSide.gitlinks, totalDependencies: baseSide.totalDependencies, counts: baseSide.counts},
       head: {manifests: headSide.manifests, gitlinksExcludedFromNodeDiscovery: headSide.gitlinks, totalDependencies: headSide.totalDependencies, counts: headSide.counts},
     },

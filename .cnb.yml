@@ -53,7 +53,7 @@ $:
           script: env -u CNB_TOKEN -u TWINE_PASSWORD npm install --global --ignore-scripts pnpm@10.19.0
         - name: Policy B newly introduced High/Critical gate (preview)
           timeout: 40m
-          script: node scripts/ci/sca-new-high-gate.mjs
+          script: env -u CNB_TOKEN -u TWINE_PASSWORD node scripts/ci/sca-new-high-gate.mjs
 
   pull_request.target:
     - name: alnilam-trusted-consumer
@@ -72,11 +72,10 @@ $:
         - name: Verify native PR identity and test the exact merge commit
           timeout: 40m
           script: node scripts/ci/cnb-trusted-gate.mjs
-        # Policy B Track 2. On pull_request.target the pipeline code and this
-        # configuration come from the target branch; until the Owner
-        # bootstraps this PR into dev, the legacy target branch config keeps
-        # running its own full High gate instead. The guard prevents a false
-        # green on target branches where the script does not exist yet.
+        # Policy B Track 2 (authoritative). On pull_request.target the
+        # pipeline code and this configuration come from the target branch.
+        # If the target branch does not yet contain the gate script, this
+        # stage fails closed rather than reporting a false green.
         - name: Policy B newly introduced High/Critical gate
           timeout: 40m
           script: |
