@@ -207,13 +207,16 @@ export function assertPreMergeParents(parents, base, head) {
   }
 }
 
-export function assertLiveRefs(output, identity) {
+export function assertLiveRefs(output, identity, event) {
   const rows = String(output).trim().split('\n').filter(Boolean).map(row => row.split('\t'));
   const found = new Map(rows.map(([sha, ref]) => [ref, sha]));
   const source = `refs/heads/${identity.sourceBranch}`;
   const target = `refs/heads/${identity.targetBranch}`;
-  if (rows.length !== 2 || found.get(source) !== identity.head || found.get(target) !== identity.base) {
-    fail('SCA_GATE_IDENTITY_MISMATCH', `live refs moved or do not match PR ${identity.iid}: want ${source}=${identity.head} ${target}=${identity.base}`);
+  const expected = event === 'pull_request.target'
+    ? [[target, identity.base], [source, identity.head]]
+    : [[target, identity.base], [source, identity.head], [`refs/pull/${identity.iid}/status`, identity.merge]];
+  if (rows.length !== expected.length || expected.some(([ref, sha]) => found.get(ref) !== sha)) {
+    fail('SCA_GATE_IDENTITY_MISMATCH', `live refs moved or do not match PR ${identity.iid} identity ${JSON.stringify(expected)}`);
   }
 }
 
@@ -238,7 +241,7 @@ export function defaultDeps() {
         try { execFileSync('git', ['cat-file', '-e', `${sha}^{commit}`], {cwd: process.cwd(), stdio: 'ignore', timeout: 30000}); }
         catch {
           try {
-            execFileSync('git', ['fetch', '--no-tags', 'origin', `refs/pull/${iid}/head`, `refs/heads/${targetBranch}`],
+            execFileSync('git', ['fetch', '--no-tags', 'origin', `refs/pull/${iid}/head`, `refs/pull/${iid}/status`, `refs/heads/${targetBranch}`],
               {cwd: process.cwd(), stdio: 'ignore', timeout: 10 * 60 * 1000});
           } catch (error) { fail('SCA_GATE_IDENTITY_MISMATCH', `base/head objects unavailable after fetch: ${String(error?.message || error).slice(0, 200)}`); }
           try { execFileSync('git', ['cat-file', `-e`, `${sha}^{commit}`], {cwd: process.cwd(), stdio: 'ignore', timeout: 30000}); }
@@ -369,14 +372,17 @@ export async function runGate({env, event, deps, registry, outDir, lsRemote}) {
   const identity = validateGateIdentity(env, event);
   const request = deps.request || fetch;
   await fetchPullRequest(identity, env.CNB_TOKEN, request);
-  assertLiveRefs(lsRemote('origin', `refs/heads/${identity.sourceBranch}`, `refs/heads/${identity.targetBranch}`), identity);
+  const refs = event === 'pull_request.target'
+    ? [`refs/heads/${identity.targetBranch}`, `refs/heads/${identity.sourceBranch}`]
+    : [`refs/heads/${identity.targetBranch}`, `refs/heads/${identity.sourceBranch}`, `refs/pull/${identity.iid}/status`];
+  assertLiveRefs(lsRemote('origin', ...refs), identity, event);
   if (identity.base === identity.head) fail('SCA_GATE_IDENTITY_MISMATCH', 'base and head SHAs must differ');
   deps.ensureCommits(event === 'pull_request' ? [identity.base, identity.head, identity.merge] : [identity.base, identity.head], identity.iid, identity.targetBranch);
   if (event === 'pull_request') assertPreMergeParents(deps.git(['rev-list', '--parents', '-n', '1', identity.merge]).trim().split(/\s+/).slice(1), identity.base, identity.head);
   const baseSide = await auditSide('base', identity.base, deps, registry, env);
   const headSide = await auditSide('head', identity.head, deps, registry, env);
   await fetchPullRequest(identity, env.CNB_TOKEN, request);
-  assertLiveRefs(lsRemote('origin', `refs/heads/${identity.sourceBranch}`, `refs/heads/${identity.targetBranch}`), identity);
+  assertLiveRefs(lsRemote('origin', ...refs), identity, event);
   const diff = diffBlockingFindings(baseSide.findings, headSide.findings);
   const report = buildReport(identity, event, registry, baseSide, headSide, diff);
   fs.mkdirSync(outDir, {recursive: true});

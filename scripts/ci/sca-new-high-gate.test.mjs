@@ -85,6 +85,7 @@ const env = extra => ({
   ...extra,
 });
 const lsRefs = () => `${HEAD_SHA}\trefs/heads/fix/ci-sca-lhci-dependency\n${BASE_SHA}\trefs/heads/dev\n`;
+const lsRefsWithMerge = () => `${BASE_SHA}\trefs/heads/dev\n${HEAD_SHA}\trefs/heads/fix/ci-sca-lhci-dependency\n${MERGE_SHA}\trefs/pull/29/status\n`;
 
 const gateError = (code, fn) => assert.throws(fn, error => error.message.startsWith(`${code}: `), `expected ${code}`);
 
@@ -189,9 +190,13 @@ test('assertPreMergeParents and assertLiveRefs reject moved or wrong identities'
   gateError('SCA_GATE_IDENTITY_MISMATCH', () => assertPreMergeParents([BASE_SHA, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'], BASE_SHA, HEAD_SHA));
   gateError('SCA_GATE_IDENTITY_MISMATCH', () => validateGateIdentity(env({CNB_PULL_REQUEST_MERGE_SHA: ''}), 'pull_request'));
   gateError('SCA_GATE_IDENTITY_MISMATCH', () => validateGateIdentity(env({CNB_COMMIT: BASE_SHA}), 'pull_request'));
-  assertLiveRefs(lsRefs(), validateGateIdentity(env(), 'pull_request'));
-  gateError('SCA_GATE_IDENTITY_MISMATCH', () => assertLiveRefs(`9999${HEAD_SHA.slice(4)}\trefs/heads/fix/ci-sca-lhci-dependency\n${BASE_SHA}\trefs/heads/dev\n`, validateGateIdentity(env(), 'pull_request')));
-  gateError('SCA_GATE_IDENTITY_MISMATCH', () => assertLiveRefs('', validateGateIdentity(env(), 'pull_request')));
+  assertLiveRefs(lsRefsWithMerge(), validateGateIdentity(env(), 'pull_request'), 'pull_request');
+  gateError('SCA_GATE_IDENTITY_MISMATCH', () => assertLiveRefs(`9999${HEAD_SHA.slice(4)}	refs/heads/fix/ci-sca-lhci-dependency
+${BASE_SHA}	refs/heads/dev
+${MERGE_SHA}	refs/pull/29/status
+`, validateGateIdentity(env(), 'pull_request'), 'pull_request'));
+  gateError('SCA_GATE_IDENTITY_MISMATCH', () => assertLiveRefs(lsRefs(), validateGateIdentity(env(), 'pull_request'), 'pull_request'));
+  gateError('SCA_GATE_IDENTITY_MISMATCH', () => assertLiveRefs('', validateGateIdentity(env(), 'pull_request'), 'pull_request'));
 });
 
 function sideDeps(baseDoc, headDoc, extra = {}) {
@@ -251,7 +256,7 @@ async function withRunGate({baseDoc = auditDoc(INHERITED), headDoc = baseDoc, ex
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sca-gate-test-'));
   const envFull = {...env({CNB_EVENT: 'pull_request', CNB_COMMIT: HEAD_SHA}), ...gateEnv};
   const result = await runGate({env: envFull, event: 'pull_request',
-    deps: sideDeps(baseDoc, headDoc, extra), registry: 'https://registry.npmjs.org/', lsRemote: lsRefs, outDir});
+    deps: sideDeps(baseDoc, headDoc, extra), registry: 'https://registry.npmjs.org/', lsRemote: lsRefsWithMerge, outDir});
   const report = JSON.parse(fs.readFileSync(path.join(outDir, 'report.json'), 'utf8'));
   fs.rmSync(outDir, {recursive: true, force: true});
   return {result, report};
@@ -285,14 +290,14 @@ test('runGate FAIL: committed new High negative blocks the exact head', async ()
 test('runGate fails closed on registry outage, moved refs and stale lockfile', async () => {
   await assert.rejects(withRunGate({extra: {auditThrows: Error('pnpm audit exited null network failure')}}), /pnpm audit exited/);
   await assert.rejects(runGate({env: env(), event: 'pull_request', deps: sideDeps(auditDoc(INHERITED), auditDoc(INHERITED)), registry: 'https://r/',
-    lsRemote: () => `0000${HEAD_SHA.slice(4)}\trefs/heads/fix/ci-sca-lhci-dependency\n${BASE_SHA}\trefs/heads/dev\n`, outDir: fs.mkdtempSync(path.join(os.tmpdir(), 'sca-gate-refs-'))}), /SCA_GATE_IDENTITY_MISMATCH/);
+    lsRemote: () => `0000${HEAD_SHA.slice(4)}\trefs/heads/dev\n${HEAD_SHA}\trefs/heads/fix/ci-sca-lhci-dependency\n${MERGE_SHA}\trefs/pull/29/status\n`, outDir: fs.mkdtempSync(path.join(os.tmpdir(), 'sca-gate-refs-'))}), /SCA_GATE_IDENTITY_MISMATCH/);
   await assert.rejects(withRunGate({extra: {installThrows: Error('ERR_PNPM_OUTDATED_LOCKFILE')}}), /SCA_GATE_LOCKFILE_STALE/);
 });
 
 test('runGate rejects a PR checkout whose parents are not the verified base and head', async () => {
   await assert.rejects(runGate({env: env(), event: 'pull_request',
     deps: sideDeps(auditDoc(INHERITED), auditDoc(INHERITED), {revListParents: [BASE_SHA, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']}),
-    registry: 'https://r/', lsRemote: lsRefs, outDir: fs.mkdtempSync(path.join(os.tmpdir(), 'sca-gate-parents-'))}), /SCA_GATE_IDENTITY_MISMATCH/);
+    registry: 'https://r/', lsRemote: lsRefsWithMerge, outDir: fs.mkdtempSync(path.join(os.tmpdir(), 'sca-gate-parents-'))}), /SCA_GATE_IDENTITY_MISMATCH/);
 });
 
 test('runGate fails closed when the native PR API disagrees or is unavailable', async () => {
