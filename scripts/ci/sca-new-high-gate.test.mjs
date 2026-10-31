@@ -169,7 +169,6 @@ test('assertImporterCoverage requires exact manifest/importer parity and never i
   assert.equal(assertImporterCoverage(IMPORTERS, MANIFESTS), undefined);
   gateError('SCA_GATE_COVERAGE_INCOMPLETE', () => assertImporterCoverage(['.', 'apps/web'], MANIFESTS));
   gateError('SCA_GATE_COVERAGE_INCOMPLETE', () => assertImporterCoverage([...IMPORTERS, '.ads'], MANIFESTS));
-  
 });
 
 test('parseLockfileImporters extracts all importer keys from the lockfile', () => {

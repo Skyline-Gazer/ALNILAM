@@ -83,7 +83,7 @@ $:
             if test -f scripts/ci/sca-new-high-gate.mjs; then
               node scripts/ci/sca-new-high-gate.mjs
             else
-              echo "POLICY_B_GATE_NOT_DEPLOYED on target branch; the legacy full High gate of that branch remains authoritative"
+              echo "POLICY_B_GATE_NOT_DEPLOYED on this target branch; failing closed: no Track 2 new-risk gate exists here"
               exit 1
             fi
         - name: Enforce Node source coverage
