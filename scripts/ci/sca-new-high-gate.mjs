@@ -134,7 +134,7 @@ export function classifyTreeEntries(lsTreeOutput, globs) {
     const file = line.slice(tab + 1);
     if (mode === '160000' || type === 'commit') { gitlinks.push(file); continue; }
     if (type !== 'blob') continue;
-    if (file === 'package.json' || file === 'pnpm-lock.yaml' || file === 'pnpm-workspace.yaml') manifests.push(file);
+    if (file === 'package.json' || file === 'pnpm-lock.yaml' || file === 'pnpm-workspace.yaml' || file === '.npmrc') manifests.push(file);
     else if (file.endsWith('/package.json')) {
       if (globs.some(glob => globMatches(glob, file))) manifests.push(file);
       else uncovered.push(file);
@@ -173,7 +173,7 @@ export function assertImporterCoverage(importers, manifests, gitlinks) {
       fail('SCA_GATE_COVERAGE_INCOMPLETE', `gitlink ${gitlink} unexpectedly appears as a lockfile importer`);
     }
   }
-  return {proof: 'submodule gitlinks carry no tracked manifests in this object DB; workspace globs never cover them, so Node dependency discovery excludes them explicitly'};
+  return {proof: 'submodule gitlinks (mode 160000) carry no tracked manifests in this object DB; workspace globs never cover them; importer parity proves no gitlink entered lockfile importers'};
 }
 
 export function validateGateIdentity(env, event) {
@@ -200,10 +200,19 @@ export function validateGateIdentity(env, event) {
   return {iid, head, base, commit, merge: merge || null, sourceBranch, targetBranch};
 }
 
-export function assertPreMergeParents(parents, base, head) {
-  if (!Array.isArray(parents) || parents.length !== 2 || new Set(parents).size !== 2 ||
-      !parents.includes(base) || !parents.includes(head)) {
-    fail('SCA_GATE_IDENTITY_MISMATCH', 'pre-merge checkout does not have exactly the verified base and head parents');
+export function assertPreMergeParents(parents, base, head, merge) {
+  const unique = [...new Set(parents)];
+  if (!Array.isArray(parents) || unique.length !== parents.length) {
+    fail('SCA_GATE_IDENTITY_MISMATCH', 'pre-merge commit has duplicate parents');
+  }
+  if (merge === head) {
+    if (unique.length !== 1 || unique[0] !== base) {
+      fail('SCA_GATE_IDENTITY_MISMATCH', 'fast-forward pre-merge commit must have exactly the verified base parent');
+    }
+    return;
+  }
+  if (unique.length !== 2 || !unique.includes(base) || !unique.includes(head)) {
+    fail('SCA_GATE_IDENTITY_MISMATCH', 'pre-merge commit does not have exactly the verified base and head parents');
   }
 }
 
@@ -236,19 +245,16 @@ export function gateEnvironment(env, home, registry) {
 export function defaultDeps() {
   return {
     git(args) { return execFileSync('git', args, {cwd: process.cwd(), encoding: 'utf8', maxBuffer: 128 * 1024 * 1024, timeout: 120000}); },
-    ensureCommits(shas, iid, targetBranch) {
-      for (const sha of shas) {
-        try { execFileSync('git', ['cat-file', '-e', `${sha}^{commit}`], {cwd: process.cwd(), stdio: 'ignore', timeout: 30000}); }
-        catch {
-          try {
-            execFileSync('git', ['fetch', '--no-tags', 'origin', `refs/pull/${iid}/head`, `refs/pull/${iid}/status`, `refs/heads/${targetBranch}`],
-              {cwd: process.cwd(), stdio: 'ignore', timeout: 10 * 60 * 1000});
-          } catch (error) { fail('SCA_GATE_IDENTITY_MISMATCH', `base/head objects unavailable after fetch: ${String(error?.message || error).slice(0, 200)}`); }
-          try { execFileSync('git', ['cat-file', `-e`, `${sha}^{commit}`], {cwd: process.cwd(), stdio: 'ignore', timeout: 30000}); }
-          catch { fail('SCA_GATE_IDENTITY_MISMATCH', `required object ${sha} is still missing in the checkout`); }
-        }
-      }
+    ensureCommits(shas) {
+      const has = sha => { try { execFileSync('git', ['cat-file', '-e', `${sha}^{commit}`], {cwd: process.cwd(), stdio: 'ignore', timeout: 30000}); return true; } catch { return false; } };
+      const missing = shas.filter(sha => !has(sha));
+      if (!missing.length) return;
+      try { execFileSync('git', ['fetch', '--no-tags', 'origin', ...missing], {cwd: process.cwd(), stdio: 'ignore', timeout: 10 * 60 * 1000}); }
+      catch (error) { fail('SCA_GATE_OBJECTS_UNAVAILABLE', `fetch by SHA failed for ${missing.join(',')}: ${String(error?.message || error).slice(0, 200)}`); }
+      const still = missing.filter(sha => !has(sha));
+      if (still.length) fail('SCA_GATE_OBJECTS_UNAVAILABLE', `required objects still missing after fetch: ${still.join(',')}`);
     },
+    request: fetch,
     pnpmInstall(cwd, env) {
       return execFileSync('pnpm', ['install', '--frozen-lockfile', '--lockfile-only', '--ignore-scripts', `--registry=${env.npm_config_registry}`],
         {cwd, env, timeout: 15 * 60 * 1000, stdio: 'pipe', maxBuffer: 64 * 1024 * 1024}).toString();
@@ -280,7 +286,7 @@ export async function auditSide(label, sha, deps, registry, parentEnv) {
   const workspaceText = deps.git(['show', `${sha}:pnpm-workspace.yaml`]);
   const globs = parseWorkspaceGlobs(workspaceText);
   const {manifests, gitlinks} = classifyTreeEntries(deps.git(['ls-tree', '-r', sha]), globs);
-  assertImporterCoverage(parseLockfileImporters(deps.git(['show', `${sha}:pnpm-lock.yaml`])), manifests, gitlinks);
+  const {proof} = assertImporterCoverage(parseLockfileImporters(deps.git(['show', `${sha}:pnpm-lock.yaml`])), manifests, gitlinks);
   const sideRoot = materializeSide(sha, manifests, deps.git);
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'sca-gate-home-'));
   const env = gateEnvironment(parentEnv, home, registry);
@@ -294,8 +300,8 @@ export async function auditSide(label, sha, deps, registry, parentEnv) {
     fs.rmSync(home, {recursive: true, force: true});
   }
   const doc = validateAuditDocument(readJsonDocument(stdout, `${label} audit`), `${label} audit`);
-  return {sha, manifests, gitlinks, findings: blockingFindings(doc), sideRoot: null,
-    totalDependencies: doc.metadata.totalDependencies, counts: doc.metadata.vulnerabilities, doc};
+  return {sha, manifests, gitlinks, exclusionProof: proof, findings: blockingFindings(doc),
+    totalDependencies: doc.metadata.totalDependencies, counts: doc.metadata.vulnerabilities};
 }
 
 export function diffBlockingFindings(base, head) {
@@ -317,10 +323,11 @@ export function buildReport(identity, event, registry, baseSide, headSide, diff)
   return {
     policy: 'ALNILAM-118-B-two-track',
     verdict: diff.introduced.length ? 'FAIL_NEW_HIGH' : 'PASS',
-    event, registry,
+    event, registry, apiVerified: event === 'pull_request.target',
     identity: {prNumber: Number(identity.iid), baseSha: identity.base, headSha: identity.head,
       sourceBranch: identity.sourceBranch, targetBranch: identity.targetBranch, checkoutSha: identity.commit, mergeSha: identity.merge},
     coverage: {
+      gitlinkExclusionProof: baseSide.exclusionProof,
       base: {manifests: baseSide.manifests, gitlinksExcludedFromNodeDiscovery: baseSide.gitlinks, totalDependencies: baseSide.totalDependencies, counts: baseSide.counts},
       head: {manifests: headSide.manifests, gitlinksExcludedFromNodeDiscovery: headSide.gitlinks, totalDependencies: headSide.totalDependencies, counts: headSide.counts},
     },
@@ -344,7 +351,7 @@ export function formatVerdict(report) {
   return lines.join('\n');
 }
 
-export async function fetchPullRequest(identity, token, request = fetch) {
+export async function fetchPullRequest(identity, token, request) {
   if (!token) fail('SCA_GATE_IDENTITY_MISMATCH', 'CNB_TOKEN required to verify the native PR identity');
   const url = new URL(`${REPO}/-/pulls/${identity.iid}`, `${API}/`);
   let response;
@@ -370,18 +377,19 @@ export async function fetchPullRequest(identity, token, request = fetch) {
 
 export async function runGate({env, event, deps, registry, outDir, lsRemote}) {
   const identity = validateGateIdentity(env, event);
-  const request = deps.request || fetch;
-  await fetchPullRequest(identity, env.CNB_TOKEN, request);
+  if (typeof deps.request !== 'function') fail('SCA_GATE_CONFIGURATION', 'deps.request is required');
+  if (typeof deps.ensureCommits !== 'function') fail('SCA_GATE_CONFIGURATION', 'deps.ensureCommits is required');
+  if (event === 'pull_request.target') await fetchPullRequest(identity, env.CNB_TOKEN, deps.request);
   const refs = event === 'pull_request.target'
     ? [`refs/heads/${identity.targetBranch}`, `refs/heads/${identity.sourceBranch}`]
     : [`refs/heads/${identity.targetBranch}`, `refs/heads/${identity.sourceBranch}`, `refs/pull/${identity.iid}/status`];
   assertLiveRefs(lsRemote('origin', ...refs), identity, event);
   if (identity.base === identity.head) fail('SCA_GATE_IDENTITY_MISMATCH', 'base and head SHAs must differ');
-  deps.ensureCommits(event === 'pull_request' ? [identity.base, identity.head, identity.merge] : [identity.base, identity.head], identity.iid, identity.targetBranch);
-  if (event === 'pull_request') assertPreMergeParents(deps.git(['rev-list', '--parents', '-n', '1', identity.merge]).trim().split(/\s+/).slice(1), identity.base, identity.head);
+  deps.ensureCommits(event === 'pull_request' ? [identity.base, identity.head, identity.merge] : [identity.base, identity.head]);
+  if (event === 'pull_request') assertPreMergeParents(deps.git(['rev-list', '--parents', '-n', '1', identity.merge]).trim().split(/\s+/).slice(1), identity.base, identity.head, identity.merge);
   const baseSide = await auditSide('base', identity.base, deps, registry, env);
   const headSide = await auditSide('head', identity.head, deps, registry, env);
-  await fetchPullRequest(identity, env.CNB_TOKEN, request);
+  if (event === 'pull_request.target') await fetchPullRequest(identity, env.CNB_TOKEN, deps.request);
   assertLiveRefs(lsRemote('origin', ...refs), identity, event);
   const diff = diffBlockingFindings(baseSide.findings, headSide.findings);
   const report = buildReport(identity, event, registry, baseSide, headSide, diff);

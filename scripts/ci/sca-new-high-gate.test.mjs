@@ -11,7 +11,7 @@ import {
 
 const BASE_SHA = '2b367d74a99b5bb8c2022b60f8c07cd6c9543d20';
 const HEAD_SHA = 'c9cf703fef8d6fa05d7b3ca27349c597851e1642';
-const MERGE_SHA = '4177abe1514e746b00c686aa7662d79af62223fe';
+const MERGE_SHA = 'f'.repeat(40);
 
 const advisory = (id, module, severity, versions, ghsa, cve) => ({
   id, module_name: module, severity, github_advisory_id: ghsa, cves: cve ? [cve] : [],
@@ -37,6 +37,7 @@ const auditDoc = (advisories, total) => ({
 });
 
 const TREE = `100644 blob a1\tpackage.json
+100644 blob a9\t.npmrc
 100644 blob a2\tpnpm-lock.yaml
 100644 blob a3\tpnpm-workspace.yaml
 100644 blob b1\tapps/web/package.json
@@ -46,7 +47,7 @@ const TREE = `100644 blob a1\tpackage.json
 160000 commit 375fc71f977c40c2053140c34431cc60a6d42883\t.ads
 `;
 const GLOBS = ['apps/*', 'packages/*', 'themes/*', 'features/*'];
-const MANIFESTS = ['apps/web/package.json', 'package.json', 'packages/core/package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'themes/editorial/package.json'];
+const MANIFESTS = ['.npmrc', 'apps/web/package.json', 'package.json', 'packages/core/package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'themes/editorial/package.json'];
 const IMPORTERS = ['.', 'apps/web', 'packages/core', 'themes/editorial'];
 
 function fakeGit(overrides = {}) {
@@ -54,6 +55,7 @@ function fakeGit(overrides = {}) {
     'pnpm-workspace.yaml': `packages:\n  - "apps/*"\n  - "packages/*"\n  - "themes/*"\n  - "features/*"\n`,
     'pnpm-lock.yaml': `lockfileVersion: '9.0'\n\nimporters:\n  .:\n    devDependencies:\n      '@lhci/cli':\n  apps/web:\n  packages/core:\n  themes/editorial:\n\nsnapshots:\n  tmp@0.1.0:\n`,
     'package.json': '{"name":"alnilam"}',
+    '.npmrc': 'registry=https://registry.npmjs.org\n',
     'apps/web/package.json': '{"name":"@alnilam/web"}',
     'packages/core/package.json': '{"name":"@alnilam/core"}',
     'themes/editorial/package.json': '{"name":"@alnilam/theme-editorial"}',
@@ -66,7 +68,7 @@ function fakeGit(overrides = {}) {
       if (!(file in files)) throw Error(`unknown file ${file}`);
       return files[file];
     }
-    if (args[0] === 'rev-list') return `${HEAD_SHA} ${BASE_SHA} ${HEAD_SHA}\n`;
+    if (args[0] === 'rev-list') return `${args[2]} ${BASE_SHA} ${HEAD_SHA}\n`;
     throw Error(`unexpected git args ${args.join(' ')}`);
   };
 }
@@ -206,7 +208,7 @@ function sideDeps(baseDoc, headDoc, extra = {}) {
     ensureCommits() {},
     request: extra.request || okRequest,
     git: args => {
-      if (args[0] === 'rev-list' && extra.revListParents) return `${HEAD_SHA} ${extra.revListParents.join(' ')}\n`;
+      if (args[0] === 'rev-list' && extra.revListParents) return `${args[2]} ${extra.revListParents.join(' ')}\n`;
       return fakeGit(extra.gitOverrides)(args);
     },
     pnpmInstall() { if (extra.installThrows) throw extra.installThrows; return 'ok'; },
@@ -252,10 +254,10 @@ test('diffBlockingFindings classifies inherited, introduced and resolved triples
   assert.equal(resolution.resolved.length, 6);
 });
 
-async function withRunGate({baseDoc = auditDoc(INHERITED), headDoc = baseDoc, extra = {}, gateEnv = {}} = {}) {
+async function withRunGate({baseDoc = auditDoc(INHERITED), headDoc = baseDoc, extra = {}, event = 'pull_request'} = {}) {
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sca-gate-test-'));
-  const envFull = {...env({CNB_EVENT: 'pull_request', CNB_COMMIT: HEAD_SHA}), ...gateEnv};
-  const result = await runGate({env: envFull, event: 'pull_request',
+  const envFull = env(event === 'pull_request.target' ? {CNB_EVENT: 'pull_request.target', CNB_COMMIT: BASE_SHA} : {});
+  const result = await runGate({env: envFull, event,
     deps: sideDeps(baseDoc, headDoc, extra), registry: 'https://registry.npmjs.org/', lsRemote: lsRefsWithMerge, outDir});
   const report = JSON.parse(fs.readFileSync(path.join(outDir, 'report.json'), 'utf8'));
   fs.rmSync(outDir, {recursive: true, force: true});
@@ -304,10 +306,47 @@ test('runGate fails closed when the native PR API disagrees or is unavailable', 
   const badHead = async () => ({ok: true, json: async () => ({data: {number: 29, state: 'open', is_merged: false,
     base: {sha: BASE_SHA, ref: 'refs/heads/dev', repo: {path: 'KoolingMachine/ALNILAM'}},
     head: {sha: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', ref: 'refs/heads/fix/ci-sca-lhci-dependency', repo: {path: 'KoolingMachine/ALNILAM'}}}})});
-  await assert.rejects(withRunGate({extra: {request: badHead}}), /SCA_GATE_IDENTITY_MISMATCH/);
-  await assert.rejects(withRunGate({extra: {request: async () => {throw Error('registry timeout');}}}), /SCA_GATE_TOOL_ERROR/);
+  await assert.rejects(withRunGate({extra: {request: badHead}, event: 'pull_request.target'}), /SCA_GATE_IDENTITY_MISMATCH/);
+  await assert.rejects(withRunGate({extra: {request: async () => {throw Error('registry timeout');}}, event: 'pull_request.target'}), /SCA_GATE_TOOL_ERROR/);
   const http500 = async () => { return {ok: false, status: 401, json: async () => { return {}; }}; };
-  await assert.rejects(withRunGate({extra: {request: http500}}), /SCA_GATE_TOOL_ERROR/);
-  await assert.rejects(runGate({env: env({CNB_TOKEN: ''}), event: 'pull_request', deps: sideDeps(auditDoc(INHERITED), auditDoc(INHERITED)),
-    registry: 'https://r/', lsRemote: lsRefs, outDir: os.tmpdir()}), /SCA_GATE_IDENTITY_MISMATCH/);
+  await assert.rejects(withRunGate({extra: {request: http500}, event: 'pull_request.target'}), /SCA_GATE_TOOL_ERROR/);
+  await assert.rejects(runGate({env: env({CNB_TOKEN: '', CNB_EVENT: 'pull_request.target', CNB_COMMIT: BASE_SHA}), event: 'pull_request.target',
+    deps: sideDeps(auditDoc(INHERITED), auditDoc(INHERITED)), registry: 'https://r/', lsRemote: lsRefs,
+    outDir: fs.mkdtempSync(path.join(os.tmpdir(), 'sca-gate-notok-'))}), /SCA_GATE_IDENTITY_MISMATCH/);
+  await assert.rejects(runGate({env: env({CNB_EVENT: 'pull_request.target', CNB_COMMIT: BASE_SHA}), event: 'pull_request.target', deps: {...sideDeps(auditDoc(INHERITED), auditDoc(INHERITED)), request: undefined},
+    registry: 'https://r/', lsRemote: lsRefs, outDir: os.tmpdir()}), /SCA_GATE_CONFIGURATION/);
+});
+
+test('assertPreMergeParents accepts verified double-parent and fast-forward shapes only', () => {
+  assertPreMergeParents([BASE_SHA, HEAD_SHA], BASE_SHA, HEAD_SHA, MERGE_SHA);
+  assertPreMergeParents([BASE_SHA], BASE_SHA, HEAD_SHA, HEAD_SHA);
+  gateError('SCA_GATE_IDENTITY_MISMATCH', () => assertPreMergeParents([BASE_SHA, BASE_SHA], BASE_SHA, HEAD_SHA, MERGE_SHA));
+  gateError('SCA_GATE_IDENTITY_MISMATCH', () => assertPreMergeParents([BASE_SHA, HEAD_SHA], BASE_SHA, HEAD_SHA, HEAD_SHA));
+  gateError('SCA_GATE_IDENTITY_MISMATCH', () => assertPreMergeParents([BASE_SHA], BASE_SHA, HEAD_SHA, MERGE_SHA));
+});
+
+test('runGate supports fast-forward previews where head is the pre-merge commit', async () => {
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sca-gate-ff-'));
+  const result = await runGate({env: env({CNB_PULL_REQUEST_MERGE_SHA: HEAD_SHA, CNB_COMMIT: HEAD_SHA}), event: 'pull_request',
+    deps: sideDeps(auditDoc(INHERITED), auditDoc(INHERITED), {revListParents: [BASE_SHA]}),
+    registry: 'https://r/', outDir,
+    lsRemote: () => `${BASE_SHA}\trefs/heads/dev\n${HEAD_SHA}\trefs/heads/fix/ci-sca-lhci-dependency\n${HEAD_SHA}\trefs/pull/29/status\n`});
+  assert.equal(result, 0);
+  fs.rmSync(outDir, {recursive: true, force: true});
+});
+
+test('real captured pnpm 10.19.0 audit output yields exactly the six inherited triples', () => {
+  const real = JSON.parse(fs.readFileSync(new URL('./fixtures/pnpm-audit-real-2b367d74.json', import.meta.url), 'utf8'));
+  validateAuditDocument(real, 'real');
+  const findings = blockingFindings(real);
+  assert.equal(findings.size, 6);
+  assert.deepEqual([...findings.keys()].sort(), [
+    'basic-ftp@5.3.1|GHSA-c475-qrg2-pj4r',
+    'extract-zip@2.0.1|GHSA-7pqw-9j4j-h8q3',
+    'extract-zip@2.0.1|GHSA-jmr9-qjv8-65gv',
+    'tmp@0.0.33|GHSA-ph9p-34f9-6g65',
+    'tmp@0.1.0|GHSA-ph9p-34f9-6g65',
+    'zod@3.25.76|GHSA-mrhx-c7xc-m3w5',
+  ]);
+  assert.ok(real.metadata.totalDependencies > 1);
 });

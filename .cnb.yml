@@ -43,9 +43,12 @@ $:
               "$CNB_BUILD_ID" "$CNB_EVENT" "$CNB_PULL_REQUEST_SHA" \
               "$CNB_PULL_REQUEST_TARGET_SHA" "$CNB_PULL_REQUEST_MERGE_SHA"
             cat ".tmp/cnb-review-${CNB_BUILD_ID}/review.json"
-        # Policy B Track 2 preview on the pre-merge commit (untrusted events
-        # cannot publish attachments; the authoritative gate runs in the
-        # trusted pull_request.target pipeline after bootstrap).
+        # Policy B Track 2 preview on the pre-merge commit. Untrusted events
+        # cannot publish attachments, so this stage audits without CNB
+        # credentials: identity is bound to platform-injected PR env, live
+        # branch + refs/pull/<iid>/status SHAs and the exact pre-merge
+        # parents. The authoritative gate (with native PR API verification)
+        # runs in the trusted pull_request.target pipeline after bootstrap.
         - name: Install pinned pnpm without CNB credentials
           script: env -u CNB_TOKEN -u TWINE_PASSWORD npm install --global --ignore-scripts pnpm@10.19.0
         - name: Policy B newly introduced High/Critical gate (preview)
