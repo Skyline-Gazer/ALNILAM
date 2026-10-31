@@ -7,11 +7,14 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 ## [Unreleased]
 
 ### Added
-- **Site schema v2 (Issue #51)**: YAML-only `alnilam.config.yaml` with strict validation for schema version, unknown fields, locales, routing and taxonomy metadata; demo Site migrated; historical v1 TOML retained under `tests/fixtures/site-v1-legacy` for negative compatibility evidence.
-- **P1 Shirone frontend vertical slice (candidate, #48):** local Shirone-derived M3E home/list/article/archive/tag presentation with the retained ALNILAM Core/Site v1, Pagefind, optional-module and rollback contracts. Not released or deployed.
+- **Site schema v2 validation (Issue #51)**: strict `schemaVersion: 2`, closed-world unknown-field rejection, locale/routing/taxonomy validation, and a fail-closed YAML parser (no duplicate keys, unresolved tags or non-plain values).
+- **P1 Shirone frontend vertical slice (candidate, #48):** local Shirone-derived M3E home/list/article/archive/tag presentation with the retained ALNILAM Core/Site contracts, Pagefind, optional-module and rollback coverage. Not released or deployed.
+
+### Changed
+- **Site configuration is YAML-only**: `alnilam.config.yaml` replaces `alnilam.config.toml`; a TOML-only Site now fails closed with an actionable message. No automatic v1→v2 migration is provided.
 
 ### Removed
-- Runtime TOML Site config parsing (`smol-toml`) and in-repo `sites/legacy-demo` fixture path (v1 legacy moved to tests).
+- Runtime TOML Site config parsing (`smol-toml` dependency), `alnilam.config.toml` support, and the in-repo `sites/legacy-demo` path (the v1 fixture moved to `tests/fixtures/site-v1-legacy`).
 
 ### Fixed
 - Nested-base canonicals/internal links, Pagefind runtime/index resolution under `/ALNILAM/`, and disabled Bangumi route output for the default fixture.

@@ -22,9 +22,12 @@ export interface SiteConfig {
   schemaVersion: number;
   site: { title: string; description: string; url: string; locale: string };
   theme: { appearance: "dark" | "light" };
+  /** Validated and reserved; this Core revision does not consume the value yet. */
   routing: { prefixDefaultLocale: boolean };
   locales: readonly string[];
+  /** Validated catalog; tag pages still derive from post frontmatter in this slice. */
   categories: readonly TaxonomyEntry[];
+  /** Validated catalog; tag pages still derive from post frontmatter in this slice. */
   tags: readonly TaxonomyEntry[];
   comments: Readonly<CommentsConfig>;
   bangumi: Readonly<BangumiConfig>;

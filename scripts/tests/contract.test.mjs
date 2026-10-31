@@ -101,9 +101,12 @@ test("YAML root documents must be mappings", () => {
   }
 });
 
-test("unresolved YAML tags and duplicate keys fail closed", () => {
+test("unresolved YAML tags, duplicate keys and non-plain values fail closed", () => {
   assert.throws(() => parseSiteConfigDocument('schemaVersion: !!js/function "function(){}"\n'), /invalid YAML/);
   assert.throws(() => parseSiteConfigDocument("site:\n  title: a\n  title: b\n"), /invalid YAML/);
+  // `!!binary` resolves to a Buffer without a parser warning; the contract
+  // layer must still reject host objects.
+  assert.throws(() => parseSiteConfigDocument('site:\n  title: !!binary "aGk="\n'), /plain YAML data/);
 });
 
 test("demo Site is valid and the read-only digest is stable", () => {

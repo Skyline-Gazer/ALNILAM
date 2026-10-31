@@ -46,9 +46,11 @@ tags:                         # optional, same shape as categories
 ```
 
 Unknown top-level or nested keys fail the build, and so do malformed YAML, duplicate
-keys and unresolved YAML tags. `routing.prefixDefaultLocale` is validated but not yet
-read by this Core revision; it reserves the configuration shape for the routing slice.
-The `comments` and `bangumi` module blocks are documented below.
+keys, unresolved YAML tags and non-plain YAML values. `routing.prefixDefaultLocale`
+and the `categories`/`tags` catalogs are validated but not yet read by this Core
+revision: tag pages still derive from post frontmatter, and the catalogs reserve the
+shape for the routing/taxonomy slice. The `comments` and `bangumi` module blocks are
+documented below.
 
 ### Posts and slugs
 

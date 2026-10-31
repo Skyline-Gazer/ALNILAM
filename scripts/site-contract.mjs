@@ -7,7 +7,18 @@ export const SITE_CONFIG_FILENAME = "alnilam.config.yaml";
 const isWithin = (child, parent) => child === parent || child.startsWith(parent + path.sep);
 
 export function siteConfigPath(root) {
-  return path.join(root, SITE_CONFIG_FILENAME);
+  const config = path.join(root, SITE_CONFIG_FILENAME);
+  const legacy = path.join(root, "alnilam.config.toml");
+  if (fs.existsSync(config) && fs.existsSync(legacy)) {
+    throw new Error("Site must not contain both alnilam.config.yaml and alnilam.config.toml");
+  }
+  if (!fs.existsSync(config) && fs.existsSync(legacy)) {
+    throw new Error(
+      "Site missing required input: " + SITE_CONFIG_FILENAME +
+        " (alnilam.config.toml is no longer read; see docs/SITE_ONBOARDING.md)",
+    );
+  }
+  return config;
 }
 
 export function validateSiteRoot(site) {
@@ -15,11 +26,12 @@ export function validateSiteRoot(site) {
   if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) {
     throw new Error("Site directory does not exist: " + root);
   }
-  for (const required of [SITE_CONFIG_FILENAME, "content/posts"]) {
-    const file = path.join(root, required);
-    if (!fs.existsSync(file)) throw new Error("Site missing required input: " + required);
+  const config = siteConfigPath(root);
+  if (!fs.existsSync(config)) throw new Error("Site missing required input: " + SITE_CONFIG_FILENAME);
+  if (!fs.existsSync(path.join(root, "content/posts"))) {
+    throw new Error("Site missing required input: content/posts");
   }
-  if (!fs.statSync(siteConfigPath(root)).isFile()) {
+  if (!fs.statSync(config).isFile()) {
     throw new Error("Site config must be a regular file");
   }
   const sha = crypto.createHash("sha256");
