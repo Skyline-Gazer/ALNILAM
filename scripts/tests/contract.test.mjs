@@ -60,17 +60,20 @@ test("unknown config fields fail closed", () => {
   );
 });
 
-test("taxonomy and locale fields are validated", () => {
-  assert.throws(() => parseConfig(`${validYaml}\ncategories:\n  - id: Tech\n    slug: tech\n`), /id must be a stable lowercase ASCII slug/);
-  assert.throws(
-    () => parseConfig(`${validYaml}\ntags:\n  - id: astro\n    slug: astro\n  - id: astro\n    slug: duplicate\n`),
-    /duplicate tags id "astro"/,
-  );
+test("locales are validated and must include site.locale", () => {
   assert.throws(
     () => parseConfig(validYaml.replace("  - zh-CN\n  - en", "  - en")),
     /site\.locale must appear in locales/,
   );
-  assert.throws(() => parseConfig(`${validYaml}\nrouting:\n  prefixDefaultLocale: maybe\n`), /prefixDefaultLocale must be a boolean/);
+  assert.throws(
+    () => parseConfig(`schemaVersion: 2\nsite:\n  title: t\n  url: https://e.com\nlocales: []\n`),
+    /locales must be a non-empty array/,
+  );
+  assert.throws(
+    () => parseConfig(validYaml.replace("  - zh-CN\n  - en", "  - zh-CN\n  - en\n  - en")),
+    /duplicate locale/,
+  );
+  assert.throws(() => parseConfig(validYaml.replace("  - en", "  - not_a_tag")), /BCP-47/);
 });
 
 test("comments module: disabled by default, giscus fields validated when enabled", () => {
@@ -221,10 +224,13 @@ test("upgrade-check classifies rollback outcomes", async () => {
   const { classifyRollback, isExpectedContractRejection } = await import("../upgrade-check.mjs");
   // The released v0.1.3 Core still requires the retired TOML file.
   const toml = "Error: Site missing required input: alnilam.config.toml";
-  // A later Core that reads YAML but only supports schema v1.
-  const schema = "ALNILAM: unsupported schemaVersion 2 (supported: 1). Upgrade Core to build this Site.";
+  // A later Core that reads YAML but only supports schema v1. An uncaught
+  // `throw new Error(...)` prints with the `Error: ` prefix; accept both forms
+  // while the line stays anchored.
+  const schema = "Error: ALNILAM: unsupported schemaVersion 2 (supported: 1). Upgrade Core to build this Site.";
   assert.equal(isExpectedContractRejection(toml), true);
   assert.equal(isExpectedContractRejection(schema), true);
+  assert.equal(isExpectedContractRejection(schema.replace(/^Error: /, "")), true);
   // Indented stack frames, pnpm wrappers and unrelated failures do not qualify.
   assert.equal(isExpectedContractRejection("  at fail (" + toml + ")"), false);
   assert.equal(isExpectedContractRejection("ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL: " + schema), false);

@@ -92,7 +92,7 @@ export function hashTree(dir) {
 // or stack frames that merely mention the text do not qualify.
 const EXPECTED_CONTRACT_REJECTIONS = [
   /^Error: Site missing required input: alnilam\.config\.toml$/m,
-  /^ALNILAM: unsupported schemaVersion \d+ \(supported: [\d, ]+\)\. Upgrade Core to build this Site\.$/m,
+  /^(?:Error: )?ALNILAM: unsupported schemaVersion \d+ \(supported: [\d, ]+\)\. Upgrade Core to build this Site\.$/m,
 ];
 
 export function isExpectedContractRejection(output) {

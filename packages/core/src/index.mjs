@@ -12,16 +12,13 @@ const ROOT_KEYS = new Set([
   "schemaVersion",
   "site",
   "theme",
-  "routing",
   "locales",
-  "categories",
-  "tags",
   "comments",
   "bangumi",
 ]);
 const SITE_KEYS = new Set(["title", "description", "url", "locale"]);
 const THEME_KEYS = new Set(["appearance"]);
-const ROUTING_KEYS = new Set(["prefixDefaultLocale"]);
+
 const COMMENT_KEYS = new Set(["enabled", "provider", "repo", "repoId", "category", "categoryId", "mapping"]);
 const BANGUMI_KEYS = new Set(["enabled", "userId", "subjectType", "limit"]);
 const BCP47 = /^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$/;
@@ -66,49 +63,6 @@ function normalizeLocale(value) {
   return value;
 }
 
-function normalizeLabelMap(value, label) {
-  if (value === undefined) return Object.freeze({});
-  assertPlainObject(value, label);
-  const out = {};
-  for (const [locale, text] of Object.entries(value)) {
-    if (!isBcp47(locale)) throw new Error(`ALNILAM: ${label} contains invalid locale ${JSON.stringify(locale)}`);
-    if (typeof text !== "string" || !text.trim()) {
-      throw new Error(`ALNILAM: ${label}.${locale} must be a non-empty string`);
-    }
-    out[locale] = text.trim();
-  }
-  return Object.freeze(out);
-}
-
-function normalizeTaxonomy(entries, kind) {
-  if (entries === undefined) return Object.freeze([]);
-  if (!Array.isArray(entries)) throw new Error(`ALNILAM: ${kind} must be an array`);
-  const seenIds = new Set();
-  const seenSlugs = new Set();
-  return Object.freeze(entries.map((entry, index) => {
-    const label = `${kind}[${index}]`;
-    assertPlainObject(entry, label);
-    rejectUnknownKeys(entry, new Set(["id", "slug", "label"]), label);
-    const id = entry.id;
-    const slug = entry.slug;
-    if (typeof id !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) {
-      throw new Error(`ALNILAM: ${label}.id must be a stable lowercase ASCII slug`);
-    }
-    if (typeof slug !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-      throw new Error(`ALNILAM: ${label}.slug must be a lowercase ASCII slug`);
-    }
-    if (seenIds.has(id)) throw new Error(`ALNILAM: duplicate ${kind} id ${JSON.stringify(id)}`);
-    if (seenSlugs.has(slug)) throw new Error(`ALNILAM: duplicate ${kind} slug ${JSON.stringify(slug)}`);
-    seenIds.add(id);
-    seenSlugs.add(slug);
-    return Object.freeze({
-      id,
-      slug,
-      label: normalizeLabelMap(entry.label, `${label}.label`),
-    });
-  }));
-}
-
 export function normalizeSiteConfig(input) {
   assertPlainObject(input, "config");
   const schemaVersion = input.schemaVersion;
@@ -140,14 +94,6 @@ export function normalizeSiteConfig(input) {
     throw new Error("ALNILAM: theme.appearance must be dark or light");
   }
 
-  if (input.routing !== undefined) {
-    assertPlainObject(input.routing, "routing");
-    rejectUnknownKeys(input.routing, ROUTING_KEYS, "routing");
-    if (input.routing.prefixDefaultLocale !== undefined && typeof input.routing.prefixDefaultLocale !== "boolean") {
-      throw new Error("ALNILAM: routing.prefixDefaultLocale must be a boolean");
-    }
-  }
-
   let locales = input.locales;
   if (locales === undefined) locales = [siteLocale];
   if (!Array.isArray(locales) || locales.length === 0) {
@@ -164,9 +110,6 @@ export function normalizeSiteConfig(input) {
   if (!localeSet.has(siteLocale)) {
     throw new Error("ALNILAM: site.locale must appear in locales");
   }
-
-  const categories = normalizeTaxonomy(input.categories, "categories");
-  const tags = normalizeTaxonomy(input.tags, "tags");
 
   assertPlainObject(input.comments ?? {}, "comments");
   rejectUnknownKeys(input.comments ?? {}, COMMENT_KEYS, "comments");
@@ -210,12 +153,7 @@ export function normalizeSiteConfig(input) {
       locale: siteLocale,
     }),
     theme: Object.freeze({ appearance }),
-    routing: Object.freeze({
-      prefixDefaultLocale: input.routing?.prefixDefaultLocale ?? false,
-    }),
     locales: Object.freeze([...locales]),
-    categories,
-    tags,
     comments: Object.freeze({
       enabled: comments.enabled === true,
       provider: "giscus",
