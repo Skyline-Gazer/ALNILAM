@@ -23,11 +23,21 @@ site:
   title: "My Blog"            # required, non-empty
   description: "About this blog"
   url: "https://blog.example.com"   # required, absolute http(s) URL
-  locale: "zh-CN"             # optional, default zh-CN
+  locale: "zh-CN"             # optional, default zh-CN; must appear in locales
+
+locales:                      # optional, defaults to [site.locale]; list every content locale
+  - "zh-CN"
 
 theme:
   appearance: "dark"          # "dark" | "light", default dark
+
+routing:                      # optional
+  prefixDefaultLocale: false  # default false; URL prefixing for the default locale
 ```
+
+Unknown top-level or nested keys fail the build. Other accepted optional sections are
+`categories` and `tags` (taxonomy entries with stable `id`, `slug` and localized
+`label` maps), plus the `comments` and `bangumi` module blocks documented below.
 
 ### Posts and slugs
 

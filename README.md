@@ -34,11 +34,14 @@ Required Site layout (schema v2 — frozen):
 
 ```
 my-site/
-  alnilam.config.yaml     # schemaVersion: 2, site.title/url, theme.appearance
+  alnilam.config.yaml     # schemaVersion: 2, site: {title, url, locale}, locales, theme: {appearance}
   content/posts/          # *.md / *.mdx
   assets/                 # optional → served at /site-assets/
   data/                   # optional, reserved
 ```
+
+See [Site onboarding](docs/SITE_ONBOARDING.md) for the complete, copy-ready
+configuration including `locales`, taxonomy and module blocks.
 
 - The Site is hashed before and after building; **any mutation aborts the build**.
 - Output is staged, then atomically swapped; `alnilam-provenance.json` binds the Core revision + Site SHA-256 digest.

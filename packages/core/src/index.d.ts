@@ -28,10 +28,10 @@ export interface SiteConfig {
   tags: readonly TaxonomyEntry[];
   comments: Readonly<CommentsConfig>;
   bangumi: Readonly<BangumiConfig>;
-  llms: { enabled: boolean };
 }
 export declare function normalizeSiteConfig(input: unknown): Readonly<SiteConfig>;
+export declare const SITE_CONFIG_FILENAME: "alnilam.config.yaml";
 export declare function parseSiteConfigDocument(
   raw: string,
   options?: { filename?: string },
-): unknown;
+): Record<string, unknown>;

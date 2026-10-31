@@ -1,8 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
-import { normalizeSiteConfig, parseSiteConfigDocument } from "@alnilam/core";
-import { SITE_CONFIG_FILENAME } from "../../../../scripts/site-contract.mjs";
+import { normalizeSiteConfig, parseSiteConfigDocument, SITE_CONFIG_FILENAME } from "@alnilam/core";
 
 const defaultSite = fileURLToPath(new URL("../../../../sites/demo/", import.meta.url));
 

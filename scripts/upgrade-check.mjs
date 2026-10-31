@@ -85,6 +85,13 @@ export function hashTree(dir) {
   return sha.digest("hex");
 }
 
+// Only the documented one-line rejection thrown by a pre-v2 Core is an
+// expected rollback failure. Error text relayed by pnpm or a stack trace that
+// merely mentions the message is not.
+export function isExpectedSchemaRejection(output) {
+  return /^ALNILAM: unsupported schemaVersion /m.test(typeof output === "string" ? output : "");
+}
+
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith("upgrade-check.mjs")) {
   main();
 }
@@ -148,6 +155,7 @@ function main() {
       env: { ...process.env, SOURCE_DATE_EPOCH: process.env.SOURCE_DATE_EPOCH || "1700000000" },
     },
   );
+  if (rollback.error) throw rollback.error;
   const rollbackOutput = `${rollback.stdout || ""}${rollback.stderr || ""}`;
   const afterRollback = validateSiteRoot(site).digest;
   if (afterRollback !== before) throw new Error("Site digest changed during the rollback build");
@@ -160,7 +168,7 @@ function main() {
       console.log("UPGRADE/ROLLBACK OK: Site unchanged, outputs byte-identical.");
     }
   } else {
-    const expectedSchemaFailure = /unsupported schemaVersion/i.test(rollbackOutput);
+    const expectedSchemaFailure = isExpectedSchemaRejection(rollbackOutput);
     if (!expectedSchemaFailure) {
       throw new Error(
         "Old Core revision failed to build the Site for an unexpected reason:\n" + rollbackOutput.trim(),

@@ -18,15 +18,14 @@ const ROOT_KEYS = new Set([
   "tags",
   "comments",
   "bangumi",
-  "llms",
 ]);
 const SITE_KEYS = new Set(["title", "description", "url", "locale"]);
 const THEME_KEYS = new Set(["appearance"]);
 const ROUTING_KEYS = new Set(["prefixDefaultLocale"]);
 const COMMENT_KEYS = new Set(["enabled", "provider", "repo", "repoId", "category", "categoryId", "mapping"]);
 const BANGUMI_KEYS = new Set(["enabled", "userId", "subjectType", "limit"]);
-const LLMS_KEYS = new Set(["enabled"]);
 const BCP47 = /^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$/;
+const DEFAULT_SITE_LOCALE = "zh-CN";
 
 function assertPlainObject(value, label) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -58,10 +57,10 @@ function parseAbsoluteUrl(url, label = "site.url") {
   return parsed.toString();
 }
 
-function normalizeLocale(value, label) {
-  if (value === undefined) return "zh-CN";
+function normalizeLocale(value) {
+  if (value === undefined) return DEFAULT_SITE_LOCALE;
   if (typeof value !== "string" || !BCP47.test(value)) {
-    throw new Error(`ALNILAM: ${label} must be a BCP-47 tag`);
+    throw new Error("ALNILAM: site.locale must be a BCP-47 tag");
   }
   return value;
 }
@@ -126,7 +125,7 @@ export function normalizeSiteConfig(input) {
   if (typeof title !== "string" || !title.trim()) {
     throw new Error("ALNILAM: site.title must be a non-empty string");
   }
-  const siteLocale = normalizeLocale(input.site.locale, "site.locale");
+  const siteLocale = normalizeLocale(input.site.locale);
   if (input.site.description !== undefined && typeof input.site.description !== "string") {
     throw new Error("ALNILAM: site.description must be a string");
   }
@@ -199,14 +198,6 @@ export function normalizeSiteConfig(input) {
     }
   }
 
-  if (input.llms !== undefined) {
-    assertPlainObject(input.llms, "llms");
-    rejectUnknownKeys(input.llms, LLMS_KEYS, "llms");
-    if (typeof input.llms.enabled !== "boolean") {
-      throw new Error("ALNILAM: llms.enabled must be a boolean");
-    }
-  }
-
   return Object.freeze({
     schemaVersion,
     site: Object.freeze({
@@ -237,8 +228,7 @@ export function normalizeSiteConfig(input) {
       subjectType: bangumi.subjectType || "anime",
       limit: bangumi.limit ?? 10,
     }),
-    llms: Object.freeze({ enabled: input.llms?.enabled === true }),
   });
 }
 
-export { parseSiteConfigDocument } from "./parse-site-config.mjs";
+export { parseSiteConfigDocument, SITE_CONFIG_FILENAME } from "./parse-site-config.mjs";
