@@ -20,10 +20,9 @@ snapshot below; that snapshot is retained only for traceability.
 ### State of the T01 implementation
 
 - YAML-only Site v2 is implemented on the branch: strict `schemaVersion: 2`,
-  closed-world unknown-field rejection, locale validation, plain-data-only YAML
-  parsing (duplicate keys, unresolved tags and `!!binary` values fail closed),
-  and an actionable rejection for TOML-only Sites. Routing/taxonomy catalogs are
-  deferred to their consuming slices.
+  closed-world unknown-field rejection, locale/routing/taxonomy validation,
+  plain-data-only YAML parsing (duplicate keys, unresolved tags and `!!binary`
+  values fail closed) and an actionable rejection for TOML-only Sites.
 - The branch carries a v2-only contract suite. The migration-window suite merged on
   `dev` by PR #25 is what the trusted gate uses to review this PR; it selects the
   contract declared by the candidate demo and is replaced by the v2-only suite after

@@ -76,6 +76,15 @@ test("locales are validated and must include site.locale", () => {
   assert.throws(() => parseConfig(validYaml.replace("  - en", "  - not_a_tag")), /BCP-47/);
 });
 
+test("reserved routing and taxonomy catalogs are validated", () => {
+  assert.throws(() => parseConfig(`${validYaml}\ncategories:\n  - id: Tech\n    slug: tech\n`), /id must be a stable lowercase ASCII slug/);
+  assert.throws(
+    () => parseConfig(`${validYaml}\ntags:\n  - id: astro\n    slug: astro\n  - id: astro\n    slug: duplicate\n`),
+    /duplicate tags id "astro"/,
+  );
+  assert.throws(() => parseConfig(`${validYaml}\nrouting:\n  prefixDefaultLocale: maybe\n`), /prefixDefaultLocale must be a boolean/);
+});
+
 test("comments module: disabled by default, giscus fields validated when enabled", () => {
   const off = parseConfig(validYaml);
   assert.equal(off.comments.enabled, false);
