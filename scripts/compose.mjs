@@ -37,18 +37,36 @@ const stage = fs.mkdtempSync(path.join(path.dirname(destination), ".alnilam-buil
 const backup = destination + ".alnilam-backup-" + process.pid;
 let published = false;
 try {
-  // Deterministic provenance: the Core revision comes from the caller (env or
-  // git), the Site identity from the validated read-only digest. Both are
-  // embedded in the output and must not change between the two reads below.
+  // Deterministic provenance: Core and Site refs are pinned independently.
+  // The Core revision comes from the caller (env or git); the Site ref comes
+  // from ALNILAM_SITE_REF or the Site's own Git HEAD. The Site digest binds
+  // the exact read-only inputs and must not change between the two reads.
   let coreRev = process.env.ALNILAM_CORE_REV;
   if (!coreRev) {
     const rev = spawnSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot, encoding: "utf8" });
     coreRev = rev.status === 0 ? rev.stdout.trim() : "unknown";
   }
+  const sha = /^[0-9a-f]{40}$/;
+  let siteRef = process.env.ALNILAM_SITE_REF;
+  if (siteRef !== undefined) {
+    if (!sha.test(siteRef)) throw new Error("ALNILAM_SITE_REF must be a full lowercase commit SHA");
+  } else {
+    // Only a Site that is its own Git root gets a ref; the demo fixture lives
+    // inside the Core repository and must not inherit Core's HEAD.
+    const top = spawnSync("git", ["-C", site, "rev-parse", "--show-toplevel"], { encoding: "utf8" });
+    const root = top.status === 0 ? fs.realpathSync(top.stdout.trim()) : "";
+    const self = fs.realpathSync(site);
+    let resolved = "unversioned";
+    if (root === self) {
+      const rev = spawnSync("git", ["-C", site, "rev-parse", "HEAD"], { encoding: "utf8" });
+      if (rev.status === 0 && sha.test((rev.stdout || "").trim())) resolved = rev.stdout.trim();
+    }
+    siteRef = resolved;
+  }
   const provenance = {
     schema: 1,
     core: { revision: coreRev },
-    site: { digest: before },
+    site: { ref: siteRef, digest: before },
     // NOTE: no absolute source path — it leaks local filesystem layout and
     // breaks reproducibility across checkouts. The digest is the identity.
     generatedAt: process.env.SOURCE_DATE_EPOCH

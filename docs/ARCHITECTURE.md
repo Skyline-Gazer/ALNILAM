@@ -31,9 +31,12 @@ scripts/compose.mjs    # non-mutating external Site builder
 5. Hash the Site inputs again and abort on changes.
 6. Replace the final destination from staging; retain/restore the existing output if staging fails.
 
-The staged output also carries `alnilam-provenance.json`. Its `schema` field versions
-the **provenance document format** and is independent of the Site `schemaVersion`:
-changing the Site contract does not relabel already-published provenance records.
+The staged output also carries `alnilam-provenance.json`: the Core revision, the Site
+ref (`ALNILAM_SITE_REF`, or the Site's own Git `HEAD` when the Site directory is its
+own Git root, otherwise `unversioned`) and the SHA-256 digest of the read-only Site
+inputs. Its `schema` field versions the **provenance document format** and is
+independent of the Site `schemaVersion`: changing the Site contract does not relabel
+already-published provenance records.
 
 **Current limits**: Do not treat this as an OS sandbox. Trusted MDX can execute build-time code. Relative asset paths and site configuration compatibility require further P0 checks. Concurrency/locking of two builds to the same output path and crash recovery are not yet fully specified; do not claim atomicity across power loss. Browser/performance and cross-platform behavior are not verified until CI and browser tests complete.
 
