@@ -11,6 +11,7 @@ import {
 
 const BASE_SHA = '2b367d74a99b5bb8c2022b60f8c07cd6c9543d20';
 const HEAD_SHA = 'c9cf703fef8d6fa05d7b3ca27349c597851e1642';
+const MERGE_SHA = '4177abe1514e746b00c686aa7662d79af62223fe';
 
 const advisory = (id, module, severity, versions, ghsa, cve) => ({
   id, module_name: module, severity, github_advisory_id: ghsa, cves: cve ? [cve] : [],
@@ -80,7 +81,7 @@ const env = extra => ({
   PATH: '/usr/bin', CNB_TOKEN: 'gate-unit-test-token', CNB_EVENT: 'pull_request', CNB_REPO_SLUG: 'KoolingMachine/ALNILAM',
   CNB_PULL_REQUEST_SLUG: 'KoolingMachine/ALNILAM', CNB_API_ENDPOINT: 'https://api.cnb.cool',
   CNB_PULL_REQUEST_IID: '29', CNB_PULL_REQUEST_BRANCH: 'refs/heads/fix/ci-sca-lhci-dependency',
-  CNB_BRANCH: 'dev', CNB_PULL_REQUEST_SHA: HEAD_SHA, CNB_PULL_REQUEST_TARGET_SHA: BASE_SHA, CNB_COMMIT: HEAD_SHA,
+  CNB_BRANCH: 'dev', CNB_PULL_REQUEST_SHA: HEAD_SHA, CNB_PULL_REQUEST_TARGET_SHA: BASE_SHA, CNB_PULL_REQUEST_MERGE_SHA: MERGE_SHA, CNB_COMMIT: HEAD_SHA,
   ...extra,
 });
 const lsRefs = () => `${HEAD_SHA}\trefs/heads/fix/ci-sca-lhci-dependency\n${BASE_SHA}\trefs/heads/dev\n`;
@@ -186,6 +187,8 @@ test('assertPreMergeParents and assertLiveRefs reject moved or wrong identities'
   assertPreMergeParents([BASE_SHA, HEAD_SHA], BASE_SHA, HEAD_SHA);
   gateError('SCA_GATE_IDENTITY_MISMATCH', () => assertPreMergeParents([BASE_SHA], BASE_SHA, HEAD_SHA));
   gateError('SCA_GATE_IDENTITY_MISMATCH', () => assertPreMergeParents([BASE_SHA, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'], BASE_SHA, HEAD_SHA));
+  gateError('SCA_GATE_IDENTITY_MISMATCH', () => validateGateIdentity(env({CNB_PULL_REQUEST_MERGE_SHA: ''}), 'pull_request'));
+  gateError('SCA_GATE_IDENTITY_MISMATCH', () => validateGateIdentity(env({CNB_COMMIT: BASE_SHA}), 'pull_request'));
   assertLiveRefs(lsRefs(), validateGateIdentity(env(), 'pull_request'));
   gateError('SCA_GATE_IDENTITY_MISMATCH', () => assertLiveRefs(`9999${HEAD_SHA.slice(4)}\trefs/heads/fix/ci-sca-lhci-dependency\n${BASE_SHA}\trefs/heads/dev\n`, validateGateIdentity(env(), 'pull_request')));
   gateError('SCA_GATE_IDENTITY_MISMATCH', () => assertLiveRefs('', validateGateIdentity(env(), 'pull_request')));

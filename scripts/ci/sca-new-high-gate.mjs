@@ -192,7 +192,12 @@ export function validateGateIdentity(env, event) {
   if (event === 'pull_request.target' && commit !== base) {
     fail('SCA_GATE_IDENTITY_MISMATCH', 'pull_request.target checkout is not the exact target SHA');
   }
-  return {iid, head, base, commit, sourceBranch, targetBranch};
+  const merge = env.CNB_PULL_REQUEST_MERGE_SHA;
+  if (event === 'pull_request') {
+    if (!SHA.test(merge || '')) fail('SCA_GATE_IDENTITY_MISMATCH', 'pull_request event lacks a native pre-merge SHA');
+    if (![head, merge].includes(commit)) fail('SCA_GATE_IDENTITY_MISMATCH', 'pull_request checkout is neither the verified head nor the pre-merge commit');
+  }
+  return {iid, head, base, commit, merge: merge || null, sourceBranch, targetBranch};
 }
 
 export function assertPreMergeParents(parents, base, head) {
@@ -311,7 +316,7 @@ export function buildReport(identity, event, registry, baseSide, headSide, diff)
     verdict: diff.introduced.length ? 'FAIL_NEW_HIGH' : 'PASS',
     event, registry,
     identity: {prNumber: Number(identity.iid), baseSha: identity.base, headSha: identity.head,
-      sourceBranch: identity.sourceBranch, targetBranch: identity.targetBranch, checkoutSha: identity.commit},
+      sourceBranch: identity.sourceBranch, targetBranch: identity.targetBranch, checkoutSha: identity.commit, mergeSha: identity.merge},
     coverage: {
       base: {manifests: baseSide.manifests, gitlinksExcludedFromNodeDiscovery: baseSide.gitlinks, totalDependencies: baseSide.totalDependencies, counts: baseSide.counts},
       head: {manifests: headSide.manifests, gitlinksExcludedFromNodeDiscovery: headSide.gitlinks, totalDependencies: headSide.totalDependencies, counts: headSide.counts},
@@ -365,9 +370,9 @@ export async function runGate({env, event, deps, registry, outDir, lsRemote}) {
   const request = deps.request || fetch;
   await fetchPullRequest(identity, env.CNB_TOKEN, request);
   assertLiveRefs(lsRemote('origin', `refs/heads/${identity.sourceBranch}`, `refs/heads/${identity.targetBranch}`), identity);
-  if (event === 'pull_request') assertPreMergeParents(deps.git(['rev-list', '--parents', '-n', '1', identity.commit]).trim().split(/\s+/).slice(1), identity.base, identity.head);
   if (identity.base === identity.head) fail('SCA_GATE_IDENTITY_MISMATCH', 'base and head SHAs must differ');
-  deps.ensureCommits([identity.base, identity.head], identity.iid, identity.targetBranch);
+  deps.ensureCommits(event === 'pull_request' ? [identity.base, identity.head, identity.merge] : [identity.base, identity.head], identity.iid, identity.targetBranch);
+  if (event === 'pull_request') assertPreMergeParents(deps.git(['rev-list', '--parents', '-n', '1', identity.merge]).trim().split(/\s+/).slice(1), identity.base, identity.head);
   const baseSide = await auditSide('base', identity.base, deps, registry, env);
   const headSide = await auditSide('head', identity.head, deps, registry, env);
   await fetchPullRequest(identity, env.CNB_TOKEN, request);
