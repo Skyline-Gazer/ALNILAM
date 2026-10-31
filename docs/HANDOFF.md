@@ -40,6 +40,14 @@ snapshot below; that snapshot is retained only for traceability.
   merge SHA and the current-head CodeBuddy review. Results bound to earlier heads are
   stale and are not acceptance evidence.
 
+### ADS pin update — 2026-10-31
+
+- The ADS gitlink advanced to the `cnb/dev` development line (authoritative pin and
+  history: "Identity and baseline" below plus `ads-pin.txt`); this update is part of
+  the Lite adoption recorded in `AGENTS.md` and `README.md`.
+- The v0.4.1-era developer-tool sections below and in `docs/p0/P0-ACCEPTANCE.md`
+  are historical and superseded by this update.
+
 ## Legacy environment work still not recovered (#94/#100)
 
 - Issue #94 (`chore/94-cnb-browser-ci-pilot`): uncommitted worktree changes in the old
@@ -103,12 +111,17 @@ See [P0 Acceptance & Decision Report](p0/P0-ACCEPTANCE.md), merged [PR #85](http
 
 ### ADS v0.4.1 consumer adoption — 2026-10-26
 
-- `.ads` is pinned to release commit `3abf6025657a5d716476029cc8cbf5239543210b` (v0.4.1); annotated tag object is `e38d01ff176448a13180afe2419c1c9c94a6ab43` and must not be used as the gitlink. The submodule remains private; public CI checks only the gitlink.
-- CodeGraph uses the owner-approved official source fallback `bb11bc1226db30233ac9e66a2670c4b16dfa85fa` (metadata 1.1.1, MIT) because official npm `latest` returns 404 and GitHub Releases is empty. It is **not** a published stable release. The previous unrelated `@colbymchenry/codegraph` installation is not accepted as official provenance.
-- Full RTK is official v1.1.0, with Apache-2.0 CLI and BUSL-1.1 engine licenses. The previous v1.0.1 remains recoverable outside the repository. Native Codex hook interception, output compression, failure exit code and diagnostic preservation were exercised.
-- Development-only integration consists of `.ads-devtools.json`, `.codex/hooks.json`, `RTK.md`, the ADS devtool policy helpers, the latest-release workflow and an optional project-local CodeGraph index. Generated indexes/caches stay untracked; `.git/info/exclude` supplies local exclusions rather than tracked production ignore rules.
-- The generic production-boundary guard may remain on production branches. It rejects the manifest, host integration, generated SQLite sidecars, `.codegraph-*` directories, tool-specific workflows/helpers, escaping symlinks and contaminated build outputs.
-- Local preflight is `CLI_PASS_HOST_UNVERIFIED` (exit 3); native Host MCP query and RTK interception were verified separately. See [P0 report section E](p0/P0-ACCEPTANCE.md#e-ads-governance) for evidence boundaries and unresolved product risks.
+> Superseded 2026-10-31: the devtool workflows/scripts, `.ads-devtools.json`,
+> `.codex/hooks.json` and `RTK.md` were removed by the ADS `cnb/dev` Lite
+> adoption, including the copied production-boundary guard. The text below records
+> the v0.4.1-era state only; it is not the current toolchain or pin.
+
+- `.ads` was pinned to release commit `3abf6025657a5d716476029cc8cbf5239543210b` (v0.4.1); annotated tag object is `e38d01ff176448a13180afe2419c1c9c94a6ab43` and must not be used as the gitlink. The private submodule was omitted from public CI checkout.
+- CodeGraph used the owner-approved official source fallback `bb11bc1226db30233ac9e66a2670c4b16dfa85fa` (metadata 1.1.1, MIT) because official npm `latest` returned 404 and GitHub Releases was empty. It was **not** a published stable release. The previous unrelated `@colbymchenry/codegraph` installation was not accepted as official provenance.
+- Full RTK was official v1.1.0, with Apache-2.0 CLI and BUSL-1.1 engine licenses. The previous v1.0.1 was recoverable outside the repository. Native Codex hook interception, output compression, failure exit code and diagnostic preservation were exercised.
+- The former development-only integration consisted of `.ads-devtools.json`, `.codex/hooks.json`, `RTK.md`, the ADS devtool policy helpers, the latest-release workflow and an optional project-local CodeGraph index. Generated indexes/caches stayed untracked; `.git/info/exclude` supplied local exclusions rather than tracked production ignore rules.
+- The former generic production-boundary guard rejected the manifest, host integration, generated SQLite sidecars, `.codegraph-*` directories, tool-specific workflows/helpers, escaping symlinks and contaminated build outputs.
+- Local preflight was `CLI_PASS_HOST_UNVERIFIED` (exit 3); native Host MCP query and RTK interception were verified separately. See [P0 report section E](p0/P0-ACCEPTANCE.md#e-ads-governance) for evidence boundaries and unresolved product risks.
 
 ## Identity and baseline
 - Core repository: https://github.com/Skyline-Gazer/ALNILAM (Apache-2.0).
@@ -117,7 +130,7 @@ See [P0 Acceptance & Decision Report](p0/P0-ACCEPTANCE.md), merged [PR #85](http
 - Development baseline: `dev` created from initial `main`.
 - Bootstrap branch: `chore/initial-platform-bootstrap` (PR into `dev`, pending review).
 - ADS is a **private repository**; the public CI checkout intentionally omits recursive submodule cloning (no cross-repo credentials). Maintainers with ADS access can materialize it and verify the full rule set.
-- Current ADS release `v0.4.2` gitlink: `375fc71f977c40c2053140c34431cc60a6d42883`, located at `.ads`. Historical `v0.3` gitlink was `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`.
+- Current ADS gitlink: `6e5a7dfd1b717a03ed5b33c66707f47aab7f76b9` (ADS `cnb/dev`, not a release tag), located at `.ads` and enforced by `ads-pin.txt`. Historical pins: `v0.4.2` `375fc71f977c40c2053140c34431cc60a6d42883`, `v0.3` `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`.
 - Do **not** infer latest bootstrap branch HEAD, CI result or Project item status from this document. Query GitHub at start of task.
 
 ## Continuation 7: deployment live + P3 modules shipped (2026-10-25) — Issues #6 closed
