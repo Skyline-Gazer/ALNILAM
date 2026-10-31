@@ -16,3 +16,6 @@ test-results/
 
 artifacts/
 .lighthouseci/
+
+__pycache__/
+*.pyc
