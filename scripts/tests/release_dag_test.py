@@ -16,6 +16,8 @@ class ReleaseDagTests(unittest.TestCase):
                 result = subprocess.run(['git', '-C', str(work), *args], capture_output=True, text=True)
                 if ok:
                     self.assertEqual(result.returncode, 0, result.stderr)
+                else:
+                    self.assertNotEqual(result.returncode, 0, 'expected the git command to fail')
                 return result.stdout.strip()
 
             def commit(message):

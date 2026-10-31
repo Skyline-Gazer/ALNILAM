@@ -43,18 +43,14 @@ snapshot below; that snapshot is retained only for traceability.
 ### ADS pin update — 2026-10-31
 
 - Pin advanced from v0.4.2 `375fc71f977c40c2053140c34431cc60a6d42883` to ADS
-  `cnb/dev` `6e5a7dfd1b717a03ed5b33c66707f47aab7f76b9`; `ads-pin.txt` is the
-  single source enforced by `scripts/check-ads-pin.sh` and the Python tests.
-- The target is a development commit, not a release tag. It carries the complete
-  v0.5.0 Lite spec; v0.5.0 is not its ancestor, and the tree difference is the
-  additive v0.6 development content. Details are in the adoption PR.
+  `cnb/dev` `6e5a7dfd1b717a03ed5b33c66707f47aab7f76b9` (a development commit, not a
+  release tag); `ads-pin.txt` is the single source enforced by
+  `scripts/check-ads-pin.sh`.
 - Adoption follows Lite defaults: root `AGENTS.md` rewritten with project facts;
   CodeGraph/RTK tooling, devtool workflows/scripts and `.ads-devtools.json`
-  removed; optional ADS profiles are not enabled. The v0.4.1-era
-  developer-tool descriptions later in this file and in `docs/p0/P0-ACCEPTANCE.md`
+  removed; optional ADS profiles are not enabled.
+- The v0.4.1-era developer-tool sections below and in `docs/p0/P0-ACCEPTANCE.md`
   are historical and superseded by this update.
-- Verification: private submodule checkout at the exact SHA, ADS docs readable,
-  `pnpm test`/`check`/`build`, Python tests and the CNB PR gate.
 
 ## Legacy environment work still not recovered (#94/#100)
 
@@ -118,6 +114,10 @@ CNB CLI/E2E details, including the CLI's read-only settings scope, Owner UI Plan
 See [P0 Acceptance & Decision Report](p0/P0-ACCEPTANCE.md), merged [PR #85](https://github.com/Skyline-Gazer/ALNILAM/pull/85) (`b36b61fff8377694f209fcc7488f7457251a2ce9`) and merged ADS v0.4.1 adoption [PR #84](https://github.com/Skyline-Gazer/ALNILAM/pull/84) (`2555c4658599598bfed604fbf0d9b525d24c3ded`; post-merge dev CI [40321449502](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40321449502) PASS). The report supersedes historical status claims below; all earlier entries remain traceability records. Existing platform source is preserved. Draft #77 remains unmerged. Stop at Owner P0 acceptance, G0-F freeze and explicit P1 scope authorization.
 
 ### ADS v0.4.1 consumer adoption — 2026-10-26
+
+> Superseded 2026-10-31: the devtool workflows/scripts, `.ads-devtools.json`,
+> `.codex/hooks.json` and `RTK.md` were removed by the ADS `cnb/dev` Lite
+> adoption. The text below records the v0.4.1-era state.
 
 - `.ads` is pinned to release commit `3abf6025657a5d716476029cc8cbf5239543210b` (v0.4.1); annotated tag object is `e38d01ff176448a13180afe2419c1c9c94a6ab43` and must not be used as the gitlink. The submodule remains private; public CI checks only the gitlink.
 - CodeGraph uses the owner-approved official source fallback `bb11bc1226db30233ac9e66a2670c4b16dfa85fa` (metadata 1.1.1, MIT) because official npm `latest` returns 404 and GitHub Releases is empty. It is **not** a published stable release. The previous unrelated `@colbymchenry/codegraph` installation is not accepted as official provenance.

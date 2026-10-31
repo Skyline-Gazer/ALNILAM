@@ -55,11 +55,9 @@ class AdsPinTests(unittest.TestCase):
 
 
     def test_repository_gitlink_matches_the_pin_manifest(self):
-        entry = subprocess.run(
-            ["git", "-C", str(REPO_ROOT), "ls-tree", "HEAD", "--", ".ads"],
-            capture_output=True, text=True, check=True,
-        ).stdout.strip()
-        self.assertEqual(entry, f"160000 commit {PIN}\t.ads")
+        result = subprocess.run(["sh", str(SCRIPT), "dev"], cwd=REPO_ROOT, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
