@@ -4,7 +4,7 @@ import path from 'node:path';
 import {spawnSync, execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {trustedAstroCheckArgs, trustedTestFiles} from './cnb-trusted-gate.mjs';
-import {validateSiteRoot} from '../site-contract.mjs';
+import {siteConfigPath, validateSiteRoot} from '../site-contract.mjs';
 
 const trustedRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const trustedSourceRoot = process.env.CNB_TRUSTED_SOURCE_ROOT;
@@ -19,7 +19,7 @@ fs.cpSync('sites/demo', site, {recursive: true});
 const before = validateSiteRoot(site).digest;
 const env = {...process.env, TMPDIR: path.resolve('.tmp/cnb'), SOURCE_DATE_EPOCH: '1700000000'};
 const composeEnv = {ALNILAM_REPO_ROOT: process.cwd(), ALNILAM_TOOLCHAIN_ROOT: trustedSourceRoot};
-const fixtureContract = fs.existsSync('sites/demo/alnilam.config.yaml') ? 'schema-v2-YAML-only' : 'schema-v1-TOML';
+const fixtureContract = path.basename(siteConfigPath(site)) === 'alnilam.config.yaml' ? 'schema-v2-YAML-only' : 'schema-v1-TOML';
 const steps = [];
 function run(name, command, args, extra = {}, output) {
   const started = Date.now();

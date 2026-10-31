@@ -18,3 +18,4 @@ artifacts/
 .lighthouseci/
 
 __pycache__/
+*.pyc

@@ -6,9 +6,9 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 
 // The trusted suite runs against the candidate product code but is owned by the
-// target branch. It therefore asserts whichever Site contract the shipped demo
-// fixture declares, so a versioned contract migration can be reviewed without
-// letting the candidate weaken the assertions for the contract it ships.
+// target branch. During a versioned Site contract migration it asserts exactly
+// the contract declared by the demo fixture the candidate ships: only the
+// matching suite is registered, so no test is skipped or left unreachable.
 const core = await import("../../packages/core/src/index.mjs");
 const { normalizeSiteConfig } = core;
 const { assertExternalOutput, validateSiteRoot } = await import("../site-contract.mjs");
@@ -22,7 +22,7 @@ if (declared.length !== 1) {
 }
 const YAML_ONLY = declared[0] === YAML_CONFIG;
 const SCHEMA_VERSION = YAML_ONLY ? 2 : 1;
-const parseConfigDocument = YAML_ONLY ? core.parseSiteConfigDocument : null;
+const legacyDir = (name) => `alnilam-${name}-`;
 
 const validYaml = `
 schemaVersion: 2
@@ -37,123 +37,10 @@ theme:
   appearance: dark
 `;
 
-function parseYamlConfig(text) {
-  return normalizeSiteConfig(parseConfigDocument(text, { filename: YAML_CONFIG }));
-}
+const parseYamlConfig = (text) =>
+  normalizeSiteConfig(core.parseSiteConfigDocument(text, { filename: YAML_CONFIG }));
 
-test("valid configuration is normalized", () => {
-  const value = YAML_ONLY
-    ? parseYamlConfig(validYaml)
-    : normalizeSiteConfig({ site: { title: "ALNILAM", url: "https://example.com" }, theme: { appearance: "dark" } });
-  assert.equal(value.site.title, "ALNILAM");
-  assert.equal(value.schemaVersion, SCHEMA_VERSION);
-});
-
-test("reject malformed site and URL schemes", () => {
-  if (YAML_ONLY) {
-    assert.throws(() => parseYamlConfig(`schemaVersion: 2\nsite:\n  title: ""\n  url: https://example.com\n`), /site\.title/);
-    assert.throws(() => parseYamlConfig(`schemaVersion: 2\nsite:\n  title: hi\n  url: file:///x\n`), /site\.url/);
-    return;
-  }
-  assert.throws(() => normalizeSiteConfig({ site: { title: "", url: "https://example.com" } }));
-  assert.throws(() => normalizeSiteConfig({ site: { title: "hi", url: "file:///x" } }));
-});
-
-test("only the declared schema version is accepted and unknown versions fail closed", () => {
-  if (YAML_ONLY) {
-    assert.equal(parseYamlConfig(validYaml).schemaVersion, 2);
-    // A missing version must not be silently upgraded to the current schema.
-    assert.throws(() => parseYamlConfig(`site:\n  title: t\n  url: https://e.com\n`), /schemaVersion/);
-    for (const bad of [1, 0, -1, 1.5, "2", null, true]) {
-      assert.throws(
-        () => parseYamlConfig(`schemaVersion: ${bad}\nsite:\n  title: t\n  url: https://e.com\n`),
-        /schemaVersion/,
-      );
-    }
-    return;
-  }
-  // Absent and explicit 1 are accepted and normalized to 1.
-  assert.equal(normalizeSiteConfig({ site: { title: "t", url: "https://e.com" } }).schemaVersion, 1);
-  assert.equal(normalizeSiteConfig({ schemaVersion: 1, site: { title: "t", url: "https://e.com" } }).schemaVersion, 1);
-  // Future/unknown versions must be rejected, not silently mis-rendered.
-  for (const bad of [2, 0, -1, 1.5, "1", null, true]) {
-    assert.throws(() => normalizeSiteConfig({ schemaVersion: bad, site: { title: "t", url: "https://e.com" } }), /schemaVersion/);
-  }
-});
-
-test("unknown config fields fail closed", () => {
-  // Schema v1 is additive: only schema v2 promises closed-world validation.
-  if (!YAML_ONLY) return;
-  assert.throws(() => parseYamlConfig(`${validYaml}\nlegacy: true\n`), /unknown config field "legacy"/);
-  assert.throws(
-    () => parseYamlConfig(`schemaVersion: 2\nsite:\n  title: t\n  url: https://e.com\n  timezone: UTC\n`),
-    /unknown site field "timezone"/,
-  );
-});
-
-test("taxonomy and locale fields are validated", () => {
-  if (!YAML_ONLY) return;
-  assert.throws(() => parseYamlConfig(`${validYaml}\ncategories:\n  - id: Tech\n    slug: tech\n`), /id must be a stable lowercase ASCII slug/);
-  assert.throws(
-    () => parseYamlConfig(`${validYaml}\ntags:\n  - id: astro\n    slug: astro\n  - id: astro\n    slug: duplicate\n`),
-    /duplicate tags id "astro"/,
-  );
-  assert.throws(
-    () => parseYamlConfig(validYaml.replace("  - zh-CN\n  - en", "  - en")),
-    /site\.locale must appear in locales/,
-  );
-  assert.throws(() => parseYamlConfig(`${validYaml}\nrouting:\n  prefixDefaultLocale: maybe\n`), /prefixDefaultLocale must be a boolean/);
-});
-
-test("comments module: disabled by default, giscus fields validated when enabled", () => {
-  if (YAML_ONLY) {
-    const off = parseYamlConfig(validYaml);
-    assert.equal(off.comments.enabled, false);
-    assert.equal(off.comments.provider, "giscus");
-    assert.throws(() => parseYamlConfig(`${validYaml}\ncomments:\n  enabled: true\n`), /comments\.repo/);
-    assert.throws(
-      () => parseYamlConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R\n  category: C\n`),
-      /comments\.categoryId/,
-    );
-    assert.throws(
-      () => parseYamlConfig(`${validYaml}\ncomments:\n  enabled: true\n  provider: disqus\n  repo: o/r\n  repoId: R\n  category: C\n  categoryId: D\n`),
-      /giscus/,
-    );
-    assert.throws(
-      () => parseYamlConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R\n  category: C\n  categoryId: D\n  mapping: bogus\n`),
-      /mapping/,
-    );
-    const on = parseYamlConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R_1\n  category: Announcements\n  categoryId: DIC_1\n`);
-    assert.equal(on.comments.enabled, true);
-    assert.equal(on.comments.mapping, "pathname");
-    return;
-  }
-  // Disabled by default — no fields required, no behavior.
-  const off = normalizeSiteConfig({ site: { title: "t", url: "https://e.com" } });
-  assert.equal(off.comments.enabled, false);
-  assert.equal(off.comments.provider, "giscus");
-  // Enabled requires all four giscus identifiers.
-  assert.throws(() => normalizeSiteConfig({ site: { title: "t", url: "https://e.com" }, comments: { enabled: true } }), /comments\.repo/);
-  assert.throws(() => normalizeSiteConfig({
-    site: { title: "t", url: "https://e.com" },
-    comments: { enabled: true, repo: "o/r", repoId: "R", category: "C" },
-  }), /comments\.categoryId/);
-  const on = normalizeSiteConfig({
-    site: { title: "t", url: "https://e.com" },
-    comments: { enabled: true, repo: "o/r", repoId: "R_1", category: "Announcements", categoryId: "DIC_1" },
-  });
-  assert.equal(on.comments.enabled, true);
-  assert.equal(on.comments.mapping, "pathname");
-  // Unknown providers and bad mapping rejected.
-  assert.throws(() => normalizeSiteConfig({
-    site: { title: "t", url: "https://e.com" },
-    comments: { enabled: true, provider: "disqus", repo: "o/r", repoId: "R", category: "C", categoryId: "D" },
-  }), /giscus/);
-  assert.throws(() => normalizeSiteConfig({
-    site: { title: "t", url: "https://e.com" },
-    comments: { enabled: true, repo: "o/r", repoId: "R", category: "C", categoryId: "D", mapping: "bogus" },
-  }), /mapping/);
-});
+// --- Shared contract checks (independent of the declared schema version) ---
 
 test("demo Site is valid and the read-only digest is stable", () => {
   const a = validateSiteRoot(DEMO);
@@ -163,7 +50,7 @@ test("demo Site is valid and the read-only digest is stable", () => {
 });
 
 test("nested-base output keeps canonical and internal links inside /ALNILAM/", (t) => {
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-base-"));
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), legacyDir("base")));
   t.after(() => fs.rmSync(out, { recursive: true, force: true }));
   const site = path.join(out, "site-source");
   fs.cpSync(DEMO, site, { recursive: true });
@@ -186,7 +73,7 @@ test("nested-base output keeps canonical and internal links inside /ALNILAM/", (
 });
 
 test("compose rejects a post slug that collides with a pagination route without changing the Site", (t) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-post-route-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), legacyDir("post-route")));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const site = path.join(root, "site-source");
   fs.cpSync(DEMO, site, { recursive: true });
@@ -213,7 +100,7 @@ test("output paths cannot overlap the Site source", () => {
 });
 
 test("compose writes deterministic provenance binding Core rev and Site digest", (t) => {
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-prov-"));
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), legacyDir("prov")));
   t.after(() => fs.rmSync(out, { recursive: true, force: true }));
   const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", DEMO, "--out", path.join(out, "site")], {
     env: { ...process.env, ALNILAM_CORE_REV: "test-core-rev-1234", SOURCE_DATE_EPOCH: "1700000000" },
@@ -222,12 +109,13 @@ test("compose writes deterministic provenance binding Core rev and Site digest",
   const prov = JSON.parse(fs.readFileSync(path.join(out, "site", "alnilam-provenance.json"), "utf8"));
   assert.equal(prov.core.revision, "test-core-rev-1234");
   assert.equal(prov.site.digest, validateSiteRoot(DEMO).digest);
+  // The provenance document schema is versioned separately from Site schemaVersion.
   assert.equal(prov.schema, 1);
   assert.match(prov.generatedAt, /^\d{4}-\d{2}-\d{2}T/);
 });
 
 test("symlinks in Site inputs are rejected", (t) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-contract-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), legacyDir("contract")));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   fs.mkdirSync(path.join(root, "content/posts"), { recursive: true });
   const config = path.join(root, declared[0]);
@@ -239,47 +127,6 @@ test("symlinks in Site inputs are rejected", (t) => {
     return;
   }
   assert.throws(() => validateSiteRoot(root), /symlinks/);
-});
-
-test("legacy Site contract follows the declared schema version", (t) => {
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-legacy-"));
-  t.after(() => fs.rmSync(out, { recursive: true, force: true }));
-  if (YAML_ONLY) {
-    // Product composition must reject v1 TOML input with an actionable message.
-    const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", "tests/fixtures/site-v1-legacy", "--out", path.join(out, "site")], {
-      env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" },
-      encoding: "utf8",
-    });
-    assert.notEqual(result.status, 0, "legacy TOML Site must fail the YAML-only contract");
-    assert.match(result.stderr + result.stdout, /Site missing required input: alnilam\.config\.yaml/);
-    assert.equal(fs.existsSync(path.join(out, "site")), false);
-    return;
-  }
-  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", "sites/legacy-demo", "--out", path.join(out, "site")], {
-    env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" },
-  });
-  assert.equal(result.status, 0, "legacy Site compose failed: " + result.stderr);
-  // Light theme config must actually render.
-  const html = fs.readFileSync(path.join(out, "site", "index.html"), "utf8");
-  assert.match(html, /data-theme="light"/);
-  assert.match(html, /Legacy Site/);
-  const prov = JSON.parse(fs.readFileSync(path.join(out, "site", "alnilam-provenance.json"), "utf8"));
-  assert.equal(prov.schema, 1);
-  assert.equal(prov.site.digest, validateSiteRoot("sites/legacy-demo").digest);
-});
-
-test("legacy Site digest is stable across reads", () => {
-  if (YAML_ONLY) return;
-  const a = validateSiteRoot("sites/legacy-demo");
-  const b = validateSiteRoot("sites/legacy-demo");
-  assert.equal(a.digest, b.digest);
-});
-
-test("YAML root documents must be mappings", () => {
-  if (!YAML_ONLY) return;
-  for (const text of ["42\n", "text\n", "- a\n- b\n", "---\n"]) {
-    assert.throws(() => parseConfigDocument(text), /must contain a YAML mapping/);
-  }
 });
 
 test("upgrade-check hashTree is content-addressed and filename-insensitive to order", async (t) => {
@@ -310,7 +157,7 @@ test("upgrade-check rejects missing or malformed --old revision", () => {
   }
 });
 
-test("upgrade-check resolveRevision verifies known local commits", async (t) => {
+test("upgrade-check resolveRevision verifies known local commits", async () => {
   const { execFileSync } = await import("node:child_process");
   const repoTop = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
   const { resolveRevision } = await import("../upgrade-check.mjs");
@@ -321,3 +168,169 @@ test("upgrade-check resolveRevision verifies known local commits", async (t) => 
   // Unresolvable revision throws; no worktree side effects.
   assert.throws(() => resolveRevision("zzzzzzz", repoTop), /fetch/);
 });
+
+// --- Schema-version-specific contract checks -------------------------------
+
+if (YAML_ONLY) {
+  test("valid schema v2 YAML is normalized", () => {
+    const value = parseYamlConfig(validYaml);
+    assert.equal(value.site.title, "ALNILAM");
+    assert.equal(value.schemaVersion, 2);
+  });
+
+  test("reject malformed site and URL schemes", () => {
+    assert.throws(() => parseYamlConfig(`schemaVersion: 2\nsite:\n  title: ""\n  url: https://example.com\n`), /site\.title/);
+    assert.throws(() => parseYamlConfig(`schemaVersion: 2\nsite:\n  title: hi\n  url: file:///x\n`), /site\.url/);
+  });
+
+  test("schema v2 is the only supported version and fails closed on unknown versions", () => {
+    // A missing version must not be silently upgraded to the current schema.
+    assert.throws(() => parseYamlConfig(`site:\n  title: t\n  url: https://e.com\n`), /schemaVersion/);
+    for (const bad of [1, 0, -1, 1.5, "2", null, true]) {
+      assert.throws(
+        () => parseYamlConfig(`schemaVersion: ${bad}\nsite:\n  title: t\n  url: https://e.com\n`),
+        /schemaVersion/,
+      );
+    }
+  });
+
+  test("unknown config fields fail closed", () => {
+    assert.throws(() => parseYamlConfig(`${validYaml}\nlegacy: true\n`), /unknown config field "legacy"/);
+    assert.throws(
+      () => parseYamlConfig(`schemaVersion: 2\nsite:\n  title: t\n  url: https://e.com\n  timezone: UTC\n`),
+      /unknown site field "timezone"/,
+    );
+  });
+
+  test("taxonomy and locale fields are validated", () => {
+    assert.throws(() => parseYamlConfig(`${validYaml}\ncategories:\n  - id: Tech\n    slug: tech\n`), /id must be a stable lowercase ASCII slug/);
+    assert.throws(
+      () => parseYamlConfig(`${validYaml}\ntags:\n  - id: astro\n    slug: astro\n  - id: astro\n    slug: duplicate\n`),
+      /duplicate tags id "astro"/,
+    );
+    assert.throws(
+      () => parseYamlConfig(validYaml.replace("  - zh-CN\n  - en", "  - en")),
+      /site\.locale must appear in locales/,
+    );
+    assert.throws(() => parseYamlConfig(`${validYaml}\nrouting:\n  prefixDefaultLocale: maybe\n`), /prefixDefaultLocale must be a boolean/);
+  });
+
+  test("comments module: disabled by default, giscus fields validated when enabled", () => {
+    const off = parseYamlConfig(validYaml);
+    assert.equal(off.comments.enabled, false);
+    assert.equal(off.comments.provider, "giscus");
+    assert.throws(() => parseYamlConfig(`${validYaml}\ncomments:\n  enabled: true\n`), /comments\.repo/);
+    assert.throws(
+      () => parseYamlConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R\n  category: C\n`),
+      /comments\.categoryId/,
+    );
+    assert.throws(
+      () => parseYamlConfig(`${validYaml}\ncomments:\n  enabled: true\n  provider: disqus\n  repo: o/r\n  repoId: R\n  category: C\n  categoryId: D\n`),
+      /giscus/,
+    );
+    assert.throws(
+      () => parseYamlConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R\n  category: C\n  categoryId: D\n  mapping: bogus\n`),
+      /mapping/,
+    );
+    const on = parseYamlConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R_1\n  category: Announcements\n  categoryId: DIC_1\n`);
+    assert.equal(on.comments.enabled, true);
+    assert.equal(on.comments.mapping, "pathname");
+  });
+
+  test("YAML root documents must be mappings", () => {
+    for (const text of ["42\n", "text\n", "- a\n- b\n", "---\n"]) {
+      assert.throws(() => core.parseSiteConfigDocument(text), /must contain a YAML mapping/);
+    }
+  });
+
+  test("v1 TOML Site is rejected by the YAML-only contract", (t) => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), legacyDir("toml")));
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const site = path.join(root, "site-source");
+    fs.mkdirSync(path.join(site, "content/posts"), { recursive: true });
+    fs.writeFileSync(
+      path.join(site, "content/posts", "old-post.md"),
+      ["---", 'title: "Old post"', 'description: "v1 fixture"', "pubDate: 2026-01-01", "---", "", "Body.", ""].join("\n"),
+    );
+    fs.writeFileSync(path.join(site, "alnilam.config.toml"), ['[site]', 'title = "Legacy"', 'url = "https://legacy.example.com"', ""].join("\n"));
+    const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "site")], {
+      env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" },
+      encoding: "utf8",
+    });
+    assert.notEqual(result.status, 0, "a TOML-only Site must fail the YAML-only contract");
+    assert.match(result.stderr + result.stdout, /Site missing required input: alnilam\.config\.yaml/);
+    assert.equal(fs.existsSync(path.join(root, "site")), false);
+    assert.deepEqual(fs.readdirSync(root).filter((entry) => entry.startsWith(".alnilam-build-")), []);
+  });
+} else {
+  test("valid configuration is normalized", () => {
+    const value = normalizeSiteConfig({ site: { title: "ALNILAM", url: "https://example.com" }, theme: { appearance: "dark" } });
+    assert.equal(value.site.title, "ALNILAM");
+    assert.equal(value.schemaVersion, 1);
+  });
+
+  test("reject malformed site and URL schemes", () => {
+    assert.throws(() => normalizeSiteConfig({ site: { title: "", url: "https://example.com" } }));
+    assert.throws(() => normalizeSiteConfig({ site: { title: "hi", url: "file:///x" } }));
+  });
+
+  test("schema v1 is the only supported version and fails closed on unknown versions", () => {
+    // Absent and explicit 1 are accepted and normalized to 1.
+    assert.equal(normalizeSiteConfig({ site: { title: "t", url: "https://e.com" } }).schemaVersion, 1);
+    assert.equal(normalizeSiteConfig({ schemaVersion: 1, site: { title: "t", url: "https://e.com" } }).schemaVersion, 1);
+    // Future/unknown versions must be rejected, not silently mis-rendered.
+    for (const bad of [2, 0, -1, 1.5, "1", null, true]) {
+      assert.throws(() => normalizeSiteConfig({ schemaVersion: bad, site: { title: "t", url: "https://e.com" } }), /schemaVersion/);
+    }
+  });
+
+  test("comments module: disabled by default, giscus fields validated when enabled", () => {
+    // Disabled by default — no fields required, no behavior.
+    const off = normalizeSiteConfig({ site: { title: "t", url: "https://e.com" } });
+    assert.equal(off.comments.enabled, false);
+    assert.equal(off.comments.provider, "giscus");
+    // Enabled requires all four giscus identifiers.
+    assert.throws(() => normalizeSiteConfig({ site: { title: "t", url: "https://e.com" }, comments: { enabled: true } }), /comments\.repo/);
+    assert.throws(() => normalizeSiteConfig({
+      site: { title: "t", url: "https://e.com" },
+      comments: { enabled: true, repo: "o/r", repoId: "R", category: "C" },
+    }), /comments\.categoryId/);
+    const on = normalizeSiteConfig({
+      site: { title: "t", url: "https://e.com" },
+      comments: { enabled: true, repo: "o/r", repoId: "R_1", category: "Announcements", categoryId: "DIC_1" },
+    });
+    assert.equal(on.comments.enabled, true);
+    assert.equal(on.comments.mapping, "pathname");
+    // Unknown providers and bad mapping rejected.
+    assert.throws(() => normalizeSiteConfig({
+      site: { title: "t", url: "https://e.com" },
+      comments: { enabled: true, provider: "disqus", repo: "o/r", repoId: "R", category: "C", categoryId: "D" },
+    }), /giscus/);
+    assert.throws(() => normalizeSiteConfig({
+      site: { title: "t", url: "https://e.com" },
+      comments: { enabled: true, repo: "o/r", repoId: "R", category: "C", categoryId: "D", mapping: "bogus" },
+    }), /mapping/);
+  });
+
+  test("legacy Site (no schemaVersion, no i18n fields) builds and gets provenance", (t) => {
+    const out = fs.mkdtempSync(path.join(os.tmpdir(), legacyDir("legacy")));
+    t.after(() => fs.rmSync(out, { recursive: true, force: true }));
+    const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", "sites/legacy-demo", "--out", path.join(out, "site")], {
+      env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" },
+    });
+    assert.equal(result.status, 0, "legacy Site compose failed: " + result.stderr);
+    // Light theme config must actually render.
+    const html = fs.readFileSync(path.join(out, "site", "index.html"), "utf8");
+    assert.match(html, /data-theme="light"/);
+    assert.match(html, /Legacy Site/);
+    const prov = JSON.parse(fs.readFileSync(path.join(out, "site", "alnilam-provenance.json"), "utf8"));
+    assert.equal(prov.schema, 1);
+    assert.equal(prov.site.digest, validateSiteRoot("sites/legacy-demo").digest);
+  });
+
+  test("legacy Site digest is stable across reads", () => {
+    const a = validateSiteRoot("sites/legacy-demo");
+    const b = validateSiteRoot("sites/legacy-demo");
+    assert.equal(a.digest, b.digest);
+  });
+}
