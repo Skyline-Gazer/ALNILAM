@@ -54,10 +54,5 @@ class AdsPinTests(unittest.TestCase):
         self.assertNotEqual(self.check_candidate("main", regular_file=True).returncode, 0)
 
 
-    def test_repository_gitlink_matches_the_pin_manifest(self):
-        result = subprocess.run(["sh", str(SCRIPT), "dev"], cwd=REPO_ROOT, capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-
-
 if __name__ == "__main__":
     unittest.main()
