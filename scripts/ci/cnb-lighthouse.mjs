@@ -8,10 +8,7 @@ import {chromium} from '@playwright/test';
 import {trackChild, stopChildren, assertSuccessfulResponses, validateLighthouseReports, validateLighthouseRegression} from './cnb-evidence.mjs';
 const trustedSourceRoot = process.env.CNB_TRUSTED_SOURCE_ROOT;
 if (!trustedSourceRoot) throw Error('Trusted dependency root is required');
-// LHCI is not a repository dependency: its puppeteer tree carries unfixed
-// advisories (extract-zip 2.0.1) that the full SCA gate would block. Resolve
-// the pinned CLI on demand, matching the GitHub workflow's `pnpm dlx` usage.
-const LHCI = '@lhci/cli@0.15.1';
+const cli = path.join(trustedSourceRoot, 'node_modules/@lhci/cli/src/cli.js');
 const env = {...process.env, CHROME_PATH: chromium.executablePath(), ALNILAM_CHROME_PATH: chromium.executablePath()};
 const children = [];
 const formFactor = process.env.ALNILAM_LHCI_FORM_FACTOR || 'mobile';
@@ -21,7 +18,7 @@ const regressionDir = `artifacts/lighthouse-regression/${formFactor}`;
 const assertionResultsPath = path.resolve('.lighthouseci/assertion-results.json');
 function run(args) {
   return new Promise((resolve, reject) => {
-    const child = spawn('pnpm', ['dlx', LHCI, ...args], {env, stdio: 'inherit'});
+    const child = spawn(process.execPath, [cli, ...args], {env, stdio: 'inherit'});
     children.push(trackChild(child));
     child.once('error', reject);
     child.once('exit', code => resolve(code));
