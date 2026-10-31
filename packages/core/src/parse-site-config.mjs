@@ -4,8 +4,8 @@ export const SITE_CONFIG_FILENAME = "alnilam.config.yaml";
 
 // Values that reach the contract layer must be plain JSON-like data. Host
 // objects the YAML schema can produce (for example a `!!binary` Buffer) are
-// rejected here; syntax errors, duplicate keys and unresolved tags are rejected
-// by `parseSiteConfigDocument` below.
+// rejected here. `parseSiteConfigDocument` separately rejects syntax errors,
+// duplicate keys and unresolved tags; other YAML warnings pass through.
 function assertPlainData(value, filename, label) {
   if (value === null || typeof value === "string" || typeof value === "boolean") return;
   if (typeof value === "number") {

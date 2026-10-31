@@ -36,11 +36,9 @@ Unknown top-level or nested keys fail the build, and so do malformed YAML, dupli
 keys, unresolved YAML tags and non-plain YAML values. The `comments` and `bangumi`
 module blocks are documented below.
 
-**Experimental reserved fields:** `routing.prefixDefaultLocale` and optional
-`categories`/`tags` catalogs are accepted and validated but have **no consumer** in this
-Core revision; do not rely on them in production Sites. Catalog shape: each entry is
-`{ id, slug, label: { <locale>: text } }` with lowercase ASCII `id`/`slug`, unique per
-kind, and BCP-47 label keys. Tag pages still derive from post frontmatter.
+**Reserved fields:** `routing`, `categories` and `tags` are accepted and validated for
+forward compatibility, but this Core revision has no consumer for them — do not rely on
+them in Sites. Tag pages derive from post frontmatter.
 
 ### Posts and slugs
 

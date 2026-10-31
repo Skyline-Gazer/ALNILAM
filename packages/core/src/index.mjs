@@ -111,7 +111,6 @@ function normalizeTaxonomy(entries, kind) {
 
 export function normalizeSiteConfig(input) {
   assertPlainObject(input, "config");
-  rejectUnknownKeys(input, ROOT_KEYS, "config");
   const schemaVersion = input.schemaVersion;
   if (!Number.isInteger(schemaVersion) || !SUPPORTED_SCHEMA_VERSIONS.includes(schemaVersion)) {
     throw new Error(
@@ -119,6 +118,8 @@ export function normalizeSiteConfig(input) {
       " (supported: " + SUPPORTED_SCHEMA_VERSIONS.join(", ") + "). Upgrade Core to build this Site.",
     );
   }
+  // Unknown fields only matter once the Site declares a contract Core supports.
+  rejectUnknownKeys(input, ROOT_KEYS, "config");
 
   assertPlainObject(input.site, "site");
   rejectUnknownKeys(input.site, SITE_KEYS, "site");
@@ -127,6 +128,7 @@ export function normalizeSiteConfig(input) {
     throw new Error("ALNILAM: site.title must be a non-empty string");
   }
   const siteLocale = normalizeLocale(input.site.locale);
+  const siteUrl = parseAbsoluteUrl(input.site.url);
   if (input.site.description !== undefined && typeof input.site.description !== "string") {
     throw new Error("ALNILAM: site.description must be a string");
   }
@@ -204,7 +206,7 @@ export function normalizeSiteConfig(input) {
     site: Object.freeze({
       title: title.trim(),
       description: input.site.description || "",
-      url: parseAbsoluteUrl(input.site.url),
+      url: siteUrl,
       locale: siteLocale,
     }),
     theme: Object.freeze({ appearance }),

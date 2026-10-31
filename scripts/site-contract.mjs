@@ -27,12 +27,11 @@ export function validateSiteRoot(site) {
     throw new Error("Site directory does not exist: " + root);
   }
   const config = siteConfigPath(root);
-
-  if (!fs.existsSync(path.join(root, "content/posts"))) {
-    throw new Error("Site missing required input: content/posts");
-  }
   if (!fs.statSync(config).isFile()) {
     throw new Error("Site config must be a regular file");
+  }
+  if (!fs.existsSync(path.join(root, "content/posts"))) {
+    throw new Error("Site missing required input: content/posts");
   }
   const sha = crypto.createHash("sha256");
   const paths = [SITE_CONFIG_FILENAME, "content", "assets", "data"];
