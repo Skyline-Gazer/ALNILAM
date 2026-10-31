@@ -28,22 +28,23 @@ export function parseSiteConfigDocument(raw, options = {}) {
   if (typeof raw !== "string" || !raw.trim()) {
     throw new Error(`ALNILAM: ${filename} must contain YAML configuration`);
   }
-  let document;
+  // `parseDocument` collects syntax errors instead of throwing; unknown tags
+  // surface as warnings and would otherwise become opaque data.
+  const document = parseDocument(raw, { uniqueKeys: true, schema: "core", customTags: [] });
+  if (document.errors.length) {
+    throw new Error(`ALNILAM: invalid YAML in ${filename}: ${document.errors[0].message.split("\n")[0]}`);
+  }
+  const unresolvedTag = document.warnings.find((warning) => /Unresolved tag/.test(warning.message));
+  if (unresolvedTag) {
+    throw new Error(`ALNILAM: invalid YAML in ${filename}: ${unresolvedTag.message.split("\n")[0]}`);
+  }
+  let parsed;
   try {
-    document = parseDocument(raw, { uniqueKeys: true, schema: "core", customTags: [] });
+    parsed = document.toJS({ maxAliasCount: 100 });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`ALNILAM: invalid YAML in ${filename}: ${message}`);
   }
-  if (document.errors.length) {
-    throw new Error(`ALNILAM: invalid YAML in ${filename}: ${document.errors[0].message.split("\n")[0]}`);
-  }
-  if (document.warnings.length) {
-    throw new Error(
-      `ALNILAM: invalid YAML in ${filename}: ${document.warnings[0].message.split("\n")[0]}`,
-    );
-  }
-  const parsed = document.toJS({ maxAliasCount: 100 });
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
     throw new Error(`ALNILAM: ${filename} must contain a YAML mapping`);
   }

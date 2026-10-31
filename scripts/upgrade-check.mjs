@@ -85,11 +85,19 @@ export function hashTree(dir) {
   return sha.digest("hex");
 }
 
-// Only the documented one-line rejection thrown by a pre-v2 Core is an
-// expected rollback failure. Error text relayed by pnpm or a stack trace that
-// merely mentions the message is not.
-export function isExpectedSchemaRejection(output) {
-  return /^ALNILAM: unsupported schemaVersion /m.test(typeof output === "string" ? output : "");
+// The only rollback failures that are expected while a Site contract migrates:
+// a pre-v2 Core rejects the YAML Site before building, either because it still
+// requires the retired TOML file or because it supports an older schemaVersion.
+// Both patterns are anchored to the exact line the Core prints; pnpm wrappers
+// or stack frames that merely mention the text do not qualify.
+const EXPECTED_CONTRACT_REJECTIONS = [
+  /^Error: Site missing required input: alnilam\.config\.toml$/m,
+  /^ALNILAM: unsupported schemaVersion \d+ \(supported: [\d, ]+\)\. Upgrade Core to build this Site\.$/m,
+];
+
+export function isExpectedContractRejection(output) {
+  const text = typeof output === "string" ? output : "";
+  return EXPECTED_CONTRACT_REJECTIONS.some((pattern) => pattern.test(text));
 }
 
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith("upgrade-check.mjs")) {
@@ -168,8 +176,8 @@ function main() {
       console.log("UPGRADE/ROLLBACK OK: Site unchanged, outputs byte-identical.");
     }
   } else {
-    const expectedSchemaFailure = rollback.status === 1 && isExpectedSchemaRejection(rollbackOutput);
-    if (!expectedSchemaFailure) {
+    const expectedContractFailure = rollback.status === 1 && isExpectedContractRejection(rollbackOutput);
+    if (!expectedContractFailure) {
       throw new Error(
         "Old Core revision failed to build the Site for an unexpected reason:\n" + rollbackOutput.trim(),
       );

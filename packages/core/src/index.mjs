@@ -26,6 +26,7 @@ const COMMENT_KEYS = new Set(["enabled", "provider", "repo", "repoId", "category
 const BANGUMI_KEYS = new Set(["enabled", "userId", "subjectType", "limit"]);
 const BCP47 = /^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$/;
 const DEFAULT_SITE_LOCALE = "zh-CN";
+const isBcp47 = (value) => typeof value === "string" && BCP47.test(value);
 
 function assertPlainObject(value, label) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -59,7 +60,7 @@ function parseAbsoluteUrl(url, label = "site.url") {
 
 function normalizeLocale(value) {
   if (value === undefined) return DEFAULT_SITE_LOCALE;
-  if (typeof value !== "string" || !BCP47.test(value)) {
+  if (!isBcp47(value)) {
     throw new Error("ALNILAM: site.locale must be a BCP-47 tag");
   }
   return value;
@@ -70,7 +71,7 @@ function normalizeLabelMap(value, label) {
   assertPlainObject(value, label);
   const out = {};
   for (const [locale, text] of Object.entries(value)) {
-    if (!BCP47.test(locale)) throw new Error(`ALNILAM: ${label} contains invalid locale ${JSON.stringify(locale)}`);
+    if (!isBcp47(locale)) throw new Error(`ALNILAM: ${label} contains invalid locale ${JSON.stringify(locale)}`);
     if (typeof text !== "string" || !text.trim()) {
       throw new Error(`ALNILAM: ${label}.${locale} must be a non-empty string`);
     }
@@ -152,7 +153,7 @@ export function normalizeSiteConfig(input) {
   }
   const localeSet = new Set();
   for (const locale of locales) {
-    if (typeof locale !== "string" || !BCP47.test(locale)) {
+    if (!isBcp47(locale)) {
       throw new Error("ALNILAM: locales must contain BCP-47 tags only");
     }
     if (localeSet.has(locale)) throw new Error(`ALNILAM: duplicate locale ${JSON.stringify(locale)}`);

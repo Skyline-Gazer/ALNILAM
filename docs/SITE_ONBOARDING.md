@@ -30,27 +30,16 @@ locales:                      # optional, defaults to [site.locale]; list every 
 
 theme:
   appearance: "dark"          # "dark" | "light", default dark
-
-routing:                      # optional, validated, reserved for later routing slices
-  prefixDefaultLocale: false  # default false
-
-categories:                   # optional taxonomy catalog
-  - id: news                  # stable lowercase ASCII id, unique per kind
-    slug: news                # lowercase ASCII slug, unique per kind
-    label: { zh-CN: 新闻, en: News }
-
-tags:                         # optional, same shape as categories
-  - id: astro
-    slug: astro
-    label: { zh-CN: Astro, en: Astro }
 ```
 
 Unknown top-level or nested keys fail the build, and so do malformed YAML, duplicate
-keys, unresolved YAML tags and non-plain YAML values. `routing.prefixDefaultLocale`
-and the `categories`/`tags` catalogs are validated but not yet read by this Core
-revision: tag pages still derive from post frontmatter, and the catalogs reserve the
-shape for the routing/taxonomy slice. The `comments` and `bangumi` module blocks are
-documented below.
+keys, unresolved YAML tags and non-plain YAML values. The `comments` and `bangumi`
+module blocks are documented below.
+
+**Reserved fields (accepted and validated, not consumed yet):** `routing.prefixDefaultLocale`
+and optional `categories`/`tags` catalogs (`id`, `slug`, localized `label` map) reserve
+the shape for the routing/taxonomy slice. Tag pages currently derive from post
+frontmatter, so these fields do not change rendering yet.
 
 ### Posts and slugs
 

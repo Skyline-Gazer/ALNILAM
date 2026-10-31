@@ -216,13 +216,18 @@ test("v1 TOML Site is rejected by the YAML-only contract", (t) => {
   assert.deepEqual(fs.readdirSync(root).filter((entry) => entry.startsWith(".alnilam-build-")), []);
 });
 
-test("upgrade-check only tolerates the documented schema rejection", async () => {
-  const { isExpectedSchemaRejection } = await import("../upgrade-check.mjs");
-  const rejection = "ALNILAM: unsupported schemaVersion 2 (supported: 1). Upgrade Core to build this Site.";
-  assert.equal(isExpectedSchemaRejection(rejection), true);
-  assert.equal(isExpectedSchemaRejection("  at fail (" + rejection + ")"), false);
-  assert.equal(isExpectedSchemaRejection("ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL: " + rejection), false);
-  assert.equal(isExpectedSchemaRejection(""), false);
+test("upgrade-check only tolerates exact old-Core contract rejections", async () => {
+  const { isExpectedContractRejection } = await import("../upgrade-check.mjs");
+  // The released v0.1.3 Core still requires the retired TOML file.
+  assert.equal(isExpectedContractRejection("Error: Site missing required input: alnilam.config.toml"), true);
+  // A later Core that reads YAML but only supports schema v1.
+  const schema = "ALNILAM: unsupported schemaVersion 2 (supported: 1). Upgrade Core to build this Site.";
+  assert.equal(isExpectedContractRejection(schema), true);
+  // Indented stack frames, pnpm wrappers and unrelated failures do not qualify.
+  assert.equal(isExpectedContractRejection("  at fail (Error: Site missing required input: alnilam.config.toml)"), false);
+  assert.equal(isExpectedContractRejection("ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL: " + schema), false);
+  assert.equal(isExpectedContractRejection("ELIFECYCLE Command failed with exit code 1."), false);
+  assert.equal(isExpectedContractRejection(""), false);
 });
 
 test("upgrade-check hashTree is content-addressed and filename-insensitive to order", async (t) => {
