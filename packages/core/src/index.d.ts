@@ -31,6 +31,7 @@ export interface SiteConfig {
 }
 export declare function normalizeSiteConfig(input: unknown): Readonly<SiteConfig>;
 export declare const SITE_CONFIG_FILENAME: "alnilam.config.yaml";
+/** Parses a Site YAML document; throws unless the root document is a YAML mapping. */
 export declare function parseSiteConfigDocument(
   raw: string,
   options?: { filename?: string },

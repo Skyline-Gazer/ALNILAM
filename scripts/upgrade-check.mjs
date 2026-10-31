@@ -168,7 +168,7 @@ function main() {
       console.log("UPGRADE/ROLLBACK OK: Site unchanged, outputs byte-identical.");
     }
   } else {
-    const expectedSchemaFailure = isExpectedSchemaRejection(rollbackOutput);
+    const expectedSchemaFailure = rollback.status === 1 && isExpectedSchemaRejection(rollbackOutput);
     if (!expectedSchemaFailure) {
       throw new Error(
         "Old Core revision failed to build the Site for an unexpected reason:\n" + rollbackOutput.trim(),

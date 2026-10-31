@@ -31,13 +31,24 @@ locales:                      # optional, defaults to [site.locale]; list every 
 theme:
   appearance: "dark"          # "dark" | "light", default dark
 
-routing:                      # optional
-  prefixDefaultLocale: false  # default false; URL prefixing for the default locale
+routing:                      # optional, validated, reserved for later routing slices
+  prefixDefaultLocale: false  # default false
+
+categories:                   # optional taxonomy catalog
+  - id: news                  # stable lowercase ASCII id, unique per kind
+    slug: news                # lowercase ASCII slug, unique per kind
+    label: { zh-CN: 新闻, en: News }
+
+tags:                         # optional, same shape as categories
+  - id: astro
+    slug: astro
+    label: { zh-CN: Astro, en: Astro }
 ```
 
-Unknown top-level or nested keys fail the build. Other accepted optional sections are
-`categories` and `tags` (taxonomy entries with stable `id`, `slug` and localized
-`label` maps), plus the `comments` and `bangumi` module blocks documented below.
+Unknown top-level or nested keys fail the build, and so do malformed YAML, duplicate
+keys and unresolved YAML tags. `routing.prefixDefaultLocale` is validated but not yet
+read by this Core revision; it reserves the configuration shape for the routing slice.
+The `comments` and `bangumi` module blocks are documented below.
 
 ### Posts and slugs
 
