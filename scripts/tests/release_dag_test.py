@@ -20,11 +20,6 @@ class ReleaseDagTests(unittest.TestCase):
                     self.assertNotEqual(result.returncode, 0, 'expected the git command to fail')
                 return result.stdout.strip()
 
-            def commit(message):
-                git('add', '-u')
-                git('commit', '-qm', message)
-                return git('rev-parse', 'HEAD')
-
             git('init', '-q', '-b', 'main')
             git('config', 'user.name', 'P0 offline fixture')
             git('config', 'user.email', 'p0@example.invalid')
@@ -44,7 +39,8 @@ class ReleaseDagTests(unittest.TestCase):
                 git('checkout', '-qb', f'feature-{round_number}')
                 with (work / 'product.txt').open('a') as stream:
                     stream.write(f'feature {round_number}\n')
-                commit(f'feature {round_number}')
+                git('add', '-u')
+                git('commit', '-qm', f'feature {round_number}')
                 git('checkout', 'cnb-dev')
                 git('merge', '--no-ff', '-m', 'simulate reviewed feature PR', f'feature-{round_number}')
                 frozen = git('rev-parse', 'HEAD')
@@ -85,7 +81,7 @@ class ReleaseDagTests(unittest.TestCase):
                 releases.append(release)
                 git('push', 'cnb', 'HEAD:refs/heads/dev')
             self.assertEqual((work / 'product.txt').read_text(), 'baseline\nfeature 1\nfeature 2\n')
-            print('OFFLINE_DAG_PASS: 2 releases; ancestry/tree/tag/idempotence/interruption/non-fast-forward checks')
+            print('OFFLINE_DAG_PASS: 2 releases; ancestry/tree/tag/idempotence/interruption/non-fast-forward checks; no devtool isolation claim')
             print(git('log', '--graph', '--oneline', '--all'))
 
 
