@@ -12,10 +12,10 @@ export function siteConfigPath(root) {
   if (fs.existsSync(config) && fs.existsSync(legacy)) {
     throw new Error("Site must not contain both alnilam.config.yaml and alnilam.config.toml");
   }
-  if (!fs.existsSync(config) && fs.existsSync(legacy)) {
+  if (!fs.existsSync(config)) {
     throw new Error(
       "Site missing required input: " + SITE_CONFIG_FILENAME +
-        " (alnilam.config.toml is no longer read; see docs/SITE_ONBOARDING.md)",
+        (fs.existsSync(legacy) ? " (alnilam.config.toml is no longer read; see docs/SITE_ONBOARDING.md)" : ""),
     );
   }
   return config;
@@ -27,7 +27,7 @@ export function validateSiteRoot(site) {
     throw new Error("Site directory does not exist: " + root);
   }
   const config = siteConfigPath(root);
-  if (!fs.existsSync(config)) throw new Error("Site missing required input: " + SITE_CONFIG_FILENAME);
+
   if (!fs.existsSync(path.join(root, "content/posts"))) {
     throw new Error("Site missing required input: content/posts");
   }

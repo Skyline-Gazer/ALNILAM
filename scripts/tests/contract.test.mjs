@@ -176,7 +176,8 @@ test("compose writes deterministic provenance binding Core rev and Site digest",
   const prov = JSON.parse(fs.readFileSync(path.join(out, "site", "alnilam-provenance.json"), "utf8"));
   assert.equal(prov.core.revision, "test-core-rev-1234");
   assert.equal(prov.site.digest, validateSiteRoot(DEMO).digest);
-  // The provenance document schema is versioned separately from Site schemaVersion.
+  // Provenance schema versions the document format, independent of Site schemaVersion
+  // (docs/ARCHITECTURE.md, build algorithm).
   assert.equal(prov.schema, 1);
   assert.match(prov.generatedAt, /^\d{4}-\d{2}-\d{2}T/);
 });
@@ -216,18 +217,24 @@ test("v1 TOML Site is rejected by the YAML-only contract", (t) => {
   assert.deepEqual(fs.readdirSync(root).filter((entry) => entry.startsWith(".alnilam-build-")), []);
 });
 
-test("upgrade-check only tolerates exact old-Core contract rejections", async () => {
-  const { isExpectedContractRejection } = await import("../upgrade-check.mjs");
+test("upgrade-check classifies rollback outcomes", async () => {
+  const { classifyRollback, isExpectedContractRejection } = await import("../upgrade-check.mjs");
   // The released v0.1.3 Core still requires the retired TOML file.
-  assert.equal(isExpectedContractRejection("Error: Site missing required input: alnilam.config.toml"), true);
+  const toml = "Error: Site missing required input: alnilam.config.toml";
   // A later Core that reads YAML but only supports schema v1.
   const schema = "ALNILAM: unsupported schemaVersion 2 (supported: 1). Upgrade Core to build this Site.";
+  assert.equal(isExpectedContractRejection(toml), true);
   assert.equal(isExpectedContractRejection(schema), true);
   // Indented stack frames, pnpm wrappers and unrelated failures do not qualify.
-  assert.equal(isExpectedContractRejection("  at fail (Error: Site missing required input: alnilam.config.toml)"), false);
+  assert.equal(isExpectedContractRejection("  at fail (" + toml + ")"), false);
   assert.equal(isExpectedContractRejection("ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL: " + schema), false);
-  assert.equal(isExpectedContractRejection("ELIFECYCLE Command failed with exit code 1."), false);
   assert.equal(isExpectedContractRejection(""), false);
+  // Execution-path classification: success, expected rejection, real failure.
+  assert.equal(classifyRollback({ status: 0, output: "" }), "ok");
+  assert.equal(classifyRollback({ status: 1, output: toml }), "expected-contract-failure");
+  assert.equal(classifyRollback({ status: 1, output: schema }), "expected-contract-failure");
+  assert.equal(classifyRollback({ status: 1, output: "ELIFECYCLE Command failed with exit code 1." }), "unexpected");
+  assert.equal(classifyRollback({ status: 2, output: toml }), "unexpected");
 });
 
 test("upgrade-check hashTree is content-addressed and filename-insensitive to order", async (t) => {

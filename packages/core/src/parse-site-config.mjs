@@ -2,10 +2,10 @@ import { parseDocument } from "yaml";
 
 export const SITE_CONFIG_FILENAME = "alnilam.config.yaml";
 
-// Site configuration is untrusted author input. Fail closed on anything the
-// parser could not resolve exactly (syntax errors, duplicate keys, unknown
-// tags) and on any non-plain value the YAML schema could produce (for example
-// a `!!binary` Buffer), so the contract layer only ever sees plain data.
+// Values that reach the contract layer must be plain JSON-like data. Host
+// objects the YAML schema can produce (for example a `!!binary` Buffer) are
+// rejected here; syntax errors, duplicate keys and unresolved tags are rejected
+// by `parseSiteConfigDocument` below.
 function assertPlainData(value, filename, label) {
   if (value === null || typeof value === "string" || typeof value === "boolean") return;
   if (typeof value === "number") {

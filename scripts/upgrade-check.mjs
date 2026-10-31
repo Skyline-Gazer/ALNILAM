@@ -100,6 +100,14 @@ export function isExpectedContractRejection(output) {
   return EXPECTED_CONTRACT_REJECTIONS.some((pattern) => pattern.test(text));
 }
 
+// Three rollback outcomes: a successful build (outputs must be compared), the
+// documented contract rejection, or a real failure that must stop the run.
+export function classifyRollback({ status, output }) {
+  if (status === 0) return "ok";
+  if (status === 1 && isExpectedContractRejection(output)) return "expected-contract-failure";
+  return "unexpected";
+}
+
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith("upgrade-check.mjs")) {
   main();
 }
@@ -167,7 +175,8 @@ function main() {
   const rollbackOutput = `${rollback.stdout || ""}${rollback.stderr || ""}`;
   const afterRollback = validateSiteRoot(site).digest;
   if (afterRollback !== before) throw new Error("Site digest changed during the rollback build");
-  if (rollback.status === 0) {
+  const outcome = classifyRollback({ status: rollback.status, output: rollbackOutput });
+  if (outcome === "ok") {
     digestOld = hashTree(outOld);
     console.log("output digest (old Core):     " + digestOld);
     if (digestNew !== digestOld) {
@@ -175,18 +184,16 @@ function main() {
     } else {
       console.log("UPGRADE/ROLLBACK OK: Site unchanged, outputs byte-identical.");
     }
-  } else {
-    const expectedContractFailure = rollback.status === 1 && isExpectedContractRejection(rollbackOutput);
-    if (!expectedContractFailure) {
-      throw new Error(
-        "Old Core revision failed to build the Site for an unexpected reason:\n" + rollbackOutput.trim(),
-      );
-    }
+  } else if (outcome === "expected-contract-failure") {
     console.warn(
       "NOTE: old Core revision could not build this Site (expected for schema v2 Sites against pre-v2 Core). Site remained unchanged.",
     );
     if (rollbackOutput.trim()) console.warn(rollbackOutput.trim());
     console.log("UPGRADE/ROLLBACK OK: Site unchanged; old Core build failed closed.");
+  } else {
+    throw new Error(
+      "Old Core revision failed to build the Site for an unexpected reason:\n" + rollbackOutput.trim(),
+    );
   }
   } finally {
     cleanup();
