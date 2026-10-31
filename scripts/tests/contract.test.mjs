@@ -243,6 +243,11 @@ if (YAML_ONLY) {
     }
   });
 
+  test("unresolved YAML tags and duplicate keys fail closed", () => {
+    assert.throws(() => core.parseSiteConfigDocument('schemaVersion: !!js/function "function(){}"\n'), /invalid YAML/);
+    assert.throws(() => core.parseSiteConfigDocument("site:\n  title: a\n  title: b\n"), /invalid YAML/);
+  });
+
   test("v1 TOML Site is rejected by the YAML-only contract", (t) => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), legacyDir("toml")));
     t.after(() => fs.rmSync(root, { recursive: true, force: true }));
