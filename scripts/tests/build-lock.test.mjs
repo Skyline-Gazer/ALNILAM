@@ -25,7 +25,7 @@ test("build lock is exclusive and fails closed on contention", (t) => {
   assert.equal(fs.existsSync(lockPath(dir)), false, "release must remove the holder's own lock");
 });
 
-test("build lock steals a stale lock and never evicts a live holder", (t) => {
+test("a stale lock is stolen and leaves no debris", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   // A lock left by a crashed build seven hours ago is stolen.
@@ -38,12 +38,9 @@ test("build lock steals a stale lock and never evicts a live holder", (t) => {
   assert.equal(fs.existsSync(lockPath(dir)), false);
 });
 
-test("a fresh lock is never stolen, even when staleness would allow it", (t) => {
+test("a fresh lock fails closed without entering the steal path", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  // A live holder recreated its lock after the contender observed a stale
-  // file (the steal's TOCTOU window). The contender must verify the moved
-  // bytes and fail closed instead of evicting the fresh lock.
   const fresh = { pid: 3, startedAt: new Date().toISOString() };
   writeLock(dir, fresh);
   const contender = createBuildLock(dir, { pid: 2 });
@@ -78,9 +75,8 @@ test("build lock release never removes a replaced lock, even from the same pid",
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const holder = createBuildLock(dir, { pid: 1 });
   holder.acquire();
-  // A later acquire by the SAME pid (module reuse, sequential composes) takes
-  // over the lock file with its own token; the first instance's release must
-  // be a no-op because only the token identifies ownership.
+  // Writing the successor's lock directly simulates a later acquire by the
+  // same pid already holding it when the first instance releases.
   writeLock(dir, { pid: 1, token: "later-acquire", startedAt: new Date().toISOString() });
   holder.release();
   assert.equal(readLock(dir).token, "later-acquire", "release must not delete a same-pid successor's lock");
