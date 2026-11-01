@@ -4,8 +4,9 @@ import subprocess
 import tempfile
 import unittest
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = Path(__file__).resolve().parents[1] / "check-ads-pin.sh"
-PIN = "375fc71f977c40c2053140c34431cc60a6d42883"
+PIN = (REPO_ROOT / "ads-pin.txt").read_text(encoding="utf-8").strip()
 OLD_PIN = "1e07d6c4bbd296b7d37dcd31934cfc70426f73ac"
 
 
