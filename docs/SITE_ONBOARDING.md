@@ -169,3 +169,49 @@ If your Site repository is private and you build in CI:
   byte-stable provenance.
 
 Compose copies validated Site inputs into a digest-keyed snapshot inside the managed build cache before building. The source Site is checked again before publishing, and an unsuccessful build retains the previous output.
+
+### Ready-made CI: the reusable `site-ci` workflow
+
+The two-checkout pattern ships as a reusable workflow in the Core repository —
+`.github/workflows/site-ci.yml`. Call it from your Site repository (no local
+service, no runner of your own):
+
+```yaml
+jobs:
+  validate:
+    uses: Skyline-Gazer/ALNILAM/.github/workflows/site-ci.yml@dev
+    with:
+      core_ref: dev                      # Core revision to build against
+      site_repository: you/your-site     # your Site repository
+      site_ref: <full commit SHA>        # pin an exact Site commit
+      site_url: https://you.example.com/ # where the Site will be served
+    secrets:
+      site_token: ${{ secrets.SITE_TOKEN }}
+```
+
+It runs the Core contract tests, validates your Site against the YAML-only v2
+contract, composes it (root base, plus your `site_url` base when different),
+runs artifact budgets, asserts `alnilam-provenance.json` binds `site.ref` to
+the exact SHA you asked for, and uploads the composed output for inspection.
+The workflow runs with `contents: read` only and never executes on pull
+requests, so the Site token cannot leak into PR logs. The token itself should
+be a fine-grained token with `contents: read` scoped to your Site repository
+alone.
+
+### Static publishing (multi-host)
+
+The composed `dist/` directory is a self-contained static bundle — any static
+file host works. Supported in detail:
+
+| Host | Base | Notes |
+| --- | --- | --- |
+| GitHub Pages project page | `https://<org>.github.io/<repo>/` | subpath; set `site_url` accordingly, add `.nojekyll` |
+| GitHub Pages user/org page or custom domain | `https://<your-domain>/` | root base |
+| Any static host (nginx, Netlify, Cloudflare Pages…) | your choice | copy `dist/` as-is |
+
+The owner-gated `deploy` workflow (`.github/workflows/deploy.yml`) publishes to
+GitHub Pages with `deploy_base: subpath | root`, and can publish an external
+Site (`site_repository` + `site_ref`) after running the same contract tests and
+provenance binding checks. It only ever runs via `workflow_dispatch` against the
+protected `github-pages` environment — production publishing remains an explicit
+owner action and is never triggered by pushes or pull requests.
