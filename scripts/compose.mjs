@@ -42,6 +42,39 @@ const stage = fs.mkdtempSync(path.join(path.dirname(destination), ".alnilam-buil
 const backup = destination + ".alnilam-backup-" + process.pid;
 let published = false;
 let workspace;
+// Concurrent composes share this checkout's Astro build state (apps/web/.astro:
+// content store and prerender chunks). A second build would delete and rewrite
+// that state under the first and crash its prerender, so composes serialize on
+// a fail-closed lock: contention fails fast instead of corrupting either build,
+// and a lock left by a crashed build six hours ago is stolen.
+const lockDir = path.join(repoRoot, "apps/web", ".astro");
+const lockPath = path.join(lockDir, ".compose-lock");
+let buildLock = false;
+function acquireBuildLock() {
+  fs.mkdirSync(lockDir, { recursive: true });
+  for (;;) {
+    try {
+      const fd = fs.openSync(lockPath, "wx");
+      fs.writeSync(fd, JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() }));
+      fs.closeSync(fd);
+      buildLock = true;
+      return;
+    } catch (err) {
+      if (err.code !== "EEXIST") throw err;
+      if (Date.now() - fs.statSync(lockPath).mtimeMs >= 6 * 60 * 60 * 1000) {
+        fs.rmSync(lockPath);
+        continue;
+      }
+      throw new Error("Another compose is building this Site revision (apps/web/.astro is locked)");
+    }
+  }
+}
+function releaseBuildLock() {
+  if (buildLock) {
+    buildLock = false;
+    fs.rmSync(lockPath, { force: true });
+  }
+}
 try {
   workspace = fs.mkdtempSync(path.join(temporaryRoot, "alnilam-site-"));
   const snapshot = path.join(workspace, "site");
@@ -89,6 +122,7 @@ try {
       ? new Date(Number(process.env.SOURCE_DATE_EPOCH) * 1000).toISOString()
       : new Date().toISOString(),
   };
+  acquireBuildLock();
   const result = spawnSync(
     externalToolchain ? process.execPath : pnpm,
     externalToolchain
@@ -155,5 +189,6 @@ try {
 } finally {
   if (!published && fs.existsSync(stage)) fs.rmSync(stage, { recursive: true, force: true });
   if (workspace) fs.rmSync(workspace, { recursive: true, force: true });
+  releaseBuildLock();
 }
 
