@@ -1,6 +1,7 @@
 // Resolves the Site ref recorded in build provenance: the Core revision and
 // the Site ref are pinned independently (docs/ARCHITECTURE.md "Build algorithm").
 import fs from "node:fs";
+import { spawnSync } from "node:child_process";
 
 const SHA = /^[0-9a-f]{40}$/;
 
