@@ -21,6 +21,7 @@ export const HARNESS_FILES = [
   'scripts/compose.mjs',
   'scripts/preview-server.mjs',
   'scripts/site-contract.mjs',
+  'scripts/site-ref.mjs',
   'scripts/ci/cnb-browser-audit.mjs',
   'scripts/ci/cnb-browser-negative.mjs',
   'scripts/ci/cnb-consumer-build.mjs',
@@ -320,6 +321,7 @@ function prepareTrustedTests(harnessRoot, candidateRoot) {
   }
   copyReadonlyFile(path.join(ROOT, 'scripts/site-contract.mjs'), path.join(testRoot, 'scripts/site-contract.mjs'));
   copyReadonlyFile(path.join(ROOT, 'scripts/build-lock.mjs'), path.join(testRoot, 'scripts/build-lock.mjs'));
+  copyReadonlyFile(path.join(ROOT, 'scripts/site-ref.mjs'), path.join(testRoot, 'scripts/site-ref.mjs'));
   copyTree(path.join(ROOT, 'scripts/p1'), path.join(testRoot, 'scripts/p1'));
   copyReadonlyFile(path.join(ROOT, 'scripts/upgrade-check.mjs'), path.join(testRoot, 'scripts/upgrade-check.mjs'));
   return testRoot;

@@ -284,11 +284,8 @@ test("fixed inputs rebuild byte-identical output without touching the Site", (t)
   assert.equal(first.status, 0, first.stderr);
   const second = compose("out-b");
   assert.equal(second.status, 0, second.stderr);
-  // A1 (#54): same Core revision + same Site digest + pinned provenance
-  // timestamp must rebuild the exact same bytes.
   assert.equal(hashTree(path.join(root, "out-b")), hashTree(path.join(root, "out-a")));
   assert.equal(validateSiteRoot(site).digest, digest);
-  // No build debris may leak next to the published outputs.
   assert.deepEqual(fs.readdirSync(root).filter((n) => n.startsWith(".alnilam-")), []);
 });
 
@@ -303,9 +300,8 @@ test("a failed rebuild preserves the previous output and the Site", (t) => {
   const good = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", out], { env, encoding: "utf8" });
   assert.equal(good.status, 0, good.stderr);
   const published = hashTree(out);
-  // A post that passes the Site contract but fails the Astro content schema
-  // (missing pubDate) makes the build fail after staging; compose must fail
-  // closed and leave the previously published output and the Site untouched.
+  // A post missing pubDate passes the Site contract but fails the Astro
+  // content schema inside the build.
   fs.writeFileSync(
     path.join(site, "content", "posts", "broken.md"),
     ["---", 'title: "Broken"', 'description: "missing pubDate"', "---", "", "Body.", ""].join("\n"),

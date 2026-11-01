@@ -6,6 +6,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { validateSiteRoot, assertExternalOutput } from "./site-contract.mjs";
 import { createBuildLock } from "./build-lock.mjs";
+import { resolveSiteRef, resolveCoreRevision } from "./site-ref.mjs";
 
 const repoRoot = process.env.ALNILAM_REPO_ROOT
   ? path.resolve(process.env.ALNILAM_REPO_ROOT)
@@ -47,10 +48,10 @@ let workspace;
 // content store and prerender chunks); serialize on a fail-closed lock.
 const buildLock = createBuildLock(path.join(repoRoot, "apps/web", ".astro"));
 try {
-  // Serializing must start before the snapshot: a compose blocked on the
-  // lock while the user edits the Site would otherwise build a stale
-  // snapshot. Acquiring first keeps the snapshot-to-build window short and
-  // the post-copy digest check below still rejects a Site changed meanwhile.
+  // The lock must be held while the snapshot is taken: building outside the
+  // lock would race another compose for apps/web/.astro. The snapshot copy
+  // and both digest checks below still fail closed on any Site change since
+  // `before` was taken — inputs are never mixed, the build aborts.
   buildLock.acquire();
   workspace = fs.mkdtempSync(path.join(temporaryRoot, "alnilam-site-"));
   const snapshot = path.join(workspace, "site");
@@ -62,32 +63,10 @@ try {
   if (validateSiteRoot(snapshot).digest !== before || validateSiteRoot(site).digest !== before) {
     throw new Error("Site source changed while creating build snapshot");
   }
-  let coreRev = process.env.ALNILAM_CORE_REV;
-  if (!coreRev) {
-    const rev = spawnSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot, encoding: "utf8" });
-    coreRev = rev.status === 0 ? rev.stdout.trim() : "unknown";
-  }
-  const sha = /^[0-9a-f]{40}$/;
-  let siteRef = process.env.ALNILAM_SITE_REF;
-  if (siteRef !== undefined) {
-    if (!sha.test(siteRef)) throw new Error("ALNILAM_SITE_REF must be a full lowercase commit SHA");
-  } else {
-    // Only a Site that is its own Git root gets a ref; the demo fixture lives
-    // inside the Core repository and must not inherit Core's HEAD.
-    const top = spawnSync("git", ["-C", site, "rev-parse", "--show-toplevel"], { encoding: "utf8" });
-    const root = top.status === 0 && top.stdout ? fs.realpathSync(top.stdout.trim()) : "";
-    const self = fs.realpathSync(site);
-    let resolved = "unversioned";
-    if (root === self) {
-      const rev = spawnSync("git", ["-C", site, "rev-parse", "HEAD"], { encoding: "utf8" });
-      if (rev.status === 0 && sha.test((rev.stdout || "").trim())) resolved = rev.stdout.trim();
-    }
-    siteRef = resolved;
-  }
   const provenance = {
     schema: 1,
-    core: { revision: coreRev },
-    site: { ref: siteRef, digest: before },
+    core: { revision: resolveCoreRevision(repoRoot) },
+    site: { ref: resolveSiteRef(site), digest: before },
     // NOTE: no absolute source path — it leaks local filesystem layout and
     // breaks reproducibility across checkouts. The digest is the identity.
     generatedAt: process.env.SOURCE_DATE_EPOCH

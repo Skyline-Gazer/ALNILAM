@@ -63,8 +63,12 @@ test("build lock release never removes a replaced lock, even from the same pid",
   // The token owner's release removes it; an unrelated release is a no-op.
   createBuildLock(dir, { pid: 2 }).release();
   assert.equal(fs.existsSync(lockPath(dir)), true, "a non-holder's release must not remove the lock");
-  const owner = createBuildLock(dir, { pid: 1 });
+  // A fresh exclusive create after the successor's lock is abandoned (the
+  // successor never releases it in this scenario) still cycles normally.
   fs.rmSync(lockPath(dir));
+  const owner = createBuildLock(dir, { pid: 1 });
   owner.acquire();
+  assert.notEqual(readLock(dir).token, "later-acquire", "acquire must write its own token");
   owner.release();
+  assert.equal(fs.existsSync(lockPath(dir)), false, "the token owner's release removes the lock");
 });
