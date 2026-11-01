@@ -97,8 +97,8 @@ $:
         # complete findings report always published. Omitting failOnSeverity
         # makes inherited findings report-only per the Owner-approved policy B
         # (the six inherited High remain visible, never hidden by install
-        # timing, ignore lists or runtime downloads). Scanner errors, coverage
-        # gaps and report publication failures still exit nonzero and fail.
+        # timing, ignore lists or runtime downloads). Scanner and report
+        # publication errors fail; inventory completeness is not asserted here.
         # Track 2 above is the merge-blocking gate for newly introduced risk.
         - name: Full installed dependency vulnerability report
           image: cnbcool/sca-vulnerability@sha256:422900af42cc94bb8bf1295210647b9ef1676a27e6ab3c388fb8e0e66f31a05a

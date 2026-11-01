@@ -43,7 +43,7 @@ export function validateAuditDocument(doc, label) {
     fail('SCA_GATE_OUTPUT_INVALID', `${label} audit lacks the legacy advisories map; coverage shape unverified`);
   }
   const counts = doc.metadata?.vulnerabilities;
-  if (!counts || !Number.isSafeInteger(counts.high) || !Number.isSafeInteger(counts.critical)) {
+  if (!counts || SEVERITIES.some(severity => !Number.isSafeInteger(counts[severity]) || counts[severity] < 0)) {
     fail('SCA_GATE_OUTPUT_INVALID', `${label} audit lacks severity count metadata`);
   }
   if (!Number.isSafeInteger(doc.metadata?.totalDependencies) || doc.metadata.totalDependencies < 1) {
@@ -135,6 +135,7 @@ export function classifyTreeEntries(lsTreeOutput, globs) {
     const file = line.slice(tab + 1);
     if (mode === '160000' || type === 'commit') { gitlinks.push(file); continue; }
     if (type !== 'blob') continue;
+    if (file.endsWith('/.npmrc')) fail('SCA_GATE_COVERAGE_INCOMPLETE', 'nested .npmrc is not supported by the audit');
     if (file === 'package.json' || file === 'pnpm-lock.yaml' || file === 'pnpm-workspace.yaml' || file === '.npmrc') manifests.push(file);
     else if (file.endsWith('/package.json')) {
       if (globs.some(glob => globMatches(glob, file))) manifests.push(file);
@@ -168,6 +169,18 @@ export function assertImporterCoverage(importers, manifests) {
   const declared = importers.slice().sort();
   if (discovered.join(',') !== declared.join(',')) {
     fail('SCA_GATE_COVERAGE_INCOMPLETE', `workspace manifests ${discovered} do not match lockfile importers ${declared}`);
+  }
+}
+
+export function assertAuditNpmrc(text, label) {
+  for (const line of String(text).split(/\r?\n/)) {
+    const entry = line.trim();
+    if (!entry || entry.startsWith('#') || entry.startsWith(';')) continue;
+    if (/^registry\s*=\s*https:\/\/registry\.npmjs\.org\/?\s*$/.test(entry)) continue;
+    // The audited tree may not inject scoped registries, credentials or other
+    // pnpm settings into the isolated install. The fixed registry is supplied
+    // by the trusted gate itself, not by a PR-controlled file.
+    fail('SCA_GATE_CONFIGURATION', `${label} contains unsupported .npmrc configuration`);
   }
 }
 
@@ -256,10 +269,11 @@ export function defaultDeps() {
     },
     pnpmAudit(cwd, env) {
       try {
-        return execFileSync('pnpm', ['audit', '--json', '--audit-level=high', `--registry=${env.npm_config_registry}`],
+        const stdout = execFileSync('pnpm', ['audit', '--json', '--audit-level=high', `--registry=${env.npm_config_registry}`],
           {cwd, env, timeout: 5 * 60 * 1000, maxBuffer: 64 * 1024 * 1024}).toString();
+        return {status: 0, stdout};
       } catch (error) {
-        if (typeof error?.status === 'number' && (error.status === 0 || error.status === 1) && error.stdout) return error.stdout.toString();
+        if (error?.status === 1 && error.stdout) return {status: 1, stdout: error.stdout.toString()};
         throw Error(`pnpm audit exited ${error?.status ?? 'signal'} ${String(error?.message || error).slice(0, 200)}`);
       }
     },
@@ -282,20 +296,31 @@ export async function auditSide(label, sha, deps, registry, parentEnv) {
   const globs = parseWorkspaceGlobs(workspaceText);
   const {manifests, gitlinks} = classifyTreeEntries(deps.git(['ls-tree', '-r', sha]), globs);
   assertImporterCoverage(parseLockfileImporters(deps.git(['show', `${sha}:pnpm-lock.yaml`])), manifests);
+  if (manifests.includes('.npmrc')) assertAuditNpmrc(deps.git(['show', `${sha}:.npmrc`]), label);
   const sideRoot = materializeSide(sha, manifests, deps.git);
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'sca-gate-home-'));
   const env = gateEnvironment(parentEnv, home, registry);
-  let stdout;
+  let audit;
   try {
     try { deps.pnpmInstall(sideRoot, env); }
     catch (error) { fail('SCA_GATE_LOCKFILE_STALE', `${label} ${sha.slice(0, 12)} manifest/lockfile consistency failed: ${String(error?.message || error).slice(0, 400)}`); }
-    stdout = deps.pnpmAudit(sideRoot, env);
+    audit = deps.pnpmAudit(sideRoot, env);
   } finally {
     fs.rmSync(sideRoot, {recursive: true, force: true});
     fs.rmSync(home, {recursive: true, force: true});
   }
-  const doc = validateAuditDocument(readJsonDocument(stdout, `${label} audit`), `${label} audit`);
-  return {sha, manifests, gitlinks, findings: blockingFindings(doc),
+  const doc = validateAuditDocument(readJsonDocument(audit?.stdout, `${label} audit`), `${label} audit`);
+  const findings = blockingFindings(doc);
+  // pnpm 10.19.0 can exit 1 for moderate/low findings even with --audit-level=high.
+  const nonBlockingFindings = Object.values(doc.advisories).some(advisory => {
+    const severity = String(advisory.severity).toLowerCase();
+    return !BLOCKING.has(severity) && doc.metadata.vulnerabilities[severity] > 0 && advisory.findings.length > 0;
+  });
+  if ((audit.status !== 0 && audit.status !== 1) || (audit.status === 0 && findings.size) ||
+      (audit.status === 1 && !findings.size && !nonBlockingFindings)) {
+    fail('SCA_GATE_TOOL_ERROR', `${label} audit exit status disagrees with High/Critical findings`);
+  }
+  return {sha, manifests, gitlinks, findings,
     totalDependencies: doc.metadata.totalDependencies, counts: doc.metadata.vulnerabilities};
 }
 
