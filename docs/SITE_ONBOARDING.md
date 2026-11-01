@@ -59,9 +59,10 @@ them in Sites. Tag pages derive from post frontmatter.
 
 ### Images policy
 
-Covers and in-post images are **Site-owned and served as-is** — ALNILAM does not
-re-encode, resize, or fetch them at build time. This keeps the build deterministic
-and offline:
+Covers and absolute `/site-assets/...` images are **Site-owned and served
+as-is** — ALNILAM does not re-encode, resize, or fetch them at build time. The
+only build-time asset work is resolving post-relative `![]()` references (see
+below). This keeps the build deterministic and offline:
 
 - An image referenced with an absolute path (`/site-assets/...`) must exist under
   your Site's `assets/` directory.

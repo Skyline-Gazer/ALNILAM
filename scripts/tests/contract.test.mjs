@@ -306,7 +306,7 @@ test("concurrent composes of the same revision are serialized by the cache lock"
   // A fresh lock means another compose is mid-build: the second must fail closed.
   fs.mkdirSync(buildDir, { recursive: true });
   const lock = path.join(buildDir, ".compose-lock");
-  fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() }));
+  fs.writeFileSync(lock, JSON.stringify({ pid: process.pid }));
   const blocked = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
     env: { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CORE_REV: "lock-test" }, encoding: "utf8",
   });
@@ -315,7 +315,7 @@ test("concurrent composes of the same revision are serialized by the cache lock"
   // A lock whose holder is gone is a crash leftover: stolen immediately. The
   // fixture PID is above Linux pid_max (4194304), so no live process can hold it.
   const unassignablePid = 2 ** 22 + 12345;
-  fs.writeFileSync(lock, JSON.stringify({ pid: unassignablePid, startedAt: new Date().toISOString() }));
+  fs.writeFileSync(lock, JSON.stringify({ pid: unassignablePid }));
   fs.mkdirSync(path.join(buildDir, "site.staging-999999"), { recursive: true });
   const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
     env: { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CORE_REV: "lock-test", SOURCE_DATE_EPOCH: "1700000000" },
@@ -326,7 +326,7 @@ test("concurrent composes of the same revision are serialized by the cache lock"
   assert.equal(fs.existsSync(path.join(buildDir, "site.staging-999999")), false, "orphaned staging dirs must be swept");
   assert.equal(validateSiteRoot(site).digest, digest);
   // A live holder is still displaced once its lock exceeds the six-hour bound.
-  fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, startedAt: "2020-01-01T00:00:00Z" }));
+  fs.writeFileSync(lock, JSON.stringify({ pid: process.pid }));
   const old = new Date(Date.now() - 7 * 60 * 60 * 1000);
   fs.utimesSync(lock, old, old);
   const displaced = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {

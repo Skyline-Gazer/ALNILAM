@@ -139,15 +139,17 @@ try {
       );
     }
     // Holder gone (crash leftover — steal immediately) or a live holder past
-    // the six-hour bound. Steal atomically: rename the lock aside, create our
-    // own, then prove the file we opened is still ours by inode. A racer that
-    // steals our fresh lock makes the inode check fail and loses.
+    // the six-hour bound. Steal by renaming the judged lock aside, creating
+    // our own, then proving (a) the file we moved aside is exactly the one we
+    // judged stale — a racer that renamed our fresh lock loses here — and
+    // (b) the file now at the lock path is still ours by inode.
     const stalePath = lockPath + ".stale-" + crypto.randomUUID();
     try {
       fs.renameSync(lockPath, stalePath);
     } catch {
       throw new Error("Another compose is building this Site revision in " + buildDir);
     }
+    let stoleJudgedLock = false;
     try {
       try {
         lockFd = fs.openSync(lockPath, "wx");
@@ -155,24 +157,23 @@ try {
         if (err.code === "EEXIST") throw new Error("Another compose is building this Site revision in " + buildDir);
         throw err;
       }
+      const moved = fs.statSync(stalePath);
+      stoleJudgedLock = moved.ino === stat.ino && moved.mtimeMs === stat.mtimeMs;
     } finally {
       fs.rmSync(stalePath, { force: true });
     }
-    if (fs.statSync(lockPath).ino !== fs.fstatSync(lockFd).ino) {
+    if (!stoleJudgedLock || fs.statSync(lockPath).ino !== fs.fstatSync(lockFd).ino) {
       fs.closeSync(lockFd);
       lockFd = undefined;
       throw new Error("Another compose is building this Site revision in " + buildDir);
     }
   }
-  fs.writeFileSync(lockFd, JSON.stringify({ pid: process.pid, coreRev, siteDigest: before, startedAt: new Date().toISOString() }) + "\n");
-  // Stage the snapshot beside its final name and swap atomically: a build
-  // killed mid-copy can never leave a partial snapshot behind.
-  // Sweep staging directories left behind by killed builds; the exclusive lock
-  // guarantees no live builder owns them.
+  fs.writeFileSync(lockFd, JSON.stringify({ pid: process.pid, coreRev, siteDigest: before }) + "\n");
+  // Crash leftovers (staging dirs, dead snapshots) are swept under the
+  // exclusive lock; staging names come from mkdtemp so PID reuse cannot collide.
   for (const entry of fs.readdirSync(buildDir)) {
     if (entry.startsWith("site.staging-")) rmTreeSafe(path.join(buildDir, entry));
   }
-  // mkdtemp guarantees uniqueness even when PIDs are recycled.
   const staging = fs.mkdtempSync(path.join(buildDir, "site.staging-"));
   for (const entry of ["alnilam.config.yaml", "content", "assets", "data"]) {
     const source = path.join(site, entry);
