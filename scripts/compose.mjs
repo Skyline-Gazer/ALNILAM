@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -50,6 +51,11 @@ if (cleanCacheOnly) {
 if (!siteArg || !outputArg) throw new Error("--site and --out require a path");
 const sitePath = path.resolve(siteArg);
 const { root: site, digest: before } = validateSiteRoot(sitePath);
+const temporaryRoot = fs.realpathSync(os.tmpdir());
+const realSite = fs.realpathSync(site);
+if (temporaryRoot === realSite || temporaryRoot.startsWith(realSite + path.sep)) {
+  throw new Error("Temporary directory must not be inside the Site source");
+}
 const destination = assertExternalOutput(site, path.resolve(outputArg));
 const isWithin = (child, parent) => child === parent || child.startsWith(parent + path.sep);
 for (const [inner, outer, message] of [

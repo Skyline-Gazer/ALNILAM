@@ -182,6 +182,22 @@ test("output paths cannot overlap the Site source", () => {
   assert.throws(() => assertExternalOutput(DEMO, "sites"));
 });
 
+test("compose rejects a temporary directory inside the Site without modifying it", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-temp-site-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const digest = validateSiteRoot(site).digest;
+  const entries = fs.readdirSync(site);
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, TMPDIR: site }, encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Temporary directory must not be inside the Site source/);
+  assert.equal(validateSiteRoot(site).digest, digest);
+  assert.deepEqual(fs.readdirSync(site), entries);
+});
+
 test("compose rejects a cache directory inside the Site without modifying it", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cache-site-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
