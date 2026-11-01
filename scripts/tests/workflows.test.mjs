@@ -17,10 +17,10 @@ function loadWorkflow(name) {
 }
 
 function triggers(workflow) {
-  // YAML parses the bare key `on` as boolean true.
-  return Object.keys(workflow.on ?? workflow[true] ?? {});
+  // The yaml package follows YAML 1.2: the bare key `on` parses as the
+  // string "on" (verified against these files with yaml@2).
+  return Object.keys(workflow.on);
 }
-
 test("site-ci validates external Sites without running on pull requests", () => {
   const workflow = loadWorkflow("site-ci.yml");
   // No pull_request/push trigger: an untrusted PR can never run a job that

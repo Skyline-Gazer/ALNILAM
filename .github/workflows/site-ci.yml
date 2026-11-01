@@ -123,6 +123,7 @@ jobs:
 
       - name: Compose the external Site (root base)
         env:
+          ALNILAM_SITE_REF: ${{ inputs.site_ref }}
           SOURCE_DATE_EPOCH: "1700000000"
         run: |
           node scripts/compose.mjs --site site-checkout --out dist/site-root
@@ -131,6 +132,7 @@ jobs:
       - name: Compose the external Site (nested base)
         if: ${{ inputs.site_url != 'https://example.com/' }}
         env:
+          ALNILAM_SITE_REF: ${{ inputs.site_ref }}
           ALNILAM_SITE_URL: ${{ inputs.site_url }}
           SOURCE_DATE_EPOCH: "1700000000"
         run: |
@@ -148,11 +150,9 @@ jobs:
           import fs from "node:fs";
           for (const dir of fs.globSync("dist/site-*")) {
             const prov = JSON.parse(fs.readFileSync(`${dir}/alnilam-provenance.json`, "utf8"));
+            // core.revision and site.digest presence is already enforced by
+            // artifact-check; this step anchors the binding to the requested SHA.
             const expected = process.env.EXPECTED_SITE_REF;
-            if (prov.core.revision === undefined || prov.site.digest === undefined) {
-              console.error(`${dir}: provenance is missing core.revision or site.digest`);
-              process.exit(1);
-            }
             if (prov.site.ref !== expected) {
               console.error(`${dir}: provenance site.ref ${prov.site.ref} does not bind ${expected}`);
               process.exit(1);

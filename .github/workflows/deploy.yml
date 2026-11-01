@@ -89,8 +89,19 @@ jobs:
       - name: Contract tests
         run: pnpm test
 
-      - name: Compose the Site for Pages
+      - name: Compose the demo Site for Pages
+        if: ${{ inputs.site_repository == '' }}
         env:
+          ALNILAM_SITE_URL: ${{ env.DEPLOY_URL }}
+          SOURCE_DATE_EPOCH: "1700000000"
+        run: |
+          node scripts/compose.mjs --site sites/demo --out dist/site
+          node scripts/artifact-check.mjs dist/site
+
+      - name: Compose the external Site for Pages
+        if: ${{ inputs.site_repository != '' }}
+        env:
+          ALNILAM_SITE_REF: ${{ inputs.site_ref }}
           ALNILAM_SITE_URL: ${{ env.DEPLOY_URL }}
           SOURCE_DATE_EPOCH: "1700000000"
         run: |
