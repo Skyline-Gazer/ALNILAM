@@ -58,34 +58,43 @@ export function createBuildLock(dir, { staleMs = BUILD_LOCK_STALE_MS, pid = proc
           } catch (err) {
             if (err.code === "ENOENT") continue; // staging was removed under us; retry with a fresh name
             if (err.code !== "EEXIST") throw err;
-            const current = readLock(lockPath);
-            if (current === null || !isStale(current, staleMs)) {
+            const observed = readLock(lockPath);
+            if (observed === null || !isStale(observed, staleMs)) {
               throw new Error("Another compose is building this Site revision (build state is locked)");
             }
             // A unique name per attempt: renameSync would silently overwrite
             // an existing target, which could destroy another acquire's
             // evicted bytes instead of only moving ours.
             const stolenPath = `${lockPath}.stealing-${pid}-${randomUUID()}`;
-            let stolen = null;
+            // Claim the eviction atomically: after this rename lockPath is
+            // gone and whatever lived there is only at stolenPath.
             try {
               fs.renameSync(lockPath, stolenPath);
-              stolen = readLock(stolenPath);
             } catch {
-              // The steal failed (permissions, ENOSPC, ...); the bounded retry
-              // budget still applies, so this cannot spin forever.
+              // lockPath was untouched (rename is atomic on failure); the
+              // bounded retry budget still applies, so this cannot spin.
               continue;
             }
-            if (stolen && stolen.token === current.token) {
+            // Whatever we moved must be the stale bytes we observed. A live
+            // holder may have recreated the lock between our read and the
+            // rename — the moved bytes then carry a different token.
+            const moved = readLock(stolenPath);
+            if (moved && moved.token === observed.token) {
               fs.rmSync(stolenPath, { force: true });
               continue;
             }
-            // The lock was recreated between our read and the rename: give the
-            // evicted bytes back instead of evicting a live holder's lock.
-            try {
-              fs.renameSync(stolenPath, lockPath);
-            } catch {
-              // lockPath was taken meanwhile; the next attempt re-evaluates.
+            // We moved bytes we cannot prove were stale: give them back.
+            for (let restore = 0; restore < MAX_STEAL_ATTEMPTS; restore++) {
+              try {
+                fs.renameSync(stolenPath, lockPath);
+                break;
+              } catch {
+                // lockPath was taken meanwhile; the evicted bytes stay
+                // recoverable at the unique stolenPath until the restore
+                // lands — never deleted, never overwritten.
+              }
             }
+            continue;
           }
         } finally {
           fs.rmSync(staged, { force: true });
