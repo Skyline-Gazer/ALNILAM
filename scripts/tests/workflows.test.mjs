@@ -7,10 +7,18 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
-const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "../..");
+let repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "../..");
+// Inside the trusted harness the test tree is target-owned while `packages`
+// is a symlink into the candidate checkout: resolve the candidate root from
+// it so the tested workflow files are the candidate's, not the harness's.
+const packagesLink = path.join(repoRoot, "packages");
+if (fs.existsSync(packagesLink)) {
+  repoRoot = path.dirname(fs.realpathSync(packagesLink));
+}
 // The workspace root does not depend on yaml directly; packages/core does.
 const yaml = createRequire(path.join(repoRoot, "packages/core/src/index.mjs"))("yaml");
 const workflowsDir = path.join(repoRoot, ".github/workflows");
+assert.ok(fs.existsSync(workflowsDir), "candidate .github/workflows must exist");
 
 function loadWorkflow(name) {
   return yaml.parse(fs.readFileSync(path.join(workflowsDir, name), "utf8"));
