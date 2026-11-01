@@ -5,6 +5,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { validateSiteRoot, assertExternalOutput } from "./site-contract.mjs";
+import { createBuildLock } from "./build-lock.mjs";
 
 const repoRoot = process.env.ALNILAM_REPO_ROOT
   ? path.resolve(process.env.ALNILAM_REPO_ROOT)
@@ -43,38 +44,8 @@ const backup = destination + ".alnilam-backup-" + process.pid;
 let published = false;
 let workspace;
 // Concurrent composes share this checkout's Astro build state (apps/web/.astro:
-// content store and prerender chunks). A second build would delete and rewrite
-// that state under the first and crash its prerender, so composes serialize on
-// a fail-closed lock: contention fails fast instead of corrupting either build,
-// and a lock left by a crashed build six hours ago is stolen.
-const lockDir = path.join(repoRoot, "apps/web", ".astro");
-const lockPath = path.join(lockDir, ".compose-lock");
-let buildLock = false;
-function acquireBuildLock() {
-  fs.mkdirSync(lockDir, { recursive: true });
-  for (;;) {
-    try {
-      const fd = fs.openSync(lockPath, "wx");
-      fs.writeSync(fd, JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() }));
-      fs.closeSync(fd);
-      buildLock = true;
-      return;
-    } catch (err) {
-      if (err.code !== "EEXIST") throw err;
-      if (Date.now() - fs.statSync(lockPath).mtimeMs >= 6 * 60 * 60 * 1000) {
-        fs.rmSync(lockPath);
-        continue;
-      }
-      throw new Error("Another compose is building this Site revision (apps/web/.astro is locked)");
-    }
-  }
-}
-function releaseBuildLock() {
-  if (buildLock) {
-    buildLock = false;
-    fs.rmSync(lockPath, { force: true });
-  }
-}
+// content store and prerender chunks); serialize on a fail-closed lock.
+const buildLock = createBuildLock(path.join(repoRoot, "apps/web", ".astro"));
 try {
   workspace = fs.mkdtempSync(path.join(temporaryRoot, "alnilam-site-"));
   const snapshot = path.join(workspace, "site");
@@ -86,10 +57,6 @@ try {
   if (validateSiteRoot(snapshot).digest !== before || validateSiteRoot(site).digest !== before) {
     throw new Error("Site source changed while creating build snapshot");
   }
-  // Deterministic provenance: Core and Site refs are pinned independently.
-  // The Core revision comes from the caller (env or git); the Site ref comes
-  // from ALNILAM_SITE_REF or the Site's own Git HEAD. The Site digest binds
-  // the exact read-only inputs and must not change between the two reads.
   let coreRev = process.env.ALNILAM_CORE_REV;
   if (!coreRev) {
     const rev = spawnSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot, encoding: "utf8" });
@@ -103,7 +70,7 @@ try {
     // Only a Site that is its own Git root gets a ref; the demo fixture lives
     // inside the Core repository and must not inherit Core's HEAD.
     const top = spawnSync("git", ["-C", site, "rev-parse", "--show-toplevel"], { encoding: "utf8" });
-    const root = top.status === 0 ? fs.realpathSync(top.stdout.trim()) : "";
+    const root = top.status === 0 && top.stdout ? fs.realpathSync(top.stdout.trim()) : "";
     const self = fs.realpathSync(site);
     let resolved = "unversioned";
     if (root === self) {
@@ -122,7 +89,7 @@ try {
       ? new Date(Number(process.env.SOURCE_DATE_EPOCH) * 1000).toISOString()
       : new Date().toISOString(),
   };
-  acquireBuildLock();
+  buildLock.acquire();
   const result = spawnSync(
     externalToolchain ? process.execPath : pnpm,
     externalToolchain
@@ -189,6 +156,6 @@ try {
 } finally {
   if (!published && fs.existsSync(stage)) fs.rmSync(stage, { recursive: true, force: true });
   if (workspace) fs.rmSync(workspace, { recursive: true, force: true });
-  releaseBuildLock();
+  buildLock.release();
 }
 

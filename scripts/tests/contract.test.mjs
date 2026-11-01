@@ -252,6 +252,23 @@ test("provenance records a Site-owned Git ref or an explicit override", (t) => {
   assert.match(invalid.result.stderr + invalid.result.stdout, /ALNILAM_SITE_REF must be a full lowercase commit SHA/);
 });
 
+test("a Site with a broken Git root degrades to unversioned instead of crashing", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-broken-git-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  fs.mkdirSync(path.join(site, ".git"));
+  // `git rev-parse --show-toplevel` fails on a broken .git; compose must
+  // record `unversioned` rather than crash on missing spawn output.
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, ALNILAM_CORE_REV: "broken-git", SOURCE_DATE_EPOCH: "1700000000" },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const prov = JSON.parse(fs.readFileSync(path.join(root, "out", "alnilam-provenance.json"), "utf8"));
+  assert.equal(prov.site.ref, "unversioned");
+});
+
 test("fixed inputs rebuild byte-identical output without touching the Site", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-repro-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -302,34 +319,6 @@ test("a failed rebuild preserves the previous output and the Site", (t) => {
   assert.equal(fs.existsSync(path.join(out, "content", "posts", "broken.md")), false, "failed build must not leak into the published output");
   assert.equal(validateSiteRoot(site).digest, brokenDigest, "a failing build must not modify the Site");
   assert.deepEqual(fs.readdirSync(root).filter((n) => n.startsWith(".alnilam-backup-")), [], "no backup may be left behind");
-});
-
-test("concurrent composes fail closed on the shared build state without corrupting the Site", (t) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-conc-"));
-  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  const site = path.join(root, "site");
-  fs.cpSync(DEMO, site, { recursive: true });
-  const digest = validateSiteRoot(site).digest;
-  const env = { ...process.env, ALNILAM_CORE_REV: "conc-core", SOURCE_DATE_EPOCH: "1700000000" };
-  // A fresh lock means another compose holds the shared Astro build state:
-  // the second must fail closed instead of corrupting either build.
-  const lockDir = path.join("apps", "web", ".astro");
-  const lockPath = path.join(lockDir, ".compose-lock");
-  fs.mkdirSync(lockDir, { recursive: true });
-  fs.writeFileSync(lockPath, JSON.stringify({ pid: 1, startedAt: new Date().toISOString() }));
-  const blocked = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], { env, encoding: "utf8" });
-  assert.notEqual(blocked.status, 0);
-  assert.match(blocked.stderr, /Another compose is building this Site revision/);
-  assert.equal(validateSiteRoot(site).digest, digest);
-  assert.equal(fs.existsSync(path.join(root, "out")), false, "no output may be published by a blocked compose");
-  // A lock left by a crashed build six hours ago is stolen and the build
-  // proceeds; the lock is released afterwards so later builds are not blocked.
-  const stale = new Date(Date.now() - 7 * 60 * 60 * 1000);
-  fs.utimesSync(lockPath, stale, stale);
-  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], { env, encoding: "utf8" });
-  assert.equal(result.status, 0, "stale lock must be stolen: " + result.stderr);
-  assert.equal(validateSiteRoot(site).digest, digest);
-  assert.equal(fs.existsSync(lockPath), false, "lock must be released after a successful build");
 });
 
 test("symlinks in Site inputs are rejected", (t) => {

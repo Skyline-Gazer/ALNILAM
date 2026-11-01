@@ -17,6 +17,7 @@ export const HARNESS_FILES = [
   'lighthouserc.cjs',
   'playwright.config.ts',
   'scripts/artifact-check.mjs',
+  'scripts/build-lock.mjs',
   'scripts/compose.mjs',
   'scripts/preview-server.mjs',
   'scripts/site-contract.mjs',
@@ -318,6 +319,7 @@ function prepareTrustedTests(harnessRoot, candidateRoot) {
     if (fs.existsSync(source)) fs.symlinkSync(source, path.join(testRoot, directory), 'dir');
   }
   copyReadonlyFile(path.join(ROOT, 'scripts/site-contract.mjs'), path.join(testRoot, 'scripts/site-contract.mjs'));
+  copyReadonlyFile(path.join(ROOT, 'scripts/build-lock.mjs'), path.join(testRoot, 'scripts/build-lock.mjs'));
   copyTree(path.join(ROOT, 'scripts/p1'), path.join(testRoot, 'scripts/p1'));
   copyReadonlyFile(path.join(ROOT, 'scripts/upgrade-check.mjs'), path.join(testRoot, 'scripts/upgrade-check.mjs'));
   return testRoot;
