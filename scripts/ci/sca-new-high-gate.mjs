@@ -256,10 +256,11 @@ export function defaultDeps() {
     },
     pnpmAudit(cwd, env) {
       try {
-        return execFileSync('pnpm', ['audit', '--json', '--audit-level=high', `--registry=${env.npm_config_registry}`],
+        const stdout = execFileSync('pnpm', ['audit', '--json', '--audit-level=high', `--registry=${env.npm_config_registry}`],
           {cwd, env, timeout: 5 * 60 * 1000, maxBuffer: 64 * 1024 * 1024}).toString();
+        return {status: 0, stdout};
       } catch (error) {
-        if (typeof error?.status === 'number' && (error.status === 0 || error.status === 1) && error.stdout) return error.stdout.toString();
+        if (error?.status === 1 && error.stdout) return {status: 1, stdout: error.stdout.toString()};
         throw Error(`pnpm audit exited ${error?.status ?? 'signal'} ${String(error?.message || error).slice(0, 200)}`);
       }
     },
@@ -285,17 +286,21 @@ export async function auditSide(label, sha, deps, registry, parentEnv) {
   const sideRoot = materializeSide(sha, manifests, deps.git);
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'sca-gate-home-'));
   const env = gateEnvironment(parentEnv, home, registry);
-  let stdout;
+  let audit;
   try {
     try { deps.pnpmInstall(sideRoot, env); }
     catch (error) { fail('SCA_GATE_LOCKFILE_STALE', `${label} ${sha.slice(0, 12)} manifest/lockfile consistency failed: ${String(error?.message || error).slice(0, 400)}`); }
-    stdout = deps.pnpmAudit(sideRoot, env);
+    audit = deps.pnpmAudit(sideRoot, env);
   } finally {
     fs.rmSync(sideRoot, {recursive: true, force: true});
     fs.rmSync(home, {recursive: true, force: true});
   }
-  const doc = validateAuditDocument(readJsonDocument(stdout, `${label} audit`), `${label} audit`);
-  return {sha, manifests, gitlinks, findings: blockingFindings(doc),
+  const doc = validateAuditDocument(readJsonDocument(audit?.stdout, `${label} audit`), `${label} audit`);
+  const findings = blockingFindings(doc);
+  if ((audit.status !== 0 && audit.status !== 1) || audit.status !== (findings.size ? 1 : 0)) {
+    fail('SCA_GATE_TOOL_ERROR', `${label} audit exit status disagrees with High/Critical findings`);
+  }
+  return {sha, manifests, gitlinks, findings,
     totalDependencies: doc.metadata.totalDependencies, counts: doc.metadata.vulnerabilities};
 }
 

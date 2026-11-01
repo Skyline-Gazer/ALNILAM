@@ -5,7 +5,7 @@ import path from 'node:path';
 import test from 'node:test';
 import {
   advisoryIdentity, assertImporterCoverage, assertLiveRefs, assertPreMergeParents, auditSide, blockingFindings,
-  classifyTreeEntries, diffBlockingFindings, fail, formatVerdict, gateEnvironment, globMatches, parseLockfileImporters,
+  classifyTreeEntries, defaultDeps, diffBlockingFindings, fail, formatVerdict, gateEnvironment, globMatches, parseLockfileImporters,
   parseRegistry, parseWorkspaceGlobs, readJsonDocument, runGate, validateAuditDocument, validateGateIdentity,
 } from './sca-new-high-gate.mjs';
 
@@ -214,7 +214,8 @@ function sideDeps(baseDoc, headDoc, extra = {}) {
     pnpmInstall() { if (extra.installThrows) throw extra.installThrows; return 'ok'; },
     pnpmAudit(cwd) {
       if (extra.auditThrows) throw extra.auditThrows;
-      return JSON.stringify(cwd.includes(baseMarker) ? baseDoc : headDoc);
+      const doc = cwd.includes(baseMarker) ? baseDoc : headDoc;
+      return {status: doc.metadata.vulnerabilities.high + doc.metadata.vulnerabilities.critical ? 1 : 0, stdout: JSON.stringify(doc)};
     },
   };
 }
@@ -233,7 +234,32 @@ test('auditSide fails closed on stale lockfile, audit crash and malformed output
   await assert.rejects(auditSide('base', BASE_SHA, sideDeps(auditDoc(INHERITED), null, {installThrows: Error('ERR_PNPM_OUTDATED_LOCKFILE')}), 'https://r/', auditSideEnv), /SCA_GATE_LOCKFILE_STALE/);
   await assert.rejects(auditSide('base', BASE_SHA, sideDeps(auditDoc(INHERITED), null, {auditThrows: Error('pnpm audit exited 2 socket hang up')}), 'https://r/', auditSideEnv), /pnpm audit exited/);
   await assert.rejects(auditSide('base', BASE_SHA, sideDeps(auditDoc(INHERITED), null, {gitOverrides: {'pnpm-lock.yaml': 'importers:\n  .:\nsnapshots:\n'}}), 'https://r/', auditSideEnv), /SCA_GATE_COVERAGE_INCOMPLETE/);
-  await assert.rejects(auditSide('base', BASE_SHA, {git: fakeGit(), ensureCommits: () => {}, pnpmInstall: () => 'ok', pnpmAudit: () => 'not json'}, 'https://r/', auditSideEnv), /SCA_GATE_OUTPUT_INVALID/);
+  await assert.rejects(auditSide('base', BASE_SHA, {git: fakeGit(), ensureCommits: () => {}, pnpmInstall: () => 'ok', pnpmAudit: () => ({status: 0, stdout: 'not json'})}, 'https://r/', auditSideEnv), /SCA_GATE_OUTPUT_INVALID/);
+});
+
+test('auditSide rejects audit exit codes inconsistent with the validated findings', async () => {
+  const deps = sideDeps(auditDoc([]), auditDoc([]));
+  for (const [status, doc] of [[1, auditDoc([])], [0, auditDoc(INHERITED)]]) {
+    deps.pnpmAudit = () => ({status, stdout: JSON.stringify(doc)});
+    await assert.rejects(auditSide('base', BASE_SHA, deps, 'https://r/', auditSideEnv), /SCA_GATE_TOOL_ERROR/);
+  }
+  deps.pnpmAudit = () => ({status: 0, stdout: JSON.stringify(auditDoc([]))});
+  assert.equal((await auditSide('base', BASE_SHA, deps, 'https://r/', auditSideEnv)).findings.size, 0);
+  deps.pnpmAudit = () => ({status: 1, stdout: JSON.stringify(auditDoc(INHERITED))});
+  assert.equal((await auditSide('base', BASE_SHA, deps, 'https://r/', auditSideEnv)).findings.size, 6);
+});
+
+test('pnpm audit adapter preserves actual process exit status and rejects tool errors', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sca-audit-exit-'));
+  t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
+  const executable = path.join(dir, 'pnpm');
+  const run = status => {
+    fs.writeFileSync(executable, `#!/bin/sh\nprintf '%s' '{"advisories":{}}'\nexit ${status}\n`, {mode: 0o755});
+    return defaultDeps().pnpmAudit(dir, {PATH: dir, npm_config_registry: 'https://registry.npmjs.org/'});
+  };
+  assert.equal(run(0).status, 0);
+  assert.equal(run(1).status, 1);
+  assert.throws(() => run(2), /pnpm audit exited 2/);
 });
 
 test('diffBlockingFindings classifies inherited, introduced and resolved triples', () => {
