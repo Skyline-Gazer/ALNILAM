@@ -41,7 +41,7 @@ The staged output also carries `alnilam-provenance.json`. Its `schema` field ver
 the **provenance document format** and is independent of the Site `schemaVersion`:
 changing the Site contract does not relabel already-published provenance records.
 
-**Current limits**: Do not treat this as an OS sandbox. Trusted MDX can execute build-time code. Post-relative image paths resolve in the build space only; the source Site stays read-only. Concurrent builds of the same Core revision and Site digest are serialized by a lock inside the managed cache (stale locks are stolen after six hours); concurrency/locking of two builds to the same output path and crash recovery beyond that are not yet fully specified; do not claim atomicity across power loss. Browser/performance and cross-platform behavior are not verified until CI and browser tests complete.
+**Current limits**: Do not treat this as an OS sandbox. Trusted MDX can execute build-time code. Post-relative image paths resolve in the build space only; the source Site stays read-only. Concurrent builds of the same Core revision and Site digest are serialized by a lock inside the managed cache (a lock is stolen when its holder process is gone or after six hours); concurrency/locking of two builds to the same output path and crash recovery beyond that are not yet fully specified; do not claim atomicity across power loss. Browser/performance and cross-platform behavior are not verified until CI and browser tests complete.
 
 ## Upgrade contract and user workflow
 - The Core Git SHA/tag and Site SHA/tag must be pinned separately in deployment configuration.

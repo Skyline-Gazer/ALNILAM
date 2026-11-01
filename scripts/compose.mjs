@@ -28,16 +28,16 @@ if (argv.includes("--help")) {
   process.exit(0);
 }
 const cleanCacheOnly = argv.includes("--clean-cache");
-const siteArg = cleanCacheOnly ? "sites/demo" : option("--site", "sites/demo");
-const outputArg = cleanCacheOnly ? "dist/site" : option("--out", "dist/site");
 // Derived build state (site snapshot, Astro content/image store, Vite dep
-// cache) lives in one managed cache root keyed by Core revision and Site
-// digest: different inputs never share cache entries, and `--clean-cache`
-// removes everything. The cache is Code-owned build space — never inside the
-// Site or the published output.
+// cache) lives in one managed cache root. Snapshot and Astro store entries
+// are keyed by Core revision and Site digest; Vite's dependency cache is
+// keyed by Core revision alone (optimized deps do not vary with Site
+// content). The cache is Code-owned build space — never inside the Site or
+// the published output — and `--clean-cache` removes everything.
 const cacheRoot = path.resolve(process.env.ALNILAM_CACHE_DIR || path.join(repoRoot, ".cache", "alnilam"));
 if (cacheRoot === path.parse(cacheRoot).root) throw new Error("Cache directory must not be the filesystem root");
-// Recursive deletes inside the cache must never follow a symlink out of it.
+// rmTreeSafe refuses to remove a cache root or entry that is itself a
+// symbolic link, so cache-side deletes cannot chase a link out of the tree.
 function rmTreeSafe(target) {
   const stat = fs.lstatSync(target, { throwIfNoEntry: false });
   if (!stat) return;
@@ -61,6 +61,8 @@ if (cleanCacheOnly) {
   console.log("ALNILAM cache cleaned: " + cacheRoot);
   process.exit(0);
 }
+const siteArg = option("--site", "sites/demo");
+const outputArg = option("--out", "dist/site");
 if (!siteArg || !outputArg) throw new Error("--site and --out require a path");
 const sitePath = path.resolve(siteArg);
 const { root: site, digest: before } = validateSiteRoot(sitePath);
@@ -113,8 +115,9 @@ try {
   if (!isWithin(buildDir, cacheRootV1)) throw new Error("Build cache path escaped the cache root: " + buildDir);
   fs.mkdirSync(buildDir, { recursive: true });
   // One exclusive builder per (Core revision, Site digest): concurrent composes
-  // would otherwise delete and rewrite each other's live snapshot. A lock left
-  // by a crashed build is stolen after six hours.
+  // would otherwise delete and rewrite each other's live snapshot. A lock is
+  // released when its build finishes; a lock whose holder process is gone —
+  // or one older than six hours — is stolen.
   lockPath = path.join(buildDir, ".compose-lock");
   try {
     lockFd = fs.openSync(lockPath, "wx");
@@ -129,25 +132,29 @@ try {
     const holderAlive = Number.isInteger(holderPid) && holderPid > 0 && (() => {
       try { process.kill(holderPid, 0); return true; } catch (err) { return err.code === "EPERM"; }
     })();
-    if (holderAlive) {
+    if (holderAlive && Date.now() - stat.mtimeMs <= 6 * 60 * 60 * 1000) {
       throw new Error(
         "Another compose is building this Site revision in " + buildDir +
         " (live process " + holderPid + ", lock held since " + stat.mtime.toISOString() + "); wait for it to finish or set ALNILAM_CACHE_DIR to a separate cache root",
       );
     }
-    // No live holder: the lock is a crash leftover — steal it now instead of
-    // making the caller wait out the six-hour bound.
-    // Steal an abandoned lock atomically: rename it aside, create our own, then
-    // prove the file we opened is still ours by inode. A racer that steals our
-    // fresh lock makes the inode check fail and loses.
-    const stalePath = lockPath + ".stale-" + process.pid;
+    // Holder gone (crash leftover — steal immediately) or a live holder past
+    // the six-hour bound. Steal atomically: rename the lock aside, create our
+    // own, then prove the file we opened is still ours by inode. A racer that
+    // steals our fresh lock makes the inode check fail and loses.
+    const stalePath = lockPath + ".stale-" + crypto.randomUUID();
     try {
       fs.renameSync(lockPath, stalePath);
     } catch {
       throw new Error("Another compose is building this Site revision in " + buildDir);
     }
     try {
-      lockFd = fs.openSync(lockPath, "wx");
+      try {
+        lockFd = fs.openSync(lockPath, "wx");
+      } catch (err) {
+        if (err.code === "EEXIST") throw new Error("Another compose is building this Site revision in " + buildDir);
+        throw err;
+      }
     } finally {
       fs.rmSync(stalePath, { force: true });
     }
@@ -165,9 +172,8 @@ try {
   for (const entry of fs.readdirSync(buildDir)) {
     if (entry.startsWith("site.staging-")) rmTreeSafe(path.join(buildDir, entry));
   }
-  const staging = path.join(buildDir, "site.staging-" + process.pid);
-  rmTreeSafe(staging);
-  fs.mkdirSync(staging, { recursive: true });
+  // mkdtemp guarantees uniqueness even when PIDs are recycled.
+  const staging = fs.mkdtempSync(path.join(buildDir, "site.staging-"));
   for (const entry of ["alnilam.config.yaml", "content", "assets", "data"]) {
     const source = path.join(site, entry);
     if (fs.existsSync(source)) fs.cpSync(source, path.join(staging, entry), { recursive: true });

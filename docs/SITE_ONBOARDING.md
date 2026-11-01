@@ -70,8 +70,8 @@ and offline:
   references) by Astro's image pipeline at build time, into the build space
   only — the source Site is never modified. The copy is emitted under
   `/_astro/...`, prefixed with your configured `base` on subpath hosts
-  (verified under `/ALNILAM/`). Inline HTML `<img>` tags are not rewritten;
-  use `![]()` or an absolute `/site-assets/...` path instead.
+  (verified with an SVG fixture under `/ALNILAM/`). Inline HTML `<img>` tags
+  are not rewritten; use `![]()` or an absolute `/site-assets/...` path.
 - Remote `http(s)` image URLs are rendered as plain `<img>` without any
   build-time download.
 
@@ -82,13 +82,15 @@ markup by always emitting explicit `width`/`height` on generated cover `<img>` t
 
 Derived build state (the verified Site snapshot, Astro's content/image store,
 Vite's dependency cache) lives in one managed cache root — `<repo>/.cache/alnilam`
-by default, overridable with `ALNILAM_CACHE_DIR`. Entries are keyed by Core
-revision and Site digest, so different inputs never share cache state and repeated
-builds never write into your Site. `node scripts/compose.mjs --clean-cache`
-removes the whole cache and the legacy cache directories (`apps/web/.astro`,
-`apps/web/node_modules/.astro`) left by earlier versions. Builds of the same
-Core revision and Site digest are serialized by a lock in the cache; a lock
-left by a crashed build is stolen after six hours.
+by default, overridable with `ALNILAM_CACHE_DIR`. The snapshot and Astro's
+content/image store are keyed by Core revision and Site digest; Vite's
+dependency cache is keyed by Core revision alone (optimized deps do not vary
+with Site content). Repeated builds never write into your Site.
+`node scripts/compose.mjs --clean-cache` removes the whole cache and the
+legacy cache directories (`apps/web/.astro`, `apps/web/node_modules/.astro`)
+left by earlier versions. Builds of the same Core revision and Site digest
+are serialized by a lock in the cache; a lock is released when its build
+finishes and stolen when its holder process is gone or after six hours.
 
 ## Optional modules (opt-in via config)
 
