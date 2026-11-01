@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { validateSiteRoot, assertExternalOutput } from "./site-contract.mjs";
+import { validateSiteRoot, assertExternalOutput, isWithin } from "./site-contract.mjs";
 
 const repoRoot = process.env.ALNILAM_REPO_ROOT
   ? path.resolve(process.env.ALNILAM_REPO_ROOT)
@@ -57,7 +57,6 @@ if (temporaryRoot === realSite || temporaryRoot.startsWith(realSite + path.sep))
   throw new Error("Temporary directory must not be inside the Site source");
 }
 const destination = assertExternalOutput(site, path.resolve(outputArg));
-const isWithin = (child, parent) => child === parent || child.startsWith(parent + path.sep);
 for (const [inner, outer, message] of [
   [cacheRoot, site, "Cache directory must not be inside the Site source"],
   [site, cacheRoot, "Cache directory must not contain the Site source"],
@@ -71,6 +70,8 @@ fs.mkdirSync(cacheRoot, { recursive: true });
 const stage = fs.mkdtempSync(path.join(path.dirname(destination), ".alnilam-build-"));
 const backup = destination + ".alnilam-backup-" + process.pid;
 let published = false;
+let lockFd;
+let lockPath;
 try {
   let coreRev = process.env.ALNILAM_CORE_REV;
   if (!coreRev) {
@@ -78,7 +79,32 @@ try {
     coreRev = rev.status === 0 ? rev.stdout.trim() : "unknown";
   }
   const revKey = coreRev.replace(/[^A-Za-z0-9._-]/g, "_");
-  const buildDir = path.join(cacheRoot, "v1", revKey, before);
+  if (!revKey || revKey === "." || revKey.includes("..")) {
+    throw new Error("ALNILAM_CORE_REV is not usable as a cache key: " + coreRev);
+  }
+  const cacheRootV1 = path.join(cacheRoot, "v1");
+  const buildDir = path.join(cacheRootV1, revKey, before);
+  if (!isWithin(buildDir, cacheRootV1)) throw new Error("Build cache path escaped the cache root: " + buildDir);
+  fs.mkdirSync(buildDir, { recursive: true });
+  // One exclusive builder per (Core revision, Site digest): concurrent composes
+  // would otherwise delete and rewrite each other's live snapshot. A lock left
+  // by a crashed build is stolen after six hours.
+  lockPath = path.join(buildDir, ".compose-lock");
+  try {
+    lockFd = fs.openSync(lockPath, "wx");
+  } catch (err) {
+    if (err.code !== "EEXIST") throw err;
+    const stat = fs.statSync(lockPath);
+    if (Date.now() - stat.mtimeMs <= 6 * 60 * 60 * 1000) {
+      throw new Error(
+        "Another compose is building this Site revision in " + buildDir +
+        " (lock held since " + stat.mtime.toISOString() + "); wait for it to finish or set ALNILAM_CACHE_DIR to a separate cache root",
+      );
+    }
+    fs.rmSync(lockPath, { force: true });
+    lockFd = fs.openSync(lockPath, "wx");
+  }
+  fs.writeFileSync(lockFd, JSON.stringify({ pid: process.pid, coreRev, siteDigest: before, startedAt: new Date().toISOString() }) + "\n");
   const snapshot = path.join(buildDir, "site");
   // The snapshot path is deterministic: Astro's content store persists image
   // importer paths resolved against it, so a per-build random directory would
@@ -174,5 +200,9 @@ try {
   console.log("Provenance: alnilam-provenance.json");
 } finally {
   if (!published && fs.existsSync(stage)) fs.rmSync(stage, { recursive: true, force: true });
+  if (lockFd) {
+    fs.closeSync(lockFd);
+    fs.rmSync(lockPath, { force: true });
+  }
 }
 

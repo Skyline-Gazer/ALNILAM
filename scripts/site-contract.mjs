@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 
 export const SITE_CONFIG_FILENAME = "alnilam.config.yaml";
 
-const isWithin = (child, parent) => child === parent || child.startsWith(parent + path.sep);
+export const isWithin = (child, parent) => child === parent || child.startsWith(parent + path.sep);
 
 export function siteConfigPath(root) {
   const config = path.join(root, SITE_CONFIG_FILENAME);

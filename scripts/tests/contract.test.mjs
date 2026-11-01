@@ -253,6 +253,8 @@ test("relative post images render from the build space and repeated builds stay 
   const html = fs.readFileSync(path.join(root, "out", "posts", "rel-image", "index.html"), "utf8");
   const src = html.match(/<img[^>]*src="([^"]+orion[^"]*)"/)?.[1];
   assert.ok(src, "relative image must render as an img element");
+  // Default base is "/", so the build-space copy must be served from /_astro/.
+  assert.match(src, /^\/_astro\//, "relative image must be served from the /_astro/ build-space prefix");
   assert.equal(fs.existsSync(path.join(root, "out", decodeURIComponent(src).replace(/^\//, ""))), true, "rendered image must exist in the output: " + src);
   assert.deepEqual(
     fs.readdirSync(root).filter((entry) => entry.startsWith(".alnilam-build-") || entry.includes(".alnilam-backup-")),
@@ -260,6 +262,56 @@ test("relative post images render from the build space and repeated builds stay 
     "no build residue may remain outside the managed cache",
   );
 });
+
+
+test("compose rejects a Core revision that escapes the cache root", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-revesc-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const victim = path.join(root, "cache");
+  fs.mkdirSync(victim);
+  fs.writeFileSync(path.join(victim, "keep.txt"), "must survive");
+  for (const rev of ["..", "../..", "."]) {
+    const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+      env: { ...process.env, ALNILAM_CACHE_DIR: victim, ALNILAM_CORE_REV: rev }, encoding: "utf8",
+    });
+    assert.notEqual(result.status, 0, "revision " + rev + " must be rejected");
+    assert.match(result.stderr, /not usable as a cache key|escaped the cache root/);
+    assert.equal(fs.existsSync(path.join(victim, "keep.txt")), true, "cache sibling files must survive revision " + rev);
+    assert.equal(fs.existsSync(path.join(root, "out")), false, "no output may be published for revision " + rev);
+  }
+});
+
+test("concurrent composes of the same revision are serialized by the cache lock", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const digest = validateSiteRoot(site).digest;
+  const cache = path.join(root, "cache");
+  const buildDir = path.join(cache, "v1", "lock-test", digest);
+  // A fresh lock means another compose is mid-build: the second must fail closed.
+  fs.mkdirSync(buildDir, { recursive: true });
+  const lock = path.join(buildDir, ".compose-lock");
+  fs.writeFileSync(lock, JSON.stringify({ pid: 1, startedAt: new Date().toISOString() }));
+  const blocked = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CORE_REV: "lock-test" }, encoding: "utf8",
+  });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr, /Another compose is building this Site revision/);
+  // A lock left by a crashed build six hours ago is stolen and the build proceeds.
+  const stale = new Date(Date.now() - 7 * 60 * 60 * 1000);
+  fs.utimesSync(lock, stale, stale);
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CORE_REV: "lock-test", SOURCE_DATE_EPOCH: "1700000000" },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, "stale lock must be stolen: " + result.stderr);
+  assert.equal(fs.existsSync(lock), false, "lock must be released after a successful build");
+  assert.equal(validateSiteRoot(site).digest, digest);
+});
+
 
 test("external image URLs pass through and local site assets are served as-is", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-extimg-"));
