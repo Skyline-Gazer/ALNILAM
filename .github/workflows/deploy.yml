@@ -62,6 +62,19 @@ jobs:
       - name: Install workspace dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Guard the caller-supplied inputs
+        run: |
+          if [ -n "${{ inputs.site_repository }}" ]; then
+            echo "${{ inputs.site_ref }}" | grep -Eq '^[0-9a-f]{40}$' || {
+              echo "::error::site_ref must be a full 40-hex lowercase commit SHA"
+              exit 1
+            }
+          fi
+          if [ "${{ inputs.deploy_base }}" = "root" ] && [ -z "${{ vars.PAGES_ROOT_URL }}" ]; then
+            echo "::error::deploy_base=root requires the PAGES_ROOT_URL repository variable"
+            exit 1
+          fi
+
       - name: Check out the external Site (when publishing one)
         if: ${{ inputs.site_repository != '' }}
         uses: actions/checkout@v4
@@ -72,27 +85,13 @@ jobs:
           path: site-checkout
           persist-credentials: false
 
-      - name: Resolve the Site source and deploy base
-        run: |
-          if [ -n "${{ inputs.site_repository }}" ]; then
-            test -n "${{ inputs.site_ref }}" || { echo "::error::site_ref is required with site_repository"; exit 1; }
-            echo "SITE_SOURCE=site-checkout" >> "$GITHUB_ENV"
-          else
-            echo "SITE_SOURCE=sites/demo" >> "$GITHUB_ENV"
-          fi
-          if [ "${{ inputs.deploy_base }}" = "root" ]; then
-            echo "DEPLOY_URL=${{ vars.PAGES_ROOT_URL || 'https://skyline-gazer.github.io/' }}" >> "$GITHUB_ENV"
-          else
-            echo "DEPLOY_URL=${{ vars.PAGES_URL || 'https://skyline-gazer.github.io/ALNILAM/' }}" >> "$GITHUB_ENV"
-          fi
-
       - name: Contract tests
         run: pnpm test
 
       - name: Compose the demo Site for Pages
         if: ${{ inputs.site_repository == '' }}
         env:
-          ALNILAM_SITE_URL: ${{ env.DEPLOY_URL }}
+          ALNILAM_SITE_URL: ${{ vars.PAGES_URL || 'https://skyline-gazer.github.io/ALNILAM/' }}
           SOURCE_DATE_EPOCH: "1700000000"
         run: |
           node scripts/compose.mjs --site sites/demo --out dist/site
@@ -102,25 +101,27 @@ jobs:
         if: ${{ inputs.site_repository != '' }}
         env:
           ALNILAM_SITE_REF: ${{ inputs.site_ref }}
-          ALNILAM_SITE_URL: ${{ env.DEPLOY_URL }}
+          ALNILAM_SITE_URL: ${{ inputs.deploy_base == 'root' && vars.PAGES_ROOT_URL || vars.PAGES_URL || 'https://skyline-gazer.github.io/ALNILAM/' }}
           SOURCE_DATE_EPOCH: "1700000000"
         run: |
-          node scripts/compose.mjs --site "$SITE_SOURCE" --out dist/site
+          node scripts/compose.mjs --site site-checkout --out dist/site
           node scripts/artifact-check.mjs dist/site
 
       - name: Verify provenance binds the published inputs
         if: ${{ inputs.site_repository != '' }}
+        env:
+          EXPECTED_SITE_REF: ${{ inputs.site_ref }}
         run: |
-          node --input-type=module -e "
-            import fs from 'node:fs';
-            const prov = JSON.parse(fs.readFileSync('dist/site/alnilam-provenance.json', 'utf8'));
-            const expected = '${{ inputs.site_ref }}';
-            if (prov.site.ref !== expected) {
-              console.error('provenance site.ref ' + prov.site.ref + ' does not bind ' + expected);
-              process.exit(1);
-            }
-            console.log('provenance binds site', expected.slice(0, 12) + '…');
-          "
+          node --input-type=module <<'EOF'
+          import fs from "node:fs";
+          const expected = process.env.EXPECTED_SITE_REF;
+          const prov = JSON.parse(fs.readFileSync("dist/site/alnilam-provenance.json", "utf8"));
+          if (prov.site?.ref !== expected) {
+            console.error(`provenance site.ref ${prov.site?.ref} does not bind ${expected}`);
+            process.exit(1);
+          }
+          console.log(`provenance binds site ${expected.slice(0, 12)}…`);
+          EOF
 
       - name: Add .nojekyll
         run: touch dist/site/.nojekyll

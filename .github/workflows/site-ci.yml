@@ -1,20 +1,28 @@
 name: Site CI
-# Validates an EXTERNAL Site (a different repository) against a pinned Core
+# Validates an EXTERNAL Site (a different repository) against a Core
 # revision: contract tests, compose, artifact budgets and provenance gating.
 # Called via workflow_call from a Site repository or run on demand. This is
 # validation only — it never publishes and never touches production.
 #
-# Least privilege: the workflow itself runs with contents: read and
+# Least privilege: the workflow runs with contents: read and
 # persist-credentials: false. Cross-repo Site checkout needs a fine-grained
 # token scoped to the Site repository with contents: read only, supplied via
-# the site_token secret. Tokens are consumed by actions/checkout and are never
-# echoed; Actions masks any secret value appearing in logs automatically.
+# the site_token secret; the calling workflow passes its own secret to the
+# reusable workflow (secrets: site_token: ${{ secrets.SITE_TOKEN }}). Tokens
+# are consumed by actions/checkout and never echoed; Actions masks any secret
+# value appearing in logs automatically. The token never appears in any run
+# or env step of this workflow.
+#
+# core_ref defaults to dev, which is a moving branch: validation results for
+# the same Site SHA drift with dev unless the caller pins a full Core SHA.
+# provenance.site.ref is bound to site_ref; provenance.core.revision records
+# whatever Core revision actually built.
 
 on:
   workflow_call:
     inputs:
       core_ref:
-        description: "Core (this repository) revision to validate against"
+        description: "Core (this repository) revision to validate against; a moving branch does not pin Core"
         required: false
         type: string
         default: dev
@@ -23,14 +31,14 @@ on:
         required: true
         type: string
       site_ref:
-        description: "Site commit SHA to validate (a full SHA, not a branch)"
+        description: "Site commit SHA to validate (full 40-hex lowercase SHA)"
         required: true
         type: string
       site_url:
-        description: "Absolute https URL the Site will be served from (base)"
+        description: "Absolute https URL for the nested-base compose; omit to skip it"
         required: false
         type: string
-        default: "https://example.com/"
+        default: ""
     secrets:
       site_token:
         description: "Fine-grained token with contents: read on the Site repository only"
@@ -38,7 +46,7 @@ on:
   workflow_dispatch:
     inputs:
       core_ref:
-        description: "Core (this repository) revision to validate against"
+        description: "Core (this repository) revision to validate against; a moving branch does not pin Core"
         required: false
         type: string
         default: dev
@@ -47,20 +55,20 @@ on:
         required: true
         type: string
       site_ref:
-        description: "Site commit SHA to validate (a full SHA, not a branch)"
+        description: "Site commit SHA to validate (full 40-hex lowercase SHA)"
         required: true
         type: string
       site_url:
-        description: "Absolute https URL the Site will be served from (base)"
+        description: "Absolute https URL for the nested-base compose; omit to skip it"
         required: false
         type: string
-        default: "https://example.com/"
+        default: ""
 
 permissions:
   contents: read
 
 concurrency:
-  group: site-ci-${{ inputs.site_repository }}-${{ inputs.site_ref }}
+  group: site-ci-${{ github.run_id }}
   cancel-in-progress: false
 
 jobs:
@@ -68,6 +76,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - name: Guard the caller-supplied inputs
+        run: |
+          echo "${{ inputs.site_ref }}" | grep -Eq '^[0-9a-f]{40}$' || {
+            echo "::error::site_ref must be a full 40-hex lowercase commit SHA"
+            exit 1
+          }
+          if [ -n "$SITE_URL_PRESENT" ]; then
+            node -e 'const u = new URL(process.env.SITE_URL); if (u.protocol !== "https:" || u.username || u.password) { console.error("site_url must be an absolute https URL without credentials"); process.exit(1); }'
+          fi
+        env:
+          SITE_URL_PRESENT: ${{ inputs.site_url != '' && '1' || '' }}
+          SITE_URL: ${{ inputs.site_url }}
+
       - name: Check out Core at the requested revision
         uses: actions/checkout@v4
         with:
@@ -130,7 +151,7 @@ jobs:
           node scripts/artifact-check.mjs dist/site-root
 
       - name: Compose the external Site (nested base)
-        if: ${{ inputs.site_url != 'https://example.com/' }}
+        if: ${{ inputs.site_url != '' }}
         env:
           ALNILAM_SITE_REF: ${{ inputs.site_ref }}
           ALNILAM_SITE_URL: ${{ inputs.site_url }}
@@ -148,16 +169,19 @@ jobs:
           }
           node --input-type=module <<'EOF'
           import fs from "node:fs";
-          for (const dir of fs.globSync("dist/site-*")) {
+          const expected = process.env.EXPECTED_SITE_REF;
+          const dirs = fs.globSync("dist/site-*");
+          if (!dirs.includes("dist/site-root")) {
+            console.error("dist/site-root is missing: compose did not produce the required artifact");
+            process.exit(1);
+          }
+          for (const dir of dirs) {
             const prov = JSON.parse(fs.readFileSync(`${dir}/alnilam-provenance.json`, "utf8"));
-            // core.revision and site.digest presence is already enforced by
-            // artifact-check; this step anchors the binding to the requested SHA.
-            const expected = process.env.EXPECTED_SITE_REF;
-            if (prov.site.ref !== expected) {
-              console.error(`${dir}: provenance site.ref ${prov.site.ref} does not bind ${expected}`);
+            if (prov.site?.ref !== expected) {
+              console.error(`${dir}: provenance site.ref ${prov.site?.ref} does not bind ${expected}`);
               process.exit(1);
             }
-            console.log(`${dir}: provenance binds site ${expected} @ digest ${prov.site.digest.slice(0, 12)}…`);
+            console.log(`${dir}: provenance binds site ${expected} @ digest ${String(prov.site?.digest ?? "").slice(0, 12)}…`);
           }
           EOF
         env:
