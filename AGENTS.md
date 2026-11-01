@@ -76,3 +76,7 @@ behavior and unresolved blockers.
 Read `docs/HANDOFF.md` before changing development authority or starting a slice. Never
 infer implemented features from roadmap entries. Record exact commit SHA, CI run URL and
 results, PR, verified functionality and unresolved blockers.
+
+## Owner override — 2026-11-01
+
+Ordinary development uses functional CI and substantive current-head CodeBuddy review. SCA, SBOM, license scanning, security evidence and isolation checks are opt-in and do not gate normal development. Preserve credential protection and production authorization boundaries. This override applies immediately under ADS #109, including while consuming older ADS releases.

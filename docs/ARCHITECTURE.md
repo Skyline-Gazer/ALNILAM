@@ -25,9 +25,9 @@ scripts/compose.mjs    # non-mutating external Site builder
 
 ## Build algorithm
 1. Resolve and validate an absolute Site source, hash the read-only inputs.
-2. Run Astro in Core with `ALNILAM_SITE_DIR` pointing to the source and output redirected into a temporary staging folder.
-3. Astro Content Layer `glob` reads `content/posts` from that Site; pages remain in Core.
-4. Copy optional Site assets into the staged static output (not back into Core or Site).
+2. Copy config, content, assets and data into a temporary snapshot and verify its digest against the source.
+3. Run Astro in Core with `ALNILAM_SITE_DIR` pointing to the snapshot; Content Layer reads its `content/posts` and output goes to staging.
+4. Copy optional snapshot assets into the staged static output (not back into Core or Site).
 5. Hash the Site inputs again and abort on changes.
 6. Replace the final destination from staging; retain/restore the existing output if staging fails.
 
