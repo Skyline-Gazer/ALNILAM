@@ -42,40 +42,47 @@ export function createBuildLock(dir, { staleMs = BUILD_LOCK_STALE_MS, pid = proc
     acquire() {
       fs.mkdirSync(dir, { recursive: true });
       for (let attempts = 0; attempts < MAX_STEAL_ATTEMPTS; attempts++) {
+        const token = randomUUID();
+        const staged = `${lockPath}.staging-${pid}-${attempts}`;
+        fs.writeFileSync(staged, JSON.stringify({ pid, token, startedAt: new Date().toISOString() }));
         try {
-          const fd = fs.openSync(lockPath, "wx");
-          const lock = { pid, token: randomUUID(), startedAt: new Date().toISOString() };
-          fs.writeSync(fd, JSON.stringify(lock));
-          fs.closeSync(fd);
-          ownedToken = lock.token;
-          return;
-        } catch (err) {
-          if (err.code !== "EEXIST") throw err;
-          const current = readLock(lockPath);
-          if (current === null || !isStale(current, staleMs)) {
-            throw new Error("Another compose is building this Site revision (build state is locked)");
-          }
-          const stolenPath = `${lockPath}.stealing-${pid}-${attempts}`;
-          let stolen = null;
           try {
-            fs.renameSync(lockPath, stolenPath);
-            stolen = readLock(stolenPath);
-          } catch {
-            // The steal failed (permissions, ENOSPC, ...); the bounded retry
-            // budget still applies, so this cannot spin forever.
-            continue;
+            // link fails with EEXIST while the lock exists, and publishes the
+            // fully written file atomically — readers never see an empty or
+            // half-written lock from a killed acquire.
+            fs.linkSync(staged, lockPath);
+            ownedToken = token;
+            return;
+          } catch (err) {
+            if (err.code !== "EEXIST") throw err;
+            const current = readLock(lockPath);
+            if (current === null || !isStale(current, staleMs)) {
+              throw new Error("Another compose is building this Site revision (build state is locked)");
+            }
+            const stolenPath = `${lockPath}.stealing-${pid}-${attempts}`;
+            let stolen = null;
+            try {
+              fs.renameSync(lockPath, stolenPath);
+              stolen = readLock(stolenPath);
+            } catch {
+              // The steal failed (permissions, ENOSPC, ...); the bounded retry
+              // budget still applies, so this cannot spin forever.
+              continue;
+            }
+            if (stolen && stolen.token === current.token) {
+              fs.rmSync(stolenPath, { force: true });
+              continue;
+            }
+            // The lock was recreated between our read and the rename: give the
+            // evicted bytes back instead of evicting a live holder's lock.
+            try {
+              fs.renameSync(stolenPath, lockPath);
+            } catch {
+              // lockPath was taken meanwhile; the next attempt re-evaluates.
+            }
           }
-          if (stolen && stolen.token === current.token) {
-            fs.rmSync(stolenPath, { force: true });
-            continue;
-          }
-          // The lock was recreated between our read and the rename: give the
-          // evicted bytes back instead of evicting a live holder's lock.
-          try {
-            fs.renameSync(stolenPath, lockPath);
-          } catch {
-            // lockPath was taken meanwhile; the next attempt re-evaluates.
-          }
+        } finally {
+          fs.rmSync(staged, { force: true });
         }
       }
       throw new Error("Another compose is building this Site revision (build state is locked)");

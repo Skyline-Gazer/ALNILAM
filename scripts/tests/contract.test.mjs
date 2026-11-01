@@ -216,7 +216,7 @@ test("compose writes deterministic provenance binding Core rev and Site digest",
   assert.match(prov.generatedAt, /^\d{4}-\d{2}-\d{2}T/);
 });
 
-test("provenance records a Site-owned Git ref or an explicit override", (t) => {
+test("provenance writes the Site ref into the published document", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-site-ref-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const site = path.join(root, "site");
@@ -227,44 +227,17 @@ test("provenance records a Site-owned Git ref or an explicit override", (t) => {
   const committed = git("-c", "user.name=fixture", "-c", "user.email=fixture@example.invalid", "commit", "-qm", "site");
   assert.equal(committed.status, 0, committed.stderr);
   const head = git("rev-parse", "HEAD").stdout.trim();
-
-  const compose = (out, extraEnv = {}) => {
-    const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, out)], {
-      env: { ...process.env, ALNILAM_CORE_REV: "core-rev", SOURCE_DATE_EPOCH: "1700000000", ...extraEnv },
-      encoding: "utf8",
-    });
-    const provenancePath = path.join(root, out, "alnilam-provenance.json");
-    return {result, provenance: fs.existsSync(provenancePath) ? JSON.parse(fs.readFileSync(provenancePath, "utf8")) : null};
-  };
-
-  const fromGit = compose("out-git");
-  assert.equal(fromGit.result.status, 0, fromGit.result.stderr);
-  assert.equal(fromGit.provenance.site.ref, head);
-
-  const override = "a".repeat(40);
-  const fromEnv = compose("out-env", {ALNILAM_SITE_REF: override});
-  assert.equal(fromEnv.result.status, 0, fromEnv.result.stderr);
-  assert.equal(fromEnv.provenance.site.ref, override);
-
-  const invalid = compose("out-invalid", {ALNILAM_SITE_REF: "not-a-sha"});
-  assert.notEqual(invalid.result.status, 0);
-  assert.match(invalid.result.stderr + invalid.result.stdout, /ALNILAM_SITE_REF must be a full lowercase commit SHA/);
-});
-
-test("a Site with a broken Git root degrades to unversioned instead of crashing", (t) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-broken-git-"));
-  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  const site = path.join(root, "site");
-  fs.cpSync(DEMO, site, { recursive: true });
-  fs.mkdirSync(path.join(site, ".git"));
+  // End-to-end: the resolved Site ref reaches the published provenance.
+  // Branch coverage for resolution lives in scripts/tests/site-ref.test.mjs.
   const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
-    env: { ...process.env, ALNILAM_CORE_REV: "broken-git", SOURCE_DATE_EPOCH: "1700000000" },
+    env: { ...process.env, ALNILAM_CORE_REV: "core-rev", SOURCE_DATE_EPOCH: "1700000000" },
     encoding: "utf8",
   });
   assert.equal(result.status, 0, result.stderr);
   const prov = JSON.parse(fs.readFileSync(path.join(root, "out", "alnilam-provenance.json"), "utf8"));
-  assert.equal(prov.site.ref, "unversioned");
+  assert.equal(prov.site.ref, head);
 });
+
 
 
 test("symlinks in Site inputs are rejected", (t) => {

@@ -48,10 +48,10 @@ let workspace;
 // content store and prerender chunks); serialize on a fail-closed lock.
 const buildLock = createBuildLock(path.join(repoRoot, "apps/web", ".astro"));
 try {
-  buildLock.acquire();
-  // The lock is held from here through publish. Re-validate under it: a Site
-  // edited between the initial check and the acquire is picked up now, and
-  // every digest below binds to the source the snapshot was taken from.
+  // The lock serializes only the shared Astro build state (apps/web/.astro);
+  // it does not protect the Site. Input consistency comes from the digest
+  // checks below: the build binds to the Site digest re-read under the lock
+  // and refuses to publish if the snapshot or source deviate from it.
   const { digest: buildDigest } = validateSiteRoot(site);
   workspace = fs.mkdtempSync(path.join(temporaryRoot, "alnilam-site-"));
   const snapshot = path.join(workspace, "site");

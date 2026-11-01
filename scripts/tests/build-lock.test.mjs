@@ -52,6 +52,29 @@ test("a fresh lock is never stolen, even when staleness would allow it", (t) => 
   assert.deepEqual(fs.readdirSync(dir).filter((n) => n.startsWith(".compose-lock.stealing-")), [], "failed steals must not leave debris");
 });
 
+test("a steal whose stolen bytes changed mid-flight is restored, not destroyed", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const observed = { pid: 1, token: "stale-observed", startedAt: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString() };
+  writeLock(dir, observed);
+  // Simulate the interleaving where a live holder's bytes replace the stolen
+  // file between the rename and the content verification: reads of a
+  // .stealing- file always return the live holder's token, so verification
+  // never matches and the module must keep restoring the lock it renamed.
+  const realReadFileSync = fs.readFileSync;
+  t.mock.method(fs, "readFileSync", (file, options) => {
+    const data = realReadFileSync(file, options);
+    if (typeof file === "string" && file.includes(".compose-lock.stealing-")) {
+      return JSON.stringify({ ...JSON.parse(data), token: "live-holder" });
+    }
+    return data;
+  });
+  const contender = createBuildLock(dir, { pid: 2 });
+  assert.throws(() => contender.acquire(), /Another compose is building this Site revision/);
+  assert.equal(readLock(dir).token, "stale-observed", "the observed bytes must be restored, never destroyed");
+  assert.deepEqual(fs.readdirSync(dir).filter((n) => n.startsWith(".compose-lock.stealing-")), [], "restore must not leave debris");
+});
+
 test("build lock release never removes a replaced lock, even from the same pid", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
