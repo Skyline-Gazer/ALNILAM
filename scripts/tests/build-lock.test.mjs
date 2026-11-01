@@ -57,10 +57,8 @@ test("a steal whose stolen bytes changed mid-flight is restored, not destroyed",
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const observed = { pid: 1, token: "stale-observed", startedAt: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString() };
   writeLock(dir, observed);
-  // Simulate the interleaving where a live holder's bytes replace the stolen
-  // file between the rename and the content verification: reads of a
-  // .stealing- file always return the live holder's token, so verification
-  // never matches and the module must keep restoring the lock it renamed.
+  // The readFileSync mock simulates the rename-to-verify interleaving
+  // without real concurrent processes.
   const realReadFileSync = fs.readFileSync;
   t.mock.method(fs, "readFileSync", (file, options) => {
     const data = realReadFileSync(file, options);

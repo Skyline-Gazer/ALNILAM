@@ -62,7 +62,10 @@ export function createBuildLock(dir, { staleMs = BUILD_LOCK_STALE_MS, pid = proc
             if (current === null || !isStale(current, staleMs)) {
               throw new Error("Another compose is building this Site revision (build state is locked)");
             }
-            const stolenPath = `${lockPath}.stealing-${pid}-${attempts}`;
+            // A unique name per attempt: renameSync would silently overwrite
+            // an existing target, which could destroy another acquire's
+            // evicted bytes instead of only moving ours.
+            const stolenPath = `${lockPath}.stealing-${pid}-${randomUUID()}`;
             let stolen = null;
             try {
               fs.renameSync(lockPath, stolenPath);
