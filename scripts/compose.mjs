@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import os from "node:os";
+import crypto from "node:crypto";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { validateSiteRoot, assertExternalOutput } from "./site-contract.mjs";
+import { validateSiteRoot, assertExternalOutput, isWithin } from "./site-contract.mjs";
 import { createBuildLock } from "./build-lock.mjs";
 import { resolveSiteRef, resolveCoreRevision } from "./site-ref.mjs";
 
@@ -25,14 +26,48 @@ function option(flag, fallback) {
   return idx < 0 ? fallback : argv[idx + 1];
 }
 if (argv.includes("--help")) {
-  console.log("Usage: node scripts/compose.mjs --site /path/to/site --out /path/to/output");
+  console.log("Usage: node scripts/compose.mjs [--site /path/to/site --out /path/to/output] [--clean-cache]");
+  process.exit(0);
+}
+const cleanCacheOnly = argv.includes("--clean-cache");
+// Derived build state (site snapshot, Astro content/image store, Vite dep
+// cache) lives in one managed cache root. Snapshot and Astro store entries
+// are keyed by Core revision and Site digest; Vite's dependency cache is
+// keyed by Core revision alone (optimized deps do not vary with Site
+// content). The cache is Code-owned build space — never inside the Site or
+// the published output — and `--clean-cache` removes everything.
+const cacheRoot = path.resolve(process.env.ALNILAM_CACHE_DIR || path.join(repoRoot, ".cache", "alnilam"));
+if (cacheRoot === path.parse(cacheRoot).root) throw new Error("Cache directory must not be the filesystem root");
+// rmTreeSafe refuses to remove a cache root or entry that is itself a
+// symbolic link, so cache-side deletes cannot chase a link out of the tree.
+function rmTreeSafe(target) {
+  const stat = fs.lstatSync(target, { throwIfNoEntry: false });
+  if (!stat) return;
+  if (stat.isSymbolicLink()) throw new Error("Refusing to remove a symbolic link in the build cache: " + target);
+  fs.rmSync(target, { recursive: true, force: true });
+}
+function removeLegacyCache() {
+  // Locations used before the managed cache existed; safe to delete, they are
+  // regenerated on demand (stale entries here once served broken builds).
+  for (const legacy of ["apps/web/.astro", "apps/web/node_modules/.astro"]) {
+    const target = path.join(repoRoot, legacy);
+    const stat = fs.lstatSync(target, { throwIfNoEntry: false });
+    if (!stat) continue;
+    if (stat.isSymbolicLink()) throw new Error("Refusing to remove a symbolic link cache location: " + target);
+    fs.rmSync(target, { recursive: true, force: true });
+  }
+}
+if (cleanCacheOnly) {
+  rmTreeSafe(cacheRoot);
+  removeLegacyCache();
+  console.log("ALNILAM cache cleaned: " + cacheRoot);
   process.exit(0);
 }
 const siteArg = option("--site", "sites/demo");
 const outputArg = option("--out", "dist/site");
 if (!siteArg || !outputArg) throw new Error("--site and --out require a path");
 const sitePath = path.resolve(siteArg);
-const { root: site } = validateSiteRoot(sitePath);
+const { root: site, digest: before } = validateSiteRoot(sitePath);
 const temporaryRoot = fs.realpathSync(os.tmpdir());
 const realSite = fs.realpathSync(site);
 if (temporaryRoot === realSite || temporaryRoot.startsWith(realSite + path.sep)) {
@@ -40,34 +75,80 @@ if (temporaryRoot === realSite || temporaryRoot.startsWith(realSite + path.sep))
 }
 const destination = assertExternalOutput(site, path.resolve(outputArg));
 fs.mkdirSync(path.dirname(destination), { recursive: true });
+// Compare resolved paths: a cache root that is (or sits under) a symlink into
+// the Site or the output must be rejected, not just the literal spelling.
+function realpathOfExisting(target) {
+  let current = target;
+  const missing = [];
+  while (!fs.existsSync(current)) {
+    missing.unshift(path.basename(current));
+    const parent = path.dirname(current);
+    if (parent === current) throw new Error("Cache directory has no existing ancestor: " + target);
+    current = parent;
+  }
+  return path.join(fs.realpathSync(current), ...missing);
+}
+const realCacheRoot = realpathOfExisting(cacheRoot);
+for (const [inner, outer, message] of [
+  [realCacheRoot, realSite, "Cache directory must not be inside the Site source"],
+  [realSite, realCacheRoot, "Cache directory must not contain the Site source"],
+  [realCacheRoot, destination, "Cache directory must not be inside the output"],
+  [destination, realCacheRoot, "Cache directory must not contain the output"],
+]) {
+  if (isWithin(inner, outer)) throw new Error(message + ": " + inner);
+}
+fs.mkdirSync(cacheRoot, { recursive: true });
 const stage = fs.mkdtempSync(path.join(path.dirname(destination), ".alnilam-build-"));
 const backup = destination + ".alnilam-backup-" + process.pid;
 let published = false;
-let workspace;
-// Concurrent composes share this checkout's Astro build state (apps/web/.astro:
-// content store and prerender chunks); serialize on a fail-closed lock.
-const buildLock = createBuildLock(path.join(repoRoot, "apps/web", ".astro"));
+let cacheLock;
 try {
-  buildLock.acquire();
-  // The lock serializes only the shared Astro build state (apps/web/.astro);
-  // it does not protect the Site. Input consistency comes from the digest
-  // checks below: the build binds to the Site digest re-read under the lock
-  // and refuses to publish if the snapshot or source deviate from it.
-  const { digest: buildDigest } = validateSiteRoot(site);
-  workspace = fs.mkdtempSync(path.join(temporaryRoot, "alnilam-site-"));
-  const snapshot = path.join(workspace, "site");
-  fs.mkdirSync(snapshot);
+  const coreRev = resolveCoreRevision(repoRoot);
+  // A fixed-length digest keeps every caller-supplied revision (branch names,
+  // tags, hostile strings, Windows reserved names) a safe single path segment.
+  const revKey = crypto.createHash("sha256").update(coreRev).digest("hex").slice(0, 16);
+  const cacheRootV1 = path.join(cacheRoot, "v1");
+  const buildDir = path.join(cacheRootV1, revKey, before);
+  if (!isWithin(buildDir, cacheRootV1)) throw new Error("Build cache path escaped the cache root: " + buildDir);
+  fs.mkdirSync(buildDir, { recursive: true });
+  // One exclusive builder per (Core revision, Site digest): concurrent composes
+  // would otherwise delete and rewrite each other's live snapshot. The token-
+  // verified lock from scripts/build-lock.mjs fails closed on a fresh lock and
+  // steals only a crash leftover (holder gone) or one older than six hours.
+  cacheLock = createBuildLock(buildDir);
+  cacheLock.acquire();
+  // Crash leftovers (staging dirs, dead snapshots) are swept under the
+  // exclusive lock; staging names come from mkdtemp so PID reuse cannot collide.
+  for (const entry of fs.readdirSync(buildDir)) {
+    if (entry.startsWith("site.staging-")) rmTreeSafe(path.join(buildDir, entry));
+  }
+  const staging = fs.mkdtempSync(path.join(buildDir, "site.staging-"));
   for (const entry of ["alnilam.config.yaml", "content", "assets", "data"]) {
     const source = path.join(site, entry);
-    if (fs.existsSync(source)) fs.cpSync(source, path.join(snapshot, entry), { recursive: true });
+    if (fs.existsSync(source)) fs.cpSync(source, path.join(staging, entry), { recursive: true });
   }
-  if (validateSiteRoot(snapshot).digest !== buildDigest || validateSiteRoot(site).digest !== buildDigest) {
+  if (validateSiteRoot(staging).digest !== before || validateSiteRoot(site).digest !== before) {
+    rmTreeSafe(staging);
+    // The Astro store binds importer paths to the snapshot content; a mismatch
+    // means the store must be rebuilt against the next successful snapshot.
+    rmTreeSafe(path.join(buildDir, "astro"));
     throw new Error("Site source changed while creating build snapshot");
   }
+  const snapshot = path.join(buildDir, "site");
+  // The snapshot path is deterministic: Astro's content store persists image
+  // importer paths resolved against it, so a per-build random directory would
+  // poison that cache across builds (intermittent ImageNotFound). Same Site
+  // digest → same snapshot path → cache entries stay valid; a changed Site
+  // digest gets a fresh store.
+  rmTreeSafe(snapshot);
+  fs.renameSync(staging, snapshot);
+  // Deterministic provenance: the Core revision and Site ref come from the
+  // caller or Git, the Site identity from the validated read-only digest. All
+  // are embedded in the output and must not change between the two reads below.
   const provenance = {
     schema: 1,
-    core: { revision: resolveCoreRevision(repoRoot) },
-    site: { ref: resolveSiteRef(site), digest: buildDigest },
+    core: { revision: coreRev },
+    site: { ref: resolveSiteRef(site), digest: before },
     // NOTE: no absolute source path — it leaks local filesystem layout and
     // breaks reproducibility across checkouts. The digest is the identity.
     generatedAt: process.env.SOURCE_DATE_EPOCH
@@ -87,6 +168,8 @@ try {
         ...toolchainEnv,
         ALNILAM_SITE_DIR: snapshot,
         ALNILAM_OUTPUT_DIR: stage,
+        ALNILAM_VITE_CACHE: path.join(cacheRoot, "v1", revKey, "vite"),
+        ALNILAM_ASTRO_CACHE: path.join(buildDir, "astro"),
       },
     },
   );
@@ -119,8 +202,8 @@ try {
     fs.writeFileSync(entryPath, JSON.stringify({ ...entry, languages: sortedLanguages }));
   }
   const after = validateSiteRoot(site).digest;
-  if (after !== buildDigest) throw new Error("Site source changed during build; refusing to publish");
-  if (provenance.site.digest !== buildDigest) throw new Error("Provenance digest mismatch; refusing to publish");
+  if (after !== before) throw new Error("Site source changed during build; refusing to publish");
+  if (provenance.site.digest !== before) throw new Error("Provenance digest mismatch; refusing to publish");
   fs.writeFileSync(path.join(stage, "alnilam-provenance.json"), JSON.stringify(provenance, null, 2) + "\n");
   if (fs.existsSync(backup)) throw new Error("Refusing to overwrite an existing build backup: " + backup);
   const existed = fs.existsSync(destination);
@@ -134,12 +217,11 @@ try {
   }
   if (existed) fs.rmSync(backup, { recursive: true });
   console.log("ALNILAM compose OK: " + destination);
-  console.log("Site digest SHA-256: " + buildDigest);
+  console.log("Site digest SHA-256: " + before);
   console.log("Core revision: " + provenance.core.revision);
   console.log("Provenance: alnilam-provenance.json");
 } finally {
   if (!published && fs.existsSync(stage)) fs.rmSync(stage, { recursive: true, force: true });
-  if (workspace) fs.rmSync(workspace, { recursive: true, force: true });
-  buildLock.release();
+  if (typeof cacheLock !== "undefined") cacheLock.release();
 }
 

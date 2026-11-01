@@ -48,6 +48,56 @@ snapshot below; that snapshot is retained only for traceability.
 - The v0.4.1-era developer-tool sections below and in `docs/p0/P0-ACCEPTANCE.md`
   are historical and superseded by this update.
 
+## P2/T03 current state — 2026-11-01
+
+### Refs
+
+- CNB [PR #35](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/35) targets `dev` from
+  `p2-t03-resource-cache`; source head `569c2c55232d1839457d3cc98328e642e9791280`
+  (docs-only handoff commit appended on top). Read live refs before any merge decision.
+- GitHub Issue [#53](https://github.com/Skyline-Gazer/ALNILAM/issues/53) — P2/T03.
+
+### State of the T03 implementation
+
+- Managed build cache (`<repo>/.cache/alnilam`, `ALNILAM_CACHE_DIR` override): the
+  verified Site snapshot (deterministic, digest-keyed) and Astro's content/image store
+  are keyed by Core revision and Site digest; Vite's dependency cache by Core revision.
+  All derived resources are generated only in the build space; removals inside the
+  cache refuse symbolic links; containment checks reject cache roots overlapping the
+  Site or the output (kept as the `--clean-cache` recursive-delete guard — recorded
+  disposition).
+- `--clean-cache` removes the managed cache and the legacy `apps/web/.astro` /
+  `apps/web/node_modules/.astro` locations unconditionally.
+- Same-(revision, digest) builds serialize on an exclusive lock; stealing requires
+  the holder process to be gone or the lock to exceed six hours, with rename-aside +
+  inode + moved-lock identity checks so exactly one builder wins.
+- Post-relative `![]()` images resolve in the build space via Astro's image pipeline
+  (`/_astro/...`, base-prefixed, SVG-verified under `/ALNILAM/`); absolute
+  `/site-assets/...` and remote `http(s)` URLs are unchanged. Inline HTML `<img>` is
+  not rewritten.
+- Fixed root cause of the historical intermittent `ImageNotFound`: Astro's persistent
+  content store bound image importer paths to per-build random temp snapshot paths;
+  the deterministic snapshot removes the mismatch.
+
+### Verification
+
+- `pnpm test` 94/94, `pnpm check` clean, `pnpm build` + artifact-check budgets OK.
+- Trusted consumer CI green on merge of `569c2c5`:
+  [cnb-9ms-1k6bu0sjs](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-9ms-1k6bu0sjs#001)
+  (15m1s: unit, coverage, astro check, three deterministic composes, browser 19/19,
+  Lighthouse, SCA). Earlier green runs of the same code family: cnb-9nh-1k6bee21p,
+  cnb-33l-1k6bqhoor, cnb-fe3-1k6bsfcjq.
+- Byte-equivalence proven: `dist/` trees for root and `/ALNILAM/` bases are identical
+  to dev `5636e5e` (excluding provenance timestamps).
+
+### Open items
+
+- Browser-audit flake on loaded CNB runners (one random Playwright test hangs 90s or
+  the `/ALNILAM/` 390 scroll-restoration check reports a fixed 396px delta) — same
+  class PR #28 hardened; retries pass; content is byte-identical to dev.
+- CodeBuddy containment-check reduction request (cache-contains-site/output) not
+  adopted; rationale recorded in the PR thread (recursive-delete guard).
+
 ## Legacy environment work still not recovered (#94/#100)
 
 - Issue #94 (`chore/94-cnb-browser-ci-pilot`): uncommitted worktree changes in the old

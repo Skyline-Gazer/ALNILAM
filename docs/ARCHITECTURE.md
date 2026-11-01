@@ -25,11 +25,18 @@ scripts/compose.mjs    # non-mutating external Site builder
 
 ## Build algorithm
 1. Resolve and validate an absolute Site source, hash the read-only inputs.
-2. Copy config, content, assets and data into a temporary snapshot and verify its digest against the source.
-3. Run Astro in Core with `ALNILAM_SITE_DIR` pointing to the snapshot; Content Layer reads its `content/posts` and output goes to staging. Composes of one Core checkout serialize on a fail-closed lock over the shared Astro build state (`apps/web/.astro`): a contending compose fails fast, and a lock left by a crashed build older than six hours is stolen.
+2. Copy config, content, assets and data into a deterministic snapshot under the managed build cache (keyed by Core revision and Site digest) and verify its digest against the source.
+3. Run Astro in Core with `ALNILAM_SITE_DIR` pointing to the snapshot; Content Layer reads its `content/posts` and output goes to staging. Composes of one Core checkout serialize on fail-closed locks: one over the shared Astro build state (`apps/web/.astro`) and one per managed-cache build directory — a contending compose fails fast, and a lock left by a crashed build older than six hours (or whose holder process is gone) is stolen.
 4. Copy optional snapshot assets into the staged static output (not back into Core or Site).
 5. Hash the Site inputs again and abort on changes.
 6. Replace the final destination from staging; retain/restore the existing output if staging fails.
+
+The managed cache root (`<repo>/.cache/alnilam`, override `ALNILAM_CACHE_DIR`) holds
+the snapshot and Astro's build-time content/image store, keyed by Core revision and
+Site digest; Vite's dependency cache is keyed by Core revision alone. All derived
+resources are generated only in the build space (cache or staging) — never in the
+Site; removals inside the cache refuse to follow symbolic links. `--clean-cache`
+removes it.
 
 The staged output also carries `alnilam-provenance.json`: the Core revision, the Site
 ref (`ALNILAM_SITE_REF`, or the Site's own Git `HEAD` when the Site directory is its
@@ -38,7 +45,7 @@ inputs. Its `schema` field versions the **provenance document format** and is
 independent of the Site `schemaVersion`: changing the Site contract does not relabel
 already-published provenance records.
 
-**Current limits**: Do not treat this as an OS sandbox. Trusted MDX can execute build-time code. Relative asset paths and site configuration compatibility require further P0 checks. Concurrent publishes to the same output path remain last-writer-wins by rename (the previous output is restored if the rename fails), and atomicity across power loss is not claimed. Browser/performance and cross-platform behavior are not verified until CI and browser tests complete.
+**Current limits**: Do not treat this as an OS sandbox. Trusted MDX can execute build-time code. Post-relative image paths resolve in the build space only; the source Site stays read-only. Concurrent publishes to the same output path remain last-writer-wins by rename (the previous output is restored if the rename fails), and atomicity across power loss is not claimed. Browser/performance and cross-platform behavior are not verified until CI and browser tests complete.
 
 ## Upgrade contract and user workflow
 - The Core Git SHA/tag and Site SHA/tag must be pinned separately in deployment configuration.

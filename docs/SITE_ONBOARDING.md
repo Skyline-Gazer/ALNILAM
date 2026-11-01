@@ -59,13 +59,39 @@ them in Sites. Tag pages derive from post frontmatter.
 
 ### Images policy
 
-Covers and in-post images are **Site-owned and served as-is** — ALNILAM does not
-re-encode, resize, or fetch them at build time. This keeps the build deterministic
-and offline: an image referenced with an absolute path (`/site-assets/...`) must
-exist under your Site's `assets/` directory; remote `http(s)` image URLs are
-rendered as plain `<img>` without any build-time download. Authors should ship
-appropriately sized images; the platform guarantees CLS-safe markup by always
-emitting explicit `width`/`height` on generated cover `<img>` tags.
+Covers and absolute `/site-assets/...` images are **Site-owned and served
+as-is** — ALNILAM does not re-encode, resize, or fetch them at build time. The
+only build-time asset work is resolving post-relative `![]()` references (see
+below). This keeps the build deterministic and offline:
+
+- An image referenced with an absolute path (`/site-assets/...`) must exist under
+  your Site's `assets/` directory.
+- A post-relative image (`![alt](./img.png)` in Markdown post bodies) is
+  resolved relative to the Markdown file's directory (including `../`
+  references) by Astro's image pipeline at build time, into the build space
+  only — the source Site is never modified. The copy is emitted under
+  `/_astro/...`, prefixed with your configured `base` on subpath hosts
+  (verified with an SVG fixture under `/ALNILAM/`). Inline HTML `<img>` tags
+  are not rewritten; use `![]()` or an absolute `/site-assets/...` path.
+- Remote `http(s)` image URLs are rendered as plain `<img>` without any
+  build-time download.
+
+Authors should ship appropriately sized images; the platform guarantees CLS-safe
+markup by always emitting explicit `width`/`height` on generated cover `<img>` tags.
+
+### Build cache
+
+Derived build state (the verified Site snapshot, Astro's content/image store,
+Vite's dependency cache) lives in one managed cache root — `<repo>/.cache/alnilam`
+by default, overridable with `ALNILAM_CACHE_DIR`. The snapshot and Astro's
+content/image store are keyed by Core revision and Site digest; Vite's
+dependency cache is keyed by Core revision alone (optimized deps do not vary
+with Site content). Repeated builds never write into your Site.
+`node scripts/compose.mjs --clean-cache` removes the whole cache and the
+legacy cache directories (`apps/web/.astro`, `apps/web/node_modules/.astro`)
+left by earlier versions. Builds of the same Core revision and Site digest
+are serialized by a lock in the cache; a lock is released when its build
+finishes and stolen when its holder process is gone or after six hours.
 
 ## Optional modules (opt-in via config)
 
@@ -142,4 +168,4 @@ If your Site repository is private and you build in CI:
 - Keep `ALNILAM_CORE_REV`/`SOURCE_DATE_EPOCH` explicit in CI for reproducible,
   byte-stable provenance.
 
-Compose copies validated Site inputs into a temporary workspace before building. The source Site is checked again before publishing, and an unsuccessful build retains the previous output.
+Compose copies validated Site inputs into a digest-keyed snapshot inside the managed build cache before building. The source Site is checked again before publishing, and an unsuccessful build retains the previous output.
