@@ -8,3 +8,5 @@
 | Tests | Adapt | Check failure preserves both the Site and previous output. |
 | CI and docs | Adapt | Keep functional checks; document snapshot behavior and make security scans optional. |
 | Existing paths | Retire | Direct build reads from the source Site. |
+
+The ordinary CNB pipeline no longer publishes security reports or requires an evidence upload receipt. Historical CNB evidence links describe their original runs and do not imply that later runs publish those attachments. Functional build logs remain available in CNB.
