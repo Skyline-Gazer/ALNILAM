@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import os from "node:os";
+import crypto from "node:crypto";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -78,10 +79,9 @@ try {
     const rev = spawnSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot, encoding: "utf8" });
     coreRev = rev.status === 0 ? rev.stdout.trim() : "unknown";
   }
-  const revKey = coreRev.replace(/[^A-Za-z0-9._-]/g, "_");
-  if (!revKey || revKey === "." || revKey.includes("..")) {
-    throw new Error("ALNILAM_CORE_REV is not usable as a cache key: " + coreRev);
-  }
+  // A fixed-length digest keeps every caller-supplied revision (branch names,
+  // tags, hostile strings, Windows reserved names) a safe single path segment.
+  const revKey = crypto.createHash("sha256").update(coreRev).digest("hex").slice(0, 16);
   const cacheRootV1 = path.join(cacheRoot, "v1");
   const buildDir = path.join(cacheRootV1, revKey, before);
   if (!isWithin(buildDir, cacheRootV1)) throw new Error("Build cache path escaped the cache root: " + buildDir);
@@ -101,10 +101,43 @@ try {
         " (lock held since " + stat.mtime.toISOString() + "); wait for it to finish or set ALNILAM_CACHE_DIR to a separate cache root",
       );
     }
-    fs.rmSync(lockPath, { force: true });
-    lockFd = fs.openSync(lockPath, "wx");
+    // Steal an abandoned lock atomically: rename it aside, create our own, then
+    // prove the file we opened is still ours by inode. A racer that steals our
+    // fresh lock makes the inode check fail and loses.
+    const stalePath = lockPath + ".stale-" + process.pid;
+    try {
+      fs.renameSync(lockPath, stalePath);
+    } catch {
+      throw new Error("Another compose is building this Site revision in " + buildDir);
+    }
+    try {
+      lockFd = fs.openSync(lockPath, "wx");
+    } finally {
+      fs.rmSync(stalePath, { force: true });
+    }
+    if (fs.statSync(lockPath).ino !== fs.fstatSync(lockFd).ino) {
+      fs.closeSync(lockFd);
+      lockFd = undefined;
+      throw new Error("Another compose is building this Site revision in " + buildDir);
+    }
   }
   fs.writeFileSync(lockFd, JSON.stringify({ pid: process.pid, coreRev, siteDigest: before, startedAt: new Date().toISOString() }) + "\n");
+  // Stage the snapshot beside its final name and swap atomically: a build
+  // killed mid-copy can never leave a partial snapshot behind.
+  const staging = path.join(buildDir, "site.staging-" + process.pid);
+  fs.rmSync(staging, { recursive: true, force: true });
+  fs.mkdirSync(staging, { recursive: true });
+  for (const entry of ["alnilam.config.yaml", "content", "assets", "data"]) {
+    const source = path.join(site, entry);
+    if (fs.existsSync(source)) fs.cpSync(source, path.join(staging, entry), { recursive: true });
+  }
+  if (validateSiteRoot(staging).digest !== before || validateSiteRoot(site).digest !== before) {
+    fs.rmSync(staging, { recursive: true, force: true });
+    // The Astro store binds importer paths to the snapshot content; a mismatch
+    // means the store must be rebuilt against the next successful snapshot.
+    fs.rmSync(path.join(buildDir, "astro"), { recursive: true, force: true });
+    throw new Error("Site source changed while creating build snapshot");
+  }
   const snapshot = path.join(buildDir, "site");
   // The snapshot path is deterministic: Astro's content store persists image
   // importer paths resolved against it, so a per-build random directory would
@@ -112,14 +145,7 @@ try {
   // digest → same snapshot path → cache entries stay valid; a changed Site
   // digest gets a fresh store.
   fs.rmSync(snapshot, { recursive: true, force: true });
-  fs.mkdirSync(snapshot, { recursive: true });
-  for (const entry of ["alnilam.config.yaml", "content", "assets", "data"]) {
-    const source = path.join(site, entry);
-    if (fs.existsSync(source)) fs.cpSync(source, path.join(snapshot, entry), { recursive: true });
-  }
-  if (validateSiteRoot(snapshot).digest !== before || validateSiteRoot(site).digest !== before) {
-    throw new Error("Site source changed while creating build snapshot");
-  }
+  fs.renameSync(staging, snapshot);
   // Deterministic provenance: the Core revision comes from the caller (env or
   // git), the Site identity from the validated read-only digest. Both are
   // embedded in the output and must not change between the two reads below.
