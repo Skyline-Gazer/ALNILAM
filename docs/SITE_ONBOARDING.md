@@ -66,11 +66,12 @@ and offline:
 - An image referenced with an absolute path (`/site-assets/...`) must exist under
   your Site's `assets/` directory.
 - A post-relative image (`![alt](./img.png)` in Markdown post bodies) is
-  resolved by Astro's image pipeline at build time into the build space only —
-  the source Site is never modified. The copy is emitted under `/_astro/...`,
-  prefixed with your configured `base` on subpath hosts (verified under
-  `/ALNILAM/`). Inline HTML `<img>` tags are not rewritten; use `![]()` or an
-  absolute `/site-assets/...` path instead.
+  resolved relative to the Markdown file's directory (including `../`
+  references) by Astro's image pipeline at build time, into the build space
+  only — the source Site is never modified. The copy is emitted under
+  `/_astro/...`, prefixed with your configured `base` on subpath hosts
+  (verified under `/ALNILAM/`). Inline HTML `<img>` tags are not rewritten;
+  use `![]()` or an absolute `/site-assets/...` path instead.
 - Remote `http(s)` image URLs are rendered as plain `<img>` without any
   build-time download.
 

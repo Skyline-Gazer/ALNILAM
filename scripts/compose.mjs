@@ -37,13 +37,27 @@ const outputArg = cleanCacheOnly ? "dist/site" : option("--out", "dist/site");
 // Site or the published output.
 const cacheRoot = path.resolve(process.env.ALNILAM_CACHE_DIR || path.join(repoRoot, ".cache", "alnilam"));
 if (cacheRoot === path.parse(cacheRoot).root) throw new Error("Cache directory must not be the filesystem root");
-if (cleanCacheOnly) {
-  fs.rmSync(cacheRoot, { recursive: true, force: true });
+// Recursive deletes inside the cache must never follow a symlink out of it.
+function rmTreeSafe(target) {
+  const stat = fs.lstatSync(target, { throwIfNoEntry: false });
+  if (!stat) return;
+  if (stat.isSymbolicLink()) throw new Error("Refusing to remove a symbolic link in the build cache: " + target);
+  fs.rmSync(target, { recursive: true, force: true });
+}
+function removeLegacyCache() {
   // Locations used before the managed cache existed; safe to delete, they are
   // regenerated on demand (stale entries here once served broken builds).
   for (const legacy of ["apps/web/.astro", "apps/web/node_modules/.astro"]) {
-    fs.rmSync(path.join(repoRoot, legacy), { recursive: true, force: true });
+    const target = path.join(repoRoot, legacy);
+    const stat = fs.lstatSync(target, { throwIfNoEntry: false });
+    if (!stat) continue;
+    if (stat.isSymbolicLink()) throw new Error("Refusing to remove a symbolic link cache location: " + target);
+    fs.rmSync(target, { recursive: true, force: true });
   }
+}
+if (cleanCacheOnly) {
+  rmTreeSafe(cacheRoot);
+  removeLegacyCache();
   console.log("ALNILAM cache cleaned: " + cacheRoot);
   process.exit(0);
 }
@@ -56,15 +70,29 @@ if (temporaryRoot === realSite || temporaryRoot.startsWith(realSite + path.sep))
   throw new Error("Temporary directory must not be inside the Site source");
 }
 const destination = assertExternalOutput(site, path.resolve(outputArg));
+fs.mkdirSync(path.dirname(destination), { recursive: true });
+// Compare resolved paths: a cache root that is (or sits under) a symlink into
+// the Site or the output must be rejected, not just the literal spelling.
+function realpathOfExisting(target) {
+  let current = target;
+  const missing = [];
+  while (!fs.existsSync(current)) {
+    missing.unshift(path.basename(current));
+    const parent = path.dirname(current);
+    if (parent === current) throw new Error("Cache directory has no existing ancestor: " + target);
+    current = parent;
+  }
+  return path.join(fs.realpathSync(current), ...missing);
+}
+const realCacheRoot = realpathOfExisting(cacheRoot);
 for (const [inner, outer, message] of [
-  [cacheRoot, site, "Cache directory must not be inside the Site source"],
-  [site, cacheRoot, "Cache directory must not contain the Site source"],
-  [cacheRoot, destination, "Cache directory must not be inside the output"],
-  [destination, cacheRoot, "Cache directory must not contain the output"],
+  [realCacheRoot, realSite, "Cache directory must not be inside the Site source"],
+  [realSite, realCacheRoot, "Cache directory must not contain the Site source"],
+  [realCacheRoot, destination, "Cache directory must not be inside the output"],
+  [destination, realCacheRoot, "Cache directory must not contain the output"],
 ]) {
   if (isWithin(inner, outer)) throw new Error(message + ": " + inner);
 }
-fs.mkdirSync(path.dirname(destination), { recursive: true });
 fs.mkdirSync(cacheRoot, { recursive: true });
 const stage = fs.mkdtempSync(path.join(path.dirname(destination), ".alnilam-build-"));
 const backup = destination + ".alnilam-backup-" + process.pid;
@@ -93,12 +121,22 @@ try {
   } catch (err) {
     if (err.code !== "EEXIST") throw err;
     const stat = fs.statSync(lockPath);
-    if (Date.now() - stat.mtimeMs <= 6 * 60 * 60 * 1000) {
+    let holder;
+    try {
+      holder = JSON.parse(fs.readFileSync(lockPath, "utf8"));
+    } catch {}
+    const holderPid = Number(holder?.pid);
+    const holderAlive = Number.isInteger(holderPid) && holderPid > 0 && (() => {
+      try { process.kill(holderPid, 0); return true; } catch (err) { return err.code === "EPERM"; }
+    })();
+    if (holderAlive) {
       throw new Error(
         "Another compose is building this Site revision in " + buildDir +
-        " (lock held since " + stat.mtime.toISOString() + "); wait for it to finish or set ALNILAM_CACHE_DIR to a separate cache root",
+        " (live process " + holderPid + ", lock held since " + stat.mtime.toISOString() + "); wait for it to finish or set ALNILAM_CACHE_DIR to a separate cache root",
       );
     }
+    // No live holder: the lock is a crash leftover — steal it now instead of
+    // making the caller wait out the six-hour bound.
     // Steal an abandoned lock atomically: rename it aside, create our own, then
     // prove the file we opened is still ours by inode. A racer that steals our
     // fresh lock makes the inode check fail and loses.
@@ -122,18 +160,23 @@ try {
   fs.writeFileSync(lockFd, JSON.stringify({ pid: process.pid, coreRev, siteDigest: before, startedAt: new Date().toISOString() }) + "\n");
   // Stage the snapshot beside its final name and swap atomically: a build
   // killed mid-copy can never leave a partial snapshot behind.
+  // Sweep staging directories left behind by killed builds; the exclusive lock
+  // guarantees no live builder owns them.
+  for (const entry of fs.readdirSync(buildDir)) {
+    if (entry.startsWith("site.staging-")) rmTreeSafe(path.join(buildDir, entry));
+  }
   const staging = path.join(buildDir, "site.staging-" + process.pid);
-  fs.rmSync(staging, { recursive: true, force: true });
+  rmTreeSafe(staging);
   fs.mkdirSync(staging, { recursive: true });
   for (const entry of ["alnilam.config.yaml", "content", "assets", "data"]) {
     const source = path.join(site, entry);
     if (fs.existsSync(source)) fs.cpSync(source, path.join(staging, entry), { recursive: true });
   }
   if (validateSiteRoot(staging).digest !== before || validateSiteRoot(site).digest !== before) {
-    fs.rmSync(staging, { recursive: true, force: true });
+    rmTreeSafe(staging);
     // The Astro store binds importer paths to the snapshot content; a mismatch
     // means the store must be rebuilt against the next successful snapshot.
-    fs.rmSync(path.join(buildDir, "astro"), { recursive: true, force: true });
+    rmTreeSafe(path.join(buildDir, "astro"));
     throw new Error("Site source changed while creating build snapshot");
   }
   const snapshot = path.join(buildDir, "site");
@@ -142,7 +185,7 @@ try {
   // poison that cache across builds (intermittent ImageNotFound). Same Site
   // digest → same snapshot path → cache entries stay valid; a changed Site
   // digest gets a fresh store.
-  fs.rmSync(snapshot, { recursive: true, force: true });
+  rmTreeSafe(snapshot);
   fs.renameSync(staging, snapshot);
   // Deterministic provenance: the Core revision comes from the caller (env or
   // git), the Site identity from the validated read-only digest. Both are

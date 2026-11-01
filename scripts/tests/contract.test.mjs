@@ -306,22 +306,45 @@ test("concurrent composes of the same revision are serialized by the cache lock"
   // A fresh lock means another compose is mid-build: the second must fail closed.
   fs.mkdirSync(buildDir, { recursive: true });
   const lock = path.join(buildDir, ".compose-lock");
-  fs.writeFileSync(lock, JSON.stringify({ pid: 1, startedAt: new Date().toISOString() }));
+  fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() }));
   const blocked = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
     env: { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CORE_REV: "lock-test" }, encoding: "utf8",
   });
   assert.notEqual(blocked.status, 0);
   assert.match(blocked.stderr, /Another compose is building this Site revision/);
-  // A lock left by a crashed build six hours ago is stolen and the build proceeds.
-  const stale = new Date(Date.now() - 7 * 60 * 60 * 1000);
-  fs.utimesSync(lock, stale, stale);
+  // A lock whose holder is gone is a crash leftover: stolen immediately.
+  const dead = spawnSync("true");
+  fs.writeFileSync(lock, JSON.stringify({ pid: dead.pid, startedAt: new Date().toISOString() }));
+  fs.mkdirSync(path.join(buildDir, "site.staging-999999"), { recursive: true });
   const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
     env: { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CORE_REV: "lock-test", SOURCE_DATE_EPOCH: "1700000000" },
     encoding: "utf8",
   });
-  assert.equal(result.status, 0, "stale lock must be stolen: " + result.stderr);
+  assert.equal(result.status, 0, "crash-leftover lock must be stolen: " + result.stderr);
   assert.equal(fs.existsSync(lock), false, "lock must be released after a successful build");
+  assert.equal(fs.existsSync(path.join(buildDir, "site.staging-999999")), false, "orphaned staging dirs must be swept");
   assert.equal(validateSiteRoot(site).digest, digest);
+});
+
+test("compose refuses symlink-poisoned cache entries", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-symlink-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const cache = path.join(root, "cache");
+  const revKey = crypto.createHash("sha256").update("poison-test").digest("hex").slice(0, 16);
+  const buildDir = path.join(cache, "v1", revKey, validateSiteRoot(site).digest);
+  fs.mkdirSync(buildDir, { recursive: true });
+  const canary = path.join(root, "canary");
+  fs.mkdirSync(canary);
+  fs.writeFileSync(path.join(canary, "keep.txt"), "must survive");
+  fs.symlinkSync(canary, path.join(buildDir, "site"));
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CORE_REV: "poison-test" }, encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Refusing to remove a symbolic link/);
+  assert.equal(fs.existsSync(path.join(canary, "keep.txt")), true, "symlink target must survive");
 });
 
 test("external image URLs pass through and local site assets are served as-is", (t) => {
