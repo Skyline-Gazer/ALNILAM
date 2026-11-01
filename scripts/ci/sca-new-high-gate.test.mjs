@@ -105,6 +105,7 @@ test('audit rejects PR-controlled npm registry and credential configuration', ()
   for (const input of ['@scope:registry=https://example.invalid/', '//example.invalid/:_authToken=secret', 'registry=https://example.invalid/']) {
     gateError('SCA_GATE_CONFIGURATION', () => assertAuditNpmrc(input, 'head'));
   }
+  gateError('SCA_GATE_COVERAGE_INCOMPLETE', () => classifyTreeEntries(`${TREE}100644 blob bad\tapps/web/.npmrc\n`, GLOBS));
 });
 
 test('gateEnvironment strips registry credentials and CNB tokens', () => {

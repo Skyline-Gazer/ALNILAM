@@ -135,6 +135,7 @@ export function classifyTreeEntries(lsTreeOutput, globs) {
     const file = line.slice(tab + 1);
     if (mode === '160000' || type === 'commit') { gitlinks.push(file); continue; }
     if (type !== 'blob') continue;
+    if (file.endsWith('/.npmrc')) fail('SCA_GATE_COVERAGE_INCOMPLETE', 'nested .npmrc is not supported by the audit');
     if (file === 'package.json' || file === 'pnpm-lock.yaml' || file === 'pnpm-workspace.yaml' || file === '.npmrc') manifests.push(file);
     else if (file.endsWith('/package.json')) {
       if (globs.some(glob => globMatches(glob, file))) manifests.push(file);
