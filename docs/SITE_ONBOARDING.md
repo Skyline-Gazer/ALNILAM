@@ -84,11 +84,10 @@ Vite's dependency cache) lives in one managed cache root — `<repo>/.cache/alni
 by default, overridable with `ALNILAM_CACHE_DIR`. Entries are keyed by Core
 revision and Site digest, so different inputs never share cache state and repeated
 builds never write into your Site. `node scripts/compose.mjs --clean-cache`
-removes the whole cache; with the default cache location it also removes legacy
-cache directories (`apps/web/.astro`, `apps/web/node_modules/.astro`) left by
-earlier versions. Builds of the same Core revision and Site digest are
-serialized by a lock in the cache; a lock left by a crashed build is stolen
-after six hours.
+removes the whole cache and the legacy cache directories (`apps/web/.astro`,
+`apps/web/node_modules/.astro`) left by earlier versions. Builds of the same
+Core revision and Site digest are serialized by a lock in the cache; a lock
+left by a crashed build is stolen after six hours.
 
 ## Optional modules (opt-in via config)
 

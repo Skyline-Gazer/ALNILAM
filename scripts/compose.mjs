@@ -39,12 +39,10 @@ const cacheRoot = path.resolve(process.env.ALNILAM_CACHE_DIR || path.join(repoRo
 if (cacheRoot === path.parse(cacheRoot).root) throw new Error("Cache directory must not be the filesystem root");
 if (cleanCacheOnly) {
   fs.rmSync(cacheRoot, { recursive: true, force: true });
-  if (!process.env.ALNILAM_CACHE_DIR) {
-    // Locations used before the managed cache existed; safe to delete, they
-    // are regenerated on demand (stale entries here once served broken builds).
-    for (const legacy of ["apps/web/.astro", "apps/web/node_modules/.astro"]) {
-      fs.rmSync(path.join(repoRoot, legacy), { recursive: true, force: true });
-    }
+  // Locations used before the managed cache existed; safe to delete, they are
+  // regenerated on demand (stale entries here once served broken builds).
+  for (const legacy of ["apps/web/.astro", "apps/web/node_modules/.astro"]) {
+    fs.rmSync(path.join(repoRoot, legacy), { recursive: true, force: true });
   }
   console.log("ALNILAM cache cleaned: " + cacheRoot);
   process.exit(0);
