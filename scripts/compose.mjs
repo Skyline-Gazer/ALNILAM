@@ -32,7 +32,7 @@ const siteArg = option("--site", "sites/demo");
 const outputArg = option("--out", "dist/site");
 if (!siteArg || !outputArg) throw new Error("--site and --out require a path");
 const sitePath = path.resolve(siteArg);
-const { root: site, digest: before } = validateSiteRoot(sitePath);
+const { root: site } = validateSiteRoot(sitePath);
 const temporaryRoot = fs.realpathSync(os.tmpdir());
 const realSite = fs.realpathSync(site);
 if (temporaryRoot === realSite || temporaryRoot.startsWith(realSite + path.sep)) {
@@ -48,11 +48,11 @@ let workspace;
 // content store and prerender chunks); serialize on a fail-closed lock.
 const buildLock = createBuildLock(path.join(repoRoot, "apps/web", ".astro"));
 try {
-  // The lock must be held while the snapshot is taken: building outside the
-  // lock would race another compose for apps/web/.astro. The snapshot copy
-  // and both digest checks below still fail closed on any Site change since
-  // `before` was taken — inputs are never mixed, the build aborts.
   buildLock.acquire();
+  // The lock is held from here through publish. Re-validate under it: a Site
+  // edited between the initial check and the acquire is picked up now, and
+  // every digest below binds to the source the snapshot was taken from.
+  const { digest: buildDigest } = validateSiteRoot(site);
   workspace = fs.mkdtempSync(path.join(temporaryRoot, "alnilam-site-"));
   const snapshot = path.join(workspace, "site");
   fs.mkdirSync(snapshot);
@@ -60,13 +60,13 @@ try {
     const source = path.join(site, entry);
     if (fs.existsSync(source)) fs.cpSync(source, path.join(snapshot, entry), { recursive: true });
   }
-  if (validateSiteRoot(snapshot).digest !== before || validateSiteRoot(site).digest !== before) {
+  if (validateSiteRoot(snapshot).digest !== buildDigest || validateSiteRoot(site).digest !== buildDigest) {
     throw new Error("Site source changed while creating build snapshot");
   }
   const provenance = {
     schema: 1,
     core: { revision: resolveCoreRevision(repoRoot) },
-    site: { ref: resolveSiteRef(site), digest: before },
+    site: { ref: resolveSiteRef(site), digest: buildDigest },
     // NOTE: no absolute source path — it leaks local filesystem layout and
     // breaks reproducibility across checkouts. The digest is the identity.
     generatedAt: process.env.SOURCE_DATE_EPOCH
@@ -118,8 +118,8 @@ try {
     fs.writeFileSync(entryPath, JSON.stringify({ ...entry, languages: sortedLanguages }));
   }
   const after = validateSiteRoot(site).digest;
-  if (after !== before) throw new Error("Site source changed during build; refusing to publish");
-  if (provenance.site.digest !== before) throw new Error("Provenance digest mismatch; refusing to publish");
+  if (after !== buildDigest) throw new Error("Site source changed during build; refusing to publish");
+  if (provenance.site.digest !== buildDigest) throw new Error("Provenance digest mismatch; refusing to publish");
   fs.writeFileSync(path.join(stage, "alnilam-provenance.json"), JSON.stringify(provenance, null, 2) + "\n");
   if (fs.existsSync(backup)) throw new Error("Refusing to overwrite an existing build backup: " + backup);
   const existed = fs.existsSync(destination);
@@ -133,7 +133,7 @@ try {
   }
   if (existed) fs.rmSync(backup, { recursive: true });
   console.log("ALNILAM compose OK: " + destination);
-  console.log("Site digest SHA-256: " + before);
+  console.log("Site digest SHA-256: " + buildDigest);
   console.log("Core revision: " + provenance.core.revision);
   console.log("Provenance: alnilam-provenance.json");
 } finally {
