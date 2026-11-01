@@ -139,3 +139,5 @@ If your Site repository is private and you build in CI:
   Site repo should record the digest; CI on Core should record its own revision.
 - Keep `ALNILAM_CORE_REV`/`SOURCE_DATE_EPOCH` explicit in CI for reproducible,
   byte-stable provenance.
+
+Compose copies validated Site inputs into a temporary workspace before building. The source Site is checked again before publishing, and an unsuccessful build retains the previous output.

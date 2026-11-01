@@ -137,10 +137,12 @@ test("nested-base output keeps canonical and internal links inside /ALNILAM/", (
     path.join(site, "content", "posts", "pagination-regression.md"),
     ["---", 'title: "Pagination regression"', 'description: "Sixth post exercises page two under a nested base."', "pubDate: 2026-10-24", 'tags: ["Test"]', "---", "", "Pagination regression fixture.", ""].join("\n"),
   );
+  const digest = validateSiteRoot(site).digest;
   const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(out, "site")], {
     env: { ...process.env, ALNILAM_SITE_URL: "https://example.com/ALNILAM/", SOURCE_DATE_EPOCH: "1700000000" },
   });
   assert.equal(result.status, 0, "nested-base compose failed: " + result.stderr);
+  assert.equal(validateSiteRoot(site).digest, digest);
   const html = fs.readFileSync(path.join(out, "site", "index.html"), "utf8");
   const posts = fs.readFileSync(path.join(out, "site", "posts", "index.html"), "utf8");
   assert.match(html, /<link rel="canonical" href="https:\/\/example\.com\/ALNILAM\/">/);
@@ -162,6 +164,8 @@ test("compose rejects a post slug that collides with a pagination route without 
   );
   const digest = validateSiteRoot(site).digest;
   const output = path.join(root, "output");
+  fs.mkdirSync(output);
+  fs.writeFileSync(path.join(output, "previous.txt"), "previous successful build");
   const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", output], {
     env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" },
     encoding: "utf8",
@@ -169,7 +173,7 @@ test("compose rejects a post slug that collides with a pagination route without 
   assert.notEqual(result.status, 0);
   assert.match(result.stderr + result.stdout, /Post slug "2" conflicts with pagination route \/posts\/2\//);
   assert.equal(validateSiteRoot(site).digest, digest);
-  assert.equal(fs.existsSync(output), false);
+  assert.equal(fs.readFileSync(path.join(output, "previous.txt"), "utf8"), "previous successful build");
   assert.deepEqual(fs.readdirSync(root).filter((entry) => entry.startsWith(".alnilam-build-")), []);
 });
 

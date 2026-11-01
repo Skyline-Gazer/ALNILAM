@@ -36,7 +36,18 @@ fs.mkdirSync(path.dirname(destination), { recursive: true });
 const stage = fs.mkdtempSync(path.join(path.dirname(destination), ".alnilam-build-"));
 const backup = destination + ".alnilam-backup-" + process.pid;
 let published = false;
+let workspace;
 try {
+  workspace = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-site-"));
+  const snapshot = path.join(workspace, "site");
+  fs.mkdirSync(snapshot);
+  for (const entry of ["alnilam.config.yaml", "content", "assets", "data"]) {
+    const source = path.join(site, entry);
+    if (fs.existsSync(source)) fs.cpSync(source, path.join(snapshot, entry), { recursive: true });
+  }
+  if (validateSiteRoot(snapshot).digest !== before || validateSiteRoot(site).digest !== before) {
+    throw new Error("Site source changed while creating build snapshot");
+  }
   // Deterministic provenance: the Core revision comes from the caller (env or
   // git), the Site identity from the validated read-only digest. Both are
   // embedded in the output and must not change between the two reads below.
@@ -66,14 +77,14 @@ try {
       env: {
         ...process.env,
         ...toolchainEnv,
-        ALNILAM_SITE_DIR: site,
+        ALNILAM_SITE_DIR: snapshot,
         ALNILAM_OUTPUT_DIR: stage,
       },
     },
   );
   if (result.error) throw result.error;
   if (result.status !== 0) throw new Error("Astro build failed: exit " + result.status);
-  const assetSrc = path.join(site, "assets");
+  const assetSrc = path.join(snapshot, "assets");
   if (fs.existsSync(assetSrc)) {
     fs.cpSync(assetSrc, path.join(stage, "site-assets"), { recursive: true, force: false, errorOnExist: true });
   }
@@ -120,5 +131,6 @@ try {
   console.log("Provenance: alnilam-provenance.json");
 } finally {
   if (!published && fs.existsSync(stage)) fs.rmSync(stage, { recursive: true, force: true });
+  if (workspace) fs.rmSync(workspace, { recursive: true, force: true });
 }
 
