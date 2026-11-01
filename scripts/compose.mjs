@@ -47,6 +47,11 @@ let workspace;
 // content store and prerender chunks); serialize on a fail-closed lock.
 const buildLock = createBuildLock(path.join(repoRoot, "apps/web", ".astro"));
 try {
+  // Serializing must start before the snapshot: a compose blocked on the
+  // lock while the user edits the Site would otherwise build a stale
+  // snapshot. Acquiring first keeps the snapshot-to-build window short and
+  // the post-copy digest check below still rejects a Site changed meanwhile.
+  buildLock.acquire();
   workspace = fs.mkdtempSync(path.join(temporaryRoot, "alnilam-site-"));
   const snapshot = path.join(workspace, "site");
   fs.mkdirSync(snapshot);
@@ -89,7 +94,6 @@ try {
       ? new Date(Number(process.env.SOURCE_DATE_EPOCH) * 1000).toISOString()
       : new Date().toISOString(),
   };
-  buildLock.acquire();
   const result = spawnSync(
     externalToolchain ? process.execPath : pnpm,
     externalToolchain

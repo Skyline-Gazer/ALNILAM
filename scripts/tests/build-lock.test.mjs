@@ -50,16 +50,21 @@ test("a fresh lock is never stolen, even when staleness would allow it", () => {
   assert.equal(fs.existsSync(lockPath(dir) + ".stealing-2"), false);
 });
 
-test("build lock release never removes a replaced lock", () => {
+test("build lock release never removes a replaced lock, even from the same pid", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
   const holder = createBuildLock(dir, { pid: 1 });
   holder.acquire();
-  // Another holder takes over the lock file (e.g. after a steal); our release
-  // must be a no-op so the replacement survives.
-  writeLock(dir, { pid: 9, startedAt: new Date().toISOString() });
+  // A later acquire by the SAME pid (module reuse, sequential composes) takes
+  // over the lock file with its own token; the first instance's release must
+  // be a no-op because only the token identifies ownership.
+  writeLock(dir, { pid: 1, token: "later-acquire", startedAt: new Date().toISOString() });
   holder.release();
-  assert.equal(readLock(dir).pid, 9, "release must not delete another holder's lock");
-  // (The real holder's own release removing the lock is covered by the
-  // exclusivity test above; here the replacement must simply survive.)
-  assert.equal(fs.existsSync(lockPath(dir)), true);
+  assert.equal(readLock(dir).token, "later-acquire", "release must not delete a same-pid successor's lock");
+  // The token owner's release removes it; an unrelated release is a no-op.
+  createBuildLock(dir, { pid: 2 }).release();
+  assert.equal(fs.existsSync(lockPath(dir)), true, "a non-holder's release must not remove the lock");
+  const owner = createBuildLock(dir, { pid: 1 });
+  fs.rmSync(lockPath(dir));
+  owner.acquire();
+  owner.release();
 });
