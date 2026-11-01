@@ -171,6 +171,18 @@ export function assertImporterCoverage(importers, manifests) {
   }
 }
 
+export function assertAuditNpmrc(text, label) {
+  for (const line of String(text).split(/\r?\n/)) {
+    const entry = line.trim();
+    if (!entry || entry.startsWith('#') || entry.startsWith(';')) continue;
+    if (/^registry\s*=\s*https:\/\/registry\.npmjs\.org\/?\s*$/.test(entry)) continue;
+    // The audited tree may not inject scoped registries, credentials or other
+    // pnpm settings into the isolated install. The fixed registry is supplied
+    // by the trusted gate itself, not by a PR-controlled file.
+    fail('SCA_GATE_CONFIGURATION', `${label} contains unsupported .npmrc configuration`);
+  }
+}
+
 export function validateGateIdentity(env, event) {
   const iid = env.CNB_PULL_REQUEST_IID;
   const head = env.CNB_PULL_REQUEST_SHA;
@@ -283,6 +295,7 @@ export async function auditSide(label, sha, deps, registry, parentEnv) {
   const globs = parseWorkspaceGlobs(workspaceText);
   const {manifests, gitlinks} = classifyTreeEntries(deps.git(['ls-tree', '-r', sha]), globs);
   assertImporterCoverage(parseLockfileImporters(deps.git(['show', `${sha}:pnpm-lock.yaml`])), manifests);
+  if (manifests.includes('.npmrc')) assertAuditNpmrc(deps.git(['show', `${sha}:.npmrc`]), label);
   const sideRoot = materializeSide(sha, manifests, deps.git);
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'sca-gate-home-'));
   const env = gateEnvironment(parentEnv, home, registry);

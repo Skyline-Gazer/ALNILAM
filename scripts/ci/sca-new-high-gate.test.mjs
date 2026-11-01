@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import {
-  advisoryIdentity, assertImporterCoverage, assertLiveRefs, assertPreMergeParents, auditSide, blockingFindings,
+  advisoryIdentity, assertAuditNpmrc, assertImporterCoverage, assertLiveRefs, assertPreMergeParents, auditSide, blockingFindings,
   classifyTreeEntries, defaultDeps, diffBlockingFindings, fail, formatVerdict, gateEnvironment, globMatches, parseLockfileImporters,
   parseRegistry, parseWorkspaceGlobs, readJsonDocument, runGate, validateAuditDocument, validateGateIdentity,
 } from './sca-new-high-gate.mjs';
@@ -56,7 +56,7 @@ function fakeGit(overrides = {}) {
     'pnpm-workspace.yaml': `packages:\n  - "apps/*"\n  - "packages/*"\n  - "themes/*"\n  - "features/*"\n`,
     'pnpm-lock.yaml': `lockfileVersion: '9.0'\n\nimporters:\n  .:\n    devDependencies:\n      '@lhci/cli':\n  apps/web:\n  packages/core:\n  themes/editorial:\n\nsnapshots:\n  tmp@0.1.0:\n`,
     'package.json': '{"name":"alnilam"}',
-    '.npmrc': 'registry=https://registry.npmjs.org\n',
+    '.npmrc': '# no per-repository registry settings\n',
     'apps/web/package.json': '{"name":"@alnilam/web"}',
     'packages/core/package.json': '{"name":"@alnilam/core"}',
     'themes/editorial/package.json': '{"name":"@alnilam/theme-editorial"}',
@@ -98,6 +98,13 @@ test('parseRegistry only accepts bare https origins', () => {
   gateError('SCA_GATE_CONFIGURATION', () => parseRegistry('http://registry.npmjs.org'));
   gateError('SCA_GATE_CONFIGURATION', () => parseRegistry('https://user:token@registry.npmjs.org'));
   gateError('SCA_GATE_CONFIGURATION', () => parseRegistry('not-a-url'));
+});
+
+test('audit rejects PR-controlled npm registry and credential configuration', () => {
+  assertAuditNpmrc('# comment\n; comment\nregistry=https://registry.npmjs.org/\n', 'head');
+  for (const input of ['@scope:registry=https://example.invalid/', '//example.invalid/:_authToken=secret', 'registry=https://example.invalid/']) {
+    gateError('SCA_GATE_CONFIGURATION', () => assertAuditNpmrc(input, 'head'));
+  }
 });
 
 test('gateEnvironment strips registry credentials and CNB tokens', () => {
@@ -236,6 +243,7 @@ test('auditSide fails closed on stale lockfile, audit crash and malformed output
   await assert.rejects(auditSide('base', BASE_SHA, sideDeps(auditDoc(INHERITED), null, {auditThrows: Error('pnpm audit exited 2 socket hang up')}), 'https://r/', auditSideEnv), /pnpm audit exited/);
   await assert.rejects(auditSide('base', BASE_SHA, sideDeps(auditDoc(INHERITED), null, {gitOverrides: {'pnpm-lock.yaml': 'importers:\n  .:\nsnapshots:\n'}}), 'https://r/', auditSideEnv), /SCA_GATE_COVERAGE_INCOMPLETE/);
   await assert.rejects(auditSide('base', BASE_SHA, {git: fakeGit(), ensureCommits: () => {}, pnpmInstall: () => 'ok', pnpmAudit: () => ({status: 0, stdout: 'not json'})}, 'https://r/', auditSideEnv), /SCA_GATE_OUTPUT_INVALID/);
+  await assert.rejects(auditSide('head', HEAD_SHA, sideDeps(auditDoc([]), auditDoc([]), {gitOverrides: {'.npmrc': '@scope:registry=https://example.invalid/'}}), 'https://r/', auditSideEnv), /SCA_GATE_CONFIGURATION/);
 });
 
 test('auditSide rejects audit exit codes inconsistent with the validated findings', async () => {
