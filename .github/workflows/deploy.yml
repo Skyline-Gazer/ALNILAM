@@ -1,8 +1,36 @@
 name: Deploy
 # CNB Mode A release mirroring may update GitHub main. Production Pages deployment
-# must remain a separate Owner-authorized workflow_dispatch action.
+# must remain a separate Owner-authorized workflow_dispatch action: it only runs
+# when explicitly dispatched, it never runs on push or pull_request, and the
+# github-pages environment protection is the owner authorization boundary.
+#
+# Multi-host publishing (#55): the composed output is a self-contained static
+# bundle. GitHub Pages under a subpath (/ALNILAM/ on a project page) and a root
+# domain (user/org page or custom domain) are both supported by choosing the
+# deploy_base input; ALNILAM_SITE_URL sets Astro's base so internal links and
+# assets are emitted with the matching prefix. Any other static host works by
+# copying the composed dist/ directory as-is (see docs/SITE_ONBOARDING.md).
 on:
   workflow_dispatch:
+    inputs:
+      deploy_base:
+        description: "Pages host layout"
+        required: false
+        type: choice
+        default: subpath
+        options:
+          - subpath
+          - root
+      site_repository:
+        description: "Optional external Site repository (owner/name); defaults to the demo Site"
+        required: false
+        type: string
+        default: ""
+      site_ref:
+        description: "Site commit SHA to publish (required with site_repository)"
+        required: false
+        type: string
+        default: ""
 permissions:
   contents: read
   pages: write
@@ -22,22 +50,79 @@ jobs:
         with:
           submodules: false
           persist-credentials: false
+
       - uses: pnpm/action-setup@v4
         with:
           version: 10.19.0
+
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
+
       - name: Install workspace dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Guard the caller-supplied inputs
+        run: |
+          if [ -n "${{ inputs.site_repository }}" ]; then
+            echo "${{ inputs.site_ref }}" | grep -Eq '^[0-9a-f]{40}$' || {
+              echo "::error::site_ref must be a full 40-hex lowercase commit SHA"
+              exit 1
+            }
+          fi
+          if [ "${{ inputs.deploy_base }}" = "root" ] && [ -z "${{ vars.PAGES_ROOT_URL }}" ]; then
+            echo "::error::deploy_base=root requires the PAGES_ROOT_URL repository variable"
+            exit 1
+          fi
+
+      - name: Check out the external Site (when publishing one)
+        if: ${{ inputs.site_repository != '' }}
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.site_repository }}
+          ref: ${{ inputs.site_ref }}
+          token: ${{ secrets.site_token }}
+          path: site-checkout
+          persist-credentials: false
+
       - name: Contract tests
         run: pnpm test
-      - name: Build demo Site for Pages
+
+      - name: Compose the demo Site for Pages
+        if: ${{ inputs.site_repository == '' }}
         env:
           ALNILAM_SITE_URL: ${{ vars.PAGES_URL || 'https://skyline-gazer.github.io/ALNILAM/' }}
           SOURCE_DATE_EPOCH: "1700000000"
         run: |
           node scripts/compose.mjs --site sites/demo --out dist/site
+          node scripts/artifact-check.mjs dist/site
+
+      - name: Compose the external Site for Pages
+        if: ${{ inputs.site_repository != '' }}
+        env:
+          ALNILAM_SITE_REF: ${{ inputs.site_ref }}
+          ALNILAM_SITE_URL: ${{ inputs.deploy_base == 'root' && vars.PAGES_ROOT_URL || vars.PAGES_URL || 'https://skyline-gazer.github.io/ALNILAM/' }}
+          SOURCE_DATE_EPOCH: "1700000000"
+        run: |
+          node scripts/compose.mjs --site site-checkout --out dist/site
+          node scripts/artifact-check.mjs dist/site
+
+      - name: Verify provenance binds the published inputs
+        if: ${{ inputs.site_repository != '' }}
+        env:
+          EXPECTED_SITE_REF: ${{ inputs.site_ref }}
+        run: |
+          node --input-type=module <<'EOF'
+          import fs from "node:fs";
+          const expected = process.env.EXPECTED_SITE_REF;
+          const prov = JSON.parse(fs.readFileSync("dist/site/alnilam-provenance.json", "utf8"));
+          if (prov.site?.ref !== expected) {
+            console.error(`provenance site.ref ${prov.site?.ref} does not bind ${expected}`);
+            process.exit(1);
+          }
+          console.log(`provenance binds site ${expected.slice(0, 12)}…`);
+          EOF
+
       - name: Add .nojekyll
         run: touch dist/site/.nojekyll
       - uses: actions/configure-pages@v5
