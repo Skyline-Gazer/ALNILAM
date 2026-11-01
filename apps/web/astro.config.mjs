@@ -21,6 +21,11 @@ export default defineConfig({
   base,
   output: "static",
   outDir: process.env.ALNILAM_OUTPUT_DIR || "./dist",
+  // compose.mjs points this at the managed build cache (per Core revision and
+  // Site digest). Astro's build-time content store and image cache live here;
+  // shared default locations once served stale entries across builds. Unset
+  // (direct `pnpm dev`) keeps Astro's default location.
+  cacheDir: process.env.ALNILAM_ASTRO_CACHE || undefined,
   integrations: [
     svelte(),
     mdx(),
@@ -35,6 +40,12 @@ export default defineConfig({
       },
     },
   ],
-  vite: { plugins: [tailwindcss()] },
+  // compose.mjs relocates Vite's dependency cache into the managed, Core-
+  // revision-keyed build cache; stale optimized deps once served broken
+  // builds. Unset (direct `pnpm dev`) keeps Vite's default location.
+  vite: {
+    cacheDir: process.env.ALNILAM_VITE_CACHE || undefined,
+    plugins: [tailwindcss()],
+  },
 });
 

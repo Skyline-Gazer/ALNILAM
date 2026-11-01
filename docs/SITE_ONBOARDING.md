@@ -61,11 +61,27 @@ them in Sites. Tag pages derive from post frontmatter.
 
 Covers and in-post images are **Site-owned and served as-is** — ALNILAM does not
 re-encode, resize, or fetch them at build time. This keeps the build deterministic
-and offline: an image referenced with an absolute path (`/site-assets/...`) must
-exist under your Site's `assets/` directory; remote `http(s)` image URLs are
-rendered as plain `<img>` without any build-time download. Authors should ship
-appropriately sized images; the platform guarantees CLS-safe markup by always
-emitting explicit `width`/`height` on generated cover `<img>` tags.
+and offline:
+
+- An image referenced with an absolute path (`/site-assets/...`) must exist under
+  your Site's `assets/` directory.
+- A post-relative image (`![alt](./img.png)` inside a Markdown post body) is
+  resolved at build time into the build space only — the source Site is never
+  modified.
+- Remote `http(s)` image URLs are rendered as plain `<img>` without any
+  build-time download.
+
+Authors should ship appropriately sized images; the platform guarantees CLS-safe
+markup by always emitting explicit `width`/`height` on generated cover `<img>` tags.
+
+### Build cache
+
+Derived build state (the verified Site snapshot, Astro's content/image store,
+Vite's dependency cache) lives in one managed cache root — `<repo>/.cache/alnilam`
+by default, overridable with `ALNILAM_CACHE_DIR`. Entries are keyed by Core
+revision and Site digest, so different inputs never share cache state and repeated
+builds never write into your Site. `node scripts/compose.mjs --clean-cache`
+removes the whole cache (plus legacy cache locations left by earlier versions).
 
 ## Optional modules (opt-in via config)
 

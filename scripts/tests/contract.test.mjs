@@ -182,20 +182,111 @@ test("output paths cannot overlap the Site source", () => {
   assert.throws(() => assertExternalOutput(DEMO, "sites"));
 });
 
-test("compose rejects a temporary directory inside the Site without modifying it", (t) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-temp-site-"));
+test("compose rejects a cache directory inside the Site without modifying it", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cache-site-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const site = path.join(root, "site");
   fs.cpSync(DEMO, site, { recursive: true });
   const digest = validateSiteRoot(site).digest;
   const entries = fs.readdirSync(site);
   const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
-    env: { ...process.env, TMPDIR: site }, encoding: "utf8",
+    env: { ...process.env, ALNILAM_CACHE_DIR: path.join(site, "cache") }, encoding: "utf8",
   });
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /Temporary directory must not be inside the Site source/);
+  assert.match(result.stderr, /Cache directory must not be inside the Site source/);
   assert.equal(validateSiteRoot(site).digest, digest);
   assert.deepEqual(fs.readdirSync(site), entries);
+});
+
+test("compose rejects a cache directory inside the output", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cache-out-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const output = path.join(root, "out");
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", output], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: path.join(output, "cache") }, encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Cache directory must not be inside the output/);
+  assert.equal(fs.existsSync(output), false);
+});
+
+test("relative post images render from the build space and repeated builds stay clean", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-relimg-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site-source");
+  fs.cpSync(DEMO, site, { recursive: true });
+  fs.mkdirSync(path.join(site, "content", "posts", "assets"), { recursive: true });
+  fs.copyFileSync(path.join(DEMO, "assets", "orion.svg"), path.join(site, "content", "posts", "assets", "orion.svg"));
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "rel-image.md"),
+    ["---", 'title: "Relative image"', 'description: "Post-relative image fixture."', "pubDate: 2026-10-30", 'tags: ["Test"]', "---", "", "![orion](./assets/orion.svg)", ""].join("\n"),
+  );
+  const digest = validateSiteRoot(site).digest;
+  const postEntries = fs.readdirSync(path.join(site, "content", "posts")).sort();
+  for (let run = 1; run <= 2; run++) {
+    const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+      env: { ...process.env, ALNILAM_CACHE_DIR: path.join(root, "cache"), ALNILAM_CORE_REV: "cache-test", SOURCE_DATE_EPOCH: "1700000000" },
+      encoding: "utf8",
+    });
+    assert.equal(result.status, 0, "relative-image compose failed on run " + run + ": " + result.stderr);
+    assert.equal(validateSiteRoot(site).digest, digest, "Site digest changed during build run " + run);
+    assert.deepEqual(fs.readdirSync(path.join(site, "content", "posts")).sort(), postEntries, "Site content dir gained files on run " + run);
+  }
+  const html = fs.readFileSync(path.join(root, "out", "posts", "rel-image", "index.html"), "utf8");
+  const src = html.match(/<img[^>]*src="([^"]+orion[^"]*)"/)?.[1];
+  assert.ok(src, "relative image must render as an img element");
+  assert.equal(fs.existsSync(path.join(root, "out", decodeURIComponent(src).replace(/^\//, ""))), true, "rendered image must exist in the output: " + src);
+  assert.deepEqual(
+    fs.readdirSync(root).filter((entry) => entry.startsWith(".alnilam-build-") || entry.includes(".alnilam-backup-")),
+    [],
+    "no build residue may remain outside the managed cache",
+  );
+});
+
+test("external image URLs pass through and local site assets are served as-is", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-extimg-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site-source");
+  fs.cpSync(DEMO, site, { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "ext-image.md"),
+    ["---", 'title: "External image"', 'description: "Remote image fixture."', "pubDate: 2026-10-30", 'tags: ["Test"]', "---", "", "![ext](https://example.com/cat.png)", ""].join("\n"),
+  );
+  const digest = validateSiteRoot(site).digest;
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: path.join(root, "cache"), ALNILAM_CORE_REV: "cache-test", SOURCE_DATE_EPOCH: "1700000000" },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, "external-image compose failed: " + result.stderr);
+  assert.equal(validateSiteRoot(site).digest, digest);
+  const html = fs.readFileSync(path.join(root, "out", "posts", "ext-image", "index.html"), "utf8");
+  assert.match(html, /<img[^>]*src="https:\/\/example\.com\/cat\.png"/);
+  assert.equal(fs.existsSync(path.join(root, "out", "site-assets", "orion.svg")), true);
+});
+
+test("build cache is version-isolated across Core revisions and cleanable", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cacheiso-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site-source");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const cache = path.join(root, "cache");
+  const composeEnv = { ...process.env, ALNILAM_CACHE_DIR: cache, SOURCE_DATE_EPOCH: "1700000000" };
+  for (const rev of ["rev-a", "rev-b"]) {
+    const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+      env: { ...composeEnv, ALNILAM_CORE_REV: rev }, encoding: "utf8",
+    });
+    assert.equal(result.status, 0, "compose failed for " + rev + ": " + result.stderr);
+  }
+  assert.deepEqual(fs.readdirSync(path.join(cache, "v1")).sort(), ["rev-a", "rev-b"]);
+  const digest = validateSiteRoot(site).digest;
+  assert.equal(fs.existsSync(path.join(cache, "v1", "rev-a", digest, "site", "alnilam.config.yaml")), true);
+  assert.equal(fs.existsSync(path.join(cache, "v1", "rev-a", digest, "astro", "data-store.json")), true);
+  assert.equal(fs.existsSync(path.join(cache, "v1", "rev-b", digest, "astro", "data-store.json")), true);
+  const clean = spawnSync(process.execPath, ["scripts/compose.mjs", "--clean-cache"], { env: composeEnv, encoding: "utf8" });
+  assert.equal(clean.status, 0, clean.stderr);
+  assert.equal(fs.existsSync(path.join(cache, "v1")), false);
 });
 
 test("compose writes deterministic provenance binding Core rev and Site digest", (t) => {

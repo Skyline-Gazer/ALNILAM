@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -23,29 +22,65 @@ function option(flag, fallback) {
   return idx < 0 ? fallback : argv[idx + 1];
 }
 if (argv.includes("--help")) {
-  console.log("Usage: node scripts/compose.mjs --site /path/to/site --out /path/to/output");
+  console.log("Usage: node scripts/compose.mjs [--site /path/to/site --out /path/to/output] [--clean-cache]");
   process.exit(0);
 }
-const siteArg = option("--site", "sites/demo");
-const outputArg = option("--out", "dist/site");
+const cleanCacheOnly = argv.includes("--clean-cache");
+const siteArg = cleanCacheOnly ? "sites/demo" : option("--site", "sites/demo");
+const outputArg = cleanCacheOnly ? "dist/site" : option("--out", "dist/site");
+// Derived build state (site snapshot, Astro content/image store, Vite dep
+// cache) lives in one managed cache root keyed by Core revision and Site
+// digest: different inputs never share cache entries, and `--clean-cache`
+// removes everything. The cache is Code-owned build space — never inside the
+// Site or the published output.
+const cacheRoot = path.resolve(process.env.ALNILAM_CACHE_DIR || path.join(repoRoot, ".cache", "alnilam"));
+if (cacheRoot === path.parse(cacheRoot).root) throw new Error("Cache directory must not be the filesystem root");
+if (cleanCacheOnly) {
+  fs.rmSync(cacheRoot, { recursive: true, force: true });
+  if (!process.env.ALNILAM_CACHE_DIR) {
+    // Locations used before the managed cache existed; safe to delete, they
+    // are regenerated on demand (stale entries here once served broken builds).
+    for (const legacy of ["apps/web/.astro", "apps/web/node_modules/.astro"]) {
+      fs.rmSync(path.join(repoRoot, legacy), { recursive: true, force: true });
+    }
+  }
+  console.log("ALNILAM cache cleaned: " + cacheRoot);
+  process.exit(0);
+}
 if (!siteArg || !outputArg) throw new Error("--site and --out require a path");
 const sitePath = path.resolve(siteArg);
 const { root: site, digest: before } = validateSiteRoot(sitePath);
-const temporaryRoot = fs.realpathSync(os.tmpdir());
-const realSite = fs.realpathSync(site);
-if (temporaryRoot === realSite || temporaryRoot.startsWith(realSite + path.sep)) {
-  throw new Error("Temporary directory must not be inside the Site source");
-}
 const destination = assertExternalOutput(site, path.resolve(outputArg));
+const isWithin = (child, parent) => child === parent || child.startsWith(parent + path.sep);
+for (const [inner, outer, message] of [
+  [cacheRoot, site, "Cache directory must not be inside the Site source"],
+  [site, cacheRoot, "Cache directory must not contain the Site source"],
+  [cacheRoot, destination, "Cache directory must not be inside the output"],
+  [destination, cacheRoot, "Cache directory must not contain the output"],
+]) {
+  if (isWithin(inner, outer)) throw new Error(message + ": " + inner);
+}
 fs.mkdirSync(path.dirname(destination), { recursive: true });
+fs.mkdirSync(cacheRoot, { recursive: true });
 const stage = fs.mkdtempSync(path.join(path.dirname(destination), ".alnilam-build-"));
 const backup = destination + ".alnilam-backup-" + process.pid;
 let published = false;
-let workspace;
 try {
-  workspace = fs.mkdtempSync(path.join(temporaryRoot, "alnilam-site-"));
-  const snapshot = path.join(workspace, "site");
-  fs.mkdirSync(snapshot);
+  let coreRev = process.env.ALNILAM_CORE_REV;
+  if (!coreRev) {
+    const rev = spawnSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot, encoding: "utf8" });
+    coreRev = rev.status === 0 ? rev.stdout.trim() : "unknown";
+  }
+  const revKey = coreRev.replace(/[^A-Za-z0-9._-]/g, "_");
+  const buildDir = path.join(cacheRoot, "v1", revKey, before);
+  const snapshot = path.join(buildDir, "site");
+  // The snapshot path is deterministic: Astro's content store persists image
+  // importer paths resolved against it, so a per-build random directory would
+  // poison that cache across builds (intermittent ImageNotFound). Same Site
+  // digest → same snapshot path → cache entries stay valid; a changed Site
+  // digest gets a fresh store.
+  fs.rmSync(snapshot, { recursive: true, force: true });
+  fs.mkdirSync(snapshot, { recursive: true });
   for (const entry of ["alnilam.config.yaml", "content", "assets", "data"]) {
     const source = path.join(site, entry);
     if (fs.existsSync(source)) fs.cpSync(source, path.join(snapshot, entry), { recursive: true });
@@ -56,11 +91,6 @@ try {
   // Deterministic provenance: the Core revision comes from the caller (env or
   // git), the Site identity from the validated read-only digest. Both are
   // embedded in the output and must not change between the two reads below.
-  let coreRev = process.env.ALNILAM_CORE_REV;
-  if (!coreRev) {
-    const rev = spawnSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot, encoding: "utf8" });
-    coreRev = rev.status === 0 ? rev.stdout.trim() : "unknown";
-  }
   const provenance = {
     schema: 1,
     core: { revision: coreRev },
@@ -84,6 +114,8 @@ try {
         ...toolchainEnv,
         ALNILAM_SITE_DIR: snapshot,
         ALNILAM_OUTPUT_DIR: stage,
+        ALNILAM_VITE_CACHE: path.join(cacheRoot, "v1", revKey, "vite"),
+        ALNILAM_ASTRO_CACHE: path.join(buildDir, "astro"),
       },
     },
   );
@@ -136,6 +168,5 @@ try {
   console.log("Provenance: alnilam-provenance.json");
 } finally {
   if (!published && fs.existsSync(stage)) fs.rmSync(stage, { recursive: true, force: true });
-  if (workspace) fs.rmSync(workspace, { recursive: true, force: true });
 }
 
