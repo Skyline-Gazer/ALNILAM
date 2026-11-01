@@ -33,7 +33,7 @@ test("build lock steals a stale lock and never evicts a live holder", (t) => {
   const thief = createBuildLock(dir, { pid: 2 });
   thief.acquire();
   assert.equal(readLock(dir).pid, 2, "stale lock must be stolen");
-  assert.deepEqual(fs.readdirSync(dir).filter((n) => n.startsWith(".compose-lock.stealing-")), [], "steal must not leave debris");
+  assert.deepEqual(fs.readdirSync(dir).filter((n) => n.startsWith(".compose-lock.")), [], "steal must not leave debris");
   thief.release();
   assert.equal(fs.existsSync(lockPath(dir)), false);
 });
@@ -49,7 +49,7 @@ test("a fresh lock is never stolen, even when staleness would allow it", (t) => 
   const contender = createBuildLock(dir, { pid: 2 });
   assert.throws(() => contender.acquire(), /Another compose is building this Site revision/);
   assert.deepEqual(readLock(dir), fresh, "a live holder's lock must not be evicted");
-  assert.deepEqual(fs.readdirSync(dir).filter((n) => n.startsWith(".compose-lock.stealing-")), [], "failed steals must not leave debris");
+  assert.deepEqual(fs.readdirSync(dir).filter((n) => n.startsWith(".compose-lock.")), [], "failed steals must not leave debris");
 });
 
 test("a steal whose stolen bytes changed mid-flight is restored, not destroyed", (t) => {
@@ -72,7 +72,7 @@ test("a steal whose stolen bytes changed mid-flight is restored, not destroyed",
   const contender = createBuildLock(dir, { pid: 2 });
   assert.throws(() => contender.acquire(), /Another compose is building this Site revision/);
   assert.equal(readLock(dir).token, "stale-observed", "the observed bytes must be restored, never destroyed");
-  assert.deepEqual(fs.readdirSync(dir).filter((n) => n.startsWith(".compose-lock.stealing-")), [], "restore must not leave debris");
+  assert.deepEqual(fs.readdirSync(dir).filter((n) => n.startsWith(".compose-lock.")), [], "restore must not leave debris");
 });
 
 test("build lock release never removes a replaced lock, even from the same pid", (t) => {

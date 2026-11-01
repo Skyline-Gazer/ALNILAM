@@ -48,6 +48,7 @@ let workspace;
 // content store and prerender chunks); serialize on a fail-closed lock.
 const buildLock = createBuildLock(path.join(repoRoot, "apps/web", ".astro"));
 try {
+  buildLock.acquire();
   // The lock serializes only the shared Astro build state (apps/web/.astro);
   // it does not protect the Site. Input consistency comes from the digest
   // checks below: the build binds to the Site digest re-read under the lock

@@ -43,7 +43,9 @@ export function createBuildLock(dir, { staleMs = BUILD_LOCK_STALE_MS, pid = proc
       fs.mkdirSync(dir, { recursive: true });
       for (let attempts = 0; attempts < MAX_STEAL_ATTEMPTS; attempts++) {
         const token = randomUUID();
-        const staged = `${lockPath}.staging-${pid}-${attempts}`;
+        // A unique staging name per attempt: two acquires in the same process
+        // (or a retry) must never rewrite or delete each other's staged file.
+        const staged = `${lockPath}.staging-${pid}-${randomUUID()}`;
         fs.writeFileSync(staged, JSON.stringify({ pid, token, startedAt: new Date().toISOString() }));
         try {
           try {
@@ -54,6 +56,7 @@ export function createBuildLock(dir, { staleMs = BUILD_LOCK_STALE_MS, pid = proc
             ownedToken = token;
             return;
           } catch (err) {
+            if (err.code === "ENOENT") continue; // staging was removed under us; retry with a fresh name
             if (err.code !== "EEXIST") throw err;
             const current = readLock(lockPath);
             if (current === null || !isStale(current, staleMs)) {

@@ -19,8 +19,23 @@ export function resolveSiteRef(site, override = process.env.ALNILAM_SITE_REF) {
     return override;
   }
   const top = spawnSync("git", ["-C", site, "rev-parse", "--show-toplevel"], { encoding: "utf8" });
-  const root = top.status === 0 && top.stdout ? fs.realpathSync(top.stdout.trim()) : "";
-  if (root !== "" && root === fs.realpathSync(site)) {
+  let root = "";
+  if (top.status === 0 && top.stdout) {
+    // A toplevel that disappears or becomes inaccessible between the probe
+    // and the stat is treated like "no Git root", not a crashed build.
+    try {
+      root = fs.realpathSync(top.stdout.trim());
+    } catch {
+      root = "";
+    }
+  }
+  let self = "";
+  try {
+    self = fs.realpathSync(site);
+  } catch {
+    return "unversioned";
+  }
+  if (root !== "" && root === self) {
     const rev = spawnSync("git", ["-C", site, "rev-parse", "HEAD"], { encoding: "utf8" });
     const head = (rev.stdout || "").trim();
     if (rev.status === 0 && SHA.test(head)) return head;

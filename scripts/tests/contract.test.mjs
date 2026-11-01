@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { normalizeSiteConfig, parseSiteConfigDocument } from "../../packages/core/src/index.mjs";
 import { assertExternalOutput, validateSiteRoot } from "../site-contract.mjs";
 
@@ -238,7 +238,32 @@ test("provenance writes the Site ref into the published document", (t) => {
   assert.equal(prov.site.ref, head);
 });
 
-
+test("two parallel composes serialize: exactly one publishes, the loser fails closed", async (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-compose-lock-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const digest = validateSiteRoot(site).digest;
+  const env = { ...process.env, ALNILAM_CORE_REV: "lockrace-core", SOURCE_DATE_EPOCH: "1700000000" };
+  // Regression guard: compose must actually call buildLock.acquire() — the
+  // shared apps/web/.astro state corrupts concurrent builds otherwise.
+  const run = (out) =>
+    new Promise((resolve) => {
+      const child = spawn(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, out)], { env });
+      let text = "";
+      child.stdout.on("data", (d) => (text += d));
+      child.stderr.on("data", (d) => (text += d));
+      child.on("exit", (status) => resolve({ out, status, text }));
+    });
+  const results = await Promise.all([run("out-a"), run("out-b")]);
+  const winners = results.filter((r) => r.status === 0);
+  const losers = results.filter((r) => r.status !== 0);
+  assert.equal(winners.length, 1, "exactly one compose may hold the build state: " + results.map((r) => r.out + "=" + r.status).join(", "));
+  assert.equal(losers.length, 1);
+  assert.match(losers[0].text, /Another compose is building this Site revision/);
+  assert.equal(fs.existsSync(path.join(root, losers[0].out)), false, "the blocked compose must not publish");
+  assert.equal(validateSiteRoot(site).digest, digest);
+});
 
 test("symlinks in Site inputs are rejected", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-contract-"));
