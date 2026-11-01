@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { normalizeSiteConfig, parseSiteConfigDocument } from "../../packages/core/src/index.mjs";
 import { assertExternalOutput, validateSiteRoot } from "../site-contract.mjs";
 
@@ -208,10 +208,61 @@ test("compose writes deterministic provenance binding Core rev and Site digest",
   const prov = JSON.parse(fs.readFileSync(path.join(out, "site", "alnilam-provenance.json"), "utf8"));
   assert.equal(prov.core.revision, "test-core-rev-1234");
   assert.equal(prov.site.digest, validateSiteRoot(DEMO).digest);
+  // The demo fixture is not a Git repository and no ref was supplied.
+  assert.equal(prov.site.ref, "unversioned");
   // Provenance schema versions the document format, independent of Site schemaVersion
   // (docs/ARCHITECTURE.md, build algorithm).
   assert.equal(prov.schema, 1);
   assert.match(prov.generatedAt, /^\d{4}-\d{2}-\d{2}T/);
+});
+
+test("provenance writes the Site ref into the published document", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-site-ref-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const git = (...args) => spawnSync("git", ["-C", site, ...args], { encoding: "utf8" });
+  assert.equal(git("init", "-q").status, 0);
+  assert.equal(git("add", "-A").status, 0);
+  const committed = git("-c", "user.name=fixture", "-c", "user.email=fixture@example.invalid", "commit", "-qm", "site");
+  assert.equal(committed.status, 0, committed.stderr);
+  const head = git("rev-parse", "HEAD").stdout.trim();
+  // End-to-end: the resolved Site ref reaches the published provenance.
+  // Branch coverage for resolution lives in scripts/tests/site-ref.test.mjs.
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, ALNILAM_CORE_REV: "core-rev", SOURCE_DATE_EPOCH: "1700000000" },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const prov = JSON.parse(fs.readFileSync(path.join(root, "out", "alnilam-provenance.json"), "utf8"));
+  assert.equal(prov.site.ref, head);
+});
+
+test("two parallel composes serialize: exactly one publishes, the loser fails closed", async (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-compose-lock-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const digest = validateSiteRoot(site).digest;
+  const env = { ...process.env, ALNILAM_CORE_REV: "lockrace-core", SOURCE_DATE_EPOCH: "1700000000" };
+  // Regression guard: compose must actually call buildLock.acquire() — the
+  // shared apps/web/.astro state corrupts concurrent builds otherwise.
+  const run = (out) =>
+    new Promise((resolve) => {
+      const child = spawn(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, out)], { env });
+      let text = "";
+      child.stdout.on("data", (d) => (text += d));
+      child.stderr.on("data", (d) => (text += d));
+      child.on("exit", (status) => resolve({ out, status, text }));
+    });
+  const results = await Promise.all([run("out-a"), run("out-b")]);
+  const winners = results.filter((r) => r.status === 0);
+  const losers = results.filter((r) => r.status !== 0);
+  assert.equal(winners.length, 1, "exactly one compose may hold the build state: " + results.map((r) => r.out + "=" + r.status).join(", "));
+  assert.equal(losers.length, 1);
+  assert.match(losers[0].text, /Another compose is building this Site revision/);
+  assert.equal(fs.existsSync(path.join(root, losers[0].out)), false, "the blocked compose must not publish");
+  assert.equal(validateSiteRoot(site).digest, digest);
 });
 
 test("symlinks in Site inputs are rejected", (t) => {

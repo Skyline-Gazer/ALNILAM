@@ -110,10 +110,12 @@ The output directory must not overlap the Site directory. The build:
 1. Hashes the Site inputs (rejecting symlinks and non-regular files),
 2. Builds static HTML with the pinned Core revision,
 3. Re-hashes the Site and aborts if anything changed,
-4. Writes `alnilam-provenance.json` (Core revision, Site SHA-256 digest) into the output.
+4. Writes `alnilam-provenance.json` (Core revision, Site ref, Site SHA-256 digest) into the output.
 
-An output from Core revision X is reproducible from the same Site digest; bind both in
-your deployment configuration and fail closed if they drift.
+Set `ALNILAM_SITE_REF` to the Site commit SHA in CI; otherwise a Site that is its own
+Git root records its `HEAD`, and an unversioned Site records `unversioned`. An output
+from Core revision X is reproducible from the same Site digest; bind the Core revision,
+Site ref and Site digest in your deployment configuration and fail closed if they drift.
 
 ## Core upgrade / rollback workflow
 

@@ -130,7 +130,7 @@ See [P0 Acceptance & Decision Report](p0/P0-ACCEPTANCE.md), merged [PR #85](http
 - Development baseline: `dev` created from initial `main`.
 - Bootstrap branch: `chore/initial-platform-bootstrap` (PR into `dev`, pending review).
 - ADS is a **private repository**; the public CI checkout intentionally omits recursive submodule cloning (no cross-repo credentials). Maintainers with ADS access can materialize it and verify the full rule set.
-- Current ADS gitlink: `6e5a7dfd1b717a03ed5b33c66707f47aab7f76b9` (ADS `cnb/dev`, not a release tag), located at `.ads` and enforced by `ads-pin.txt`. Historical pins: `v0.4.2` `375fc71f977c40c2053140c34431cc60a6d42883`, `v0.3` `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`.
+- Current ADS gitlink: `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` (ADS `cnb/dev`, not a release tag), located at `.ads` and enforced by `ads-pin.txt`. Historical pins: pre-T04 `cnb/dev` `6e5a7dfd1b717a03ed5b33c66707f47aab7f76b9`, `v0.4.2` `375fc71f977c40c2053140c34431cc60a6d42883`, `v0.3` `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`.
 - Do **not** infer latest bootstrap branch HEAD, CI result or Project item status from this document. Query GitHub at start of task.
 
 ## Continuation 7: deployment live + P3 modules shipped (2026-10-25) — Issues #6 closed

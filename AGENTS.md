@@ -3,7 +3,7 @@
 ## ADS (lite default)
 
 Source: https://github.com/Skyline-Gazer/ADS
-Local rules: `.ads/` Git submodule pinned to commit `6e5a7dfd1b717a03ed5b33c66707f47aab7f76b9`
+Local rules: `.ads/` Git submodule pinned to commit `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`
 (ADS `cnb/dev` development line; not a release tag).
 Read at this pin: `.ads/STANDARD.md`, `.ads/SAFETY.md`, `.ads/QUALITY.md`,
 `.ads/docs/lite-adoption.md`, `.ads/docs/cnb-review.md`, `.ads/docs/how-to-update.md`.

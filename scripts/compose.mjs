@@ -5,6 +5,8 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { validateSiteRoot, assertExternalOutput } from "./site-contract.mjs";
+import { createBuildLock } from "./build-lock.mjs";
+import { resolveSiteRef, resolveCoreRevision } from "./site-ref.mjs";
 
 const repoRoot = process.env.ALNILAM_REPO_ROOT
   ? path.resolve(process.env.ALNILAM_REPO_ROOT)
@@ -30,7 +32,7 @@ const siteArg = option("--site", "sites/demo");
 const outputArg = option("--out", "dist/site");
 if (!siteArg || !outputArg) throw new Error("--site and --out require a path");
 const sitePath = path.resolve(siteArg);
-const { root: site, digest: before } = validateSiteRoot(sitePath);
+const { root: site } = validateSiteRoot(sitePath);
 const temporaryRoot = fs.realpathSync(os.tmpdir());
 const realSite = fs.realpathSync(site);
 if (temporaryRoot === realSite || temporaryRoot.startsWith(realSite + path.sep)) {
@@ -42,7 +44,16 @@ const stage = fs.mkdtempSync(path.join(path.dirname(destination), ".alnilam-buil
 const backup = destination + ".alnilam-backup-" + process.pid;
 let published = false;
 let workspace;
+// Concurrent composes share this checkout's Astro build state (apps/web/.astro:
+// content store and prerender chunks); serialize on a fail-closed lock.
+const buildLock = createBuildLock(path.join(repoRoot, "apps/web", ".astro"));
 try {
+  buildLock.acquire();
+  // The lock serializes only the shared Astro build state (apps/web/.astro);
+  // it does not protect the Site. Input consistency comes from the digest
+  // checks below: the build binds to the Site digest re-read under the lock
+  // and refuses to publish if the snapshot or source deviate from it.
+  const { digest: buildDigest } = validateSiteRoot(site);
   workspace = fs.mkdtempSync(path.join(temporaryRoot, "alnilam-site-"));
   const snapshot = path.join(workspace, "site");
   fs.mkdirSync(snapshot);
@@ -50,21 +61,13 @@ try {
     const source = path.join(site, entry);
     if (fs.existsSync(source)) fs.cpSync(source, path.join(snapshot, entry), { recursive: true });
   }
-  if (validateSiteRoot(snapshot).digest !== before || validateSiteRoot(site).digest !== before) {
+  if (validateSiteRoot(snapshot).digest !== buildDigest || validateSiteRoot(site).digest !== buildDigest) {
     throw new Error("Site source changed while creating build snapshot");
-  }
-  // Deterministic provenance: the Core revision comes from the caller (env or
-  // git), the Site identity from the validated read-only digest. Both are
-  // embedded in the output and must not change between the two reads below.
-  let coreRev = process.env.ALNILAM_CORE_REV;
-  if (!coreRev) {
-    const rev = spawnSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot, encoding: "utf8" });
-    coreRev = rev.status === 0 ? rev.stdout.trim() : "unknown";
   }
   const provenance = {
     schema: 1,
-    core: { revision: coreRev },
-    site: { digest: before },
+    core: { revision: resolveCoreRevision(repoRoot) },
+    site: { ref: resolveSiteRef(site), digest: buildDigest },
     // NOTE: no absolute source path — it leaks local filesystem layout and
     // breaks reproducibility across checkouts. The digest is the identity.
     generatedAt: process.env.SOURCE_DATE_EPOCH
@@ -116,8 +119,8 @@ try {
     fs.writeFileSync(entryPath, JSON.stringify({ ...entry, languages: sortedLanguages }));
   }
   const after = validateSiteRoot(site).digest;
-  if (after !== before) throw new Error("Site source changed during build; refusing to publish");
-  if (provenance.site.digest !== before) throw new Error("Provenance digest mismatch; refusing to publish");
+  if (after !== buildDigest) throw new Error("Site source changed during build; refusing to publish");
+  if (provenance.site.digest !== buildDigest) throw new Error("Provenance digest mismatch; refusing to publish");
   fs.writeFileSync(path.join(stage, "alnilam-provenance.json"), JSON.stringify(provenance, null, 2) + "\n");
   if (fs.existsSync(backup)) throw new Error("Refusing to overwrite an existing build backup: " + backup);
   const existed = fs.existsSync(destination);
@@ -131,11 +134,12 @@ try {
   }
   if (existed) fs.rmSync(backup, { recursive: true });
   console.log("ALNILAM compose OK: " + destination);
-  console.log("Site digest SHA-256: " + before);
+  console.log("Site digest SHA-256: " + buildDigest);
   console.log("Core revision: " + provenance.core.revision);
   console.log("Provenance: alnilam-provenance.json");
 } finally {
   if (!published && fs.existsSync(stage)) fs.rmSync(stage, { recursive: true, force: true });
   if (workspace) fs.rmSync(workspace, { recursive: true, force: true });
+  buildLock.release();
 }
 
