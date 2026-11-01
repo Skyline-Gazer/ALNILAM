@@ -13,7 +13,7 @@
     "compose": "node scripts/compose.mjs",
     "artifact-check": "node scripts/artifact-check.mjs",
     "check": "pnpm --filter @alnilam/web check",
-    "test": "node --test scripts/tests/*.test.mjs scripts/ci/*.test.mjs",
+    "test": "node --test --test-concurrency=1 scripts/tests/*.test.mjs scripts/ci/*.test.mjs",
     "browser": "playwright test",
     "verify": "pnpm test && pnpm check && pnpm build"
   },

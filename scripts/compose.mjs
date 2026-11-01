@@ -6,6 +6,8 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { validateSiteRoot, assertExternalOutput, isWithin } from "./site-contract.mjs";
+import { createBuildLock } from "./build-lock.mjs";
+import { resolveSiteRef, resolveCoreRevision } from "./site-ref.mjs";
 
 const repoRoot = process.env.ALNILAM_REPO_ROOT
   ? path.resolve(process.env.ALNILAM_REPO_ROOT)
@@ -99,14 +101,9 @@ fs.mkdirSync(cacheRoot, { recursive: true });
 const stage = fs.mkdtempSync(path.join(path.dirname(destination), ".alnilam-build-"));
 const backup = destination + ".alnilam-backup-" + process.pid;
 let published = false;
-let lockFd;
-let lockPath;
+let cacheLock;
 try {
-  let coreRev = process.env.ALNILAM_CORE_REV;
-  if (!coreRev) {
-    const rev = spawnSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot, encoding: "utf8" });
-    coreRev = rev.status === 0 ? rev.stdout.trim() : "unknown";
-  }
+  const coreRev = resolveCoreRevision(repoRoot);
   // A fixed-length digest keeps every caller-supplied revision (branch names,
   // tags, hostile strings, Windows reserved names) a safe single path segment.
   const revKey = crypto.createHash("sha256").update(coreRev).digest("hex").slice(0, 16);
@@ -115,60 +112,11 @@ try {
   if (!isWithin(buildDir, cacheRootV1)) throw new Error("Build cache path escaped the cache root: " + buildDir);
   fs.mkdirSync(buildDir, { recursive: true });
   // One exclusive builder per (Core revision, Site digest): concurrent composes
-  // would otherwise delete and rewrite each other's live snapshot. A lock is
-  // released when its build finishes; a lock whose holder process is gone —
-  // or one older than six hours — is stolen.
-  lockPath = path.join(buildDir, ".compose-lock");
-  try {
-    lockFd = fs.openSync(lockPath, "wx");
-  } catch (err) {
-    if (err.code !== "EEXIST") throw err;
-    const stat = fs.statSync(lockPath);
-    let holder;
-    try {
-      holder = JSON.parse(fs.readFileSync(lockPath, "utf8"));
-    } catch {}
-    const holderPid = Number(holder?.pid);
-    const holderAlive = Number.isInteger(holderPid) && holderPid > 0 && (() => {
-      try { process.kill(holderPid, 0); return true; } catch (err) { return err.code === "EPERM"; }
-    })();
-    if (holderAlive && Date.now() - stat.mtimeMs <= 6 * 60 * 60 * 1000) {
-      throw new Error(
-        "Another compose is building this Site revision in " + buildDir +
-        " (live process " + holderPid + ", lock held since " + stat.mtime.toISOString() + "); wait for it to finish or set ALNILAM_CACHE_DIR to a separate cache root",
-      );
-    }
-    // Holder gone (crash leftover — steal immediately) or a live holder past
-    // the six-hour bound. Steal by renaming the judged lock aside, creating
-    // our own, then proving (a) the file we moved aside is exactly the one we
-    // judged stale — a racer that renamed our fresh lock loses here — and
-    // (b) the file now at the lock path is still ours by inode.
-    const stalePath = lockPath + ".stale-" + crypto.randomUUID();
-    try {
-      fs.renameSync(lockPath, stalePath);
-    } catch {
-      throw new Error("Another compose is building this Site revision in " + buildDir);
-    }
-    let stoleJudgedLock = false;
-    try {
-      try {
-        lockFd = fs.openSync(lockPath, "wx");
-      } catch (err) {
-        if (err.code === "EEXIST") throw new Error("Another compose is building this Site revision in " + buildDir);
-        throw err;
-      }
-      const moved = fs.statSync(stalePath);
-      stoleJudgedLock = moved.ino === stat.ino && moved.mtimeMs === stat.mtimeMs;
-    } finally {
-      fs.rmSync(stalePath, { force: true });
-    }
-    if (!stoleJudgedLock || fs.statSync(lockPath).ino !== fs.fstatSync(lockFd).ino) {
-      fs.closeSync(lockFd);
-      lockFd = undefined;
-      throw new Error("Another compose is building this Site revision in " + buildDir);
-    }
-  }
-  fs.writeFileSync(lockFd, JSON.stringify({ pid: process.pid, coreRev, siteDigest: before }) + "\n");
+  // would otherwise delete and rewrite each other's live snapshot. The token-
+  // verified lock from scripts/build-lock.mjs fails closed on a fresh lock and
+  // steals only a crash leftover (holder gone) or one older than six hours.
+  cacheLock = createBuildLock(buildDir);
+  cacheLock.acquire();
   // Crash leftovers (staging dirs, dead snapshots) are swept under the
   // exclusive lock; staging names come from mkdtemp so PID reuse cannot collide.
   for (const entry of fs.readdirSync(buildDir)) {
@@ -194,13 +142,13 @@ try {
   // digest gets a fresh store.
   rmTreeSafe(snapshot);
   fs.renameSync(staging, snapshot);
-  // Deterministic provenance: the Core revision comes from the caller (env or
-  // git), the Site identity from the validated read-only digest. Both are
-  // embedded in the output and must not change between the two reads below.
+  // Deterministic provenance: the Core revision and Site ref come from the
+  // caller or Git, the Site identity from the validated read-only digest. All
+  // are embedded in the output and must not change between the two reads below.
   const provenance = {
     schema: 1,
     core: { revision: coreRev },
-    site: { digest: before },
+    site: { ref: resolveSiteRef(site), digest: before },
     // NOTE: no absolute source path — it leaks local filesystem layout and
     // breaks reproducibility across checkouts. The digest is the identity.
     generatedAt: process.env.SOURCE_DATE_EPOCH
@@ -274,9 +222,6 @@ try {
   console.log("Provenance: alnilam-provenance.json");
 } finally {
   if (!published && fs.existsSync(stage)) fs.rmSync(stage, { recursive: true, force: true });
-  if (lockFd) {
-    fs.closeSync(lockFd);
-    fs.rmSync(lockPath, { force: true });
-  }
+  if (typeof cacheLock !== "undefined") cacheLock.release();
 }
 

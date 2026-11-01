@@ -20,13 +20,13 @@ themes/editorial/      # released visual layout + rollback surface
 themes/shirone/        # P1 Shirone-derived layout, tokens and Post card
 sites/demo/            # Core-repo Site fixture (only for tests & preview)
 scripts/compose.mjs    # non-mutating external Site builder
-.ads/                  # optional private ADS gitlink (cnb/dev 6e5a7df); not cloned by public CI
+.ads/                  # optional private ADS gitlink (cnb/dev b8d9cfc); not cloned by public CI
 ```
 
 ## Build algorithm
 1. Resolve and validate an absolute Site source, hash the read-only inputs.
 2. Copy config, content, assets and data into a deterministic snapshot under the managed build cache (keyed by Core revision and Site digest) and verify its digest against the source.
-3. Run Astro in Core with `ALNILAM_SITE_DIR` pointing to the snapshot; Content Layer reads its `content/posts` and output goes to staging.
+3. Run Astro in Core with `ALNILAM_SITE_DIR` pointing to the snapshot; Content Layer reads its `content/posts` and output goes to staging. Composes of one Core checkout serialize on fail-closed locks: one over the shared Astro build state (`apps/web/.astro`) and one per managed-cache build directory — a contending compose fails fast, and a lock left by a crashed build older than six hours (or whose holder process is gone) is stolen.
 4. Copy optional snapshot assets into the staged static output (not back into Core or Site).
 5. Hash the Site inputs again and abort on changes.
 6. Replace the final destination from staging; retain/restore the existing output if staging fails.
@@ -35,13 +35,17 @@ The managed cache root (`<repo>/.cache/alnilam`, override `ALNILAM_CACHE_DIR`) h
 the snapshot and Astro's build-time content/image store, keyed by Core revision and
 Site digest; Vite's dependency cache is keyed by Core revision alone. All derived
 resources are generated only in the build space (cache or staging) — never in the
-Site; removals inside the cache refuse to follow symbolic links. `--clean-cache` removes it.
+Site; removals inside the cache refuse to follow symbolic links. `--clean-cache`
+removes it.
 
-The staged output also carries `alnilam-provenance.json`. Its `schema` field versions
-the **provenance document format** and is independent of the Site `schemaVersion`:
-changing the Site contract does not relabel already-published provenance records.
+The staged output also carries `alnilam-provenance.json`: the Core revision, the Site
+ref (`ALNILAM_SITE_REF`, or the Site's own Git `HEAD` when the Site directory is its
+own Git root, otherwise `unversioned`) and the SHA-256 digest of the read-only Site
+inputs. Its `schema` field versions the **provenance document format** and is
+independent of the Site `schemaVersion`: changing the Site contract does not relabel
+already-published provenance records.
 
-**Current limits**: Do not treat this as an OS sandbox. Trusted MDX can execute build-time code. Post-relative image paths resolve in the build space only; the source Site stays read-only. Concurrent builds of the same Core revision and Site digest are serialized by a lock inside the managed cache (a lock is stolen when its holder process is gone or after six hours); concurrency/locking of two builds to the same output path and crash recovery beyond that are not yet fully specified; do not claim atomicity across power loss. Browser/performance and cross-platform behavior are not verified until CI and browser tests complete.
+**Current limits**: Do not treat this as an OS sandbox. Trusted MDX can execute build-time code. Post-relative image paths resolve in the build space only; the source Site stays read-only. Concurrent publishes to the same output path remain last-writer-wins by rename (the previous output is restored if the rename fails), and atomicity across power loss is not claimed. Browser/performance and cross-platform behavior are not verified until CI and browser tests complete.
 
 ## Upgrade contract and user workflow
 - The Core Git SHA/tag and Site SHA/tag must be pinned separately in deployment configuration.
