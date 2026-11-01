@@ -152,6 +152,22 @@ Site ref and Site digest in your deployment configuration and fail closed if the
 
 The Site's Git ref is never touched by any of these steps.
 
+## Content build security and secrets boundary
+
+- **Secrets never belong in the Site.** `alnilam.config.yaml`, `content/` and
+  `assets/` are copied verbatim into the build and published as content — any
+  value placed there is public. Keep credentials in your CI system's secret
+  store (GitHub Actions Secrets); the shipped workflows consume them only
+  where needed and never echo them (anchored by
+  `scripts/tests/workflows.test.mjs`).
+- **Build outputs carry no environment state.** `alnilam-provenance.json`
+  records only the Core revision, the Site ref, the Site digest and a
+  timestamp; the build environment (tokens, variables) cannot reach the
+  composed output (anchored by `scripts/tests/secrets-boundary.test.mjs`).
+- **Build-time code is trusted, not sandboxed.** MDX and the build run with
+  the CI job's permissions; only build Site content you trust. See
+  docs/ARCHITECTURE.md "Current limits".
+
 ## Private Site: secure CI strategy
 
 If your Site repository is private and you build in CI:
