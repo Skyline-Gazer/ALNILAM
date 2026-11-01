@@ -43,7 +43,7 @@ export function validateAuditDocument(doc, label) {
     fail('SCA_GATE_OUTPUT_INVALID', `${label} audit lacks the legacy advisories map; coverage shape unverified`);
   }
   const counts = doc.metadata?.vulnerabilities;
-  if (!counts || !Number.isSafeInteger(counts.high) || !Number.isSafeInteger(counts.critical)) {
+  if (!counts || SEVERITIES.some(severity => !Number.isSafeInteger(counts[severity]) || counts[severity] < 0)) {
     fail('SCA_GATE_OUTPUT_INVALID', `${label} audit lacks severity count metadata`);
   }
   if (!Number.isSafeInteger(doc.metadata?.totalDependencies) || doc.metadata.totalDependencies < 1) {
@@ -297,7 +297,13 @@ export async function auditSide(label, sha, deps, registry, parentEnv) {
   }
   const doc = validateAuditDocument(readJsonDocument(audit?.stdout, `${label} audit`), `${label} audit`);
   const findings = blockingFindings(doc);
-  if ((audit.status !== 0 && audit.status !== 1) || audit.status !== (findings.size ? 1 : 0)) {
+  // pnpm 10.19.0 can exit 1 for moderate/low findings even with --audit-level=high.
+  const nonBlockingFindings = Object.values(doc.advisories).some(advisory => {
+    const severity = String(advisory.severity).toLowerCase();
+    return !BLOCKING.has(severity) && doc.metadata.vulnerabilities[severity] > 0 && advisory.findings.length > 0;
+  });
+  if ((audit.status !== 0 && audit.status !== 1) || (audit.status === 0 && findings.size) ||
+      (audit.status === 1 && !findings.size && !nonBlockingFindings)) {
     fail('SCA_GATE_TOOL_ERROR', `${label} audit exit status disagrees with High/Critical findings`);
   }
   return {sha, manifests, gitlinks, findings,

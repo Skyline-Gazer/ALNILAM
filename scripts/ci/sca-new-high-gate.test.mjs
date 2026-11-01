@@ -30,7 +30,8 @@ const INHERITED = [
 const auditDoc = (advisories, total) => ({
   advisories: Object.fromEntries(advisories.map(item => [String(item.id), item])),
   metadata: {totalDependencies: total ?? 629, vulnerabilities: {
-    info: 0, low: advisories.filter(a => a.severity === 'low').length, moderate: 0,
+    info: 0, low: advisories.filter(a => a.severity === 'low').length,
+    moderate: advisories.filter(a => a.severity === 'moderate').length,
     high: advisories.filter(a => a.severity === 'high').flatMap(a => a.findings).length,
     critical: advisories.filter(a => a.severity === 'critical').flatMap(a => a.findings).length,
   }},
@@ -247,6 +248,13 @@ test('auditSide rejects audit exit codes inconsistent with the validated finding
   assert.equal((await auditSide('base', BASE_SHA, deps, 'https://r/', auditSideEnv)).findings.size, 0);
   deps.pnpmAudit = () => ({status: 1, stdout: JSON.stringify(auditDoc(INHERITED))});
   assert.equal((await auditSide('base', BASE_SHA, deps, 'https://r/', auditSideEnv)).findings.size, 6);
+  const moderate = advisory(42, 'uuid', 'moderate', ['8.3.2'], 'GHSA-xxxx-xxxx-xxxx', null);
+  deps.pnpmAudit = () => ({status: 1, stdout: JSON.stringify(auditDoc([moderate]))});
+  assert.equal((await auditSide('base', BASE_SHA, deps, 'https://r/', auditSideEnv)).findings.size, 0);
+  const uncorroborated = auditDoc([]);
+  uncorroborated.metadata.vulnerabilities.moderate = 1;
+  deps.pnpmAudit = () => ({status: 1, stdout: JSON.stringify(uncorroborated)});
+  await assert.rejects(auditSide('base', BASE_SHA, deps, 'https://r/', auditSideEnv), /SCA_GATE_TOOL_ERROR/);
 });
 
 test('pnpm audit adapter preserves actual process exit status and rejects tool errors', (t) => {
