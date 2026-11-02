@@ -66,7 +66,7 @@ below). This keeps the build deterministic and offline:
 
 - An image referenced with an absolute path (`/site-assets/...`) must exist under
   your Site's `assets/` directory.
-- A post-relative image (`![alt](./img.png)` in Markdown post bodies) is
+- A post-relative image (a Markdown image whose destination is `./img.png`) is
   resolved relative to the Markdown file's directory (including `../`
   references) by Astro's image pipeline at build time, into the build space
   only — the source Site is never modified. The copy is emitted under

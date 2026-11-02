@@ -141,7 +141,7 @@ test("alias expansion is bounded and literal merge keys fail field validation", 
   );
   // A recursive anchor must be rejected with a contract error, not a stack
   // overflow escaping the parser.
-  assert.throws(() => parseConfig("a: &x\n  b: *x\nschemaVersion: *x\n"), /circular reference|invalid YAML/);
+  assert.throws(() => parseConfig("a: &x\n  b: *x\nschemaVersion: *x\n"), /circular reference/);
   // YAML 1.2 keeps `<<` as a literal key; it does not merge the mapping.
   // The contract must reject that key through unknown-field validation.
   const literal = parseSiteConfigDocument("schemaVersion: 2\n<<: { a: 1 }\n");
