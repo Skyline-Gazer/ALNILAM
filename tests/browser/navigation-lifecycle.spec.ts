@@ -69,9 +69,12 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
         expect(searchBox!.x + searchBox!.width).toBeLessThanOrEqual(width);
         if (width === 390) {
           await page.setViewportSize({width: 320, height: 900});
-          const narrowBox = await search.boundingBox();
-          expect(narrowBox!.x).toBeGreaterThanOrEqual(0);
-          expect(narrowBox!.x + narrowBox!.width).toBeLessThanOrEqual(320);
+          // Viewport resizing settles on a rendering frame; keep both strict bounds.
+          await expect.poll(async () => (await search.boundingBox())?.x ?? -Infinity).toBeGreaterThanOrEqual(0);
+          await expect.poll(async () => {
+            const box = await search.boundingBox();
+            return box ? box.x + box.width : Infinity;
+          }).toBeLessThanOrEqual(320);
           await page.setViewportSize({width, height: 900});
         }
         await page.screenshot({path: info.outputPath('search-overlay.png'), fullPage: true, animations: 'disabled'});

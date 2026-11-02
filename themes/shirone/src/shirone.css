@@ -1182,3 +1182,9 @@ main {
   background: var(--error);
   font-size: 0.9rem;
 }
+
+@media (max-width: 360px) {
+  .brand > span:last-child {
+    display: none;
+  }
+}
