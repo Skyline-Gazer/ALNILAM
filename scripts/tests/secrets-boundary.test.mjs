@@ -1,5 +1,5 @@
-// Secrets boundary tests (#56): build-environment values must never reach the
-// composed output, and provenance must carry only its documented fields.
+// Secrets boundary regressions (#56): the shipped pipeline must not publish
+// injected marker values; provenance carries only its documented fields.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -17,7 +17,7 @@ function* walk(root) {
   }
 }
 
-test("build environment secrets never reach the composed output", (t) => {
+test("shipped compose omits injected environment secret markers", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-secrets-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const site = path.join(root, "site");

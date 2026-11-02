@@ -133,7 +133,7 @@ test("dangerous and unknown YAML tags fail closed", () => {
   assert.throws(() => parseSiteConfigDocument('site:\n  title: !!binary "aGk="\n'), /plain YAML data/);
 });
 
-test("alias expansion is bounded and merge keys are not applied", () => {
+test("alias expansion is bounded and literal merge keys fail field validation", () => {
   // Billion-laughs style alias expansion: the parser's alias budget stops it.
   assert.throws(
     () => parseConfig("a: &a [x, x]\nb: &b [*a, *a]\nc: &c [*b, *b]\nd: &d [*c, *c]\ne: &e [*d, *d]\nf: &f [*e, *e]\nschemaVersion: *f\n"),
@@ -142,11 +142,14 @@ test("alias expansion is bounded and merge keys are not applied", () => {
   // A recursive anchor must be rejected with a contract error, not a stack
   // overflow escaping the parser.
   assert.throws(() => parseConfig("a: &x\n  b: *x\nschemaVersion: *x\n"), /circular reference|invalid YAML/);
-  // YAML merge keys (`<<`) would splice aliased mappings into the root
-  // document; the unknown-field check rejects whatever they introduce.
+  // YAML 1.2 keeps `<<` as a literal key; it does not merge the mapping.
+  // The contract must reject that key through unknown-field validation.
+  const literal = parseSiteConfigDocument("schemaVersion: 2\n<<: { a: 1 }\n");
+  assert.deepEqual(literal["<<"], { a: 1 });
+  assert.equal(Object.hasOwn(literal, "a"), false);
   assert.throws(
-    () => parseConfig("defaults: &d { a: 1 }\n<<: *d\nschemaVersion: 2\n"),
-    /circular reference|unknown config field/,
+    () => parseConfig("schemaVersion: 2\n<<: { a: 1 }\n"),
+    /unknown config field/,
   );
 });
 test("shared aliases are not circular references", () => {

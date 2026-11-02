@@ -160,10 +160,13 @@ The Site's Git ref is never touched by any of these steps.
   store (GitHub Actions Secrets); the shipped workflows consume them only
   where needed and never echo them (anchored by
   `scripts/tests/workflows.test.mjs`).
-- **Build outputs carry no environment state.** `alnilam-provenance.json`
-  records only the Core revision, the Site ref, the Site digest and a
-  timestamp; the build environment (tokens, variables) cannot reach the
-  composed output (anchored by `scripts/tests/secrets-boundary.test.mjs`).
+- **Provenance contains only documented build metadata.**
+  `alnilam-provenance.json` records the Core revision, Site ref, Site digest,
+  schema and timestamp. The regression test in
+  `scripts/tests/secrets-boundary.test.mjs` verifies that two injected
+  environment marker values are absent from every composed output file.
+  This does not guarantee that arbitrary trusted MDX or future build code
+  cannot read and publish environment values; keep secrets out of their reach.
 - **Build-time code is trusted, not sandboxed.** MDX and the build run with
   the CI job's permissions; only build Site content you trust. See
   docs/ARCHITECTURE.md "Current limits".
