@@ -28,7 +28,8 @@ export async function getStaticPaths() {
   });
 }
 const { post, allPosts } = Astro.props as { post: CollectionEntry<"posts">; allPosts: CollectionEntry<"posts">[] };
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
+const toc = headings.filter(({ depth }) => depth === 2 || depth === 3);
 const { config } = loadSite();
 const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale, showBangumi: config.bangumi?.enabled ?? false };
 const dateIso = post.data.pubDate.toISOString();
@@ -74,6 +75,32 @@ const alternates = (translationAlternates(post, allPosts, config.site.locale) ??
         class="article-cover"
       />
     )}
+    {toc.length > 0 && (
+      <details class="article-toc">
+        <summary>文章目录</summary>
+        <nav aria-label="文章目录">
+          <ol>
+            {toc.map(({ depth, slug, text }) => (
+              <li data-depth={depth}><a href={`#${slug}`}>{text}</a></li>
+            ))}
+          </ol>
+        </nav>
+      </details>
+    )}
+    {toc.length > 0 && <script is:inline>
+      (() => {
+        const toc = document.querySelector(".article-toc");
+        toc?.addEventListener("click", event => {
+          if (event.target instanceof Element && event.target.closest("a")) toc.open = false;
+        });
+        toc?.addEventListener("keydown", event => {
+          if (event.key === "Escape") {
+            toc.open = false;
+            toc.querySelector("summary")?.focus();
+          }
+        });
+      })();
+    </script>}
     <div class="prose-post"><Content /></div>
     {config.comments.enabled && (
       <section class="article-comments" aria-label="评论">
