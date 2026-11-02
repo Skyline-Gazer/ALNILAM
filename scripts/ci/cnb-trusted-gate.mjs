@@ -320,9 +320,10 @@ function prepareTrustedTests(harnessRoot, candidateRoot) {
     if (fs.existsSync(source)) fs.symlinkSync(source, path.join(testRoot, directory), 'dir');
   }
   copyReadonlyFile(path.join(ROOT, 'scripts/site-contract.mjs'), path.join(testRoot, 'scripts/site-contract.mjs'));
-  // The workflow contract tests read .github/workflows/*.yml; without this
-  // copy every pull_request.target run after the workflows tests landed
-  // fails with ENOENT inside the harness.
+  // The workflow contract tests read .github/workflows/*.yml from the
+  // trusted-tests root; without this copy every pull_request.target run
+  // after the T05 merge fails unit coverage with ENOENT inside the harness.
+  // Source is this target-owned checkout (ROOT), never the candidate.
   copyTree(path.join(ROOT, '.github/workflows'), path.join(testRoot, '.github/workflows'));
   copyReadonlyFile(path.join(ROOT, 'scripts/build-lock.mjs'), path.join(testRoot, 'scripts/build-lock.mjs'));
   copyReadonlyFile(path.join(ROOT, 'scripts/site-ref.mjs'), path.join(testRoot, 'scripts/site-ref.mjs'));
