@@ -116,7 +116,7 @@ input {
   padding-inline: 6px;
   color: var(--on-surface);
   font-family: var(--font-display);
-  font-size: 1.04rem;
+  font-size: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
   font-weight: 800;
   letter-spacing: 0.08em;
 }
@@ -465,6 +465,9 @@ main {
 }
 
 .post-card__title a {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
   border-radius: 4px;
 }
 
@@ -609,6 +612,7 @@ main {
 }
 
 .article-header h1 {
+  overflow-wrap: anywhere;
   max-width: 16ch;
   margin: 22px 0 0;
   font-family: var(--font-display);
@@ -660,6 +664,9 @@ main {
 }
 
 .prose-post {
+  max-width: 78ch;
+  margin-inline: auto;
+  overflow-wrap: anywhere;
   padding: clamp(24px, 5vw, 54px);
   border-radius: var(--shape-xl);
   color: color-mix(in oklab, var(--on-surface) 88%, transparent);
@@ -725,6 +732,8 @@ main {
 }
 
 .prose-post pre {
+  max-width: 100%;
+  overflow-wrap: normal;
   padding: 18px;
   overflow-x: auto;
   border: 1px solid var(--outline-variant);
@@ -747,13 +756,31 @@ main {
   background: var(--surface-container);
 }
 
-.prose-post img {
+.prose-post img,
+.prose-post video,
+.prose-post iframe {
   max-width: 100%;
   height: auto;
   border-radius: var(--shape-m);
 }
 
+.prose-post iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.prose-post audio {
+  width: 100%;
+}
+
+.prose-post figure {
+  margin-inline: 0;
+}
+
 .prose-post table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
   width: 100%;
   margin: 1.5em 0;
   border-collapse: collapse;
@@ -950,6 +977,12 @@ main {
 
   .post-card__content {
     padding: 20px;
+  }
+
+  .post-card__tags a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
   }
 
   .post-card__cover {
