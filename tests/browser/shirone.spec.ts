@@ -259,3 +259,61 @@ for (const origin of [ROOT, NESTED]) for (const width of [1440, 390]) {
     } finally { await context.close(); }
   });
 }
+
+for (const origin of [ROOT, NESTED]) {
+  test(`navigation and settings ${new URL(origin).pathname}`, async ({browser}, info) => {
+    const context = await browser.newContext({viewport: {width: 390, height: 844}, hasTouch: true});
+    const page = await context.newPage();
+    const errors: string[] = [];
+    page.on('pageerror', error => errors.push(String(error)));
+    // The preference is resolved in head, before body markup and deferred modules.
+    await context.addInitScript(() => {
+      if (!localStorage.getItem('alnilam-theme')) localStorage.setItem('alnilam-theme', 'light');
+      new MutationObserver(() => {
+        if (document.body && !Reflect.has(window, '__firstBodyTheme')) {
+          Reflect.set(window, '__firstBodyTheme', document.documentElement.dataset.theme);
+        }
+      }).observe(document, {childList: true, subtree: true});
+    });
+    try {
+      await page.goto(`${origin}/`, {waitUntil: 'networkidle'});
+      expect(await page.evaluate(() => Reflect.get(window, '__firstBodyTheme'))).toBe('light');
+      await expect(page.getByRole('radio', {name: '浅色', exact: true})).toBeChecked();
+      const menu = page.getByRole('button', {name: '切换导航菜单'});
+      const nav = page.getByRole('navigation', {name: '主导航'});
+      await expect(nav).toBeHidden();
+      await menu.tap();
+      await expect(menu).toHaveAttribute('aria-expanded', 'true');
+      await expect(nav).toBeVisible();
+      for (const width of [390, 320]) {
+        await page.setViewportSize({width, height: 844});
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+      }
+      await page.setViewportSize({width: 390, height: 844});
+      await nav.getByRole('link', {name: '文章', exact: true}).focus();
+      await page.keyboard.press('Escape');
+      await expect(menu).toBeFocused();
+      await expect(nav).toBeHidden();
+      await page.keyboard.press('Enter');
+      await expect(nav).toBeVisible();
+      await captureScreenshot(page, info.outputPath('mobile-navigation.png'));
+      await nav.getByRole('link', {name: '文章', exact: true}).tap();
+      await expect(page).toHaveURL(`${origin}/posts/`);
+      await expect(menu).toHaveAttribute('aria-expanded', 'false');
+      await expect(page.getByRole('radio', {name: '浅色', exact: true})).toBeChecked();
+      await page.getByRole('radio', {name: '浅色', exact: true}).focus();
+      await page.keyboard.press('ArrowLeft');
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+      await page.reload();
+      await expect(page.getByRole('radio', {name: '深色', exact: true})).toBeChecked();
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+      await menu.tap();
+      await page.setViewportSize({width: 1440, height: 1000});
+      await expect(menu).toBeHidden();
+      await expect(nav).toBeVisible();
+      await page.setViewportSize({width: 390, height: 844});
+      await expect(nav).toBeHidden();
+      expect(errors).toEqual([]);
+    } finally { await context.close(); }
+  });
+}

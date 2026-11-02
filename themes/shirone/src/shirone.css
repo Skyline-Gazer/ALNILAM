@@ -143,6 +143,17 @@ input {
   stroke: none;
 }
 
+.menu-toggle {
+  display: none;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--shape-s);
+  color: var(--on-surface);
+  background: var(--surface-container);
+  cursor: pointer;
+}
+
 .primary-nav {
   display: flex;
   justify-content: center;
@@ -208,8 +219,8 @@ input {
 
 .theme-picker label {
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   cursor: pointer;
   place-items: center;
   border-radius: 999px;
@@ -221,6 +232,11 @@ input {
   position: absolute;
   opacity: 0;
   pointer-events: none;
+}
+
+.theme-picker label:has(input:focus-visible) {
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
 }
 
 .theme-picker label:has(input:checked) {
@@ -901,10 +917,24 @@ main {
 
 @media (max-width: 860px) {
   .app-bar {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  html[data-navigation="ready"] .menu-toggle {
+    display: inline-grid;
+    place-items: center;
+  }
+
+  html[data-navigation="ready"] .primary-nav {
+    display: none;
+  }
+
+  html[data-navigation="ready"] .app-bar:has(.menu-toggle[aria-expanded="true"]) .primary-nav {
+    display: flex;
   }
 
   .primary-nav {
+    flex-wrap: wrap;
     grid-column: 1 / -1;
     grid-row: 2;
     justify-content: flex-start;
@@ -917,7 +947,7 @@ main {
   }
 
   .primary-nav a {
-    min-height: 38px;
+    min-height: 44px;
     padding-inline: 11px;
   }
 }
@@ -936,6 +966,8 @@ main {
   }
 
   .brand {
+    min-width: 0;
+    overflow-wrap: anywhere;
     font-size: 0.9rem;
     letter-spacing: 0.04em;
   }
@@ -954,8 +986,8 @@ main {
   }
 
   .theme-picker label {
-    width: 33px;
-    height: 33px;
+    width: 44px;
+    height: 44px;
   }
 
   .home-hero {

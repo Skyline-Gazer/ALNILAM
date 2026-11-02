@@ -1,5 +1,27 @@
 # ALNILAM — AI Agent Handoff
 
+## Autonomous continuation — #58 merged / #59 in progress (2026-11-02)
+
+- #58 / CNB PR #44 merged normally into dev at `c3f554144d0baed8a2d0a0d110b7567b1fdffdb7`.
+  Source `c503cb1a5bbd3d680fadc5dca31fa408c1ed90f6`; tested candidate
+  `d939b8801c7b38713bab5f9c91ed4fd02a6d5ce7`; source ancestry and identical tree verified.
+  [Native CI](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-k6t-1k6dncf4e)
+  SUCCESS, 15m38s. CodeBuddy advisory completed, two comments dismissed with actual
+  short-table alignment/mutation probe and navigation evidence in PR comment
+  `2117186781536022528`. Serial local 8 browser cases + review probe PASS (9 total).
+  Earlier environment/concurrent diagnostic failures are disclosed, not product PASS.
+  Issue #58 Closed / Project Done. No separate post-merge push CI is configured.
+- #59 starts from that exact dev: reuse primary navigation and theme controls;
+  mobile disclosure with keyboard/Escape/focus handling, 44px controls, theme controls
+  synchronized from the pre-paint resolved DOM theme instead of rereading storage.
+  No new router, settings store or framework. Local 10/10 Shirone browser cases PASS
+  (including touch, keyboard, pre-body theme, reload persistence, 320/390 containment,
+  desktop/mobile resize); affected Node tests 5/5, Astro check clean, root/subpath
+  builds and root artifact budget PASS. Native PR feedback/delivery pending.
+- #55 remains NOT_VERIFIED; PR #43 ADS proposal stays unmerged; effective pin b8d9cfc.
+  Main/mirror/tags/deployments and ADS upstream are untouched.
+
+
 ## P3 #57 delivered / #58 resumed — 2026-11-02
 
 - CNB PR #42 merged normally at `1353df3e39a5f521c88cfb79b00ff3ef6c103f0f`,
