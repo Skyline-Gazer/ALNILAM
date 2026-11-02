@@ -1,5 +1,38 @@
 # ALNILAM — AI Agent Handoff
 
+## P3 #57 delivered / #58 resumed — 2026-11-02
+
+- CNB PR #42 merged normally at `1353df3e39a5f521c88cfb79b00ff3ef6c103f0f`,
+  source `7b0e160931e513421dca6729cefa2fa715acdbf0`, tested merge
+  `b6dae35a9b5c44250f40ec42e751c326ef8219c7`; ancestry and tree equality verified.
+  Native [functional CI](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-t0g-1k6dlpg7s)
+  success (16m56s), including 19 browser passes / one intentional skip.
+  [Advisory](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-tsp-1k6dlpg7r)
+  completed; Bangumi's old token was fixed, legacy Editorial fallback and test-scope
+  advisories have native dispositions. No structured reviewer approval is claimed.
+  #57 Closed / Project Done. One M3E token source, data-theme API and shared Search
+  semantic colors are delivered. ADS pin remains b8d9cfc.
+- PR #41's final [native run](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-9um-1k6dla1v5)
+  is ERROR, not PASS: functional checks/19 browser tests completed, then the final
+  live-ref check rejected the already-merged target. No product regression was
+  established and no adoption rerun was needed. Preserve that result.
+- #58 starts independently from the verified #57 dev: retain one-post-per-row and
+  28% desktop cover geometry; contain long titles, code/tables and rich media,
+  preserve card/tag click targets, and capture 1440/390 root/subpath evidence.
+  Local type/build/budget and five affected token/browser-harness checks pass;
+  existing plus new browser cases pass 8/8; the final four edge cases also pass
+  with actual pre/code markup, page-error capture and labelled report steps.
+  Screenshots are attached in PR #44; current source/CI is recorded there.
+  New edge-case tests use clearly labelled synthetic DOM content; they do not
+  establish #55 real external-Site CI acceptance or P3 phase completion.
+- Proposed ADS cnb/dev `9e36584516205bc11e7b7f1fd7ea0529901d855a` was compared
+  read-only: exactly six CNB adapter files, no Core delta. Any proposed pin update
+  is proposed in [CNB maintenance PR #43](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/43)
+  (source `58f67b3ddbf68d542a49c40a4c5e1d72a9d2865b`, #120); only gitlink,
+  ads-pin.txt and AGENTS change. Fourteen existing Python tests and proposed pin
+  check pass. PR remains unmerged; dev pin is unchanged and it does not block #58.
+  Production preflight limits and #55 NOT_VERIFIED / T04 history below remain.
+
 ## ADS adoption reconciliation — Owner correction 2026-11-02
 
 Current project-local policy is [AGENTS.md](../AGENTS.md). It supersedes older
