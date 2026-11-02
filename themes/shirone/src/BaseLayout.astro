@@ -96,6 +96,7 @@ const isCurrent = (path: string) => {
     <title>{title} · {siteTitle}</title>
     <script is:inline>
       (() => {
+        document.documentElement.dataset.navigation = "ready";
         try {
           const theme = localStorage.getItem("alnilam-theme");
           if (theme === "dark" || theme === "light") document.documentElement.dataset.theme = theme;
@@ -118,7 +119,7 @@ const isCurrent = (path: string) => {
           <span>{siteTitle}</span>
         </a>
 
-        <nav class="primary-nav" aria-label="主导航" data-site-nav>
+        <nav id="primary-navigation" class="primary-nav" aria-label="主导航" data-site-nav>
           {navItems.map((item) => (
             <a href={withBase(item.href)} aria-current={isCurrent(item.href) ? "page" : undefined}>
               {item.label}
@@ -127,6 +128,7 @@ const isCurrent = (path: string) => {
         </nav>
 
         <div class="app-bar__actions">
+          <button class="menu-toggle" type="button" aria-label="切换导航菜单" aria-controls="primary-navigation" aria-expanded="false"><span data-menu-open>菜单</span><span data-menu-close>收起</span></button>
           <Search client:idle />
           <fieldset class="theme-picker" aria-label="配色方案">
             <legend>配色方案</legend>
@@ -158,18 +160,27 @@ const isCurrent = (path: string) => {
     <script>
       const root = document.documentElement;
       const choices = document.querySelectorAll('[data-theme-choice] input');
-      const savedTheme = (() => {
-        try {
-          const value = localStorage.getItem("alnilam-theme");
-          return value === "dark" || value === "light" ? value : "";
-        } catch {
-          return "";
+      // The head script resolves persisted preference before paint. Controls reflect that same state.
+      choices.forEach((input) => {
+        if (input instanceof HTMLInputElement) input.checked = input.id === `theme-${root.dataset.theme}`;
+      });
+      window.dispatchEvent(new CustomEvent("giscus-theme-change", { detail: root.dataset.theme }));
+      const menu = document.querySelector<HTMLButtonElement>(".menu-toggle");
+      const navigation = document.querySelector<HTMLElement>("#primary-navigation");
+      const closeMenu = () => menu?.setAttribute("aria-expanded", "false");
+      menu?.addEventListener("click", () => {
+        menu.setAttribute("aria-expanded", String(menu.getAttribute("aria-expanded") !== "true"));
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && menu?.getAttribute("aria-expanded") === "true") {
+          closeMenu();
+          menu.focus();
         }
-      })();
-      if (savedTheme) {
-        document.querySelector(`[data-theme-choice="${savedTheme}"] input`)?.setAttribute("checked", "");
-        window.dispatchEvent(new CustomEvent("giscus-theme-change", { detail: savedTheme }));
-      }
+      });
+      navigation?.addEventListener("click", (event) => {
+        if (event.target instanceof Element && event.target.closest("a")) closeMenu();
+      });
+      matchMedia("(max-width: 860px)").addEventListener("change", closeMenu);
       choices.forEach((input) => {
         input.addEventListener("change", () => {
           const theme = input.id === "theme-light" ? "light" : "dark";
