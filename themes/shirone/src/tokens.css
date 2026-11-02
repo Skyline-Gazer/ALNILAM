@@ -54,8 +54,6 @@
   --font-ui: "Avenir Next", "Segoe UI Variable", "Noto Sans SC", sans-serif;
   --font-display: ui-rounded, "Avenir Next", "SF Pro Rounded", "Noto Sans SC", sans-serif;
   --font-mono: "SFMono-Regular", "Cascadia Code", "Noto Sans Mono", monospace;
-
-
 }
 
 :root[data-theme="light"] {
