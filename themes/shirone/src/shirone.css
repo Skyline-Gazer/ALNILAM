@@ -154,6 +154,20 @@ input {
   cursor: pointer;
 }
 
+.menu-toggle [data-menu-close],
+.menu-toggle[aria-expanded="true"] [data-menu-open] {
+  display: none;
+}
+
+.menu-toggle[aria-expanded="true"] [data-menu-close] {
+  display: inline;
+}
+
+.menu-toggle[aria-expanded="true"] {
+  color: var(--on-primary-container);
+  background: var(--primary-container);
+}
+
 .primary-nav {
   display: flex;
   justify-content: center;

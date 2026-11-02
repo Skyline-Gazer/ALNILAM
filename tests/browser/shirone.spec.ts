@@ -279,11 +279,12 @@ for (const origin of [ROOT, NESTED]) {
       await page.goto(`${origin}/`, {waitUntil: 'networkidle'});
       expect(await page.evaluate(() => Reflect.get(window, '__firstBodyTheme'))).toBe('light');
       await expect(page.getByRole('radio', {name: '浅色', exact: true})).toBeChecked();
-      const menu = page.getByRole('button', {name: '切换导航菜单'});
+      const menu = page.getByRole('button', {name: '切换导航菜单', includeHidden: true});
       const nav = page.getByRole('navigation', {name: '主导航'});
       await expect(nav).toBeHidden();
       await menu.tap();
       await expect(menu).toHaveAttribute('aria-expanded', 'true');
+      await expect(menu.locator('[data-menu-close]')).toBeVisible();
       await expect(nav).toBeVisible();
       for (const width of [390, 320]) {
         await page.setViewportSize({width, height: 844});
@@ -310,6 +311,7 @@ for (const origin of [ROOT, NESTED]) {
       await menu.tap();
       await page.setViewportSize({width: 1440, height: 1000});
       await expect(menu).toBeHidden();
+      await expect(menu).toHaveAttribute('aria-expanded', 'false');
       await expect(nav).toBeVisible();
       await page.setViewportSize({width: 390, height: 844});
       await expect(nav).toBeHidden();
