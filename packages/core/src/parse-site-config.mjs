@@ -16,12 +16,14 @@ function assertPlainData(value, filename, label, seen = new WeakSet()) {
     if (seen.has(value)) throw new Error(`ALNILAM: ${filename} contains a circular reference at ${label}`);
     seen.add(value);
     value.forEach((entry, index) => assertPlainData(entry, filename, `${label}[${index}]`, seen));
+    seen.delete(value);
     return;
   }
   if (typeof value === "object" && Object.getPrototypeOf(value) === Object.prototype) {
     if (seen.has(value)) throw new Error(`ALNILAM: ${filename} contains a circular reference at ${label}`);
     seen.add(value);
     for (const [key, entry] of Object.entries(value)) assertPlainData(entry, filename, `${label}.${key}`, seen);
+    seen.delete(value);
     return;
   }
   throw new Error(`ALNILAM: ${filename} must contain plain YAML data (${label})`);

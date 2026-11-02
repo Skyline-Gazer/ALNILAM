@@ -149,6 +149,16 @@ test("alias expansion is bounded and merge keys are not applied", () => {
     /circular reference|unknown config field/,
   );
 });
+test("shared aliases are not circular references", () => {
+  // Reusing one anchored mapping under two fields maps both to the same JS
+  // object instance: a DAG, not a cycle. The plain-data check must let it
+  // through (field validation rejects unknown fields separately).
+  const shared = parseSiteConfigDocument("site: &s { title: t, url: https://e.com, locale: zh-CN }\nextra: *s\n");
+  assert.equal(shared.extra, shared.site);
+  assert.equal(shared.site.title, "t");
+  // A genuine cycle (a mapping containing itself) is still rejected.
+  assert.throws(() => parseSiteConfigDocument("a: &x\n  b: *x\n"), /circular reference/);
+});
 
 test("non-string mapping keys and wrong field types fail closed", () => {
   // A numeric key is not one of the known config fields.
