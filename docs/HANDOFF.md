@@ -1,5 +1,62 @@
 # ALNILAM — AI Agent Handoff
 
+## P2 Owner Final GO — 2026-11-02
+
+This checkpoint supersedes the prior dev-protection rescue instructions. Owner
+removed CNB dev protection; ordinary PR merges or non-force Git integration are
+allowed. Main, production mirrors, tags and deployments remain separately
+protected/authorized. ADS stays pinned to `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`.
+
+- PR #40 source `6c19d930eeff17f0f627ec5b2f327205d831dc3e` was delivered by
+  non-force Git merge `fb49e8c08e237f6b8993cd41428b43fd77a459cc` into CNB dev.
+  Normal Merge API returned HTTP 409 / 2009014 (`status_check`); PR #40 was
+  explicitly commented and closed, **not** represented as a platform PR merge.
+  Source ancestry and identical merged/source trees were verified. Existing
+  3/3 harness and 15/15 affected-test evidence was reused.
+- T06 PR #39 final candidate is `83b1bfdc829c90ed7fc91547bfb6d10796360de7`.
+  Existing `p2-t06-review-fixes` was merged without rewriting history. Shared
+  YAML aliases pass; actual cycles fail with a contract error. Workflow tests
+  read the trusted tree; the target-owned workflow copy comes from PR #40.
+  Merge-key assertions and environment/provenance documentation now describe
+  their exact tested scope. The onboarding example no longer creates a broken
+  Markdown link in the existing docs check.
+- Local validation: full Node suite 117/117 on the same final product code;
+  subsequent affected alias assertions 2/2, marker/provenance tests 3/3,
+  Astro check 0 errors/warnings/hints, static build/artifact budgets PASS,
+  Python suite 14/14. Synthetic marker checks do not prove arbitrary trusted
+  MDX cannot publish environment values.
+- Current-head CodeBuddy review `2117134518142595072` concerns supplemental
+  static-test placement/completeness and repeated assertions, accepted as
+  nonblocking advisories with native replies. Earlier material findings were
+  fixed. The cycle-removal suggestion was disproved: the installed YAML
+  library returns an actual self-referential object from `toJS`; the active
+  recursion-stack guard is necessary.
+- Current candidate native trusted run:
+  https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-rl5-1k6dddi7n
+  Review run:
+  https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-d2e-1k6dddi7m
+  Read live results; do not substitute local PASS for native CI PASS.
+- PR #39 merged normally via the CNB API as
+  `d717c0b657a99f312cc0523e90737ac399e75110`; source ancestry and merged tree
+  were verified against source and tested merge
+  `3844d8e3ce465181fccdd11045cb139e1e43ed88`. Native trusted consumer passed
+  in 13m53s (including 19 browser passes and one intentional skip); advisory
+  review pipeline passed in 49.9s. Review findings are not an approval claim.
+  The Gate bootstrap failure is resolved; earlier failing/stale runs retain
+  their historical results. #56 is complete; #38 remains Open for #55.
+  Project #17: #51–#54 and #56 Done, #38/#55 In Progress.
+  P2 Phase Gate remains **NOT_MET / NOT_VERIFIED**, solely for the real
+  external Site CI acceptance gap. CNB's merge API still has no expected-head
+  parameter; immediate ref readback mitigates but does not eliminate that race.
+- #55 remains Open / external Site CI **NOT_VERIFIED**: existing authorized
+  repository metadata and Issue records provide no dedicated real Site or
+  scoped checkout credential. Demo/temporary fixtures are not acceptance.
+  No new environment/service or production action was created for acceptance.
+- #51–#54 are already Closed / Project Done. The T04 historical review
+  discipline deviation remains recorded on parent #38 comment 6569958426;
+  no historical rescore or audit was performed.
+
+
 ## P2/T01 current state — 2026-10-31
 
 Read live refs before acting. This section supersedes the 2026-10-30 preservation
