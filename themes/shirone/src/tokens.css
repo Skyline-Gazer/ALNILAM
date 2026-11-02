@@ -1,0 +1,94 @@
+/* Static M3E token layer adapted from Shirone's token contract. The slice
+   deliberately omits its HCT runtime and unlicensed bundled fonts. */
+:root {
+  color-scheme: dark;
+  --primary: #adc6ff;
+  --on-primary: #002e69;
+  --primary-container: #173a72;
+  --on-primary-container: #d8e2ff;
+  --secondary: #ffb4a8;
+  --on-secondary: #5f150d;
+  --secondary-container: #7d2b20;
+  --on-secondary-container: #ffdad4;
+  --tertiary: #71dbc8;
+  --on-tertiary: #003730;
+  --tertiary-container: #005047;
+  --on-tertiary-container: #8ff8e3;
+  --surface: #0d1118;
+  --surface-dim: #090d13;
+  --surface-bright: #303640;
+  --surface-container-lowest: #080b11;
+  --surface-container-low: #151a23;
+  --surface-container: #191f28;
+  --surface-container-highest: #242a34;
+  --on-surface: #e3e7ef;
+  --on-surface-variant: #aeb5c2;
+  --outline: #78808d;
+  --outline-variant: #3c4552;
+  --inverse-surface: #e3e7ef;
+  --inverse-on-surface: #2b313a;
+  --error: #ffb4ab;
+  --on-error: #690005;
+  --page-bg: var(--surface);
+  --card-bg: var(--surface-container-low);
+  --shadow-color: rgba(0, 0, 0, 0.42);
+  --mode-glow: rgba(173, 198, 255, 0.18);
+  --mode-glow-secondary: rgba(255, 180, 168, 0.1);
+  --shape-xs: 6px;
+  --shape-s: 10px;
+  --shape-m: 14px;
+  --shape-l: 22px;
+  --shape-xl: 34px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --ease-expressive: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --duration: 180ms;
+  --duration-long: 420ms;
+  --font-ui: "Avenir Next", "Segoe UI Variable", "Noto Sans SC", sans-serif;
+  --font-display: ui-rounded, "Avenir Next", "SF Pro Rounded", "Noto Sans SC", sans-serif;
+  --font-mono: "SFMono-Regular", "Cascadia Code", "Noto Sans Mono", monospace;
+
+
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --primary: #2d5f9a;
+  --on-primary: #fff;
+  --primary-container: #d8e7ff;
+  --on-primary-container: #0b2d53;
+  --secondary: #8b4c45;
+  --on-secondary: #fff;
+  --secondary-container: #ffdad5;
+  --on-secondary-container: #3b0907;
+  --tertiary: #006b5f;
+  --on-tertiary: #fff;
+  --tertiary-container: #8ff8e3;
+  --on-tertiary-container: #00201c;
+  --surface: #f8f9ff;
+  --surface-dim: #d9dae3;
+  --surface-bright: #f8f9ff;
+  --surface-container-lowest: #fff;
+  --surface-container-low: #f1f3fa;
+  --surface-container: #e9ecf4;
+  --surface-container-highest: #d8dde8;
+  --on-surface: #1b2430;
+  --on-surface-variant: #566170;
+  --outline: #737d8b;
+  --outline-variant: #c5ccd7;
+  --error: #ba1a1a;
+  --on-error: #fff;
+  --inverse-surface: #2b313a;
+  --inverse-on-surface: #eef1f8;
+  --shadow-color: rgba(51, 64, 91, 0.13);
+  --mode-glow: rgba(45, 95, 154, 0.15);
+  --mode-glow-secondary: rgba(139, 76, 69, 0.09);
+}
+
