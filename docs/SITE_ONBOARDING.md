@@ -66,7 +66,7 @@ below). This keeps the build deterministic and offline:
 
 - An image referenced with an absolute path (`/site-assets/...`) must exist under
   your Site's `assets/` directory.
-- A post-relative image (`![alt](./img.png)` in Markdown post bodies) is
+- A post-relative image (a Markdown image whose destination is `./img.png`) is
   resolved relative to the Markdown file's directory (including `../`
   references) by Astro's image pipeline at build time, into the build space
   only — the source Site is never modified. The copy is emitted under
@@ -151,6 +151,25 @@ Site ref and Site digest in your deployment configuration and fail closed if the
 4. Swap the served output directory; rollback = rebuild with the previous Core revision.
 
 The Site's Git ref is never touched by any of these steps.
+
+## Content build security and secrets boundary
+
+- **Secrets never belong in the Site.** `alnilam.config.yaml`, `content/` and
+  `assets/` are copied verbatim into the build and published as content — any
+  value placed there is public. Keep credentials in your CI system's secret
+  store (GitHub Actions Secrets); the shipped workflows consume them only
+  where needed and never echo them (anchored by
+  `scripts/tests/workflows.test.mjs`).
+- **Provenance contains only documented build metadata.**
+  `alnilam-provenance.json` records the Core revision, Site ref, Site digest,
+  schema and timestamp. The regression test in
+  `scripts/tests/secrets-boundary.test.mjs` verifies that two injected
+  environment marker values are absent from every composed output file.
+  This does not guarantee that arbitrary trusted MDX or future build code
+  cannot read and publish environment values; keep secrets out of their reach.
+- **Build-time code is trusted, not sandboxed.** MDX and the build run with
+  the CI job's permissions; only build Site content you trust. See
+  docs/ARCHITECTURE.md "Current limits".
 
 ## Private Site: secure CI strategy
 

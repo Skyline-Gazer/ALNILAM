@@ -6,18 +6,24 @@ export const SITE_CONFIG_FILENAME = "alnilam.config.yaml";
 // objects the YAML schema can produce (for example a `!!binary` Buffer) are
 // rejected here. `parseSiteConfigDocument` separately rejects syntax errors,
 // duplicate keys and unresolved tags; other YAML warnings pass through.
-function assertPlainData(value, filename, label) {
+function assertPlainData(value, filename, label, seen = new WeakSet()) {
   if (value === null || typeof value === "string" || typeof value === "boolean") return;
   if (typeof value === "number") {
     if (!Number.isFinite(value)) throw new Error(`ALNILAM: ${filename} contains a non-finite number at ${label}`);
     return;
   }
   if (Array.isArray(value)) {
-    value.forEach((entry, index) => assertPlainData(entry, filename, `${label}[${index}]`));
+    if (seen.has(value)) throw new Error(`ALNILAM: ${filename} contains a circular reference at ${label}`);
+    seen.add(value);
+    value.forEach((entry, index) => assertPlainData(entry, filename, `${label}[${index}]`, seen));
+    seen.delete(value);
     return;
   }
   if (typeof value === "object" && Object.getPrototypeOf(value) === Object.prototype) {
-    for (const [key, entry] of Object.entries(value)) assertPlainData(entry, filename, `${label}.${key}`);
+    if (seen.has(value)) throw new Error(`ALNILAM: ${filename} contains a circular reference at ${label}`);
+    seen.add(value);
+    for (const [key, entry] of Object.entries(value)) assertPlainData(entry, filename, `${label}.${key}`, seen);
+    seen.delete(value);
     return;
   }
   throw new Error(`ALNILAM: ${filename} must contain plain YAML data (${label})`);

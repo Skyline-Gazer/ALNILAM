@@ -122,6 +122,62 @@ test("unresolved YAML tags, duplicate keys and non-plain values fail closed", ()
   assert.throws(() => parseSiteConfigDocument('site:\n  title: !!binary "aGk="\n'), /plain YAML data/);
 });
 
+test("dangerous and unknown YAML tags fail closed", () => {
+  // Tags the core schema resolves into host objects (Set, Date) are caught by
+  // the plain-data check; tags it cannot resolve fail as invalid YAML.
+  assert.throws(() => parseSiteConfigDocument("schemaVersion: !!set { a }\n"), /plain YAML data/);
+  assert.throws(() => parseSiteConfigDocument("schemaVersion: !!timestamp 2026-01-01\n"), /plain YAML data/);
+  assert.throws(() => parseSiteConfigDocument("schemaVersion: !!js/regexp /x/\n"), /invalid YAML/);
+  assert.throws(() => parseSiteConfigDocument("schemaVersion: !!python/object:os.system\n"), /invalid YAML/);
+  assert.throws(() => parseSiteConfigDocument('schemaVersion: !!js/function "function(){}"\n'), /invalid YAML/);
+  assert.throws(() => parseSiteConfigDocument('site:\n  title: !!binary "aGk="\n'), /plain YAML data/);
+});
+
+test("alias expansion is bounded and literal merge keys fail field validation", () => {
+  // Billion-laughs style alias expansion: the parser's alias budget stops it.
+  assert.throws(
+    () => parseConfig("a: &a [x, x]\nb: &b [*a, *a]\nc: &c [*b, *b]\nd: &d [*c, *c]\ne: &e [*d, *d]\nf: &f [*e, *e]\nschemaVersion: *f\n"),
+    /invalid YAML/,
+  );
+  // A recursive anchor must be rejected with a contract error, not a stack
+  // overflow escaping the parser.
+  assert.throws(() => parseConfig("a: &x\n  b: *x\nschemaVersion: *x\n"), /circular reference/);
+  // YAML 1.2 keeps `<<` as a literal key; it does not merge the mapping.
+  // The contract must reject that key through unknown-field validation.
+  const literal = parseSiteConfigDocument("schemaVersion: 2\n<<: { a: 1 }\n");
+  assert.deepEqual(literal["<<"], { a: 1 });
+  assert.equal(Object.hasOwn(literal, "a"), false);
+  assert.throws(
+    () => parseConfig("schemaVersion: 2\n<<: { a: 1 }\n"),
+    /unknown config field/,
+  );
+});
+test("shared aliases are not circular references", () => {
+  // Reusing one anchored mapping under two fields maps both to the same JS
+  // object instance: a DAG, not a cycle. The plain-data check must let it
+  // through (field validation rejects unknown fields separately).
+  const shared = parseSiteConfigDocument("site: &s { title: t, url: https://e.com, locale: zh-CN }\nextra: *s\n");
+  assert.equal(shared.extra, shared.site);
+  assert.equal(shared.site.title, "t");
+  // A genuine cycle (a mapping containing itself) is still rejected.
+  assert.throws(() => parseSiteConfigDocument("a: &x\n  b: *x\n"), /circular reference/);
+});
+
+test("non-string mapping keys and wrong field types fail closed", () => {
+  // A numeric key is not one of the known config fields.
+  assert.throws(() => parseConfig("1: x\nschemaVersion: 2\n"), /unknown config field/);
+  // Core fields with wrong data shapes are rejected by the schema.
+  assert.throws(() => parseConfig("schemaVersion: [2]\n"), /schemaVersion/);
+  assert.throws(
+    () => parseConfig("schemaVersion: 2\nsite:\n  title: t\n  url: 42\n  locale: zh-CN\nlocales:\n  - zh-CN\n"),
+    /site\.url/,
+  );
+  assert.throws(
+    () => parseConfig("schemaVersion: 2\nsite:\n  title: t\n  url: https://e.com\n  locale:\n    - zh-CN\nlocales:\n  - zh-CN\n"),
+    /site\.locale/,
+  );
+});
+
 test("demo Site is valid and the read-only digest is stable", () => {
   const a = validateSiteRoot(DEMO);
   const b = validateSiteRoot(DEMO);
