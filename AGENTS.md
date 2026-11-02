@@ -54,22 +54,26 @@ Core/Site independence, Site immutability, YAML-only v2, provenance/rollback and
 Apache-2.0/third-party notices. End each task with the exact SHA, CI run, PR, verified
 behavior and unresolved blockers.
 
-## CNB Agent-governed PR workflow — Owner decision 2026-10-30
+## CNB development workflow — Owner correction 2026-11-02
 
-- Create an Issue-linked PR and perform a normal Merge Commit only after current-head CI
-  and an actual CodeBuddy review of the same source SHA. Never push directly to protected
-  branches, force-push, bypass checks or enable Auto Merge.
-- Re-fetch source and target SHAs before merging; bind the tested merge/tree and retained
-  receipts to the candidate; resolve Critical/High findings or record an auditable
-  false-positive disposition.
-- Serialize Agent writes. Re-read live refs immediately before merge; after merging,
-  verify the target commit, source ancestry and tree.
-- CNB can still allow zero-status merges and its merge API has no expected-head
-  parameter; record that residual risk. Independent Gatekeeper, fixed reviewer and Auto
-  Merge are not gates.
-- The private ADS gitlink stays pinned; default recursive clones skip ADS. Production
-  `main`, the first production mirror, tags/releases and deployments remain separately
-  authorized operations.
+- Single-maintainer `dev` defaults to no mandatory platform protection. Use an
+  Issue-linked ordinary PR or Owner-authorized non-force Git integration. This
+  reconciliation is delivered through one scoped PR to CNB `dev`.
+- Functional CI and CodeBuddy provide real feedback to find and fix defects; they
+  are not mandatory approval on every ordinary development change. Run checks
+  proportionate to the change, address material findings, and report failed,
+  missing or stale results honestly. Do not claim a plugin exit is review approval.
+- Existing configured required checks remain effective until explicitly changed;
+  never disable a check to disguise a failure. Serialize writes, reread live refs
+  before integration, then verify actual source ancestry and resulting tree.
+- CNB's merge API has no expected-head parameter; the read/merge race remains.
+  Do not force-push, force-merge or enable Auto Merge to bypass a real restriction.
+- Keep ADS pinned to `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`.
+  This project-local Owner decision supersedes conflicting older mandatory CNB
+  review/protection language at that pin; it does not opt into strict governance.
+- `main` retains necessary production quality and explicit authorization boundaries.
+  Main promotion, production mirror, tags/releases, deployments and protection
+  changes require separate Owner authorization. This session does not operate ADS.
 
 ## Handoff
 
@@ -79,4 +83,4 @@ results, PR, verified functionality and unresolved blockers.
 
 ## Owner override — 2026-11-01
 
-Ordinary development uses functional CI and substantive current-head CodeBuddy review. SCA, SBOM, license scanning, security evidence and isolation checks are opt-in and do not gate normal development. Preserve credential protection and production authorization boundaries. This override applies immediately under ADS #109, including while consuming older ADS releases.
+Ordinary development uses proportionate functional checks and CodeBuddy feedback under the current development workflow above. SCA, SBOM, license scanning, security evidence and isolation checks are opt-in and do not gate normal development. Preserve credential protection and production authorization boundaries. This override applies immediately under ADS #109, including while consuming older ADS releases.
