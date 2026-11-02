@@ -25,8 +25,8 @@
   #59 Closed / Project Done. No separate post-merge push CI configured.
 - #60 is local implementation from dev, incorporating #59 without publishing a
   second unmerged feature PR: native MPA retained, SSR headings-based sticky TOC,
-  search focus/Escape/timer/request cleanup, popup anchored to header, and initial
-  comments space reserved. No second router, settings store or SDK.
+  search focus/Escape/timer/request cleanup, popup anchored to header, mobile
+  navigation overlay without article displacement, and initial comments space reserved. No second router, settings store or SDK.
   Browser probe caught search left edge at -31px on 390px (scrollWidth alone missed
   it); fixed with header anchoring and explicit left/right checks incl. 320px.
   Four root/subpath 390/1440 lifecycle cases passed before final integration;

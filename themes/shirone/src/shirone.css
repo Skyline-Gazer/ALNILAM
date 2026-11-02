@@ -1006,7 +1006,16 @@ main {
   }
 
   html[data-navigation="ready"] .primary-nav {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
     display: none;
+    padding: 10px;
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--shape-l);
+    background: var(--surface-container);
+    box-shadow: 0 8px 24px var(--shadow-color);
   }
 
   html[data-navigation="ready"] .app-bar:has(.menu-toggle[aria-expanded="true"]) .primary-nav {

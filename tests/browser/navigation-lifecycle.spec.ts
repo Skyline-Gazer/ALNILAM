@@ -26,6 +26,18 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
         await page.goto(`${origin}/posts/getting-started/`, {waitUntil: 'networkidle'});
         await sample('first-render');
         expect(pagefindImports).toBe(0);
+        const headerY = await page.locator('.article-header').evaluate(el => el.getBoundingClientRect().top);
+        await page.locator('[data-theme-choice="light"]').click();
+        await sample('theme');
+        if (width === 390) {
+          const menu = page.getByRole('button', {name: '切换导航菜单'});
+          await menu.click();
+          await expect(page.getByRole('navigation', {name: '主导航'})).toBeVisible();
+          expect(await page.locator('.article-header').evaluate(el => el.getBoundingClientRect().top)).toBe(headerY);
+          await sample('mobile-menu-overlay');
+          await page.keyboard.press('Escape');
+          await expect(menu).toBeFocused();
+        }
         const toc = page.locator('.article-toc');
         await expect(toc).toHaveCount(1);
         const summary = toc.locator('summary');
@@ -53,6 +65,12 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
         for (let round = 0; round < 10; round++) {
           await page.getByRole('link', {name: '← 返回全部文章'}).click();
           await expect(page.locator('.post-list')).toBeVisible();
+          if (round === 0) {
+            const image = page.locator('[data-post-card] img[loading="lazy"]').first();
+            await image.scrollIntoViewIfNeeded();
+            await expect.poll(() => image.evaluate(el => (el as HTMLImageElement).complete && (el as HTMLImageElement).naturalWidth > 0)).toBe(true);
+            await sample('lazy-image-and-font-ready');
+          }
           await page.locator(`[data-post-card] h2 a[href="${new URL(origin).pathname.replace(/\/$/, '')}/posts/getting-started/"]`).click();
           await expect(page.locator('.article-toc')).toHaveCount(1);
           await expect(page.locator('astro-island[component-export="default"]')).toHaveCount(1);
