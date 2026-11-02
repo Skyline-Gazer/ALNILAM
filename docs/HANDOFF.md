@@ -20,7 +20,9 @@
   28% desktop cover geometry; contain long titles, code/tables and rich media,
   preserve card/tag click targets, and capture 1440/390 root/subpath evidence.
   Local type/build/budget and five affected token/browser-harness checks pass;
-  four new 1440/390 root/subpath edge cases pass with screenshot attachments.
+  existing plus new browser cases pass 8/8; the final four edge cases also pass
+  with actual pre/code markup, page-error capture and labelled report steps.
+  Screenshots are attached in PR #44; current source/CI is recorded there.
   New edge-case tests use clearly labelled synthetic DOM content; they do not
   establish #55 real external-Site CI acceptance or P3 phase completion.
 - Proposed ADS cnb/dev `9e36584516205bc11e7b7f1fd7ea0529901d855a` was compared

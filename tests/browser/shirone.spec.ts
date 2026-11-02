@@ -200,53 +200,62 @@ for (const origin of [ROOT, NESTED]) for (const width of [1440, 390]) {
   test(`reading edge cases ${new URL(origin).pathname} ${width}`, async ({browser}, info) => {
     const context = await browser.newContext({viewport: {width, height: 1000}, reducedMotion: "reduce"});
     const page = await context.newPage();
+    const errors: string[] = [];
+    page.on("pageerror", error => errors.push(String(error)));
     try {
-      await page.goto(`${origin}/`, {waitUntil: "networkidle"});
-      await assertListGeometry(page, width);
-      const card = page.locator('[data-post-card][data-cover="true"]').first();
-      const title = card.locator('h2 a');
-      const articleHref = await title.getAttribute('href');
-      await title.evaluate(el => { el.textContent = "LongUnbrokenTitle".repeat(12); });
-      const titleBox = await title.boundingBox();
-      const contentBox = await card.locator('.post-card__content').boundingBox();
-      expect(titleBox!.x + titleBox!.width).toBeLessThanOrEqual(contentBox!.x + contentBox!.width);
-      expect(await title.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
-      const noCover = page.locator('[data-post-card][data-cover="false"]').first();
-      await expect(noCover).toBeVisible();
-      await expect(noCover.locator('.post-card__cover')).toHaveCount(0);
-      const tag = card.locator('.post-card__tags a').first();
-      const tagHref = await tag.getAttribute('href');
-      if (width === 390) expect((await tag.boundingBox())!.height).toBeGreaterThanOrEqual(44);
-      await captureScreenshot(page, info.outputPath('cards-long-title.png'));
-      await tag.click();
-      await expect(page).toHaveURL(new URL(tagHref!, origin).href);
-      await page.goto(`${origin}/`, {waitUntil: "networkidle"});
-      // The stretched title link makes blank card space clickable, without swallowing tag links.
-      await page.locator('[data-post-card][data-cover="true"]').first().click({position: {x: 12, y: 12}});
-      await expect(page).toHaveURL(new URL(articleHref!, origin).href);
-      await page.locator('.article-header h1').evaluate(el => { el.textContent = "LongArticleTitle".repeat(12); });
-      await page.locator('.prose-post').evaluate(el => {
-        const paragraph = document.createElement('p');
-        paragraph.textContent = "https://example.com/" + "unbrokentext".repeat(30);
-        const pre = document.createElement('pre');
-        pre.textContent = "long_code_token_".repeat(40);
-        const table = document.createElement('table');
-        table.innerHTML = '<caption>Synthetic wide table</caption><tbody><tr>' + '<td style="white-space:nowrap">Wide table column</td>'.repeat(12) + '</tr></tbody>';
-        const frame = document.createElement('iframe');
-        frame.width = '1600'; frame.height = '900'; frame.title = 'Synthetic embedded media';
-        frame.srcdoc = '<p>Local media fixture</p>';
-        el.append(paragraph, pre, table, frame);
+      await test.step("card layout, long titles and separate click targets", async () => {
+        await page.goto(`${origin}/`, {waitUntil: "networkidle"});
+        await assertListGeometry(page, width);
+        const card = page.locator('[data-post-card][data-cover="true"]').first();
+        const title = card.locator('h2 a');
+        const articleHref = await title.getAttribute('href');
+        await title.evaluate(el => { el.textContent = "LongUnbrokenTitle".repeat(12); });
+        const titleBox = await title.boundingBox();
+        const contentBox = await card.locator('.post-card__content').boundingBox();
+        expect(titleBox!.x + titleBox!.width).toBeLessThanOrEqual(contentBox!.x + contentBox!.width);
+        expect(await title.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+        const noCover = page.locator('[data-post-card][data-cover="false"]').first();
+        await expect(noCover).toBeVisible();
+        await expect(noCover.locator('.post-card__cover')).toHaveCount(0);
+        const tag = card.locator('.post-card__tags a').first();
+        const tagHref = await tag.getAttribute('href');
+        if (width === 390) expect((await tag.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+        await captureScreenshot(page, info.outputPath('cards-long-title.png'));
+        await tag.click();
+        await expect(page).toHaveURL(new URL(tagHref!, origin).href);
+        await page.goto(`${origin}/`, {waitUntil: "networkidle"});
+        // The stretched title link makes blank card space clickable, without swallowing tag links.
+        await page.locator('[data-post-card][data-cover="true"]').first().click({position: {x: 12, y: 12}});
+        await expect(page).toHaveURL(new URL(articleHref!, origin).href);
       });
-      await expect(page.locator('.prose-post iframe')).toBeVisible();
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
-      for (const selector of ['pre', 'table']) {
-        const overflow = await page.locator(`.prose-post ${selector}`).last().evaluate(el => ({
-          scrolls: el.scrollWidth > el.clientWidth, overflowX: getComputedStyle(el).overflowX,
-        }));
-        expect(overflow.scrolls).toBe(true);
-        expect(overflow.overflowX).toBe('auto');
-      }
-      await captureScreenshot(page, info.outputPath('article-rich-media.png'));
+      await test.step("article long text, code, tables and embedded media", async () => {
+        await page.locator('.article-header h1').evaluate(el => { el.textContent = "LongArticleTitle".repeat(12); });
+        await page.locator('.prose-post').evaluate(el => {
+          const paragraph = document.createElement('p');
+          paragraph.textContent = "https://example.com/" + "unbrokentext".repeat(30);
+          const pre = document.createElement('pre');
+          const code = document.createElement("code");
+          code.textContent = "long_code_token_".repeat(40);
+          pre.append(code);
+          const table = document.createElement('table');
+          table.innerHTML = '<caption>Synthetic wide table</caption><tbody><tr>' + '<td style="white-space:nowrap">Wide table column</td>'.repeat(12) + '</tr></tbody>';
+          const frame = document.createElement('iframe');
+          frame.width = '1600'; frame.height = '900'; frame.title = 'Synthetic embedded media';
+          frame.srcdoc = '<p>Local media fixture</p>';
+          el.append(paragraph, pre, table, frame);
+        });
+        await expect(page.locator('.prose-post iframe')).toBeVisible();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+        for (const selector of ['pre', 'table']) {
+          const overflow = await page.locator(`.prose-post ${selector}`).last().evaluate(el => ({
+            scrolls: el.scrollWidth > el.clientWidth, overflowX: getComputedStyle(el).overflowX,
+          }));
+          expect(overflow.scrolls).toBe(true);
+          expect(overflow.overflowX).toBe('auto');
+        }
+        await captureScreenshot(page, info.outputPath('article-rich-media.png'));
+      });
+      expect(errors).toEqual([]);
     } finally { await context.close(); }
   });
 }
