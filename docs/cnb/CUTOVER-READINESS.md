@@ -10,7 +10,17 @@ Development authority now rests on CNB `KoolingMachine/ALNILAM` with feature bra
 
 GitHub Issues and Project #17 remain task-management authority. GitHub code is mirror-only for new feature development. Residual zero-status/non-atomic merge risk is accepted and documented; production `main`, first production mirror, tags/releases and deployments remain separately authorized.
 
-## Current Owner decision — Agent-governed PRs (2026-10-30)
+## Current Owner correction — 2026-11-02
+
+CNB dev is the development authority and has no mandatory platform protection.
+Use ordinary PRs or authorized non-force Git integration. CI/CodeBuddy provide
+truthful functional feedback, not mandatory approval per ordinary change. Follow
+[AGENTS.md](../../AGENTS.md) and the current [handoff](../HANDOFF.md) for the
+retained ADS pin and read-only production preflight. Main/release/mirror/deploy
+still require separate authorization. The earlier decision and pilot evidence
+below are historical; their outcomes are not rescored or repeated prerequisites.
+
+## Historical Owner decision — Agent-governed PRs (2026-10-30)
 
 This decision supersedes the independent Gatekeeper proposal and its acceptance blockers below. The Agent must verify complete current-version CI plus actual CodeBuddy review, resolve blocking findings, re-read the live PR head, and actively perform a normal merge. No independent approval identity, fixed required Reviewer or CNB Auto Merge is required. CNB zero-status mergeability remains a disclosed platform risk; it has not been repaired. Production main, the first production mirror, formal tags/releases and deployments are excluded from this authorization.
 

@@ -1,4 +1,6 @@
-# Public pilot only. Never publish, mirror, tag, or deploy from CNB.
+# Functional feedback for CNB development, not per-change approval or dev protection.
+# Keep real failures visible; optional security/isolation audits are not prerequisites.
+# Never publish, mirror, tag, or deploy from CNB.
 # "$" covers dev and disposable acceptance branches without modifying main.
 $:
   pull_request:

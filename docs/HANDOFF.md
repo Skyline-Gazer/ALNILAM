@@ -1,5 +1,53 @@
 # ALNILAM — AI Agent Handoff
 
+## ADS adoption reconciliation — Owner correction 2026-11-02
+
+Current project-local policy is [AGENTS.md](../AGENTS.md). It supersedes older
+mandatory per-change CodeBuddy/complete-CI/protection wording below, without
+rewriting its historical outcomes. Baseline CNB dev is
+`bb7e6afacba2f005cbc887dd063573cb711bc679`; `.ads` remains pinned to
+`b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`. No bootstrap or pin upgrade.
+
+- Native settings readback: only `main` has a protection rule; dev has none.
+  Ordinary PR or authorized non-force integration is permitted. CodeBuddy is
+  already advisory in `.cnb.yml`; functional tests and coverage remain useful
+  feedback, with actual failures reported. No new CI framework or security audit.
+- P2 #51–#54/#56 are complete; reuse their evidence. #55 stays
+  **NOT_VERIFIED** for a real external Site CI; Demo fixtures do not satisfy it.
+  T04 A03 history is unchanged. Next independent feature: P3 #57 under #39;
+  P1 is accepted and P2 configuration/resource contracts are stable, so this
+  token/component work does not depend on #55 or claim the P2 Gate passed.
+
+### Production promotion preflight — read-only
+
+Both CNB/GitHub main remain `285a62cecd87f8f20276c7cc989537a391f488c8`.
+CNB main rule `b28b7af69320201d1cf206ebf28373980add1451` requires PR,
+review (count 1, ratio 50), status checks, and has no master manual-merge/push
+exception. Its single-maintainer merge path is **not verified/ready**; do not
+attempt a merge or silently weaken that rule. GitHub main ruleset requires PR,
+resolved threads and current `verify` (zero fixed approvals); it is a separate
+production constraint, not proof CNB main can merge.
+
+GitHub main's `.github/workflows/ci.yml` still hardcodes ADS
+`1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`. Current dev uses
+`ads-pin.txt` plus `scripts/check-ads-pin.sh`, allowing the exact approved pin or
+an omitted production gitlink. A future release/mirror PR must test its actual
+candidate workflow/tree; do not assume old-main verify accepts a new/omitted pin.
+No production workflow or branch was changed for this preflight.
+
+Existing mirror preparation is local-only `scripts/cnb-mirror-candidate.py`;
+it does not push refs. Production synchronization remains an explicitly
+approved sync-branch/PR flow, not a new automatic mirror. CNB `.cnb.yml` has PR
+feedback only, no publish/mirror/deploy stages. Actual GitHub main Deploy is
+`workflow_dispatch` only and Pages uses workflow builds. Its environment has
+branch restrictions, **no required-reviewer approval rule**; manual dispatch is
+not itself proof of Owner approval. Do not dispatch. Public checkout skips ADS.
+
+The mistakenly sent ADS release instruction was revoked after remote side
+effects had already occurred. No further ADS writes are authorized here; do
+not delete tags, roll back ADS main or rewrite its history. ALNILAM consumes
+only its retained approved pin, irrespective of later ADS branch/release state.
+
 ## P2 Owner Final GO — 2026-11-02
 
 This checkpoint supersedes the prior dev-protection rescue instructions. Owner
@@ -171,7 +219,7 @@ CNB `KoolingMachine/ALNILAM` is now the development code authority. Verified ref
 - GitHub `dev`: `0d11757e111a4a5169d3a473b736ed2918bd3d2e`
 - Shared Git tree: `5530addc6e4d719229641e9e2cd0828d78256e78`
 
-New feature branches start from CNB `dev`. CNB PRs require current-head CI and actual CodeBuddy review before an Agent normal Merge Commit. GitHub Issues and Project #17 remain the task-management authority; GitHub code is a mirror target only and does not accept new feature PRs. GitHub `dev` history is not rewritten and the two remotes do not require identical commit SHAs.
+New feature branches start from CNB `dev`. The 2026-11-02 Owner correction above supersedes the earlier per-change CI/CodeBuddy approval requirement. GitHub Issues and Project #17 remain the task-management authority; GitHub code is a mirror target only and does not accept new feature PRs. GitHub `dev` history is not rewritten and the two remotes do not require identical commit SHAs.
 
 Accepted residual risk remains: CNB can still expose zero-status mergeability and the recheck/merge window is not atomic. Independent Gatekeeper, fixed Reviewer, Auto Merge, force push and bypass are not part of the accepted workflow.
 
