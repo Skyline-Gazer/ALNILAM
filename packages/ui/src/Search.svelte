@@ -102,7 +102,7 @@
   <button
     type="button"
     class="rounded-full px-4 py-2 text-sm font-medium transition-colors"
-    style="border: 1px solid var(--border); color: var(--fg-soft); background: var(--bg-card)"
+    style="border: 1px solid var(--outline-variant, var(--border)); color: var(--on-surface, var(--fg-soft)); background: var(--surface-container, var(--bg-card))"
     aria-expanded={open}
     aria-controls="alnilam-search"
     onclick={() => {
@@ -115,7 +115,7 @@
     <div
       id="alnilam-search"
       class="absolute right-0 z-30 mt-3 w-80 rounded-2xl p-4 sm:w-96"
-      style="background: var(--bg-elev); border: 1px solid var(--border); box-shadow: 0 12px 40px rgba(0,0,0,.25)"
+      style="background: var(--surface-container-highest, var(--bg-elev)); border: 1px solid var(--outline-variant, var(--border)); box-shadow: 0 12px 40px var(--shadow-color, rgba(0,0,0,.25))"
       role="dialog"
       aria-label="站内搜索"
       
@@ -125,23 +125,23 @@
         placeholder={t.placeholder}
         aria-label={t.placeholder}
         class="w-full rounded-xl px-3.5 py-2 text-sm"
-        style="border: 1px solid var(--border); background: var(--bg-card); color: var(--fg)"
+        style="border: 1px solid var(--outline-variant, var(--border)); background: var(--surface-container, var(--bg-card)); color: var(--on-surface, var(--fg))"
         bind:value={query}
         {oninput}
       />
       <div class="mt-3 max-h-96 overflow-y-auto" aria-live="polite">
         {#if searching}
-          <p class="text-sm" style="color: var(--fg-muted)">{t.searching}</p>
+          <p class="text-sm" style="color: var(--on-surface-variant, var(--fg-muted))">{t.searching}</p>
         {:else if query && results.length === 0}
-          <p class="text-sm" style="color: var(--fg-muted)">{t.zero(query)}</p>
+          <p class="text-sm" style="color: var(--on-surface-variant, var(--fg-muted))">{t.zero(query)}</p>
         {:else if results.length > 0}
-          <p class="mb-2 text-xs" style="color: var(--fg-muted)">{t.many(results.length)}</p>
+          <p class="mb-2 text-xs" style="color: var(--on-surface-variant, var(--fg-muted))">{t.many(results.length)}</p>
           <ul class="space-y-2">
             {#each results as r, i (i)}
               <li>
-                <a href={r.url} class="block rounded-xl p-2.5 transition-colors hover:bg-[var(--accent-soft)]">
-                  <span class="block text-sm font-semibold" style="color: var(--fg)">{r.title}</span>
-                  <span class="mt-1 block text-xs leading-relaxed" style="color: var(--fg-muted)">{r.excerpt}</span>
+                <a href={r.url} class="block rounded-xl p-2.5 transition-colors hover:bg-[var(--primary-container,var(--accent-soft))]">
+                  <span class="block text-sm font-semibold" style="color: var(--on-surface, var(--fg))">{r.title}</span>
+                  <span class="mt-1 block text-xs leading-relaxed" style="color: var(--on-surface-variant, var(--fg-muted))">{r.excerpt}</span>
                 </a>
               </li>
             {/each}
