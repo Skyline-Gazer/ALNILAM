@@ -32,6 +32,11 @@ export interface ShironesPaths {
 	 * @default "<root>/content"
 	 */
 	content?: string;
+	/**
+	 * Cache directory for generated config bundles, icon collections, and thumbnails.
+	 * @default "<projectRoot>/.shirones"
+	 */
+	cache?: string;
 }
 
 export interface ShironesFontOptions {

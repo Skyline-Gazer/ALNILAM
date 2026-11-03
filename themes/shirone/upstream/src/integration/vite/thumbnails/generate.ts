@@ -173,13 +173,15 @@ export async function generateMomentThumbnails({
 		nextCache[cacheKey] = digest;
 	}
 
-	await fs.mkdir(outputRoot, { recursive: true });
+	if (images.length > 0) {
+		await fs.mkdir(outputRoot, { recursive: true });
+	}
 	let removed = 0;
 	// Pruning is only meaningful when the sources were actually read. A
 	// project with a custom content root has no `public/images/moments`, and
 	// treating "no sources" as "no thumbnails wanted" would delete every
 	// existing thumbnail on each dev/build.
-	const canPrune = prune && existsSync(sourceRoot);
+	const canPrune = prune && existsSync(sourceRoot) && existsSync(outputRoot);
 	if (canPrune) {
 		for (const outputPath of await collectImages(outputRoot)) {
 			if (expectedOutputs.has(path.resolve(outputPath).toLowerCase())) continue;

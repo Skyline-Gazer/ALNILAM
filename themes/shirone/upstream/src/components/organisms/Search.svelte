@@ -44,6 +44,12 @@ const fakeResult: SearchResult[] = [
 const togglePanel = () => {
 	const panel = document.getElementById("search-panel");
 	panel?.classList.toggle("float-panel-closed");
+	if (panel && !panel.classList.contains("float-panel-closed")) {
+		void (
+			window as unknown as { __loadPagefind?: () => Promise<unknown> }
+		).__loadPagefind?.();
+		panel.querySelector<HTMLInputElement>("input")?.focus();
+	}
 };
 
 const setPanelVisibility = (show: boolean, isDesktop: boolean): void => {
@@ -166,7 +172,7 @@ $: if (initialized) {
     id="search-input-desktop"
     name="search-desktop"
     placeholder={i18n(I18nKey.search)}
-    onfocus={() => search(keywordDesktop, true)}
+    onfocus={() => { void (window as unknown as { __loadPagefind?: () => Promise<unknown> }).__loadPagefind?.(); void search(keywordDesktop, true); }}
     oncollapse={() => { requestGeneration++; isSearching=false; setPanelVisibility(false, true); }}
 />
 

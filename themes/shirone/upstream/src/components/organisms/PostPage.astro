@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from "astro:content";
 import { getPostUrl } from "@utils/url-utils";
+import { siteConfig } from "@/config";
 import { POST_CARD_MIN_WIDTH, postListConfig } from "@/config/postListConfig";
 import PostCard from "./PostCard.astro";
 
@@ -94,7 +95,7 @@ activate-post-grid()
      Layout 的 content:replace 钩子兜底，见 utils/layout-mode.ts）。
      grid 模式需同步做一次最简瀑布流打包（与 utils/masonry.ts 同算法），
      避免未打包的 8px 行轨道在首帧叠加渲染。 -->
-<script is:inline>
+{(siteConfig.displaySettings.layoutMode || mode === "grid") && <script is:inline>
 (function () {
 	var el = document.getElementById("post-list");
 	if (!el) return;
@@ -120,15 +121,4 @@ activate-post-grid()
 		heights[shortest] += h;
 	}
 })();
-</script>
-
-<script>
-	// 首载挂接瀑布流（打包 + ResizeObserver）；字体加载后卡片高度可能微调，重排一次。
-	// swup 导航由 Layout 的 content:replace 钩子调用 applyStoredLayoutMode 兜底。
-	import { packMasonry, setupMasonry } from "@utils/masonry";
-	const container = document.getElementById("post-list");
-	if (container) {
-		setupMasonry(container);
-		document.fonts?.ready.then(() => packMasonry(container));
-	}
-</script>
+</script>}

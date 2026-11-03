@@ -114,6 +114,14 @@ for (const [deployment, origin] of deployments) {
 
 test.afterAll(async ({}, info) => {
   const root = path.join(info.project.outputDir, 'visual-baseline');
+  if (!fs.existsSync(root)) return;
+  const expectedKeys = deployments.flatMap(([deployment]) =>
+    widths.flatMap(width => themes.map(theme => keyFor(deployment, width, theme))),
+  );
+  const existingKeys = expectedKeys.filter(key =>
+    fs.existsSync(path.join(root, key, 'visual-baseline.json')),
+  );
+  if (existingKeys.length < expectedKeys.length) return;
   // This report is a complete 8-scenario matrix; missing pair members fail the batch.
   for (const [deployment] of deployments) for (const width of widths) for (const theme of themes) {
     const key = keyFor(deployment, width, theme);

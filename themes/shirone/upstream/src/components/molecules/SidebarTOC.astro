@@ -261,7 +261,11 @@ class TableOfContents extends HTMLElement {
 				this.updateActiveHighlight();
 
 				history.pushState(history.state, "", anchor.hash);
-				window.scrollTo({ top: this.anchorNavScrollTop, behavior: "smooth" });
+				const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+				window.scrollTo({
+					top: this.anchorNavScrollTop,
+					behavior: reduced ? "auto" : "smooth",
+				});
 			} else {
 				this.anchorNavTarget = null;
 				this.anchorNavIdx = null;

@@ -47,14 +47,27 @@ function rmTreeSafe(target) {
   fs.rmSync(target, { recursive: true, force: true });
 }
 function removeLegacyCache() {
-  // Locations used before the managed cache existed; safe to delete, they are
-  // regenerated on demand (stale entries here once served broken builds).
-  for (const legacy of ["apps/web/.astro", "apps/web/node_modules/.astro"]) {
+  // Locations used before the managed cache existed or by direct CLI runs;
+  // safe to delete, they are regenerated on demand in the managed cache.
+  for (const legacy of [
+    "apps/web/.astro",
+    "apps/web/node_modules/.astro",
+    "apps/web/.shirones",
+    "apps/web/src/generated",
+    "apps/web/public/assets/moments/thumbnails",
+  ]) {
     const target = path.join(repoRoot, legacy);
     const stat = fs.lstatSync(target, { throwIfNoEntry: false });
     if (!stat) continue;
     if (stat.isSymbolicLink()) throw new Error("Refusing to remove a symbolic link cache location: " + target);
     fs.rmSync(target, { recursive: true, force: true });
+  }
+  for (const emptyDir of ["apps/web/public/assets/moments", "apps/web/public/assets", "apps/web/public"]) {
+    const target = path.join(repoRoot, emptyDir);
+    const stat = fs.lstatSync(target, { throwIfNoEntry: false });
+    if (stat && stat.isDirectory() && !stat.isSymbolicLink() && fs.readdirSync(target).length === 0) {
+      fs.rmdirSync(target);
+    }
   }
 }
 if (cleanCacheOnly) {
@@ -155,6 +168,7 @@ try {
       ? new Date(Number(process.env.SOURCE_DATE_EPOCH) * 1000).toISOString()
       : new Date().toISOString(),
   };
+  removeLegacyCache();
   const result = spawnSync(
     externalToolchain ? process.execPath : pnpm,
     externalToolchain
@@ -170,6 +184,7 @@ try {
         ALNILAM_OUTPUT_DIR: stage,
         ALNILAM_VITE_CACHE: path.join(cacheRoot, "v1", revKey, "vite"),
         ALNILAM_ASTRO_CACHE: path.join(buildDir, "astro"),
+        ALNILAM_SHIRONE_CACHE: path.join(buildDir, "shirone"),
       },
     },
   );

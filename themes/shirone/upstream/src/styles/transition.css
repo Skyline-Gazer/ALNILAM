@@ -46,6 +46,18 @@ html.is-animating .transition-swup-fade {
     animation-delay: 250ms;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .onload-animation {
+        opacity: 1;
+        animation: none;
+    }
+}
+
+html.motion-reduced .onload-animation {
+    opacity: 1;
+    animation: none;
+}
+
 /* Post content
  *
  * The staggered entry delays this used to set are gone. They were scoped to

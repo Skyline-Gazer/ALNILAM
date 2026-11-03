@@ -54,13 +54,12 @@ const isHomeItemVisible = homeItem
 	style={`--fab-bottom: ${fabConfig.offset?.bottom ?? "var(--m3e-space-8)"}; --fab-inline-offset: ${fabConfig.offset?.right ?? "var(--m3e-space-6)"}`}
 >
 	<!-- 1. TOC 悬浮目录项与弹窗 -->
-	{tocItem && (
+	{tocItem && isWidgetVisibleOnPage(tocItem.pages, page) && (
 		<div
 			data-fab-slot
 			class:list={[
 				"relative",
 				resolveDeviceClasses(tocItem.devices),
-				{ "is-page-hidden": !isWidgetVisibleOnPage(tocItem.pages, page) },
 			]}
 		>
 			<FloatingTOCPanel
@@ -75,7 +74,6 @@ const isHomeItemVisible = homeItem
 				devices={tocItem.devices}
 				pages={tocItem.pages ?? ["post"]}
 				size={fabConfig.size}
-				class={!isWidgetVisibleOnPage(tocItem.pages, page) ? "is-page-hidden" : ""}
 			>
 				<Icon icon="material-symbols:format-list-bulleted-rounded" class="text-xl" />
 			</FloatingActionButton>
@@ -160,12 +158,3 @@ const isHomeItemVisible = homeItem
 	.m3-floating-controls-container
 		transition: none
 </style>
-
-<script>
-	import { initFabController } from "@utils/fab-controller";
-
-	// 初始化 FAB 运行时状态机，支持直接加载与 Swup 导航
-	if (typeof window !== "undefined") {
-		initFabController();
-	}
-</script>

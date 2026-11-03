@@ -64,6 +64,9 @@ function syncFromRoute() {
 // 点击链接后收起抽屉；外部链接不改变路由，高亮已由路由同步维护
 function handleNavClick() {
 	open = false;
+	document
+		.getElementById("nav-drawer-switch")
+		?.setAttribute("aria-expanded", "false");
 }
 
 function toggleGroup(group: string) {
@@ -72,8 +75,15 @@ function toggleGroup(group: string) {
 
 onMount(() => {
 	syncFromRoute();
+	const syncButtonAria = (isOpen: boolean) => {
+		document
+			.getElementById("nav-drawer-switch")
+			?.setAttribute("aria-expanded", String(isOpen));
+	};
+	syncButtonAria(open);
 	const onToggle = () => {
 		open = !open;
+		syncButtonAria(open);
 		if (open) {
 			tick().then(() => {
 				drawerEl?.querySelector<HTMLElement>("a, button")?.focus();
@@ -81,15 +91,28 @@ onMount(() => {
 		}
 	};
 	const onKey = (e: KeyboardEvent) => {
-		if (e.key === "Escape") open = false;
+		if (e.key === "Escape" && open) {
+			open = false;
+			syncButtonAria(false);
+			document.getElementById("nav-drawer-switch")?.focus();
+		}
+	};
+	const desktopMedia = window.matchMedia("(min-width: 1024px)");
+	const onDesktopChange = (e: MediaQueryListEvent) => {
+		if (e.matches && open) {
+			open = false;
+			syncButtonAria(false);
+		}
 	};
 	document.addEventListener("site-drawer:toggle", onToggle);
 	document.addEventListener("swup:content:replace", syncFromRoute);
 	window.addEventListener("keydown", onKey);
+	desktopMedia.addEventListener("change", onDesktopChange);
 	return () => {
 		document.removeEventListener("site-drawer:toggle", onToggle);
 		document.removeEventListener("swup:content:replace", syncFromRoute);
 		window.removeEventListener("keydown", onKey);
+		desktopMedia.removeEventListener("change", onDesktopChange);
 	};
 });
 

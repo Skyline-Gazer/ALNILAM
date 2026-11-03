@@ -7,6 +7,7 @@ import {
 	unlinkSync,
 	writeFileSync,
 } from "node:fs";
+import { createRequire } from "node:module";
 import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { ResolvedShironesPaths } from "../types.ts";
@@ -167,11 +168,21 @@ function overlayEsbuildPlugin(
 			// with 0.34 bindings and crash at import time (`sharp.format().heif`
 			// is undefined). Keeping both external lets Node resolve a matched
 			// pair from the project root, where `sharp` is a peer dependency.
+			const pkgRequire = createRequire(join(paths.packageRoot, "package.json"));
 			// biome-ignore lint/suspicious/noExplicitAny: see above.
-			build.onResolve({ filter: /^(sharp$|@img\/)/ }, (args: any) => ({
-				path: args.path,
-				external: true,
-			}));
+			build.onResolve({ filter: /^(sharp$|@img\/)/ }, (args: any) => {
+				try {
+					return {
+						path: pathToFileURL(pkgRequire.resolve(args.path)).href,
+						external: true,
+					};
+				} catch {
+					return {
+						path: args.path,
+						external: true,
+					};
+				}
+			});
 		},
 	};
 }

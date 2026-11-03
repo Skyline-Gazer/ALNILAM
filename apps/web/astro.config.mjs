@@ -2,10 +2,27 @@ import { defineConfig } from "astro/config";
 import svelte, {vitePreprocess} from "@astrojs/svelte";
 import mdx from "@astrojs/mdx";
 import shirones from "../../themes/shirone/upstream/src/integration/index.ts";
+import fs from "node:fs";
+import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {userConfigOverrides, userConfigSources, siteAppearance} from '../../themes/shirone/adapter/site-config.mjs';
 import { loadSite } from "./src/lib/site-source.mjs";
-const { config } = loadSite();
+const { root: siteRoot, config } = loadSite();
+process.env.ALNILAM_SITE_DIR ||= siteRoot;
+
+const originalRename = fs.promises.rename.bind(fs.promises);
+fs.promises.rename = async (oldPath, newPath) => {
+  try {
+    return await originalRename(oldPath, newPath);
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "EXDEV") {
+      await fs.promises.cp(oldPath, newPath, { recursive: true });
+      await fs.promises.rm(oldPath, { recursive: true, force: true });
+      return;
+    }
+    throw error;
+  }
+};
 
 /**
  * Optional-module route gating: a disabled module must ship nothing — no page,
@@ -14,6 +31,11 @@ const { config } = loadSite();
  */
 
 const base = new URL(config.site.url).pathname.replace(/\/$/, "") || "/";
+const shironeCacheDir =
+  process.env.ALNILAM_SHIRONE_CACHE ||
+  (process.env.ALNILAM_ASTRO_CACHE
+    ? path.join(path.dirname(process.env.ALNILAM_ASTRO_CACHE), "shirone")
+    : fileURLToPath(new URL("../../.tmp/shirone", import.meta.url)));
 
 export default defineConfig({
   site: config.site.url,
@@ -23,6 +45,9 @@ export default defineConfig({
   base,
   output: "static",
   outDir: process.env.ALNILAM_OUTPUT_DIR || "./dist",
+  build: {
+    inlineStylesheets: "never",
+  },
   // compose.mjs points this at the managed build cache (per Core revision and
   // Site digest). Astro's build-time content store and image cache live here;
   // shared default locations once served stale entries across builds. Unset
@@ -35,10 +60,11 @@ export default defineConfig({
       pagefind: false,
       fonts: {subset: false},
       paths: {
-        root: fileURLToPath(new URL('../../.tmp/shirone', import.meta.url)),
+        root: shironeCacheDir,
+        cache: shironeCacheDir,
         config: fileURLToPath(new URL('../../themes/shirone/upstream/src/config', import.meta.url)),
         data: fileURLToPath(new URL('../../themes/shirone/upstream/src/data', import.meta.url)),
-        content: loadSite().root + '/content',
+        content: siteRoot + '/content',
       },
     }),
     // Svelte 5 strips type-only TS; Vite preprocessing is needed only for native Stylus.
@@ -50,6 +76,27 @@ export default defineConfig({
         "astro:config:setup": ({ injectRoute }) => {
           if (config.bangumi.enabled) {
             injectRoute({ pattern: "/bangumi/", entrypoint: "./src/modules/bangumi.astro", prerender: true });
+          }
+        },
+        "astro:build:setup": ({ vite }) => {
+          if (process.env.ALNILAM_ASTRO_CACHE && vite.environments) {
+            const buildScratch = fileURLToPath(new URL(`./.astro/build-${process.pid}`, import.meta.url));
+            if (vite.environments.prerender?.build) {
+              vite.environments.prerender.build.outDir = path.join(buildScratch, ".prerender");
+            }
+            if (vite.environments.ssr?.build) {
+              vite.environments.ssr.build.outDir = buildScratch;
+            }
+            const cleanScratch = () => {
+              try {
+                fs.rmSync(buildScratch, { recursive: true, force: true });
+                const dotAstro = path.dirname(buildScratch);
+                if (fs.existsSync(dotAstro) && fs.readdirSync(dotAstro).length === 0) {
+                  fs.rmdirSync(dotAstro);
+                }
+              } catch {}
+            };
+            process.once("exit", cleanScratch);
           }
         },
       },

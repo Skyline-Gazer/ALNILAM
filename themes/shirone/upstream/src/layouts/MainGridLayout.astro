@@ -17,7 +17,7 @@ import {
 	isDualColumn,
 } from "@utils/responsive-utils";
 import type { MarkdownHeading } from "astro";
-import { contextMenuConfig } from "@/config";
+import { contextMenuConfig, siteConfig } from "@/config";
 import type { SidebarPage } from "@/types/sidebarConfig";
 import Layout from "./Layout.astro";
 
@@ -61,6 +61,16 @@ const sidebarClasses = generatePrimarySidebarClasses(sidebarResponsive);
 const secondarySidebarClasses =
 	generateSecondarySidebarClasses(sidebarResponsive);
 const mainContentClasses = generateMainContentClasses(sidebarResponsive);
+const hasBanner =
+	(Array.isArray(siteConfig.banner.src.desktop)
+		? siteConfig.banner.src.desktop.length > 0
+		: siteConfig.banner.src.desktop.light.length > 0 ||
+			siteConfig.banner.src.desktop.dark.length > 0) ||
+	(Array.isArray(siteConfig.banner.src.mobile)
+		? siteConfig.banner.src.mobile.length > 0
+		: siteConfig.banner.src.mobile.light.length > 0 ||
+			siteConfig.banner.src.mobile.dark.length > 0) ||
+	Boolean(siteConfig.banner.homeText?.enable);
 ---
 
 <Layout title={title} banner={banner} ogImage={ogImage} description={description} lang={lang} setOGTypeArticle={setOGTypeArticle} page={page}>
@@ -74,7 +84,7 @@ const mainContentClasses = generateMainContentClasses(sidebarResponsive);
 </header>
 
 <!-- Banner -->
-<BannerStage page={page} title={title} description={description} date={bannerDate} />
+{hasBanner && <BannerStage page={page} title={title} description={description} date={bannerDate} />}
 
 <!-- Main content -->
 <div id="main-layout" class="absolute w-full z-30 pointer-events-none">
@@ -117,7 +127,7 @@ const mainContentClasses = generateMainContentClasses(sidebarResponsive);
         </div>
 
         <FloatingControls page={page} headings={headings} hasComments={hasComments} />
-        <RouteProgress client:load />
+        <RouteProgress />
     </div>
 </div>
 

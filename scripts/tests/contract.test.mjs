@@ -452,12 +452,18 @@ test("build cache is version-isolated across Core revisions and cleanable", (t) 
   assert.equal(fs.existsSync(path.join(cache, "v1", keyOf("rev-a"), digest, "site", "alnilam.config.yaml")), true);
   assert.equal(fs.existsSync(path.join(cache, "v1", keyOf("rev-a"), digest, "astro", "data-store.json")), true);
   assert.equal(fs.existsSync(path.join(cache, "v1", keyOf("rev-b"), digest, "astro", "data-store.json")), true);
+  assert.equal(fs.existsSync(path.join(cache, "v1", keyOf("rev-a"), digest, "shirone", "generated", "local-icon-collections.ts")), true);
+  assert.equal(fs.existsSync(path.join(cache, "v1", keyOf("rev-b"), digest, "shirone", "generated", "local-icon-collections.ts")), true);
   // Legacy cache locations are cleaned regardless of the cache root choice.
   const legacyRoot = path.join(root, "legacy-repo");
   fs.mkdirSync(path.join(legacyRoot, "apps/web/node_modules/.astro"), { recursive: true });
   fs.mkdirSync(path.join(legacyRoot, "apps/web/.astro"), { recursive: true });
+  fs.mkdirSync(path.join(legacyRoot, "apps/web/.shirones"), { recursive: true });
+  fs.mkdirSync(path.join(legacyRoot, "apps/web/src/generated"), { recursive: true });
   fs.writeFileSync(path.join(legacyRoot, "apps/web/.astro", "stale.txt"), "x");
   fs.writeFileSync(path.join(legacyRoot, "apps/web/node_modules/.astro", "stale.txt"), "x");
+  fs.writeFileSync(path.join(legacyRoot, "apps/web/.shirones", "stale.txt"), "x");
+  fs.writeFileSync(path.join(legacyRoot, "apps/web/src/generated", "local-icon-collections.ts"), "x");
   const clean = spawnSync(process.execPath, ["scripts/compose.mjs", "--clean-cache"], {
     env: { ...composeEnv, ALNILAM_REPO_ROOT: legacyRoot }, encoding: "utf8",
   });
@@ -465,6 +471,8 @@ test("build cache is version-isolated across Core revisions and cleanable", (t) 
   assert.equal(fs.existsSync(path.join(cache, "v1")), false);
   assert.equal(fs.existsSync(path.join(legacyRoot, "apps/web/.astro")), false);
   assert.equal(fs.existsSync(path.join(legacyRoot, "apps/web/node_modules/.astro")), false);
+  assert.equal(fs.existsSync(path.join(legacyRoot, "apps/web/.shirones")), false);
+  assert.equal(fs.existsSync(path.join(legacyRoot, "apps/web/src/generated")), false);
 });
 
 test("compose writes deterministic provenance binding Core rev and Site digest", (t) => {

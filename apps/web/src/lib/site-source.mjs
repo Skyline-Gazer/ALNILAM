@@ -3,7 +3,10 @@ import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync } from "node:fs";
 import { normalizeSiteConfig, parseSiteConfigDocument, SITE_CONFIG_FILENAME } from "@alnilam/core";
 
-const defaultSite = fileURLToPath(new URL("../../../../sites/demo/", import.meta.url));
+const fromModule = fileURLToPath(new URL("../../../../sites/demo/", import.meta.url));
+const defaultSite = existsSync(path.join(fromModule, SITE_CONFIG_FILENAME))
+  ? fromModule
+  : path.resolve(process.cwd(), "../../sites/demo");
 
 export function loadSite() {
   const root = path.resolve(process.env.ALNILAM_SITE_DIR || defaultSite);

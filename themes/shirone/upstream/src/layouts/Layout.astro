@@ -297,6 +297,100 @@ import { initLastUpdatedNotices } from "../utils/last-updated-notice";
 import {getHue, getStoredTheme, setHue, setTheme} from "../utils/setting-utils";
 import { WALLPAPER_MODE_CHANGE_EVENT, BANNER_HEIGHT, BANNER_HEIGHT_EXTEND } from "../constants/constants";
 import { copyPageLink } from "../utils/copy-page-link";
+import { bindFancyboxRuntime } from "../utils/fancybox-runtime";
+import { applyStoredLayoutMode } from "../utils/layout-mode";
+import { initFabController } from "../utils/fab-controller";
+import { packMasonry, setupMasonry } from "../utils/masonry";
+import { resolvePageKey } from "../utils/nav-utils";
+
+function syncTopAppBarNavigation() {
+	setTopAppBarNavigation(resolvePageKey(new URL(window.location.href)));
+}
+
+function setTopAppBarNavigation(pageKey: string) {
+	document.querySelectorAll<HTMLElement>("[data-nav-key]").forEach((link) => {
+		const active = (link.dataset.navKey || "") === pageKey;
+		link.classList.toggle("top-app-bar__nav-link--active", active);
+		if (active) link.setAttribute("aria-current", "page");
+		else link.removeAttribute("aria-current");
+	});
+	document.querySelectorAll<HTMLElement>("[data-nav-group]").forEach((group) => {
+		const trigger = group.querySelector(":scope > button.top-app-bar__nav-link");
+		if (!trigger) return;
+		const active = Boolean(group.querySelector(".top-app-bar__submenu-item.top-app-bar__nav-link--active"));
+		trigger.classList.toggle("top-app-bar__nav-link--active", active);
+	});
+}
+
+function closeTopAppBarMenus() {
+	document.querySelectorAll<HTMLElement>("[data-nav-group].top-app-bar__nav-group--open").forEach((group) => {
+		group.classList.remove("top-app-bar__nav-group--open");
+		group.querySelector(":scope > button")?.setAttribute("aria-expanded", "false");
+	});
+}
+
+function loadTopAppBar() {
+	const drawerBtn = document.getElementById("nav-drawer-switch");
+	if (drawerBtn) {
+		drawerBtn.onclick = () => {
+			document.dispatchEvent(new CustomEvent("site-drawer:toggle"));
+		};
+	}
+
+	const settingBtn = document.getElementById("display-settings-switch");
+	if (settingBtn) {
+		settingBtn.onclick = () => {
+			const settingPanel = document.getElementById("display-setting");
+			if (settingPanel) {
+				settingPanel.classList.toggle("float-panel-closed");
+			}
+		};
+	}
+
+	syncTopAppBarNavigation();
+	const categoryParam = new URLSearchParams(window.location.search).get("category");
+	if (categoryParam) {
+		const bar = document.getElementById("category-bar");
+		bar?.querySelectorAll<HTMLAnchorElement>("a.m3-chip").forEach((pill) => {
+			const href = pill.getAttribute("href") || "";
+			pill.classList.toggle(
+				"m3-chip--selected",
+				href.includes(`category=${encodeURIComponent(categoryParam)}`),
+			);
+		});
+	}
+	document.querySelectorAll<HTMLElement>("[data-nav-key]").forEach((link) => {
+		link.onclick = () => {
+			setTopAppBarNavigation(link.dataset.navKey || "");
+			closeTopAppBarMenus();
+		};
+	});
+	document.querySelectorAll<HTMLElement>("[data-nav-group]").forEach((group) => {
+		const trigger = group.querySelector<HTMLButtonElement>(":scope > button");
+		if (!trigger) return;
+		trigger.onclick = () => {
+			const open = group.classList.toggle("top-app-bar__nav-group--open");
+			trigger.setAttribute("aria-expanded", String(open));
+		};
+	});
+	if (!document.documentElement.dataset.topAppBarNavBound) {
+		document.documentElement.dataset.topAppBarNavBound = "true";
+		document.addEventListener("swup:content:replace", syncTopAppBarNavigation);
+		document.addEventListener("swup:page:view", syncTopAppBarNavigation);
+		document.addEventListener("click", (event) => {
+			const insideNavigationGroup = event.composedPath().some(
+				(node) => node instanceof HTMLElement && node.hasAttribute("data-nav-group"),
+			);
+			if (!insideNavigationGroup) {
+				closeTopAppBarMenus();
+			}
+		});
+		document.addEventListener("keydown", (event) => {
+			if (event.key === "Escape") closeTopAppBarMenus();
+		});
+		window.addEventListener("popstate", syncTopAppBarNavigation);
+	}
+}
 
 function setClickOutsideToClose(panel: string, ignores: string[]) {
 	document.addEventListener('click', event => {
@@ -321,7 +415,16 @@ function init() {
 	loadTheme();
 }
 init();
+loadTopAppBar();
+initFabController();
 initLastUpdatedNotices();
+bindFancyboxRuntime();
+
+const postListContainer = document.getElementById("post-list");
+if (postListContainer) {
+	setupMasonry(postListContainer);
+	document.fonts?.ready.then(() => packMasonry(postListContainer));
+}
 
 document.addEventListener("click", async (event) => {
 	const target = event.target;
@@ -350,6 +453,9 @@ const setup = () => {
 		visitActive = true;
 		scrollStarted = false;
 		document.getElementById('page-height-extend')?.classList.remove('hidden');
+	});
+	window.swup.hooks.on('content:replace', () => {
+		applyStoredLayoutMode(document.getElementById("post-list"));
 	});
 	window.swup.hooks.on('visit:end', () => { if (!scrollStarted) finishVisit(); });
 	window.swup.hooks.on('visit:abort', finishVisit);
@@ -386,19 +492,4 @@ new MutationObserver(scrollFunction).observe(document.body, { attributes: true, 
 window.addEventListener(WALLPAPER_MODE_CHANGE_EVENT, () => requestAnimationFrame(scrollFunction));
 document.addEventListener('swup:page:view', scrollFunction);
 scrollFunction();
-</script>
-
-<script>
-import { bindFancyboxRuntime } from "../utils/fancybox-runtime";
-import { applyStoredLayoutMode } from "../utils/layout-mode";
-
-bindFancyboxRuntime();
-
-const setup = () => {
-	window.swup.hooks.on("content:replace", () => {
-		applyStoredLayoutMode(document.getElementById("post-list"));
-	});
-};
-if (window.swup) setup();
-else document.addEventListener("swup:enable", setup);
 </script>

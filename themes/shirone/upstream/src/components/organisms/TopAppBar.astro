@@ -92,94 +92,11 @@ function isActive(link: (typeof links)[number]): boolean {
 			</IconButton>
 		)}
 		<LightDarkSwitch client:only="svelte"></LightDarkSwitch>
-		<DisplaySettings client:only="svelte" class="top-full right-4 max-w-[calc(100vw-2rem)] md:right-0"></DisplaySettings>
+		{!siteConfig.themeColor.fixed && (
+			<DisplaySettings client:only="svelte" class="top-full right-4 max-w-[calc(100vw-2rem)] md:right-0"></DisplaySettings>
+		)}
 	</div>
 </div>
-
-<script>
-	import { resolvePageKey } from "@utils/nav-utils";
-
-	function syncTopAppBarNavigation() {
-		setTopAppBarNavigation(resolvePageKey(new URL(window.location.href)));
-	}
-
-	function setTopAppBarNavigation(pageKey: string) {
-		document.querySelectorAll<HTMLElement>("[data-nav-key]").forEach((link) => {
-			const active = (link.dataset.navKey || "") === pageKey;
-			link.classList.toggle("top-app-bar__nav-link--active", active);
-			if (active) link.setAttribute("aria-current", "page");
-			else link.removeAttribute("aria-current");
-		});
-		document.querySelectorAll<HTMLElement>("[data-nav-group]").forEach((group) => {
-			// 仅处理有下拉子菜单的组（组触发器是 button）；普通链接组已由上面设置
-			const trigger = group.querySelector(":scope > button.top-app-bar__nav-link");
-			if (!trigger) return;
-			const active = Boolean(group.querySelector(".top-app-bar__submenu-item.top-app-bar__nav-link--active"));
-			trigger.classList.toggle("top-app-bar__nav-link--active", active);
-		});
-	}
-
-	function closeTopAppBarMenus() {
-		document.querySelectorAll<HTMLElement>("[data-nav-group].top-app-bar__nav-group--open").forEach((group) => {
-			group.classList.remove("top-app-bar__nav-group--open");
-			group.querySelector(":scope > button")?.setAttribute("aria-expanded", "false");
-		});
-	}
-
-	function loadTopAppBar() {
-		const drawerBtn = document.getElementById("nav-drawer-switch");
-		if (drawerBtn) {
-			drawerBtn.onclick = () => {
-				document.dispatchEvent(new CustomEvent("site-drawer:toggle"));
-			};
-		}
-
-		const settingBtn = document.getElementById("display-settings-switch");
-		if (settingBtn) {
-			settingBtn.onclick = () => {
-				const settingPanel = document.getElementById("display-setting");
-				if (settingPanel) {
-					settingPanel.classList.toggle("float-panel-closed");
-				}
-			};
-		}
-
-		syncTopAppBarNavigation();
-		document.querySelectorAll<HTMLElement>("[data-nav-key]").forEach((link) => {
-			link.onclick = () => {
-				setTopAppBarNavigation(link.dataset.navKey || "");
-				closeTopAppBarMenus();
-			};
-		});
-		document.querySelectorAll<HTMLElement>("[data-nav-group]").forEach((group) => {
-			const trigger = group.querySelector<HTMLButtonElement>(":scope > button");
-			if (!trigger) return;
-			trigger.onclick = () => {
-				const open = group.classList.toggle("top-app-bar__nav-group--open");
-				trigger.setAttribute("aria-expanded", String(open));
-			};
-		});
-		if (!document.documentElement.dataset.topAppBarNavBound) {
-			document.documentElement.dataset.topAppBarNavBound = "true";
-			document.addEventListener("swup:content:replace", syncTopAppBarNavigation);
-			document.addEventListener("swup:page:view", syncTopAppBarNavigation);
-			document.addEventListener("click", (event) => {
-				const insideNavigationGroup = event.composedPath().some(
-					(node) => node instanceof HTMLElement && node.hasAttribute("data-nav-group"),
-				);
-				if (!insideNavigationGroup) {
-					closeTopAppBarMenus();
-				}
-			});
-			document.addEventListener("keydown", (event) => {
-				if (event.key === "Escape") closeTopAppBarMenus();
-			});
-			window.addEventListener("popstate", syncTopAppBarNavigation);
-		}
-	}
-
-	loadTopAppBar();
-</script>
 
 {import.meta.env.PROD && <script is:inline define:vars={{scriptUrl: url('/pagefind/pagefind.js')}}>
 window.__loadPagefind = function() {
@@ -187,6 +104,9 @@ window.__loadPagefind = function() {
 	window.__pagefindLoadingPromise = (async () => {
 		try {
 			const pagefind = await import(scriptUrl);
+			if (typeof pagefind.init === 'function') {
+				await pagefind.init();
+			}
 			await pagefind.options({
 				excerptLength: 20
 			});

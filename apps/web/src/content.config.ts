@@ -6,6 +6,16 @@ import { loadSite } from "./lib/site-source.mjs";
 const { root, config } = loadSite();
 const base = new URL(config.site.url).pathname.replace(/\/$/, "");
 
+function resolveCover(cover: string | undefined, basePath: string): string {
+  if (!cover) return "";
+  if (/^(?:https?:|data:|\/\/)/i.test(cover)) return cover;
+  if (cover.startsWith("/")) return `${basePath}${cover}`;
+  const clean = cover
+    .replace(/^(?:\.\.?\/)+/, "")
+    .replace(/^(?:site-)?assets\//, "");
+  return `${basePath}/site-assets/${clean}`;
+}
+
 const posts = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: root + "/content/posts" }),
   schema: z.object({
@@ -25,7 +35,7 @@ const posts = defineCollection({
     ...data,
     published: data.pubDate,
     updated: data.updatedDate,
-    image: data.cover ? (/^https?:/.test(data.cover) ? data.cover : base + (data.cover.startsWith('/') ? data.cover : '/' + data.cover)) : '',
+    image: resolveCover(data.cover, base),
     pinned: false, category: '', series: '', encrypted: false, hideHomeContent: true,
     comment: config.comments.enabled,
     prevTitle: '', prevSlug: '', nextTitle: '', nextSlug: '',

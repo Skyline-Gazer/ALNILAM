@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -475,12 +475,18 @@ export function shirones(options: ShironesOptions = {}): AstroIntegration {
 			},
 
 			"astro:build:done": async ({ dir, logger }) => {
+				const outDir = dir.pathname;
+				const astroAssetsDir = join(paths.cacheDir, "astro-assets");
+				if (existsSync(astroAssetsDir)) {
+					const targetAstroDir = join(outDir, "_astro");
+					mkdirSync(targetAstroDir, { recursive: true });
+					cpSync(astroAssetsDir, targetAstroDir, { recursive: true });
+				}
 				// The theme's own repository keeps its `pagefind --site dist` CLI
 				// build step, which honours the repository's `pagefind.yml`
 				// (workers, exclusions, ...). Indexing here as well would build
 				// the index twice.
 				if (options.pagefind === false || paths.isThemeRepo) return;
-				const outDir = dir.pathname;
 				try {
 					const pagefind = await import("pagefind");
 					const { index } = await pagefind.createIndex({});

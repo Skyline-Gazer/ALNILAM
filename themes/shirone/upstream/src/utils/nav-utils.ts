@@ -76,9 +76,17 @@ export function resolvePageKey(
 	}
 
 	if (pathname === "/") return "home";
+	if (pathname === "/posts" || /^\/posts\/\d+$/.test(pathname)) return "posts";
 	if (url.searchParams.has("category")) return "categories";
-	if (url.searchParams.has("tag")) return "tags";
-	if (pathname === "/archive") return "archive";
+	if (
+		url.searchParams.has("tag") ||
+		pathname === "/tags" ||
+		pathname.startsWith("/tags/")
+	)
+		return "tags";
+	if (pathname === "/archive" || pathname === "/archives") return "archive";
+	if (pathname === "/bangumi" || pathname.startsWith("/bangumi/"))
+		return "bangumi";
 	if (pathname === "/friends") return "friends";
 	if (pathname === "/moments") return "moments";
 	if (pathname === "/anime") return "anime";

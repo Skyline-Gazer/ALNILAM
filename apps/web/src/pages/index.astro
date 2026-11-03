@@ -1,7 +1,7 @@
 ---
 // Actual pinned Shirone layout and post-list components, retained ALNILAM Site loader.
-import MainGridLayout from '../../../../themes/shirone/upstream/src/layouts/MainGridLayout.astro';
-import PostPage from '../../../../themes/shirone/upstream/src/components/organisms/PostPage.astro';
+import MainGridLayout from '@alnilam/theme-shirone/MainGridLayout.astro';
+import PostPage from '@alnilam/theme-shirone/PostPage.astro';
 import {getCollection} from 'astro:content';
 const posts = (await getCollection('posts', ({data}) => !data.draft))
   .sort((a,b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());

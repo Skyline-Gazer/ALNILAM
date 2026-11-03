@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { isAbsolute, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ResolvedShironesPaths, ShironesOptions } from "../types.ts";
 
@@ -114,6 +114,14 @@ export function resolvePaths(
 			? join(packageSrc, "content")
 			: join(contentRoot, "content");
 
+	const cacheDir = options.paths?.cache
+		? toAbsolute(projectRoot, options.paths.cache)
+		: process.env.ALNILAM_SHIRONE_CACHE
+			? toAbsolute(projectRoot, process.env.ALNILAM_SHIRONE_CACHE)
+			: process.env.ALNILAM_ASTRO_CACHE
+				? join(dirname(toAbsolute(projectRoot, process.env.ALNILAM_ASTRO_CACHE)), "shirone")
+				: join(projectRoot, CACHE_DIR_NAME);
+
 	return {
 		projectRoot,
 		packageRoot,
@@ -121,7 +129,7 @@ export function resolvePaths(
 		configDir,
 		dataDir,
 		contentDir,
-		cacheDir: join(projectRoot, CACHE_DIR_NAME),
+		cacheDir,
 		isThemeRepo,
 	};
 }

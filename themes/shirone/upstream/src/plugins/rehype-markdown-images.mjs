@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fromHtml } from "hast-util-from-html";
@@ -146,24 +147,98 @@ function onlyImageChild(node) {
 		: null;
 }
 
-async function readImageDimensions(src, filePath) {
+function normalizeCleanAssetPath(src) {
+	return src
+		.replace(/^(?:\.\.?\/)+/, "")
+		.replace(/^(?:site-)?assets\//, "");
+}
+
+function getShironeCacheDir() {
+	return (
+		process.env.ALNILAM_SHIRONE_CACHE ||
+		(process.env.ALNILAM_ASTRO_CACHE
+			? path.join(path.dirname(process.env.ALNILAM_ASTRO_CACHE), "shirone")
+			: undefined)
+	);
+}
+
+async function resolveLocalImageCandidate(src, filePath) {
 	if (!src || /^(?:https?:|data:|\/\/)/i.test(src)) return undefined;
+	const siteDir = process.env.ALNILAM_SITE_DIR;
 	const candidates = [];
+	if (src.startsWith("/site-assets/") && siteDir) {
+		candidates.push(
+			path.join(siteDir, "assets", src.slice("/site-assets/".length)),
+		);
+	}
 	if (src.startsWith("/")) {
 		candidates.push(path.join(process.cwd(), "public", src.slice(1)));
-	} else if (filePath) {
-		candidates.push(path.resolve(path.dirname(filePath), src));
+	} else {
+		if (filePath) {
+			candidates.push(path.resolve(path.dirname(filePath), src));
+		}
+		if (siteDir) {
+			candidates.push(
+				path.join(siteDir, "assets", normalizeCleanAssetPath(src)),
+			);
+		}
 	}
 	for (const candidate of candidates) {
 		try {
 			await fs.access(candidate);
-			const metadata = await sharp(candidate).metadata();
-			if (metadata.width && metadata.height) {
-				return { width: metadata.width, height: metadata.height };
-			}
+			return candidate;
 		} catch {
-			// Missing or unsupported files are left untouched for runtime handling.
+			// Try next candidate
 		}
+	}
+	return undefined;
+}
+
+async function resolveMarkdownImageSrc(src, baseUrl, filePath) {
+	if (!src || /^(?:https?:|data:|\/\/)/i.test(src)) return src;
+	const normalizedBase =
+		typeof baseUrl === "string" && baseUrl !== "/"
+			? baseUrl.replace(/\/$/, "")
+			: "";
+	if (src.startsWith("/")) {
+		if (
+			normalizedBase &&
+			src !== normalizedBase &&
+			!src.startsWith(`${normalizedBase}/`)
+		) {
+			return `${normalizedBase}${src}`;
+		}
+		return src;
+	}
+	const candidate = await resolveLocalImageCandidate(src, filePath);
+	const cacheDir = getShironeCacheDir();
+	if (candidate && cacheDir) {
+		const buf = await fs.readFile(candidate);
+		const hash = crypto.createHash("sha256").update(buf).digest("hex").slice(0, 8);
+		const parsed = path.parse(candidate);
+		const fileName = `${parsed.name}.${hash}${parsed.ext}`;
+		const astroAssetsDir = path.join(cacheDir, "astro-assets");
+		await fs.mkdir(astroAssetsDir, { recursive: true });
+		await fs.writeFile(path.join(astroAssetsDir, fileName), buf);
+		return `${normalizedBase}/_astro/${fileName}`;
+	}
+	if (process.env.ALNILAM_SITE_DIR) {
+		const clean = normalizeCleanAssetPath(src);
+		return `${normalizedBase}/site-assets/${clean}`;
+	}
+	return src;
+}
+
+async function readImageDimensions(src, filePath) {
+	const candidate = await resolveLocalImageCandidate(src, filePath);
+	if (!candidate) return undefined;
+	try {
+		const metadata = await sharp(candidate).metadata();
+		if (metadata.width && metadata.height) {
+			return { width: metadata.width, height: metadata.height };
+		}
+	} catch {
+		// Missing or unsupported files are left untouched for runtime handling.
 	}
 	return undefined;
 }
@@ -171,18 +246,24 @@ async function readImageDimensions(src, filePath) {
 async function enhanceImage(image, ancestors, allowFigure, options, filePath) {
 	image.properties ??= {};
 	const properties = image.properties;
+	const rawSrc = String(properties.src ?? "");
 	// 零额外负担：所有正文图片统一惰性加载与异步解码
 	properties.loading ??= "lazy";
 	properties.decoding ??= "async";
 	if (properties.width == null || properties.height == null) {
-		const dimensions = await readImageDimensions(
-			String(properties.src ?? ""),
+		const dimensions = (await readImageDimensions(rawSrc, filePath)) ?? {
+			width: 640,
+			height: 360,
+		};
+		properties.width ??= dimensions.width;
+		properties.height ??= dimensions.height;
+	}
+	if (rawSrc) {
+		properties.src = await resolveMarkdownImageSrc(
+			rawSrc,
+			options.baseUrl,
 			filePath,
 		);
-		if (dimensions) {
-			properties.width ??= dimensions.width;
-			properties.height ??= dimensions.height;
-		}
 	}
 	if (
 		matchesNoReferrerDomain(
@@ -291,6 +372,7 @@ export function rehypeMarkdownImages(options = {}) {
 		noReferrerDomains: Array.isArray(options.noReferrerDomains)
 			? options.noReferrerDomains
 			: [],
+		baseUrl: typeof options.baseUrl === "string" ? options.baseUrl : undefined,
 	};
 
 	return async (tree, file) => {

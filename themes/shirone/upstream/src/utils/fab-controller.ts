@@ -205,7 +205,12 @@ class FabController {
 							headingEl.getBoundingClientRect().top + window.scrollY - 80,
 						);
 						history.pushState(history.state, "", hash);
-						window.scrollTo({ top: offsetTop, behavior: "smooth" });
+						window.scrollTo({
+							top: offsetTop,
+							behavior: prefersReducedMotion() ? "auto" : "smooth",
+						});
+						this.mobileScrollAnchor = Math.max(window.scrollY, offsetTop);
+						this.setMobileControlsHidden(false);
 					}
 				}
 				if (panel?.dataset.tocCloseOnSelect !== "false") {

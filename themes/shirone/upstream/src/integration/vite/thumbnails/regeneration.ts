@@ -12,6 +12,7 @@
  * therefore early enough, and it also keeps `astro sync` from paying for sharp.
  */
 
+import { join } from "node:path";
 import type { Plugin } from "vite";
 import type { ResolvedShironesPaths } from "../../types.ts";
 import { generateMomentThumbnails } from "./generate.ts";
@@ -39,6 +40,7 @@ export function shironesThumbnailsRegeneration(
 		try {
 			const result = await generateMomentThumbnails({
 				projectRoot: paths.projectRoot,
+				cachePath: join(paths.cacheDir, "moment-thumbnails.json"),
 			});
 			if (reportedThisProcess) return;
 			reportedThisProcess = true;

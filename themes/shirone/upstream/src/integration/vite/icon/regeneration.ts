@@ -42,12 +42,19 @@ export function shironesIconRegeneration(
 	paths: ResolvedShironesPaths,
 	logger?: { warn: (message: string) => void },
 ): Plugin {
-	const userCopy = join(
+	const legacyUserCopy = join(
 		paths.projectRoot,
 		"src",
 		"generated",
 		"local-icon-collections.ts",
 	);
+	const userCopy = paths.isThemeRepo
+		? legacyUserCopy
+		: join(
+				paths.cacheDir,
+				"generated",
+				"local-icon-collections.ts",
+			);
 	const packageCopy = join(
 		paths.packageSrc,
 		"generated",
@@ -109,6 +116,7 @@ export function shironesIconRegeneration(
 			if (
 				source !== ICON_COLLECTIONS_SPECIFIER &&
 				source !== withoutExtension(userCopy) &&
+				source !== withoutExtension(legacyUserCopy) &&
 				source !== withoutExtension(packageCopy)
 			) {
 				return null;
