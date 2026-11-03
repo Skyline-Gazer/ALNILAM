@@ -1,6 +1,6 @@
 # ALNILAM — AI Agent Handoff
 
-## Autonomous continuation — #58 merged / #59 in progress (2026-11-02)
+## Autonomous continuation — #58/#59 merged / #60 in progress (2026-11-02)
 
 - #58 / CNB PR #44 merged normally into dev at `c3f554144d0baed8a2d0a0d110b7567b1fdffdb7`.
   Source `c503cb1a5bbd3d680fadc5dca31fa408c1ed90f6`; tested candidate
@@ -11,13 +11,39 @@
   `2117186781536022528`. Serial local 8 browser cases + review probe PASS (9 total).
   Earlier environment/concurrent diagnostic failures are disclosed, not product PASS.
   Issue #58 Closed / Project Done. No separate post-merge push CI is configured.
-- #59 starts from that exact dev: reuse primary navigation and theme controls;
-  mobile disclosure with keyboard/Escape/focus handling, 44px controls, theme controls
-  synchronized from the pre-paint resolved DOM theme instead of rereading storage.
-  No new router, settings store or framework. Local 10/10 Shirone browser cases PASS
-  (including touch, keyboard, pre-body theme, reload persistence, 320/390 containment,
-  desktop/mobile resize); affected Node tests 5/5, Astro check clean, root/subpath
-  builds and root artifact budget PASS. Native PR feedback/delivery pending.
+- #59 / [CNB PR #45](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/45) merged normally
+  at `d4df50e97b7c55f0eb814fa08e5a2f68ab9a720b`, source
+  `9fbe273b5e93e6048b3100ad4c006f8979a62bed`, tested candidate
+  `d23bcf27b7feb6424af308bb749383412926618c`; source ancestry and tree equality verified.
+  [Native functional CI](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-1p9-1k6dpqa24)
+  SUCCESS, 14m24s. Mobile disclosure, 44px controls, Escape focus, resize reset and
+  pre-paint theme/control synchronization delivered. Original local browser 10/10,
+  final affected settings 2/2, Node 5/5, type/build/budget checks PASS.
+  CodeBuddy visible state/resize advice adopted; false-positive focus/state claims
+  disposed in PR comments `2117188579567038464` / `2117189598321541120`.
+  Advisory returned prose, not structured approval; no approval claimed.
+  #59 Closed / Project Done. No separate post-merge push CI configured.
+- #60 is local implementation from dev, incorporating #59 without publishing a
+  second unmerged feature PR: native MPA retained, SSR headings-based sticky TOC,
+  search focus/Escape/timer/request cleanup, popup anchored to header, mobile
+  navigation overlay without article displacement, and initial comments space reserved. No second router, settings store or SDK.
+  Browser probe caught search left edge at -31px on 390px (scrollWidth alone missed
+  it); fixed with header anchoring and explicit left/right checks incl. 320px.
+  Four root/subpath 390/1440 lifecycle cases passed before final integration;
+  combined run passed 13/14; one immediate-resize measurement read an unsettled frame.
+  Strict left/right checks now retry until layout settles; final affected lifecycle
+  and settings scenarios pass 6/6. Original reading/search cases passed in that
+  integration run. Type check, root/subpath builds/budgets and Node 5/5 PASS.
+  Existing shared CLS observer/budget reused. Below 360px show the accessible brand
+  icon rather than stacking the site title vertically.
+  An enabled temporary Site exercised actual Comments.svelte with a labelled mock
+  Giscus response: delayed 260px iframe initially gave CLS 0.10118367 on mobile;
+  reserved initial area fixed it. Final integration: CLS 390=0.00982235,
+  1440=0.00307803, zero initial provider requests and exactly one after scroll.
+  No live-provider claim. Native feature PR/CI and merge remain pending.
+  Root/subpath and enabled-Site builds preserve input digest. A /tmp output probe
+  hit Astro EXDEV moving assets across filesystems; workspace output worked. This
+  output-path limitation is not a #55 real-Site CI result or a blocker to this UI.
 - #55 remains NOT_VERIFIED; PR #43 ADS proposal stays unmerged; effective pin b8d9cfc.
   Main/mirror/tags/deployments and ADS upstream are untouched.
 

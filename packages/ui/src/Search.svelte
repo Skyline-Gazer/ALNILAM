@@ -5,6 +5,21 @@
   // minimal custom UI (Pagefind's own default-ui bundle is webpack-era and
   // breaks under rolldown; the raw search API is ~40 lines and themeable).
   let open = $state(false);
+  let trigger: HTMLButtonElement | undefined;
+  let searchInput = $state<HTMLInputElement>();
+
+  $effect(() => {
+    if (open) searchInput?.focus();
+  });
+
+  function closeSearch() {
+    open = false;
+    clearTimeout(debounce);
+    debounce = undefined;
+    requestId += 1;
+    searching = false;
+    trigger?.focus();
+  }
   let query = $state("");
   let results = $state<{ url: string; title: string; excerpt: string }[]>([]);
   let searching = $state(false);
@@ -41,7 +56,7 @@
       await api.options({ baseUrl });
       if (destroyed) return;
       searchApi = api;
-      if (query && !debounce) void runSearch(query);
+      if (open && query.trim() && !debounce) void runSearch(query);
     } catch {
       // Index unavailable (e.g. built without pagefind) — leave the UI inert.
     } finally {
@@ -66,7 +81,7 @@
   }
 
   async function runSearch(q: string) {
-    if (!searchApi) return;
+    if (!open || !searchApi) return;
     const currentRequest = ++requestId;
     searching = true;
     try {
@@ -98,15 +113,28 @@
   });
 </script>
 
-<div class="relative">
+<svelte:window onkeydown={(event) => {
+  if (open && event.key === "Escape") {
+    event.preventDefault();
+    closeSearch();
+  }
+}} />
+
+<!-- The positioned header owns the popup, keeping it inside narrow viewports. -->
+<div>
   <button
+    bind:this={trigger}
     type="button"
     class="rounded-full px-4 py-2 text-sm font-medium transition-colors"
     style="border: 1px solid var(--outline-variant, var(--border)); color: var(--on-surface, var(--fg-soft)); background: var(--surface-container, var(--bg-card))"
     aria-expanded={open}
     aria-controls="alnilam-search"
     onclick={() => {
-      open = !open;
+      if (open) closeSearch();
+      else {
+        open = true;
+        if (query.trim() && searchApi) void runSearch(query);
+      }
     }}
   >
     搜索
@@ -115,12 +143,13 @@
     <div
       id="alnilam-search"
       class="absolute right-0 z-30 mt-3 w-80 rounded-2xl p-4 sm:w-96"
-      style="background: var(--surface-container-highest, var(--bg-elev)); border: 1px solid var(--outline-variant, var(--border)); box-shadow: 0 12px 40px var(--shadow-color, rgba(0,0,0,.25))"
+      style="max-width: calc(100vw - 2rem); background: var(--surface-container-highest, var(--bg-elev)); border: 1px solid var(--outline-variant, var(--border)); box-shadow: 0 12px 40px var(--shadow-color, rgba(0,0,0,.25))"
       role="dialog"
       aria-label="站内搜索"
       
     >
       <input
+        bind:this={searchInput}
         type="search"
         placeholder={t.placeholder}
         aria-label={t.placeholder}
