@@ -1,9 +1,9 @@
 ---
 import { getCollection, type CollectionEntry } from "astro:content";
-import BaseLayout from "@alnilam/theme-shirone/BaseLayout.astro";
-import PostCard from "@alnilam/theme-shirone/PostCard.astro";
-import { loadSite } from "../../lib/site-source.mjs";
-import { canonicalUrl, postPath, withBase } from "../../lib/i18n.mjs";
+import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
+import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
+import PostPage from "@alnilam/theme-shirone/PostPage.astro";
+import { withBase } from "../../lib/i18n.mjs";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
@@ -21,25 +21,9 @@ export async function getStaticPaths() {
 }
 const { tag } = Astro.params;
 const { list } = Astro.props as { list: CollectionEntry<"posts">[] };
-const { config } = loadSite();
-const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale, showBangumi: config.bangumi?.enabled ?? false };
 ---
-<BaseLayout title={`#${tag}`} {...layout} description={`标签 ${tag} 下的全部文章`} canonical={canonicalUrl(`/tags/${tag}/`, config.site.url)}>
-  <header class="page-heading">
-    <p class="page-heading__eyebrow"><a href={withBase("/tags/")}>← 全部标签</a></p>
-    <h1>#{tag}</h1>
-    <p>{list.length} 篇文章</p>
-  </header>
-  <div class="post-list">
-    {list.map((post) => (
-      <PostCard
-        title={post.data.title}
-        description={post.data.description}
-        href={withBase(postPath(post, config.site.locale)) + "/"}
-        published={post.data.pubDate}
-        tags={post.data.tags}
-        cover={post.data.cover}
-      />
-    ))}
-  </div>
-</BaseLayout>
+<MainGridLayout title={`#${tag}`} description={`标签 ${tag} 下的全部文章`} page="tags">
+  <a href={withBase("/tags/")} class="text-[var(--primary)]">← 全部标签</a>
+  <PageHeader title={`#${tag}`} subtitle={`${list.length} 篇文章`} />
+  <PostPage page={{data: list}} />
+</MainGridLayout>

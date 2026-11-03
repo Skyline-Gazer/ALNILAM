@@ -18,7 +18,8 @@
     "verify": "pnpm test && pnpm check && pnpm build"
   },
   "devDependencies": {
-    "@playwright/test": "1.64.1",
-    "@lhci/cli": "0.15.1"
+    "@astrojs/svelte": "9.1.1",
+    "@lhci/cli": "0.15.1",
+    "@playwright/test": "1.64.1"
   }
 }

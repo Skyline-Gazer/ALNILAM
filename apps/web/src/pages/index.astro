@@ -1,48 +1,23 @@
 ---
-import { getCollection } from "astro:content";
-import BaseLayout from "@alnilam/theme-shirone/BaseLayout.astro";
-import PostCard from "@alnilam/theme-shirone/PostCard.astro";
-import Status from "@alnilam/ui/Status.svelte";
-import { loadSite } from "../lib/site-source.mjs";
-import { canonicalUrl, postPath, withBase } from "../lib/i18n.mjs";
-const { config } = loadSite();
-const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale, showBangumi: config.bangumi?.enabled ?? false };
-const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+// Actual pinned Shirone layout and post-list components, retained ALNILAM Site loader.
+import MainGridLayout from '@alnilam/theme-shirone/MainGridLayout.astro';
+import PostPage from '@alnilam/theme-shirone/PostPage.astro';
+import {getCollection} from 'astro:content';
+const posts = (await getCollection('posts', ({data}) => !data.draft))
+  .sort((a,b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 const latest = posts.slice(0, 5);
-const rest = posts.slice(5);
+const page = {
+  data: latest,
+  currentPage: 1,
+  lastPage: 1,
+  total: latest.length,
+  size: 5,
+  start: 0,
+  end: Math.max(0, latest.length - 1),
+  url: { current: '/', prev: undefined, next: undefined, first: undefined, last: undefined },
+};
 ---
-<BaseLayout title="首页" {...layout} description={config.site.description} canonical={canonicalUrl("/", config.site.url)}>
-  <section class="home-hero" aria-labelledby="hero-title">
-    <div class="home-hero__content">
-      <p class="page-heading__eyebrow">A quiet corner of the web</p>
-      <h1 id="hero-title">{config.site.title}</h1>
-      <p class="home-hero__description">{config.site.description}</p>
-      <div class="home-hero__status"><Status client:visible /></div>
-    </div>
-  </section>
-  <section aria-labelledby="latest-posts">
-    <div class="section-heading">
-      <h2 id="latest-posts">最近文章</h2>
-      <p>{posts.length} 篇已发布</p>
-    </div>
-    <div class="post-list">
-      {latest.length
-        ? latest.map((post) => (
-            <PostCard
-              title={post.data.title}
-              description={post.data.description}
-              href={withBase(postPath(post, config.site.locale)) + "/"}
-              published={post.data.pubDate}
-              tags={post.data.tags}
-              cover={post.data.cover}
-            />
-          ))
-        : <p>暂无文章。</p>}
-    </div>
-    {rest.length > 0 && (
-      <div class="list-footer">
-        <a href={withBase("/posts/")} class="pill-link">查看全部 {posts.length} 篇文章</a>
-      </div>
-    )}
-  </section>
-</BaseLayout>
+<MainGridLayout page="home">
+  <h1 class="sr-only">最近文章</h1>
+  <PostPage page={page} />
+</MainGridLayout>

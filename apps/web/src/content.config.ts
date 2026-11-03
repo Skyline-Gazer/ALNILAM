@@ -3,7 +3,18 @@ import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 import { loadSite } from "./lib/site-source.mjs";
 
-const { root } = loadSite();
+const { root, config } = loadSite();
+const base = new URL(config.site.url).pathname.replace(/\/$/, "");
+
+function resolveCover(cover: string | undefined, basePath: string): string {
+  if (!cover) return "";
+  if (/^(?:https?:|data:|\/\/)/i.test(cover)) return cover;
+  if (cover.startsWith("/")) return `${basePath}${cover}`;
+  const clean = cover
+    .replace(/^(?:\.\.?\/)+/, "")
+    .replace(/^(?:site-)?assets\//, "");
+  return `${basePath}/site-assets/${clean}`;
+}
 
 const posts = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: root + "/content/posts" }),
@@ -20,7 +31,20 @@ const posts = defineCollection({
     // any post, hreflang alternates are rendered for the whole group.
     lang: z.string().regex(/^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$/, "must be a BCP-47 tag").optional(),
     translationKey: z.string().min(1).optional(),
-  }),
+  }).transform((data) => ({
+    ...data,
+    published: data.pubDate,
+    updated: data.updatedDate,
+    image: resolveCover(data.cover, base),
+    // Upstream Shirone post schema defaults; taxonomy/series fields are deferred to P4 (#62),
+    // and upstream CommentSection is disabled in favor of ALNILAM's Core Comments island.
+    pinned: false, category: '', series: '', encrypted: false, hideHomeContent: true,
+    comment: config.comments.enabled,
+    prevTitle: '', prevSlug: '', nextTitle: '', nextSlug: '',
+  })),
 });
-export const collections = { posts };
+// Empty stubs only for disabled upstream modules; their field contracts are not modeled.
+// Enabling one requires its own Site contract/schema before any content can be loaded.
+const emptyCollection = () => defineCollection({loader: async () => [], schema: z.object({title: z.string().default('')})});
+export const collections = { posts, series: emptyCollection(), moments: emptyCollection(), spec: emptyCollection() };
 
