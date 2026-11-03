@@ -55,8 +55,8 @@ const { remarkPluginFrontmatter } = await render(entry);
 let coverUrl = image;
 let coverSrcset: string | undefined;
 let coverAvifSrcset: string | undefined;
-let coverWidth: number | undefined;
-let coverHeight: number | undefined;
+let coverWidth: number | undefined = image ? 640 : undefined;
+let coverHeight: number | undefined = image ? 360 : undefined;
 if (image) {
 	const isLocal = !(
 		image.startsWith("/") ||

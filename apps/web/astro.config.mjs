@@ -1,7 +1,9 @@
 import { defineConfig } from "astro/config";
-import svelte from "@astrojs/svelte";
+import svelte, {vitePreprocess} from "@astrojs/svelte";
 import mdx from "@astrojs/mdx";
-import tailwindcss from "@tailwindcss/vite";
+import shirones from "../../themes/shirone/upstream/src/integration/index.ts";
+import {fileURLToPath} from "node:url";
+import {userConfigOverrides, userConfigSources} from '../../themes/shirone/adapter/site-config.mjs';
 import { loadSite } from "./src/lib/site-source.mjs";
 const { config } = loadSite();
 
@@ -27,7 +29,19 @@ export default defineConfig({
   // (direct `pnpm dev`) keeps Astro's default location.
   cacheDir: process.env.ALNILAM_ASTRO_CACHE || undefined,
   integrations: [
-    svelte(),
+    shirones({
+      bundledIntegrations: false,
+      injectRoutes: false,
+      pagefind: false,
+      fonts: {subset: false},
+      paths: {
+        root: fileURLToPath(new URL('../../.tmp/shirone', import.meta.url)),
+        config: fileURLToPath(new URL('../../themes/shirone/upstream/src/config', import.meta.url)),
+        data: fileURLToPath(new URL('../../themes/shirone/upstream/src/data', import.meta.url)),
+        content: loadSite().root + '/content',
+      },
+    }),
+    svelte({preprocess: [vitePreprocess({script: true})]}),
     mdx(),
     {
       name: "alnilam-module-gating",
@@ -44,8 +58,18 @@ export default defineConfig({
   // revision-keyed build cache; stale optimized deps once served broken
   // builds. Unset (direct `pnpm dev`) keeps Vite's default location.
   vite: {
+    // Publish only resolved values to Shirone's shared config module. Its browser
+    // consumers must never import ALNILAM's Node-only YAML/filesystem loader.
+    plugins: [{
+      name: 'alnilam-shirone-site-values',
+      enforce: 'pre',
+      load(id) {
+        if (id.split('?')[0] === fileURLToPath(new URL('../../themes/shirone/upstream/src/user/user-config.ts', import.meta.url))) {
+          return `export const userConfigOverrides = ${JSON.stringify(userConfigOverrides)};\nexport const userConfigSources = ${JSON.stringify(userConfigSources)};`;
+        }
+      },
+    }],
     cacheDir: process.env.ALNILAM_VITE_CACHE || undefined,
-    plugins: [tailwindcss()],
   },
 });
 

@@ -217,8 +217,8 @@ const initialMobileBanner = page === "home";
 			<img
 				class="banner-stage__image banner-stage__image--front banner-stage__image--active"
 				src={initialMobileBanner ? initialSrc || undefined : undefined}
-				width={initialImage?.width}
-				height={initialImage?.height}
+				width={initialImage?.width ?? 1920}
+				height={initialImage?.height ?? 1080}
 				fetchpriority="high"
 				loading="eager"
 				decoding="async"
@@ -226,7 +226,7 @@ const initialMobileBanner = page === "home";
 				style={`object-position: ${siteConfig.banner.position ?? "center"};`}
 			/>
 		</picture>
-		<img class="banner-stage__image banner-stage__image--back" alt="" />
+		<img class="banner-stage__image banner-stage__image--back" alt="" width="1920" height="1080" />
 	</div>
 	{siteConfig.banner.dim.enable && (
 		<div class="banner-stage__scrim" style={`--banner-dim-opacity: ${dimOpacity}`}></div>

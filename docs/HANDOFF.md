@@ -1,5 +1,36 @@
 # ALNILAM — AI Agent Handoff
 
+## Owner correction — actual Shirone frontend Base (2026-11-03)
+
+Owner confirmed that pages/layout/main components must use the real pinned Shirone
+implementation. Earlier M3E-inspired local UI and its passing checks do not prove
+that migration. PR #47 is WIP/unmerged; old snapshots are deviation evidence, not
+an approved target. Reuse this chain for the correction; no new approval ritual.
+
+- Pinned source `LyraVoid/Shirone@55a84b2322bdfb634a59ca6383bb242e5ce646bf`
+  is retained under `themes/shirone/upstream` with MIT license and per-file hashes.
+  Pure source commit `59097e72bdc3947de3ddfae5718d3c0690cd911d` is separate
+  from consumer adapters. Upstream assets/content/fonts/scripts/workflows excluded.
+- Working homepage directly renders original MainGridLayout/PostPage, top bar,
+  sidebar, native cards, HCT/settings/drawer. Old ALNILAM hero is absent.
+  Existing Core composer/YAML-only Site loader/Pagefind/provenance retained;
+  field mapping is in memory and user-config browser module contains only resolved
+  public values, never Node filesystem imports. No content:sync invocation.
+- Local raw compose succeeds at root and /ALNILAM/ (13 pages each), unchanged Site
+  digest `5fe6379c403641e98934ab41a8a4700b8e477cf4b336a2c7c4eaf6875e0294be`.
+  Native-home browser cases 4/4 PASS at 1440/390 root/subpath, canonical, drawer,
+  no overflow/page errors. App Astro check: 18 files, zero diagnostics; upstream
+  tooling still warns TypeScript5.9 vs6 metadata. This is not full upstream typecheck.
+- Canonical/skip-link and pass-through cover/banner dimensions adapted in source,
+  changes explicitly listed in SOURCE.json. Existing artifact budget still FAILS:
+  homepage9 islands vs2, HTML91.7KiB vs64. No checks weakened or disabled.
+- Remaining: migrate the other routes off the old UI, preserve SEO/i18n/optional
+  behavior, fix/measure native runtime budgets against actual upstream baseline,
+  adapt stale old-UI browser expectations with real behavior evidence, then native
+  CI/CodeBuddy and reviewable integration. DO NOT claim migration/P3 accepted.
+- Effective ADS pin and main/mirror/tag/deploy boundaries remain unchanged.
+
+
 ## Autonomous continuation — #58–#60 merged / #61 in progress (2026-11-03)
 
 Current checkpoint — 2026-11-03:
