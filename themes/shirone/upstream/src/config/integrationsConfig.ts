@@ -202,9 +202,9 @@ export const mdxOptions: NonNullable<Parameters<typeof mdx>[0]> = {
 export const viteBuildShared: NonNullable<
 	NonNullable<AstroUserConfig["vite"]>["build"]
 > = {
-	minify: "esbuild" as const,
+	minify: "oxc" as const,
 	cssCodeSplit: true,
-	cssMinify: "esbuild" as const,
+	cssMinify: "lightningcss" as const,
 	chunkSizeWarningLimit: 1000,
 	rollupOptions: {
 		// Parameter types are inferred from the build-options type. Hand-writing them

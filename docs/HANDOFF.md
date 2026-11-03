@@ -1,5 +1,23 @@
 # ALNILAM — AI Agent Handoff
 
+## Native minifier compatibility — 2026-11-03
+
+Source45398f01539673551785b19e8257682d770e9c30 functional run
+[cnb-c30-1k6fnjtc7](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-c30-1k6fnjtc7#001)
+ended ERROR8m59s, not PASS. Removing script preprocessing alone did not fix the
+trusted Vite missing-esbuild error. Actual root cause was pinned
+config/integrationsConfig.ts forcing esbuild JS/CSS minification. The consumer
+patch now uses the installed Vite8 Oxc/LightningCSS minifiers, keeping compression
+enabled. An explicit local loader hook that rejects Vite->esbuild imports
+reproduced the original error and then passed a13-page raw compose after this
+patch, with unchanged Site digest. No required check or pipeline is disabled.
+This patch is listed in SOURCE.json; latest source/CI are in PR47/Issue61.
+Native screenshot evidence on45398f0 is linked from those records; local test
+metadata deliberately separates served provenance and runner HEAD. PR47 remains
+WIP: performance budgets, stale old-UI behavior cases, categories#62 and actual
+native CI screenshot retention still need work. Never infer merge/P3 acceptance.
+
+
 ## Owner correction — actual Shirone frontend Base (2026-11-03)
 
 Owner confirmed that pages/layout/main components must use the real pinned Shirone
