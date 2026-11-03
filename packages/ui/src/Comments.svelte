@@ -9,10 +9,9 @@
     categoryId: string;
     mapping: "pathname" | "specific" | "number";
   }
-  const { repo, repoId, category, categoryId, mapping, theme, lang } = $props() as {
-    repo: string; repoId: string; category: string; categoryId: string;
-    mapping: GiscusConfig["mapping"]; theme: string; lang: string;
-  };
+  const { repo, repoId, category, categoryId, mapping, theme, lang }: GiscusConfig & {
+    theme: string; lang: string;
+  } = $props();
 
   let container: HTMLDivElement | undefined = $state();
   let loaded = false;

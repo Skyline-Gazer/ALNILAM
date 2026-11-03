@@ -31,7 +31,8 @@ const posts = defineCollection({
     prevTitle: '', prevSlug: '', nextTitle: '', nextSlug: '',
   })),
 });
-// The upstream frontend asks for optional collections; disabled modules have no Site input.
+// Empty stubs only for disabled upstream modules; their field contracts are not modeled.
+// Enabling one requires its own Site contract/schema before any content can be loaded.
 const emptyCollection = () => defineCollection({loader: async () => [], schema: z.object({title: z.string().default('')})});
 export const collections = { posts, series: emptyCollection(), moments: emptyCollection(), spec: emptyCollection() };
 

@@ -41,7 +41,8 @@ export default defineConfig({
         content: loadSite().root + '/content',
       },
     }),
-    svelte({preprocess: [vitePreprocess({script: true})]}),
+    // Svelte 5 strips type-only TS; Vite preprocessing is needed only for native Stylus.
+    svelte({preprocess: [vitePreprocess()]}),
     mdx(),
     {
       name: "alnilam-module-gating",

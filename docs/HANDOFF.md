@@ -11,7 +11,8 @@ an approved target. Reuse this chain for the correction; no new approval ritual.
   is retained under `themes/shirone/upstream` with MIT license and per-file hashes.
   Pure source commit `59097e72bdc3947de3ddfae5718d3c0690cd911d` is separate
   from consumer adapters. Upstream assets/content/fonts/scripts/workflows excluded.
-- Working homepage directly renders original MainGridLayout/PostPage, top bar,
+- All active home/list/article/tag/archive routes use original native layouts/pages,
+  top bar,
   sidebar, native cards, HCT/settings/drawer. Old ALNILAM hero is absent.
   Existing Core composer/YAML-only Site loader/Pagefind/provenance retained;
   field mapping is in memory and user-config browser module contains only resolved
@@ -24,12 +25,44 @@ an approved target. Reuse this chain for the correction; no new approval ritual.
 - Canonical/skip-link and pass-through cover/banner dimensions adapted in source,
   changes explicitly listed in SOURCE.json. Existing artifact budget still FAILS:
   homepage9 islands vs2, HTML91.7KiB vs64. No checks weakened or disabled.
-- Remaining: migrate the other routes off the old UI, preserve SEO/i18n/optional
-  behavior, fix/measure native runtime budgets against actual upstream baseline,
+- Remaining: fix/measure native runtime budgets against actual upstream baseline,
   adapt stale old-UI browser expectations with real behavior evidence, then native
   CI/CodeBuddy and reviewable integration. DO NOT claim migration/P3 accepted.
 - Effective ADS pin and main/mirror/tag/deploy boundaries remain unchanged.
 
+
+## Native browser/review follow-up — 2026-11-03
+
+Current code checkpoint before follow-up:50f79e2b1878148a459bb411a510080549e29013.
+It includes the consuming-app Stylus lock entry (18d4055 omitted it; its frozen
+install ERROR is retained). Frozen local install PASS. Latest functional CI at
+50f79e2 is [ERROR,7m34s](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-c24-1k6fmmcgr#001):
+check0diagnostics and source coverage85.2768% passed, then target-toolchain Vite
+could not import its optional esbuild during script preprocessing. Current
+follow-up uses Svelte5's built-in type-only TS support and retains only Stylus
+preprocessing; no toolchain/framework version upgrade or CI redesign. Existing
+integration9.1.1 is also declared at workspace root so the Astro language checker
+resolves sibling-package Svelte files after clean installs. Comments props use
+Svelte5's typed $props declaration; no behavior bypass.
+
+Native functional + real visual matrix16/16 PASS locally,56 gallery images plus
+route captures. Explicit report batch keys and link validation replace generated
+directory-name guessing. Actual served provenance and testRunHead are separate;
+reports explicitly do not certify a clean checkout. Native theme/search selectors
+are used. Compose commands and preview ports are documented. Categories404/#62
+remains a P2 gap, not an approved substitute. Current HEAD/CI/evidence are recorded
+in PR47 and Issue61. PR remains WIP, #61/parent39 open; these local results do not establish
+complete functional CI or P3 acceptance.
+
+CodeBuddy latest review2117457007058055168: genuine visual-selector/metadata/report
+issues fixed. Its claim that a client:visible island cannot hydrate through an
+Astro named slot is disproved by actual enabled-Comments probes: provider loads
+once after scroll and receives native theme updates. Its claim that the demo
+getting-started/Guide URLs are absent is disproved by200responses in all8 visual
+cases. Disabled-collection schema stubs are explicitly documented; no new module
+contract is implied. Keep material findings and failed CI visible. Performance
+budgets still FAIL; old-UI browser expectations and actual native CI archive
+adoption remain unfinished. Do not claim P3 accepted or rewrite old run outcomes.
 
 ## Native Shirone route correction checkpoint — 2026-11-03
 
