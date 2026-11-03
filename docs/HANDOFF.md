@@ -31,6 +31,45 @@ an approved target. Reuse this chain for the correction; no new approval ritual.
 - Effective ADS pin and main/mirror/tag/deploy boundaries remain unchanged.
 
 
+## Native Shirone route correction checkpoint — 2026-11-03
+
+PR #47 remains WIP, using the existing feat/61-visual-baseline branch. The native
+package now exports the original Shirone components, not the historical src/
+adaptation. All active home/post/list/tag/archive routes use those exports;
+Bangumi retains Core data/gating and uses native layout/card/page-header.
+Article composition is the actual upstream Article page with small recorded
+head/comments slots, semantic h1 and public-cover dimensions. Preserve existing
+language URLs, hreflang, canonical/published metadata, plural /archives/, /tags/
+detail routes and /posts/ pagination. Site default appearance is used by native
+theme state; there is no second theme store or router.
+
+Last remote source before this checkpoint: 2125e1757019ab717b09ba1149c693317775ca56.
+[Its functional CI](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-j38-1k6fkfmgq#001)
+is ERROR: preserved stage-fail-0 diagnostics identify missing Stylus at the app
+consumer. Pinned stylus0.64.0 is now declared directly in apps/web (same native
+version; no framework upgrade). Advisory pipeline completion is not approval.
+
+Final native root/subpath desktop/mobile home + six-route/real-search cases
+passed8/8, including Site default appearance, keyboard trigger/Escape focus and
+HTTP checks of internal links. Static crawl:13pages, zero missing internal hrefs.
+Enabled Comments/Bangumi2/2 controlled-provider probes PASS: zero requests before
+offscreen comments, one after scroll, native dark/light synchronization; delayed
+iframe CLS desktop0/mobile0.00324258547. Existing Core Comments now listens to
+native theme events and retains340px reservation; no live-provider claim. Full Node suite:117/119 PASS; the failures were
+pagination pointing at upstream /2/ rather than existing /posts/2/, plus one
+parallel-compose run in which neither build succeeded. Pagination has been fixed;
+affected two-case rerun2/2 PASS with original assertions retained and bounded
+child diagnostics added. Do not report a new full119/119 run. Reproducible output,
+Site digest, cache isolation and failure preservation cases passed in that run.
+App check18files zero diagnostics. Final native browser evidence and current exact source SHA are recorded in PR #47. Performance budgets still FAIL; no budget,
+mandatory check or CI status has been weakened or disguised. Existing old-UI
+browser expectations also need behavioral migration, not blanket deletion.
+
+Remaining before acceptance: complete actual native UI regression/performance
+work, enable-module evidence and native CI/review; category page #62 and actual
+native CI screenshot retention remain separate P3 acceptance gaps. #61/parent39
+stay open, Project In Progress. Main/production/ADS pin untouched.
+
 ## Autonomous continuation — #58–#60 merged / #61 in progress (2026-11-03)
 
 Current checkpoint — 2026-11-03:

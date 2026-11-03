@@ -4,8 +4,16 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./BaseLayout.astro": "./src/BaseLayout.astro",
-    "./PostCard.astro": "./src/PostCard.astro"
+    "./BaseLayout.astro": "./upstream/src/layouts/MainGridLayout.astro",
+    "./MainGridLayout.astro": "./upstream/src/layouts/MainGridLayout.astro",
+    "./PostCard.astro": "./upstream/src/components/organisms/PostCard.astro",
+    "./PostPage.astro": "./upstream/src/components/organisms/PostPage.astro",
+    "./PageHeader.astro": "./upstream/src/components/atoms/display/PageHeader.astro",
+    "./Card.svelte": "./upstream/src/components/atoms/display/Card.svelte",
+    "./Pagination.astro": "./upstream/src/components/molecules/Pagination.astro",
+    "./Article.astro": "./upstream/src/pages/posts/[...slug].astro",
+    "./Archive.astro": "./upstream/src/pages/archive.astro",
+    "./Tags.astro": "./upstream/src/pages/tags.astro"
   },
   "dependencies": {
     "@alnilam/ui": "workspace:*",

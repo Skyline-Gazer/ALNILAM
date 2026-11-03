@@ -1,3 +1,4 @@
+import { siteConfig } from "../config/siteConfig.ts";
 import { permalinkConfig } from "../config/permalinkConfig.ts";
 import type I18nKey from "../i18n/i18nKey.ts";
 import { i18n } from "../i18n/translation.ts";
@@ -81,12 +82,15 @@ export function getPostUrl(
 		(post as { id?: string; slug?: string }).id ??
 		(post as { id?: string; slug?: string }).slug ??
 		"";
-	return getPostUrlBySlug(postId);
+	// ALNILAM preserves its existing language-prefixed URLs.
+	const lang = (post as {data?: {lang?: string}}).data?.lang;
+	const locale = siteConfig.lang.replace("_", "-");
+	return getPostUrlBySlug(lang && lang !== locale && !postId.startsWith(`${lang}/`) ? `${lang}/${postId}` : postId);
 }
 
 export function getTagUrl(tag: string): string {
-	if (!tag) return url("/archive/");
-	return url(`/archive/?tag=${encodeURIComponent(tag.trim())}`);
+	if (!tag) return url("/tags/");
+	return url(`/tags/${encodeURIComponent(tag.trim())}/`);
 }
 
 export function getCategoryUrl(category: string | null): string {
@@ -96,8 +100,8 @@ export function getCategoryUrl(category: string | null): string {
 		category.trim().toLowerCase() ===
 			i18n("uncategorized" as I18nKey).toLowerCase()
 	)
-		return url("/archive/?uncategorized=true");
-	return url(`/archive/?category=${encodeURIComponent(category.trim())}`);
+		return url("/archives/?uncategorized=true");
+	return url(`/archives/?category=${encodeURIComponent(category.trim())}`);
 }
 
 export function getSeriesUrl(series: string): string {

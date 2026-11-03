@@ -527,7 +527,7 @@ test("two parallel composes serialize: exactly one publishes, the loser fails cl
   const results = await Promise.all([run("out-a"), run("out-b")]);
   const winners = results.filter((r) => r.status === 0);
   const losers = results.filter((r) => r.status !== 0);
-  assert.equal(winners.length, 1, "exactly one compose may hold the build state: " + results.map((r) => r.out + "=" + r.status).join(", "));
+  assert.equal(winners.length, 1, "exactly one compose may hold the build state: " + results.map((r) => r.out + "=" + r.status + "\n" + r.text.slice(-2500)).join("\n"));
   assert.equal(losers.length, 1);
   assert.match(losers[0].text, /Another compose is building this Site revision/);
   assert.equal(fs.existsSync(path.join(root, losers[0].out)), false, "the blocked compose must not publish");

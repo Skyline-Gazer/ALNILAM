@@ -15,6 +15,7 @@ let result: SearchResult[] = [];
 let isSearching = false;
 let pagefindLoaded = false;
 let initialized = false;
+let requestGeneration = 0;
 
 $: panelResults = result.map((r) => ({
 	url: r.url,
@@ -57,6 +58,7 @@ const setPanelVisibility = (show: boolean, isDesktop: boolean): void => {
 };
 
 const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
+	const generation = ++requestGeneration;
 	if (!keyword) {
 		setPanelVisibility(false, isDesktop);
 		result = [];
@@ -97,14 +99,16 @@ const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
 			searchResults = fakeResult;
 		}
 
+		if (!initialized || generation !== requestGeneration) return;
 		result = searchResults;
 		setPanelVisibility(result.length > 0, isDesktop);
 	} catch (error) {
+		if (!initialized || generation !== requestGeneration) return;
 		console.error("Search error:", error);
 		result = [];
 		setPanelVisibility(false, isDesktop);
 	} finally {
-		isSearching = false;
+		if(generation === requestGeneration) isSearching = false;
 	}
 };
 
@@ -120,24 +124,27 @@ onMount(() => {
 		if (keywordMobile) search(keywordMobile, false);
 	};
 
-	if (import.meta.env.DEV) {
-		console.log(
-			"Pagefind is not available in development mode. Using mock data.",
-		);
-		initializeSearch();
-	} else {
-		document.addEventListener("pagefindready", () => {
-			console.log("Pagefind ready event received.");
-			initializeSearch();
-		});
-		document.addEventListener("pagefindloaderror", () => {
-			console.warn(
-				"Pagefind load error event received. Search functionality will be limited.",
-			);
-			initializeSearch();
-		});
-		initializeSearch();
-	}
+	const loadError = () => initializeSearch();
+	const escape = (event: KeyboardEvent) => {
+		if (event.key !== "Escape") return;
+		const panel = document.getElementById("search-panel");
+		if (!panel || panel.classList.contains("float-panel-closed")) return;
+		panel.classList.add("float-panel-closed");
+		requestGeneration++;
+		const trigger = window.matchMedia("(min-width: 1024px)").matches ? "search-input-desktop-switch" : "search-switch";
+		document.getElementById(trigger)?.focus();
+	};
+	document.addEventListener("pagefindready", initializeSearch);
+	document.addEventListener("pagefindloaderror", loadError);
+	document.addEventListener("keydown", escape);
+	initializeSearch();
+	return () => {
+		initialized = false;
+		requestGeneration++;
+		document.removeEventListener("pagefindready", initializeSearch);
+		document.removeEventListener("pagefindloaderror", loadError);
+		document.removeEventListener("keydown", escape);
+	};
 });
 
 $: if (initialized) {
@@ -160,7 +167,7 @@ $: if (initialized) {
     name="search-desktop"
     placeholder={i18n(I18nKey.search)}
     onfocus={() => search(keywordDesktop, true)}
-    oncollapse={() => setPanelVisibility(false, true)}
+    oncollapse={() => { requestGeneration++; isSearching=false; setPanelVisibility(false, true); }}
 />
 
 <!-- toggle btn for phone/tablet view -->

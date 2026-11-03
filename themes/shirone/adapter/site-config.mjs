@@ -33,3 +33,5 @@ export const userConfigOverrides = {
   comment: disabled,
 };
 export const userConfigSources = ['alnilam.config.yaml (validated, read-only)'];
+
+export const siteAppearance = config.theme.appearance;

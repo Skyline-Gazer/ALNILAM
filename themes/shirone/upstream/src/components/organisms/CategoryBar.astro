@@ -22,7 +22,7 @@ const { currentPostCategory } = Astro.props;
 
 const categories = await getCategoryList();
 const homeUrl = url("/");
-const archiveUrl = url("/archive/");
+const archiveUrl = url("/archives/");
 
 const pathname = Astro.url.pathname;
 const isHome = pathsEqual(pathname, homeUrl);
@@ -148,7 +148,7 @@ const softCategory = !isHome && !isArchive && postCategory ? postCategory : "";
 					: active === "__home__"
 					? normalizedHref === "/"
 					: active === "__archive__"
-						? href.includes("/archive/") && !href.includes("category=") && !href.includes("tag=")
+						? href.includes("/archives/") && !href.includes("category=") && !href.includes("tag=")
 						: href.includes(`category=${encodeURIComponent(categoryParam!)}`);
 			pill.classList.toggle("m3-chip--selected", isActive);
 

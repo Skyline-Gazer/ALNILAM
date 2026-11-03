@@ -5,6 +5,7 @@
  * w-48 胶囊输入条，失焦延迟自动折叠。value / expanded 可双向绑定，
  * 展开折叠交互细节全部内聚在此，Search 有机体只负责搜索与结果面板。
  */
+import {onDestroy} from "svelte";
 import Icon from "@iconify/svelte";
 
 let {
@@ -26,10 +27,12 @@ let {
 } = $props();
 
 let blurTimer: ReturnType<typeof setTimeout>;
+let focusTimer: ReturnType<typeof setTimeout>;
+onDestroy(() => {clearTimeout(blurTimer); clearTimeout(focusTimer);});
 
 const expand = (): void => {
 	expanded = true;
-	setTimeout(() => {
+	focusTimer = setTimeout(() => {
 		const input = document.getElementById(id) as HTMLInputElement;
 		input?.focus();
 	}, 0);
@@ -53,18 +56,20 @@ const handleFocus = (): void => {
     <div
         class="m3-state-layer absolute right-0 top-0 flex items-center overflow-hidden rounded-full h-10 top-app-bar__search-shell
                {expanded ? 'top-app-bar__search-shell--expanded w-48 bg-(--surface-container-high)' : 'w-10 bg-transparent'}"
+        onkeydown={(event) => { if(event.key === "Escape") {expanded=false; oncollapse(); document.getElementById(`${id}-switch`)?.focus();}}}
         style="transition: width var(--m3e-duration-medium) var(--m3e-easing-emphasized-decelerate), background-color var(--m3e-duration-short) var(--m3e-easing-standard);"
-        onclick={() => {
-            if (!expanded) expand();
-        }}
     >
+        <button type="button" id={`${id}-switch`} aria-label={placeholder || "Search"}
+            aria-controls={id} aria-expanded={expanded} onclick={expand}
+            class="w-10 h-10 shrink-0 flex items-center justify-center focus-visible:outline-2 focus-visible:outline-[var(--primary)]">
         <Icon
             icon="material-symbols:search"
             class="pointer-events-none shrink-0 text-[1.25rem] transition-colors duration-[var(--m3e-duration-short)]
                    {expanded
-                       ? 'ml-3 text-[var(--on-surface-variant)]'
+                       ? 'text-[var(--on-surface-variant)]'
                        : 'mx-auto text-[var(--on-surface)]'}"
         ></Icon>
+        </button>
         <input
             {id}
             {name}

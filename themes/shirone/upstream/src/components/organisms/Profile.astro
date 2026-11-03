@@ -9,7 +9,7 @@ import UmamiStats from "@components/organisms/UmamiStats.astro";
 import Icon from "@iconify/svelte";
 import { resolveImageAsset } from "@utils/asset-utils";
 import { url } from "@utils/url-utils";
-import { profileConfig } from "@/config";
+import { aboutConfig, profileConfig } from "@/config";
 import type { ProfileWidget } from "@/types/sidebarConfig";
 
 interface Props {
@@ -57,7 +57,7 @@ if (typeof avatarAsset !== "string") {
 ---
 <div class={className} style={style}>
 	<Card color="var(--card-bg)" radius="l" class="m3-profile p-3">
-    <a aria-label="Go to About Page" href={url('/about/')}
+    <a aria-label={config.name} href={url(aboutConfig.enable ? "/about/" : "/")}
        class="m3-profile__avatar-link group">
         <div class="m3-profile__avatar-overlay">
             <Icon icon="fa7-solid:address-card"
@@ -71,7 +71,7 @@ if (typeof avatarAsset !== "string") {
 			height={avatarHeight}
 			loading={priority ? "eager" : "lazy"}
 			fetchPriority={priority ? "high" : undefined}
-            alt="Profile Image of the Author"
+            alt={config.name}
             size={176}
             shape="rounded"
             class="mx-auto lg:!w-full"

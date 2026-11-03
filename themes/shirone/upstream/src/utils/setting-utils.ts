@@ -1,7 +1,7 @@
+import { siteAppearance as DEFAULT_THEME } from "../user/user-config";
 import {
 	AUTO_MODE,
 	DARK_MODE,
-	DEFAULT_THEME,
 	LIGHT_MODE,
 	TEXTURE_CHANGE_EVENT,
 	TEXTURE_OPACITY_KEY,

@@ -3,7 +3,7 @@ import svelte, {vitePreprocess} from "@astrojs/svelte";
 import mdx from "@astrojs/mdx";
 import shirones from "../../themes/shirone/upstream/src/integration/index.ts";
 import {fileURLToPath} from "node:url";
-import {userConfigOverrides, userConfigSources} from '../../themes/shirone/adapter/site-config.mjs';
+import {userConfigOverrides, userConfigSources, siteAppearance} from '../../themes/shirone/adapter/site-config.mjs';
 import { loadSite } from "./src/lib/site-source.mjs";
 const { config } = loadSite();
 
@@ -65,7 +65,7 @@ export default defineConfig({
       enforce: 'pre',
       load(id) {
         if (id.split('?')[0] === fileURLToPath(new URL('../../themes/shirone/upstream/src/user/user-config.ts', import.meta.url))) {
-          return `export const userConfigOverrides = ${JSON.stringify(userConfigOverrides)};\nexport const userConfigSources = ${JSON.stringify(userConfigSources)};`;
+          return `export const userConfigOverrides = ${JSON.stringify(userConfigOverrides)};\nexport const userConfigSources = ${JSON.stringify(userConfigSources)};\nexport const siteAppearance = ${JSON.stringify(siteAppearance)};`;
         }
       },
     }],

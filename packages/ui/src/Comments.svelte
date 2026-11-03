@@ -18,7 +18,7 @@
   let loaded = false;
 
   const selectedTheme = () =>
-    document.documentElement.dataset.theme === "light" ? "light" : "dark_dimmed";
+    (document.documentElement.classList.contains("dark") || document.documentElement.dataset.theme === "dark") ? "dark_dimmed" : "light";
 
   $effect(() => {
     if (!container || loaded) return;
@@ -50,7 +50,11 @@
       );
     };
     window.addEventListener("giscus-theme-change", updateTheme);
-    return () => window.removeEventListener("giscus-theme-change", updateTheme);
+    window.addEventListener("shirone:theme-change", updateTheme);
+    return () => {
+      window.removeEventListener("giscus-theme-change", updateTheme);
+      window.removeEventListener("shirone:theme-change", updateTheme);
+    };
   });
 </script>
 

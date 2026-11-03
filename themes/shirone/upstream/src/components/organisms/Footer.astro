@@ -12,9 +12,8 @@ import packageMetadata from "../../../package.json";
 
 const currentYear = new Date().getFullYear();
 const links = [
-	{ label: "RSS", href: url("rss/") },
-	{ label: "Atom", href: url("atom/") },
-	{ label: "Sitemap", href: url("sitemap-index.xml"), external: true },
+	{ label: "RSS", href: url("rss.xml") },
+	{ label: "Sitemap", href: url("sitemap.xml"), external: true },
 ];
 const isShironesPackage = packageMetadata.name === "shirones";
 const poweredBy = [

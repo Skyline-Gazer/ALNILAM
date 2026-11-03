@@ -81,7 +81,7 @@ const pageLabel = (p: number) => labels.page.replace("{page}", String(p));
 	<!-- 移动端简化版：prev + 当前/总页（点击跳转）+ next -->
 	<div class="m3-blog-pagination__mobile">
 		{prevUrl ? (
-			<a href={prevUrl} aria-label={labels.prev} class="m3-blog-pagination__arrow m3-state-layer">
+			<a href={prevUrl} rel="prev" aria-label={labels.prev} class="m3-blog-pagination__arrow m3-state-layer">
 				<Icon icon="material-symbols:chevron-left-rounded" />
 			</a>
 		) : (
@@ -103,7 +103,7 @@ const pageLabel = (p: number) => labels.page.replace("{page}", String(p));
 			<span class="m3-blog-pagination__jump-total">{totalPages}</span>
 		</button>
 		{nextUrl ? (
-			<a href={nextUrl} aria-label={labels.next} class="m3-blog-pagination__arrow m3-state-layer">
+			<a href={nextUrl} rel="next" aria-label={labels.next} class="m3-blog-pagination__arrow m3-state-layer">
 				<Icon icon="material-symbols:chevron-right-rounded" />
 			</a>
 		) : (
@@ -117,7 +117,7 @@ const pageLabel = (p: number) => labels.page.replace("{page}", String(p));
 	<div class="m3-blog-pagination__desktop">
 		{prevUrl ? (
 			<a
-				href={prevUrl}
+				href={prevUrl} rel="prev"
 				aria-label={labels.prev}
 				class="m3-blog-pagination__arrow m3-state-layer"
 			>
@@ -147,7 +147,7 @@ const pageLabel = (p: number) => labels.page.replace("{page}", String(p));
 		</div>
 		{nextUrl ? (
 			<a
-				href={nextUrl}
+				href={nextUrl} rel="next"
 				aria-label={labels.next}
 				class="m3-blog-pagination__arrow m3-state-layer"
 			>

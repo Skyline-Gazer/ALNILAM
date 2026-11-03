@@ -118,6 +118,7 @@ const resolvedAspectRatio = aspectRatio ?? (!isLocal ? "16 / 9" : undefined);
     {!isLocal && (
 		<img
 			src={isPublic ? url(src) : src}
+                width="640" height="360"
 			alt={alt || ""}
 			class={imageClass}
 			style={imageStyle}
