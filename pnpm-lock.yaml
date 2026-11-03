@@ -44,6 +44,9 @@ importers:
       sharp:
         specifier: 0.35.5
         version: 0.35.5(@types/node@26.6.5)
+      stylus:
+        specifier: 0.64.0
+        version: 0.64.0
       svelte:
         specifier: ^5.56.3
         version: 5.57.2
