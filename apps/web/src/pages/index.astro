@@ -5,7 +5,17 @@ import PostPage from '@alnilam/theme-shirone/PostPage.astro';
 import {getCollection} from 'astro:content';
 const posts = (await getCollection('posts', ({data}) => !data.draft))
   .sort((a,b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
-const page = {data: posts.slice(0,5)};
+const latest = posts.slice(0, 5);
+const page = {
+  data: latest,
+  currentPage: 1,
+  lastPage: 1,
+  total: latest.length,
+  size: 5,
+  start: 0,
+  end: Math.max(0, latest.length - 1),
+  url: { current: '/', prev: undefined, next: undefined, first: undefined, last: undefined },
+};
 ---
 <MainGridLayout page="home">
   <h1 class="sr-only">最近文章</h1>

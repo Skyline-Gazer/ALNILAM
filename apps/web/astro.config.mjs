@@ -10,13 +10,27 @@ import { loadSite } from "./src/lib/site-source.mjs";
 const { root: siteRoot, config } = loadSite();
 process.env.ALNILAM_SITE_DIR ||= siteRoot;
 
+const buildScratchRoot = fileURLToPath(new URL("./.astro", import.meta.url));
+const userConfigTarget = fs.realpathSync(
+  fileURLToPath(new URL("../../themes/shirone/upstream/src/user/user-config.ts", import.meta.url)),
+);
+const toPathString = (target) => (target instanceof URL ? fileURLToPath(target) : String(target));
 const originalRename = fs.promises.rename.bind(fs.promises);
+// Astro 7.4.2 ssrMoveAssets moves prerendered assets from apps/web/.astro into outDir via rename();
+// when outDir is on a separate mount (e.g. /tmp tmpfs), fall back to copy+remove strictly for .astro scratch.
 fs.promises.rename = async (oldPath, newPath) => {
   try {
     return await originalRename(oldPath, newPath);
   } catch (error) {
-    if (error && typeof error === "object" && "code" in error && error.code === "EXDEV") {
-      await fs.promises.cp(oldPath, newPath, { recursive: true });
+    const oldFile = path.resolve(toPathString(oldPath));
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "EXDEV" &&
+      oldFile.startsWith(buildScratchRoot + path.sep)
+    ) {
+      await fs.promises.cp(oldPath, newPath, { recursive: true, force: true });
       await fs.promises.rm(oldPath, { recursive: true, force: true });
       return;
     }
@@ -112,8 +126,14 @@ export default defineConfig({
       name: 'alnilam-shirone-site-values',
       enforce: 'pre',
       load(id) {
-        if (id.split('?')[0] === fileURLToPath(new URL('../../themes/shirone/upstream/src/user/user-config.ts', import.meta.url))) {
-          return `export const userConfigOverrides = ${JSON.stringify(userConfigOverrides)};\nexport const userConfigSources = ${JSON.stringify(userConfigSources)};\nexport const siteAppearance = ${JSON.stringify(siteAppearance)};`;
+        const clean = id.split('?')[0];
+        if (!clean || !path.isAbsolute(clean)) return;
+        try {
+          if (fs.realpathSync(clean) === userConfigTarget) {
+            return `export const userConfigOverrides = ${JSON.stringify(userConfigOverrides)};\nexport const userConfigSources = ${JSON.stringify(userConfigSources)};\nexport const siteAppearance = ${JSON.stringify(siteAppearance)};`;
+          }
+        } catch {
+          return;
         }
       },
     }],

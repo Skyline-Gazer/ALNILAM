@@ -36,6 +36,8 @@ const posts = defineCollection({
     published: data.pubDate,
     updated: data.updatedDate,
     image: resolveCover(data.cover, base),
+    // Upstream Shirone post schema defaults; taxonomy/series fields are deferred to P4 (#62),
+    // and upstream CommentSection is disabled in favor of ALNILAM's Core Comments island.
     pinned: false, category: '', series: '', encrypted: false, hideHomeContent: true,
     comment: config.comments.enabled,
     prevTitle: '', prevSlug: '', nextTitle: '', nextSlug: '',

@@ -22,6 +22,7 @@ export const userConfigOverrides = {
     {type: 'tags', enable: true, slot: 'sticky'},
     {type: 'toc', enable: true, slot: 'sticky', pages: ['post']},
   ]},
+  // Native nav links bind both href (`url`) and active-route key (`pageKey`, resolved by `resolvePageKey`).
   navBar: {links: [
     {name: '首页', url: '/', pageKey: 'home'},
     {name: '文章', url: '/posts/', pageKey: 'posts'},
@@ -33,6 +34,7 @@ export const userConfigOverrides = {
   moments: disabled, anime: disabled, friends: disabled, projects: disabled,
   skills: disabled, games: disabled, timeline: disabled, devices: disabled,
   compass: disabled, about: disabled, series: disabled,
+  // Upstream CommentSection is disabled because ALNILAM mounts its Core Giscus Comments island via slot="comments".
   comment: disabled,
 };
 export const userConfigSources = ['alnilam.config.yaml (validated, read-only)'];
