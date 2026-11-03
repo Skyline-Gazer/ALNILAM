@@ -1,6 +1,28 @@
 # ALNILAM — AI Agent Handoff
 
-## Autonomous continuation — #58/#59 merged / #60 in progress (2026-11-02)
+## Autonomous continuation — #58–#60 merged / #61 in progress (2026-11-03)
+
+Current checkpoint — 2026-11-03:
+#60 [PR #46](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/46) merged normally into
+CNB dev at `046f251d0092adee8d7d7e091df6bce82dd3ac16`; source
+`aaf48cac56585fcfe812c0a0c2393d32990404e9`, tested candidate
+`8956ddf069d13e746f133fb12b0210e787481f15`. Source ancestry and identical tree verified.
+[Functional CI](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-3qn-1k6duhckl)
+SUCCESS, 14m0s. CodeBuddy structured status passed with two warning / one info;
+comments disposed in `2117210143129825280`, info ID `2117209735409926144`.
+No separate reviewer approval claimed. #60 Closed / Project Done.
+[Actual browser/CLS evidence](https://cnb.cool/-/files/qFV4QWmSEWRUfrFEOd8XHA/64f1e6d3-b3e7-4c51-aae3-da9c31b6497e/alnilam-60-lifecycle-aaf48ca.zip)
+retains final 6/6, enabled Comments.svelte with mock response and provenance.
+
+#61 starts from that dev: reuse Playwright and current artifact retention; fixed
+home/list/article/search/tags/tag/archive screenshots at 1440/390, dark/light,
+root/subpath, loaded images, JSON manifest and human-readable HTML gallery.
+Independent `/categories/` is not implemented (planned #62); record P2 functional gap
+and keep #61/Phase P3 open until category evidence and native CI archives exist.
+New browser cases are local until the target-owned harness lands; do not claim the
+current PR's trusted target runs candidate-only tests. No new CI framework.
+Goal runner still reports `usageLimited`; current session tools work, no background
+agent execution is claimed. Ordinary development continues within existing scope.
 
 - #58 / CNB PR #44 merged normally into dev at `c3f554144d0baed8a2d0a0d110b7567b1fdffdb7`.
   Source `c503cb1a5bbd3d680fadc5dca31fa408c1ed90f6`; tested candidate
@@ -40,7 +62,7 @@
   Giscus response: delayed 260px iframe initially gave CLS 0.10118367 on mobile;
   reserved initial area fixed it. Final integration: CLS 390=0.00982235,
   1440=0.00307803, zero initial provider requests and exactly one after scroll.
-  No live-provider claim. Native feature PR/CI and merge remain pending.
+  No live-provider claim. Final native CI and merge are recorded above.
   Root/subpath and enabled-Site builds preserve input digest. A /tmp output probe
   hit Astro EXDEV moving assets across filesystems; workspace output worked. This
   output-path limitation is not a #55 real-Site CI result or a blocker to this UI.
