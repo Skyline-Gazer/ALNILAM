@@ -11,19 +11,35 @@ export async function getStaticPaths() {
   const allPosts = await getCollection("posts", ({ data }) => !data.draft);
   const { config } = loadSite();
   const lastPage = Math.ceil(allPosts.length / POSTS_PAGE_SIZE);
+  const seenRoutes = new Set<string>();
+  const seenTranslations = new Set<string>();
   for (const post of allPosts) {
-    if (postLang(post, config.site.locale) !== config.site.locale) continue;
-    const page = Number(post.id);
-    if (String(page) === post.id && page >= 2 && page <= lastPage) {
-      throw new Error(`Post slug "${post.id}" conflicts with pagination route /posts/${page}/.`);
+    const lang = postLang(post, config.site.locale);
+    if (lang === config.site.locale) {
+      const page = Number(post.id);
+      if (String(page) === post.id && page >= 2 && page <= lastPage) {
+        throw new Error(`Post slug "${post.id}" conflicts with pagination route /posts/${page}/.`);
+      }
+    }
+    if (post.data.translationKey) {
+      const tk = `${lang}:${post.data.translationKey}`;
+      if (seenTranslations.has(tk)) {
+        throw new Error(`ALNILAM: duplicate translationKey "${post.data.translationKey}" for locale "${lang}"`);
+      }
+      seenTranslations.add(tk);
     }
   }
   return allPosts.map((post) => {
     const lang = postLang(post, config.site.locale);
+    const slug = lang === config.site.locale || post.id.startsWith(lang + "/") ? post.id : `${lang}/${post.id}`;
+    if (seenRoutes.has(slug)) {
+      throw new Error(`ALNILAM: duplicate post route "/posts/${slug}/"`);
+    }
+    seenRoutes.add(slug);
     return {
       // [...slug] rest param: id already contains "<lang>/" when the file lives
       // in a locale directory; otherwise prefix explicitly.
-      params: { slug: lang === config.site.locale || post.id.startsWith(lang + "/") ? post.id : `${lang}/${post.id}` },
+      params: { slug },
       props: { post, allPosts },
     };
   });
@@ -36,6 +52,7 @@ const alternates = translationAlternates(post, allPosts, config.site.locale);
   <Fragment slot="head">
     {alternates && [...alternates].map(([lang, path]) => <link rel="alternate" hreflang={lang} href={canonicalUrl(path + "/", config.site.url)} />)}
     <meta property="article:published_time" content={post.data.pubDate.toISOString()} />
+    {post.data.category && <meta property="article:section" content={post.data.category} />}
     {post.data.tags.map(tag => <meta property="article:tag" content={tag} />)}
   </Fragment>
   {config.comments.enabled && (

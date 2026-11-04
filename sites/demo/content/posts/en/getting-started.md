@@ -2,6 +2,7 @@
 title: "Getting started with ALNILAM"
 description: "A second article showing multilingual content organization."
 pubDate: 2026-10-26
+category: "guide"
 tags: ["Guide"]
 lang: "en"
 translationKey: "getting-started"

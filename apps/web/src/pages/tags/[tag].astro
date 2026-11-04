@@ -4,8 +4,12 @@ import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
 import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
 import PostPage from "@alnilam/theme-shirone/PostPage.astro";
 import { withBase } from "../../lib/i18n.mjs";
+import { loadSite } from "../../lib/site-source.mjs";
+import { comparePosts, loadSiteTaxonomy, tagDisplayLabel } from "../../lib/taxonomy";
 
 export async function getStaticPaths() {
+  const { root, config } = loadSite();
+  const taxonomy = loadSiteTaxonomy(root, config);
   const posts = await getCollection("posts", ({ data }) => !data.draft);
   const byTag = new Map<string, CollectionEntry<"posts">[]>();
   for (const post of posts) {
@@ -14,13 +18,31 @@ export async function getStaticPaths() {
       byTag.get(tag)!.push(post);
     }
   }
+  for (const entry of taxonomy.tags) {
+    const matching = posts.filter((post) =>
+      post.data.tags.some(
+        (tag) =>
+          tag === entry.slug ||
+          tag === entry.id ||
+          tag.toLowerCase() === entry.slug ||
+          tag.toLowerCase() === entry.id ||
+          Object.values(entry.label).includes(tag),
+      ),
+    );
+    if (matching.length > 0 && !byTag.has(entry.slug)) {
+      byTag.set(entry.slug, matching);
+    }
+  }
   return [...byTag.entries()].map(([tag, list]) => ({
     params: { tag },
-    props: { list: list.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()) },
+    props: {
+      list: [...list].sort(comparePosts),
+      label: tagDisplayLabel(tag, taxonomy.tags, config.site.locale),
+    },
   }));
 }
 const { tag } = Astro.params;
-const { list } = Astro.props as { list: CollectionEntry<"posts">[] };
+const { list } = Astro.props as { list: CollectionEntry<"posts">[]; label: string };
 ---
 <MainGridLayout title={`#${tag}`} description={`标签 ${tag} 下的全部文章`} page="tags">
   <a href={withBase("/tags/")} class="text-[var(--primary)]">← 全部标签</a>

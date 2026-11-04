@@ -2,6 +2,7 @@
 title: "Hello, ALNILAM"
 description: "The English translation of the first article in an independently owned Site."
 pubDate: 2026-10-25
+category: "release"
 tags: ["ALNILAM", "Astro"]
 cover: "/site-assets/orion.svg"
 lang: "en"

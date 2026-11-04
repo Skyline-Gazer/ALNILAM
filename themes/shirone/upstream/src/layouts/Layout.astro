@@ -302,6 +302,109 @@ import { applyStoredLayoutMode } from "../utils/layout-mode";
 import { initFabController } from "../utils/fab-controller";
 import { packMasonry, setupMasonry } from "../utils/masonry";
 import { resolvePageKey } from "../utils/nav-utils";
+import { url } from "../utils/url-utils";
+
+class WidgetLayout extends HTMLElement {
+	constructor() {
+		super();
+		if (this.dataset.isCollapsed !== "true") return;
+		const id = this.dataset.id;
+		const btn = this.querySelector(".expand-btn");
+		const wrapper = id ? this.querySelector(`#${id}`) : null;
+		btn?.addEventListener("click", () => {
+			wrapper?.classList.remove("collapsed");
+			btn.classList.add("hidden");
+		});
+	}
+}
+if (!customElements.get("widget-layout")) {
+	customElements.define("widget-layout", WidgetLayout);
+}
+
+const win = window as Window & {
+	__loadPagefind?: () => Promise<unknown>;
+	__pagefindLoadingPromise?: Promise<unknown>;
+};
+
+if (import.meta.env.PROD) {
+	const scriptUrl = url("/pagefind/pagefind.js");
+	win.__loadPagefind = function () {
+		if (win.__pagefindLoadingPromise) return win.__pagefindLoadingPromise;
+		win.__pagefindLoadingPromise = (async () => {
+			try {
+				const pagefind = await import(/* @vite-ignore */ scriptUrl);
+				if (typeof pagefind.init === "function") {
+					await pagefind.init();
+				}
+				await pagefind.options({ excerptLength: 20 });
+				window.pagefind = pagefind;
+				document.dispatchEvent(new CustomEvent("pagefindready"));
+				return pagefind;
+			} catch (error) {
+				console.error("Failed to load Pagefind:", error);
+				window.pagefind = {
+					search: () => Promise.resolve({ results: [] }),
+				};
+				document.dispatchEvent(new CustomEvent("pagefindloaderror"));
+				return window.pagefind;
+			}
+		})();
+		return win.__pagefindLoadingPromise;
+	};
+
+	const bindSearchTriggers = () => {
+		const loadPagefind = win.__loadPagefind;
+		if (!loadPagefind) return;
+		for (const id of ["search-input-desktop", "search-switch"]) {
+			const el = document.getElementById(id);
+			if (!el || el.dataset.pagefindBound === "true") continue;
+			el.dataset.pagefindBound = "true";
+			el.addEventListener("focus", loadPagefind, { once: true, passive: true });
+			el.addEventListener("click", loadPagefind, { once: true, passive: true });
+		}
+	};
+	bindSearchTriggers();
+	document.addEventListener("swup:content:replace", bindSearchTriggers);
+}
+
+document.addEventListener("click", (event) => {
+	const btn = (event.target as HTMLElement | null)?.closest<HTMLElement>(
+		".m3-blog-pagination__jump",
+	);
+	if (!btn) return;
+	const current = btn.dataset.current || "1";
+	const total = Number(btn.dataset.total || "1");
+	const template = btn.dataset.hrefTemplate || "";
+	const first = btn.dataset.hrefFirst || "/";
+	const btnLabel = btn.getAttribute("aria-label") || "";
+	const input = document.createElement("input");
+	input.type = "text";
+	input.inputMode = "numeric";
+	input.maxLength = String(total).length;
+	input.value = current;
+	input.className = "m3-blog-pagination__jump-input";
+	input.setAttribute("aria-label", btnLabel);
+	const restore = () => {
+		if (input.parentElement) input.replaceWith(btn);
+	};
+	btn.replaceWith(input);
+	input.focus();
+	input.select();
+	const commit = () => {
+		const n = Number.parseInt(input.value, 10);
+		if (!Number.isInteger(n) || n < 1 || n > total) {
+			restore();
+			return;
+		}
+		window.location.href =
+			n === 1 ? first : template.replace("{page}", String(n));
+	};
+	input.addEventListener("keydown", (e) => {
+		if (e.key === "Enter") commit();
+		if (e.key === "Escape") restore();
+	});
+	input.addEventListener("blur", restore);
+});
 
 function syncTopAppBarNavigation() {
 	setTopAppBarNavigation(resolvePageKey(new URL(window.location.href)));
