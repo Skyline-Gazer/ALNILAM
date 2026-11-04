@@ -40,6 +40,15 @@ node scripts/compose.mjs --site /absolute/path/to/site --out /absolute/path/to/o
 python3 -m unittest discover -s scripts/tests -p '*_test.py'
 ```
 
+Run affected tests locally in the DevBox before pushing; use `pnpm test`, `pnpm check`
+and build checks as appropriate. For browser work, `pnpm browser:local`, `pnpm cls:local`
+and `pnpm lighthouse:local` prepare root and subpath outputs and use the same Playwright,
+CLS and Lighthouse configuration as CNB. After the first build, `pnpm browser -- <spec>`
+reuses those outputs for fast test-only iteration; rebuild after product changes. Run
+`pnpm audit:local` for a full browser and Lighthouse audit when relevant. CNB remains the
+independent merge-candidate build, contract and regression verification; do not remove or
+ignore a failing check. See README for setup and evidence locations.
+
 - Production deployment, release tags, the GitHub mirror and branch-protection changes
   require explicit Owner authorization. CNB never publishes, mirrors, tags or deploys.
 - Secrets never belong in the repository, logs, URLs or Site config. Public CI must not

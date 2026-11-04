@@ -10,7 +10,8 @@ import {MIN_SOURCE_COVERAGE} from './cnb-coverage.mjs';
 const REPO = 'KoolingMachine/ALNILAM';
 const API = 'https://api.cnb.cool';
 const SHA = /^[a-f0-9]{40}$/;
-const MAX_ARTIFACT_BYTES = 100 * 1024 * 1024;
+// Local resource bound, independent of CNB's per-file and account storage limits.
+const MAX_ARTIFACT_BYTES = 64 * 1024 * 1024 * 1024;
 const ROOT = process.cwd();
 const SCRIPT = fileURLToPath(import.meta.url);
 export const HARNESS_FILES = [
@@ -425,7 +426,7 @@ function copyFailureEvidence(candidateRoot, message, status) {
   ensureFailurePlatform(message, status);
 }
 
-function archiveEvidence(candidateRoot, identity) {
+async function archiveEvidence(candidateRoot, identity) {
   const source = path.join(candidateRoot, 'artifacts');
   const tree = inspectArtifactTree(source);
   const destination = path.join(ROOT, 'artifacts');
@@ -437,7 +438,9 @@ function archiveEvidence(candidateRoot, identity) {
   const lcov = path.join(source, 'coverage', 'source.lcov.info');
   if (!fs.lstatSync(lcov).isFile()) throw Error('Verified source LCOV is missing');
   fs.copyFileSync(lcov, path.join(destination, 'coverage', 'source.lcov.info'));
-  const digest = createHash('sha256').update(fs.readFileSync(archive)).digest('hex');
+  const hash = createHash('sha256');
+  for await (const chunk of fs.createReadStream(archive)) hash.update(chunk);
+  const digest = hash.digest('hex');
   const stat = fs.statSync(archive);
   fs.writeFileSync(path.join(destination, 'platform.json'), JSON.stringify({
     status: 'PASS', build: process.env.CNB_BUILD_ID, event: process.env.CNB_EVENT,
@@ -498,7 +501,7 @@ async function main() {
     verifyLiveRefs(identity);
     const after = await fetchPullRequest(env);
     validateNativePullRequest(after, env, checkoutSha);
-    archiveEvidence(evidenceRoot, identity);
+    await archiveEvidence(evidenceRoot, identity);
   } catch (error) {
     stopCandidateProcesses();
     failure = error;
