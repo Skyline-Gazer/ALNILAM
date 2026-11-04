@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import os from 'node:os';
+import {gzipSync} from 'node:zlib';
 import path from 'node:path';
 import {spawnSync, execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
@@ -37,6 +38,11 @@ try {
     '--test', ...tests,
   ]);
   run('coverage-content', process.execPath, [path.join(trustedRoot, 'scripts/ci/cnb-coverage.mjs'), 'artifacts/coverage/lcov.info']);
+  // Keep the complete raw coverage evidence losslessly, while the filtered source
+  // LCOV stays plain text for CNB's coverage consumer. Raw LCOV includes dependencies.
+  const rawLCOV = 'artifacts/coverage/lcov.info';
+  fs.writeFileSync(`${rawLCOV}.gz`, gzipSync(fs.readFileSync(rawLCOV)));
+  fs.rmSync(rawLCOV);
   run('check', 'pnpm', trustedAstroCheckArgs(trustedSourceRoot, process.cwd()));
   run('demo-compose', process.execPath, [path.join(trustedRoot, 'scripts/compose.mjs'), '--site', 'sites/demo', '--out', 'dist/demo'],
     composeEnv);
