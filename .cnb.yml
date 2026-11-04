@@ -86,3 +86,19 @@ $:
                 tail -n 80 "$file"
               done
             ' sh {} +
+
+# Validate each integrated Core revision against a pinned independent Site.
+dev:
+  push:
+    - name: alnilam-independent-site
+      runner:
+        tags: cnb:arch:amd64
+        cpus: 2
+      docker:
+        image: node:24-bookworm@sha256:e2007d1f4e652444f88d9bb196256d2d035269015e3d27a0d47c1d0cb5192a98
+      git:
+        submodules: false
+      stages:
+        - name: Validate pinned independent Site
+          timeout: 20m
+          script: env -u CNB_TOKEN -u TWINE_PASSWORD bash scripts/ci/cnb-independent-site.sh
