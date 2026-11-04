@@ -196,6 +196,7 @@ The two-checkout pattern ships as a reusable workflow in the Core repository —
 service, no runner of your own):
 
 ```yaml
+on: workflow_dispatch
 jobs:
   validate:
     uses: Skyline-Gazer/ALNILAM/.github/workflows/site-ci.yml@dev

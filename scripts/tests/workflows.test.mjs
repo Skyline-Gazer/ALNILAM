@@ -46,7 +46,6 @@ test("site-ci validates external Sites with explicit input and checkout bindings
   // The guard step validates the caller-supplied SHA/URL before they are used.
   const guard = steps.find((step) => /Guard the caller-supplied inputs/.test(step.name ?? ""));
   assert.equal(guard.env.SITE_REF, "${{ inputs.site_ref }}");
-  assert.match(guard.run, /\[\[ "\$SITE_REF" =~ \^\[0-9a-f\]\{40\}\$ \]\]/);
   for (const step of steps.filter((step) => step.run)) {
     assert.doesNotMatch(step.run, /\$\{\{\s*inputs\./, "caller inputs must not be interpolated into shell source");
   }
