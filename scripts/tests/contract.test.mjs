@@ -852,3 +852,21 @@ test("taxonomy, series and pinned frontmatter compose category, tag and series r
   assert.match(article, /<meta property="article:section" content="lab">/);
   assert.match(article, /\/categories\/lab\//, "article links its category route");
 });
+
+
+test("free-form categories containing slashes link to the archive filter", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-slash-category-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.mkdirSync(path.join(site, "content/posts"), { recursive: true });
+  fs.writeFileSync(path.join(site, "alnilam.config.yaml"), "schemaVersion: 2\nsite:\n  title: Test\n  url: https://example.com\n  locale: zh-CN\nlocales: [zh-CN]\ntheme:\n  appearance: dark\n");
+  fs.writeFileSync(path.join(site, "content/posts/slash.md"), '---\ntitle: Slash category\npubDate: 2026-01-01\ncategory: "A/B"\n---\n\nExample.\n');
+  const out = path.join(root, "out");
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", out], {
+    env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" }, encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr.slice(-2500));
+  const post = fs.readFileSync(path.join(out, "posts/slash/index.html"), "utf8");
+  assert.match(post, /href="\/archives\/\?category=A%2FB"/);
+  assert.ok(fs.existsSync(path.join(out, "archives/index.html")));
+});

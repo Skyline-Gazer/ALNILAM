@@ -16,7 +16,7 @@ export async function getStaticPaths() {
   const byCategory = new Map<string, CollectionEntry<"posts">[]>();
   for (const post of posts) {
     const category = post.data.category?.trim() || seriesCategories.get(post.data.series?.trim())?.trim();
-    if (!category) continue;
+    if (!category || category.includes("/")) continue;
     if (!byCategory.has(category)) byCategory.set(category, []);
     byCategory.get(category)!.push(post);
   }

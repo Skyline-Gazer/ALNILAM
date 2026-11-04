@@ -101,6 +101,8 @@ export function getCategoryUrl(category: string | null): string {
 			i18n("uncategorized" as I18nKey).toLowerCase()
 	)
 		return url("/archives/?uncategorized=true");
+	if (category.includes("/"))
+		return url(`/archives/?category=${encodeURIComponent(category.trim())}`);
 	return url(`/categories/${encodeURIComponent(category.trim())}/`);
 }
 
