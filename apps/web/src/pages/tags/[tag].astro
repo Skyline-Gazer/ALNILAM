@@ -29,7 +29,7 @@ export async function getStaticPaths() {
           Object.values(entry.label).includes(tag),
       ),
     );
-    if (matching.length > 0 && !byTag.has(entry.slug)) {
+    if (matching.length > 0) {
       byTag.set(entry.slug, matching);
     }
   }
@@ -41,11 +41,10 @@ export async function getStaticPaths() {
     },
   }));
 }
-const { tag } = Astro.params;
-const { list } = Astro.props as { list: CollectionEntry<"posts">[]; label: string };
+const { list, label } = Astro.props as { list: CollectionEntry<"posts">[]; label: string };
 ---
-<MainGridLayout title={`#${tag}`} description={`标签 ${tag} 下的全部文章`} page="tags">
+<MainGridLayout title={`#${label}`} description={`标签 ${label} 下的全部文章`} page="tags">
   <a href={withBase("/tags/")} class="text-[var(--primary)]">← 全部标签</a>
-  <PageHeader title={`#${tag}`} subtitle={`${list.length} 篇文章`} />
+  <PageHeader title={`#${label}`} subtitle={`${list.length} 篇文章`} />
   <PostPage page={{data: list}} />
 </MainGridLayout>

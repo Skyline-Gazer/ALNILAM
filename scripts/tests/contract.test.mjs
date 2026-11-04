@@ -793,11 +793,11 @@ test("taxonomy, series and pinned frontmatter compose category, tag and series r
   );
   fs.writeFileSync(
     path.join(site, "content", "posts", "pinned-post.md"),
-    ["---", 'title: "置顶文章"', 'description: "Pinned fixture."', "pubDate: 2020-01-01", 'category: "lab"', 'pinned: true', 'series: "demo-series"', "seriesOrder: 2", 'tags: ["Test"]', "---", "", "Pinned fixture.", ""].join("\n"),
+    ["---", 'title: "置顶文章"', 'description: "Pinned fixture."', "pubDate: 2020-01-01", 'category: "lab"', 'pinned: true', 'series: "demo-series"', "seriesOrder: 2", 'tags: ["Test", "series"]', "---", "", "Pinned fixture.", ""].join("\n"),
   );
   fs.writeFileSync(
     path.join(site, "content", "posts", "series-part-one.md"),
-    ["---", 'title: "Series one"', 'description: "Series order one."', "pubDate: 2026-05-01", 'series: "demo-series"', "seriesOrder: 1", 'category: "guide"', 'tags: ["Test"]', "---", "", "First member.", ""].join("\n"),
+    ["---", 'title: "Series one"', 'description: "Series order one."', "pubDate: 2026-05-01", 'series: "demo-series"', "seriesOrder: 1", 'category: "guide"', 'tags: ["Test", "Series"]', "---", "", "First member.", ""].join("\n"),
   );
   const digest = validateSiteRoot(site).digest;
   const out = path.join(root, "out");
@@ -821,6 +821,11 @@ test("taxonomy, series and pinned frontmatter compose category, tag and series r
   // Tags routes exist for catalog and free-form tags.
   const labTag = fs.readFileSync(path.join(out, "tags", "test", "index.html"), "utf8");
   assert.match(labTag, /\/posts\/pinned-post\//, "tag route lists matching posts");
+
+  const seriesTag = fs.readFileSync(path.join(out, "tags", "series", "index.html"), "utf8");
+  assert.match(seriesTag, /<title>#系列 - ALNILAM<\/title>/, "tag page uses the localized label");
+  assert.match(seriesTag, /\/posts\/pinned-post\//, "canonical tag includes slug matches");
+  assert.match(seriesTag, /\/posts\/series-part-one\//, "canonical tag includes alias matches");
 
   // Series collection drives /series/ and /series/<slug>/ ordering.
   const seriesIndex = fs.readFileSync(path.join(out, "series", "index.html"), "utf8");

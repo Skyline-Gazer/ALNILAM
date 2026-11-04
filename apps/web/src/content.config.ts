@@ -56,28 +56,20 @@ const posts = defineCollection({
   })),
 });
 
-const series = fs.existsSync(seriesDir)
-  ? defineCollection({
-      loader: glob({ pattern: "**/*.{md,mdx}", base: seriesDir }),
-      schema: z
-        .object({
-          title: z.string().min(1),
-          status: z.enum(["ongoing", "completed"]).default("ongoing"),
-          defaultCategory: z.string().default(""),
-        })
-        .transform((data) => ({
-          ...data,
-          defaultCategory: resolvePostCategory(data.defaultCategory, taxonomy.categories),
-        })),
-    })
-  : defineCollection({
-      loader: async () => [],
-      schema: z.object({
-        title: z.string().default(""),
-        status: z.enum(["ongoing", "completed"]).default("ongoing"),
-        defaultCategory: z.string().default(""),
-      }),
-    });
+const seriesSchema = z
+  .object({
+    title: z.string().min(1),
+    status: z.enum(["ongoing", "completed"]).default("ongoing"),
+    defaultCategory: z.string().default(""),
+  })
+  .transform((data) => ({
+    ...data,
+    defaultCategory: resolvePostCategory(data.defaultCategory, taxonomy.categories),
+  }));
+const series = defineCollection({
+  loader: fs.existsSync(seriesDir) ? glob({ pattern: "**/*.{md,mdx}", base: seriesDir }) : async () => [],
+  schema: seriesSchema,
+});
 
 // Empty stubs only for disabled upstream modules; their field contracts are not modeled.
 // Enabling one requires its own Site contract/schema before any content can be loaded.
