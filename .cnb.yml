@@ -76,12 +76,10 @@ $:
             cp artifacts/platform.json "artifacts/platform-${CNB_BUILD_ID}.json"
         - name: Upload and verify evidence attachments
           image: cnbcool/attachments:latest@sha256:79bff7d36daca45e67e5ab1ba0f44c9bdd8e7acbecd9968efbecd62200cae1fc
-          script: node scripts/ci/cnb-evidence-attachments.mjs deliver "artifacts/cnb-evidence-${CNB_BUILD_ID}.tgz" "$CNB_COMMIT"
-        - name: Publish verified evidence to the target commit
-          image: cnbcool/attachments:latest@sha256:79bff7d36daca45e67e5ab1ba0f44c9bdd8e7acbecd9968efbecd62200cae1fc
-          settings:
-            attachments:
-              - artifacts/platform-*.json
+          script: |
+            set -eu
+            node scripts/ci/cnb-evidence-attachments.mjs deliver "artifacts/cnb-evidence-${CNB_BUILD_ID}.tgz" "$CNB_COMMIT"
+            node scripts/ci/cnb-evidence-attachments.mjs deliver "artifacts/platform-${CNB_BUILD_ID}.json" "$CNB_COMMIT"
       failStages:
         - name: Preserve available test diagnostics
           script: |
