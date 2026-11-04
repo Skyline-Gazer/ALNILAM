@@ -1,0 +1,32 @@
+schemaVersion: 2
+site:
+  title: Content Model
+  description: ALNILAM content-model acceptance fixture (Issue #62).
+  url: https://content-model.example.com
+  locale: zh-CN
+locales:
+  - zh-CN
+  - en
+  - ja
+theme:
+  appearance: dark
+categories:
+  - id: guide
+    slug: guide
+    label:
+      zh-CN: 指南
+      en: Guide
+      ja: ガイド
+tags:
+  - id: alnilam
+    slug: alnilam
+    label:
+      zh-CN: ALNILAM
+      en: ALNILAM
+      ja: ALNILAM
+  - id: i18n
+    slug: i18n
+    label:
+      zh-CN: 国际化
+      en: i18n
+      ja: 国際化
