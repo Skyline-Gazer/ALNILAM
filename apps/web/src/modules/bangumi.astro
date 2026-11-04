@@ -1,8 +1,10 @@
 ---
-import BaseLayout from "@alnilam/theme-shirone/BaseLayout.astro";
+import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
+import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
+import Card from "@alnilam/theme-shirone/Card.svelte";
 import { loadSite } from "../lib/site-source.mjs";
 import { fetchBangumiCollections } from "../lib/bangumi.mjs";
-import { canonicalUrl, withBase } from "../lib/i18n.mjs";
+import { withBase } from "../lib/i18n.mjs";
 
 // Injected via astro.config.mjs only when [bangumi] enabled = true — the page
 // never ships for disabled modules.
@@ -14,26 +16,24 @@ try {
 } catch (e: unknown) {
   error = String((e as Error).message ?? e);
 }
-const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale, showBangumi: config.bangumi?.enabled ?? false };
 ---
-<BaseLayout title="番组计划" {...layout} description={`${config.bangumi.userId} 的 ${config.bangumi.subjectType} 收藏`} canonical={canonicalUrl("/bangumi/", config.site.url)}>
-  <header class="page-heading">
-    <p class="page-heading__eyebrow">Collections</p>
-    <h1>Bangumi 收藏</h1>
+<MainGridLayout title="番组计划" description={`${config.bangumi.userId} 的 ${config.bangumi.subjectType} 收藏`}>
+  <Card color="var(--card-bg)" radius="l" class="p-6 mb-4">
+    <PageHeader title="Bangumi 收藏" />
     <p>
       <a href={`https://bgm.tv/user/${config.bangumi.userId}`} rel="noopener noreferrer">@{config.bangumi.userId}</a>
       · {config.bangumi.subjectType} · 数据在构建时获取
     </p>
-  </header>
+  </Card>
   {error && (
     <p class="module-alert" role="alert">
       Bangumi 数据获取失败（构建时）：{error}。页面其余部分不受影响。
     </p>
   )}
   {collections.length ? (
-    <ul class="post-list bangumi-list">
+    <ul class="flex flex-col gap-4">
       {collections.map((c) => (
-        <li class="bangumi-card">
+        <li><Card color="var(--card-bg)" radius="l" class="flex flex-row gap-4 p-4">
           {c.cover && (
             <img
               src={withBase(c.cover)}
@@ -43,21 +43,21 @@ const layout = { siteTitle: config.site.title, appearance: config.theme.appearan
               width="200"
               height="280"
               referrerpolicy="no-referrer"
-              class="bangumi-cover"
-              style="background: var(--bg-card)"
+              class="w-24 h-auto shrink-0 object-cover rounded-xl"
+              style="background: var(--surface-container)"
             />
           )}
-          <div class="bangumi-card__content">
+          <div class="min-w-0">
             <h2>
               {c.href ? <a href={c.href} rel="noopener noreferrer" >{c.nameCn}</a> : c.nameCn}
             </h2>
-            {c.nameCn !== c.name && <p class="bangumi-name">{c.name}</p>}
-            <p class="bangumi-summary">{c.summary}</p>
+            {c.nameCn !== c.name && <p class="text-[var(--on-surface-variant)]">{c.name}</p>}
+            <p class="mt-2 line-clamp-4">{c.summary}</p>
           </div>
-        </li>
+        </Card></li>
       ))}
     </ul>
   ) : (
     !error && <p>暂无收藏。</p>
   )}
-</BaseLayout>
+</MainGridLayout>

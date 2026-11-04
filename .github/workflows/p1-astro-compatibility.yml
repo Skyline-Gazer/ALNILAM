@@ -62,8 +62,8 @@ jobs:
               /usr/bin/time -v pnpm --filter @alnilam/web exec astro build --timings \
               2>&1 | tee "astro-evidence/timing-$name.log"
           }
-          run_timing root https://example.test/
-          run_timing nested https://example.test/ALNILAM/
+          run_timing root https://example.com/
+          run_timing nested https://example.com/ALNILAM/
       - name: Compose and verify the external Site at root and nested base
         run: |
           set -euo pipefail
@@ -73,11 +73,11 @@ jobs:
               "$ALNILAM_COMPAT_SITE"
           }
           before="$(site_digest)"
-          ALNILAM_SITE_URL=https://example.test/ node scripts/compose.mjs --site "$ALNILAM_COMPAT_SITE" --out dist/site
+          ALNILAM_SITE_URL=https://example.com/ node scripts/compose.mjs --site "$ALNILAM_COMPAT_SITE" --out dist/site
           node scripts/artifact-check.mjs dist/site
           test -s dist/site/posts/astro-compatibility/index.html
           grep -F 'MDX fixture rendered by Astro.' dist/site/posts/astro-compatibility/index.html
-          ALNILAM_SITE_URL=https://example.test/ALNILAM/ node scripts/compose.mjs --site "$ALNILAM_COMPAT_SITE" --out dist/nested-base
+          ALNILAM_SITE_URL=https://example.com/ALNILAM/ node scripts/compose.mjs --site "$ALNILAM_COMPAT_SITE" --out dist/nested-base
           node scripts/artifact-check.mjs dist/nested-base
           test -s dist/nested-base/posts/astro-compatibility/index.html
           after="$(site_digest)"

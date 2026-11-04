@@ -4,7 +4,7 @@
 
 Apache-2.0 licensed, static-first Astro 7 / Svelte 5 / Tailwind CSS 4 blogging platform, with a strict Core/Site ownership boundary. Released v0.1.3 uses the Editorial theme; the P1 preview on `dev` uses the Shirone-derived theme.
 
-> **Status: v0.1.3 is released; Shirone slice PR #95 is merged to `dev`, but is not released or deployed.** P1 is accepted: the Owner closed #37 on 2026-10-28 after the implementation and evidence PRs for #49, #50 and #79 merged. P2 planning is ready; P2 code has not started. Core/Site composition, two-version upgrade/rollback acceptance, RSS/sitemap/robots/SEO, archives, tags, local search (Pagefind), i18n with hreflang, and paginated streams remain implemented. The Editorial package remains the rollback path. See [the P1 slice record](docs/p1/48-SHIRONE-VERTICAL-SLICE.md), [the #49 record](docs/p1/49-UNIFIED-ROUTING-LIFECYCLE.md) and [CHANGELOG.md](CHANGELOG.md).
+> **Status:** v0.1.3 is released; current CNB `dev` development is not a production release. P2 Core/Site work is accepted on the tracker: independent CNB Site and Core push runs are recorded in [#55](https://github.com/Skyline-Gazer/ALNILAM/issues/55). A GitHub reusable Site workflow [passed on an authorized non-production ref](https://github.com/Skyline-Gazer/Test-Site/actions/runs/41836937453); GitHub `dev` is not yet synchronized. See [Handoff](docs/HANDOFF.md) and check live Issues and CNB before starting work.
 
 ## Quickstart
 
@@ -24,21 +24,56 @@ pnpm build          # compose demo Site + artifact budget checks
 
 The default Site fixture lives in `sites/demo` (three locales, two articles) — it is a test fixture, **never** a user-owned production Site.
 
+## Local browser and performance checks
+
+In a fresh worktree, install dependencies as above and install the pinned Playwright
+Chromium with `pnpm exec playwright install chromium` (Linux may also require
+`pnpm exec playwright install-deps chromium`). Ports 4323 and 4324 must be free.
+Then run one of:
+
+```bash
+pnpm browser:local     # complete default Playwright suite, including CLS
+pnpm cls:local         # CLS and navigation-focused Playwright specifications
+pnpm lighthouse:local  # mobile and desktop Lighthouse, including regression probes
+pnpm audit:local       # complete Playwright suite followed by both Lighthouse runs
+```
+
+Each command composes a temporary copy of the demo Site at root and `/ALNILAM/`,
+checks both artifacts, and stops on failure. Browser commands accept additional
+Playwright arguments, for example `pnpm browser:local -- --grep navigation`.
+Playwright writes `browser-results/`; Lighthouse writes `artifacts/lighthouse/`
+and `artifacts/lighthouse-regression/`, replacing the selected form factor's
+previous reports. Lighthouse uses the CI routes, budgets, run count and expected-red
+CLS regression check. These local results do not replace the target-owned CNB gate;
+the separate P1 external-Site baseline uses a different fixture and configuration.
+
+CNB publishes gate evidence as commit attachments and downloads it again to verify
+the manifest, file sizes and SHA-256 before marking the upload successful. The manifest
+lists the archive and its parts in order. If CNB explicitly reports a 100 MB per-file
+limit, the uploader retries in parts of at most 90 MiB; quota and ambiguous failures
+remain failures. To recover a split archive, download the manifest and every listed
+part, concatenate them in manifest order (for example `cat archive.tgz.part* > archive.tgz`),
+then compare `sha256sum archive.tgz` with the manifest's `sha256` before extracting.
+CNB's overall storage quota is separate from its per-file limit.
+
 ## Build Core with your own Site
 
 ```bash
 node scripts/compose.mjs --site /absolute/path/to/my-site --out /absolute/path/to/dist
 ```
 
-Required Site layout (schema v1 — frozen):
+Required Site layout (schema v2 — frozen):
 
 ```
 my-site/
-  alnilam.config.toml     # schemaVersion = 1, [site] title/url, [theme] appearance
+  alnilam.config.yaml     # schemaVersion: 2, site: {title, url, locale}, locales, theme: {appearance}
   content/posts/          # *.md / *.mdx
   assets/                 # optional → served at /site-assets/
   data/                   # optional, reserved
 ```
+
+See [Site onboarding](docs/SITE_ONBOARDING.md) for the complete, copy-ready
+configuration including `locales`, taxonomy and module blocks.
 
 - The Site is hashed before and after building; **any mutation aborts the build**.
 - Output is staged, then atomically swapped; `alnilam-provenance.json` binds the Core revision + Site SHA-256 digest.
@@ -60,14 +95,14 @@ CI runs this acceptance on every PR (two revisions, one unchanged external Site,
 
 ## Development and governance
 
-- Primary development: `dev` with Issue-linked PRs; `main` is release-only (rulesets `alnilam-dev` / `alnilam-main`: PR-only + required `verify` check, no force pushes/deletion).
+- Primary development: CNB `dev` with Issue-linked CNB PRs; GitHub Issues/Project remain the task tracker; `main` is release-only (rulesets `alnilam-dev` / `alnilam-main`: PR-only + required `verify` check, no force pushes/deletion).
 - Tagging: `vX.Y.Z` on `main` only, annotated, created by the release PR merge. See [CHANGELOG.md](CHANGELOG.md) for versioning rules (SemVer; `lang`/`translationKey` are schema-v1 additive fields).
-- ADS v0.4.2 pinned at `.ads` (commit `375fc71f977c40c2053140c34431cc60a6d42883`; private — optional for public users, `git submodule update --init --recursive --checkout .ads` requires authorized access). CI never clones it.
+- ADS pinned at `.ads` to commit `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` (ADS `cnb/dev` development line, not a release tag; private — optional for public users, `git submodule update --init --checkout .ads` requires authorized access). CI never clones it.
 - Docs: [Architecture](docs/ARCHITECTURE.md) · [Site onboarding](docs/SITE_ONBOARDING.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/HANDOFF.md)
 - Attribution: [CREDITS.md](CREDITS.md) · [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) · [NOTICE](NOTICE)
 - GitHub Project #17: https://github.com/orgs/Skyline-Gazer/projects/17/
-- ALNILAM Next: G0-F froze the P1 Plan/Spec through [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77). Shirone slice [PR #95](https://github.com/Skyline-Gazer/ALNILAM/pull/95) is merged to `dev`; P1 is accepted under closed [#37](https://github.com/Skyline-Gazer/ALNILAM/issues/37), including the integrated #49 routing/lifecycle, #50 browser evidence and #79 Astro compatibility work. Reusable ALNILAM behavior (immutable Site build, v1 contract, CI, Pagefind and optional modules) is retained; production release remains separately gated. Future Astro build acceleration stays out of release scope until official stabilization.
-- ADS consumer v0.4.2: [release](https://github.com/Skyline-Gazer/ADS/releases/tag/v0.4.2) and [mandatory development-only CodeGraph/full RTK policy](https://github.com/Skyline-Gazer/ADS/blob/v0.4.2/docs/consumer-dev-toolchain.md). This project remains Apache-2.0; ADS's MIT license does not relicense ALNILAM.
+- ALNILAM Next: G0-F froze the P1 Plan/Spec through [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77). Shirone slice [PR #95](https://github.com/Skyline-Gazer/ALNILAM/pull/95) is merged to `dev`; P1 is accepted under closed [#37](https://github.com/Skyline-Gazer/ALNILAM/issues/37), including the integrated #49 routing/lifecycle, #50 browser evidence and #79 Astro compatibility work. Reusable ALNILAM behavior (immutable Site build, v2 YAML contract, CI, Pagefind and optional modules) is retained; production release remains separately gated. Future Astro build acceleration stays out of release scope until official stabilization.
+- ADS adoption follows the v0.5.0 Lite model: [lite adoption](https://github.com/Skyline-Gazer/ADS/blob/b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695/docs/lite-adoption.md). Optional CodeGraph/RTK and strict profiles are not enabled. This project remains Apache-2.0; ADS's MIT license does not relicense ALNILAM.
 
 ## License
 

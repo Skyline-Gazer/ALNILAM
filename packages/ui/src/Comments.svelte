@@ -9,16 +9,15 @@
     categoryId: string;
     mapping: "pathname" | "specific" | "number";
   }
-  const { repo, repoId, category, categoryId, mapping, theme, lang } = $props() as {
-    repo: string; repoId: string; category: string; categoryId: string;
-    mapping: GiscusConfig["mapping"]; theme: string; lang: string;
-  };
+  const { repo, repoId, category, categoryId, mapping, theme, lang }: GiscusConfig & {
+    theme: string; lang: string;
+  } = $props();
 
   let container: HTMLDivElement | undefined = $state();
   let loaded = false;
 
   const selectedTheme = () =>
-    document.documentElement.dataset.theme === "light" ? "light" : "dark_dimmed";
+    (document.documentElement.classList.contains("dark") || document.documentElement.dataset.theme === "dark") ? "dark_dimmed" : "light";
 
   $effect(() => {
     if (!container || loaded) return;
@@ -50,7 +49,11 @@
       );
     };
     window.addEventListener("giscus-theme-change", updateTheme);
-    return () => window.removeEventListener("giscus-theme-change", updateTheme);
+    window.addEventListener("shirone:theme-change", updateTheme);
+    return () => {
+      window.removeEventListener("giscus-theme-change", updateTheme);
+      window.removeEventListener("shirone:theme-change", updateTheme);
+    };
   });
 </script>
 

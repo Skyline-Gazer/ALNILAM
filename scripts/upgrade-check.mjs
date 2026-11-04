@@ -5,7 +5,7 @@
 //   node scripts/upgrade-check.mjs --old <git-sha> [--site /path/to/external/site]
 //
 // Contract verified (docs/ARCHITECTURE.md "Upgrade contract"):
-// 1. An external Site (default: a throwaway copy of sites/demo outside the repo)
+// 1. An external Site (default: a throwaway copy of the current schema v2 demo fixture)
 //    is built by the current Core revision, then by the old Core revision.
 // 2. The Site's read-only digest (scripts/site-contract.mjs) must be identical
 //    before, after the upgrade build, and after the rollback build.
@@ -85,6 +85,29 @@ export function hashTree(dir) {
   return sha.digest("hex");
 }
 
+// The only rollback failures that are expected while a Site contract migrates:
+// a pre-v2 Core rejects the YAML Site before building, either because it still
+// requires the retired TOML file or because it supports an older schemaVersion.
+// Both patterns are anchored to the exact line the Core prints; pnpm wrappers
+// or stack frames that merely mention the text do not qualify.
+const EXPECTED_CONTRACT_REJECTIONS = [
+  /^Error: Site missing required input: alnilam\.config\.toml$/m,
+  /^(?:Error: )?ALNILAM: unsupported schemaVersion \d+ \(supported: [\d, ]+\)\. Upgrade Core to build this Site\.$/m,
+];
+
+export function isExpectedContractRejection(output) {
+  const text = typeof output === "string" ? output : "";
+  return EXPECTED_CONTRACT_REJECTIONS.some((pattern) => pattern.test(text));
+}
+
+// Three rollback outcomes: a successful build (outputs must be compared), the
+// documented contract rejection, or a real failure that must stop the run.
+export function classifyRollback({ status, output }) {
+  if (status === 0) return "ok";
+  if (status === 1 && isExpectedContractRejection(output)) return "expected-contract-failure";
+  return "unexpected";
+}
+
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith("upgrade-check.mjs")) {
   main();
 }
@@ -138,18 +161,42 @@ function main() {
   run("git", ["worktree", "add", "--detach", oldWorktree, oldSha], repoRoot);
   run(process.platform === "win32" ? "pnpm.cmd" : "pnpm", ["install", "--frozen-lockfile"], oldWorktree);
   const outOld = path.join(tempRoot, "out-old");
-  run(process.platform === "win32" ? "pnpm.cmd" : "pnpm", ["compose", "--site", site, "--out", outOld], oldWorktree);
+  let digestOld = null;
+  const rollback = spawnSync(
+    process.platform === "win32" ? "pnpm.cmd" : "pnpm",
+    ["compose", "--site", site, "--out", outOld],
+    {
+      cwd: oldWorktree,
+      // compose runs its children with `stdio: "inherit"`, so they inherit
+      // these pipes and the Core rejection reaches `rollbackOutput`.
+      stdio: ["ignore", "pipe", "pipe"],
+      encoding: "utf8",
+      env: { ...process.env, SOURCE_DATE_EPOCH: process.env.SOURCE_DATE_EPOCH || "1700000000" },
+    },
+  );
+  if (rollback.error) throw rollback.error;
+  const rollbackOutput = `${rollback.stdout || ""}${rollback.stderr || ""}`;
   const afterRollback = validateSiteRoot(site).digest;
   if (afterRollback !== before) throw new Error("Site digest changed during the rollback build");
-
-  // 4. Report output digests. Site non-mutation is the hard contract; the two
-  // revisions render identical output only while rendering logic is unchanged.
-  const digestOld = hashTree(outOld);
-  console.log("output digest (old Core):     " + digestOld);
-  if (digestNew !== digestOld) {
-    console.warn("NOTE: the two Core revisions produced different output for the same Site (expected when a Core upgrade changes rendering).");
+  const outcome = classifyRollback({ status: rollback.status, output: rollbackOutput });
+  if (outcome === "ok") {
+    digestOld = hashTree(outOld);
+    console.log("output digest (old Core):     " + digestOld);
+    if (digestNew !== digestOld) {
+      console.warn("NOTE: the two Core revisions produced different output for the same Site (expected when a Core upgrade changes rendering).");
+    } else {
+      console.log("UPGRADE/ROLLBACK OK: Site unchanged, outputs byte-identical.");
+    }
+  } else if (outcome === "expected-contract-failure") {
+    console.warn(
+      "NOTE: old Core revision could not build this Site (expected for schema v2 Sites against pre-v2 Core). Site remained unchanged.",
+    );
+    if (rollbackOutput.trim()) console.warn(rollbackOutput.trim());
+    console.log("UPGRADE/ROLLBACK OK: Site unchanged; old Core build failed closed.");
   } else {
-    console.log("UPGRADE/ROLLBACK OK: Site unchanged, outputs byte-identical.");
+    throw new Error(
+      "Old Core revision failed to build the Site for an unexpected reason:\n" + rollbackOutput.trim(),
+    );
   }
   } finally {
     cleanup();

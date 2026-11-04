@@ -11,7 +11,6 @@ const previewCommand = (journal: string, root: string, port: number, base: strin
 
 export default defineConfig({
   testDir: "./tests/browser",
-  testIgnore: "**/p1-baseline.spec.ts",
   timeout: 90_000,
   fullyParallel: false,
   workers: 1,

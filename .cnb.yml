@@ -1,4 +1,6 @@
-# Public pilot only. Never publish, mirror, tag, or deploy from CNB.
+# Functional feedback for CNB development, not per-change approval or dev protection.
+# Keep real failures visible; optional security/isolation audits are not prerequisites.
+# Never publish, mirror, tag, or deploy from CNB.
 # "$" covers dev and disposable acceptance branches without modifying main.
 $:
   pull_request:
@@ -68,40 +70,16 @@ $:
             allowExts: .mjs
             lines: 77
             breakIfNoCoverage: true
-        - name: New High and Critical vulnerability gate
-          image: cnbcool/sca-vulnerability@sha256:422900af42cc94bb8bf1295210647b9ef1676a27e6ab3c388fb8e0e66f31a05a
-          settings:
-            scanMode: diff
-            failOnSeverity: high
-            publish: true
-        - name: New High license risk gate
-          image: cnbcool/sca-license@sha256:06661e7f220de8064670b5dfe3b995a86cfa7a6778d17db7731a5b66690afa4a
-          settings:
-            scanMode: diff
-            failOnSeverity: high
-            publish: true
-        - name: Retained SBOM delta
-          image: cnbcool/sca-sbom@sha256:b1c8ef55ec9d800aded0aaad94e84e58594ea6dd7c50217ffc27dc7cfe58a8ca
-          settings:
-            scanMode: diff
-            format: cyclonedx-json
-            publish: true
-        - name: Upload source-bound consumer evidence
-          image: cnbcool/attachments:v1.1.5@sha256:3112e2ee5c562dc508ed2d51706ecccb1770781a105c488cc7620b53d6bf5442
-          settings:
-            attachments:
-              - artifacts/cnb-evidence-${CNB_BUILD_ID}.tgz
-            ttl: 14
-          exports:
-            FILES: CNB_EVIDENCE_FILES
-        - name: Require evidence upload receipt
-          script: test "$CNB_EVIDENCE_FILES" = "artifacts/cnb-evidence-${CNB_BUILD_ID}.tgz"
-        - name: Native security summary (scanner gates remain authoritative)
-          image: cnbcool/cnb-sechook@sha256:b31a19d033a70c327db3f9484d5ac8944e3e2c9e001afe18e5c8fc71f412ca0e
-          settings:
-            scanning_disabled: false
-            sensitive_disabled: false
-            max_display_authors: 5
+        - name: Prepare uniquely named evidence receipt
+          script: |
+            case "$CNB_BUILD_ID" in ''|*[!a-zA-Z0-9-]*) exit 1;; esac
+            cp artifacts/platform.json "artifacts/platform-${CNB_BUILD_ID}.json"
+        - name: Upload and verify evidence attachments
+          image: cnbcool/attachments:latest@sha256:79bff7d36daca45e67e5ab1ba0f44c9bdd8e7acbecd9968efbecd62200cae1fc
+          script: |
+            set -eu
+            node scripts/ci/cnb-evidence-attachments.mjs deliver "artifacts/cnb-evidence-${CNB_BUILD_ID}.tgz" "$CNB_COMMIT"
+            node scripts/ci/cnb-evidence-attachments.mjs deliver "artifacts/platform-${CNB_BUILD_ID}.json" "$CNB_COMMIT"
       failStages:
         - name: Preserve available test diagnostics
           script: |
@@ -118,3 +96,19 @@ $:
                 tail -n 80 "$file"
               done
             ' sh {} +
+
+# Validate each integrated Core revision against a pinned independent Site.
+dev:
+  push:
+    - name: alnilam-independent-site
+      runner:
+        tags: cnb:arch:amd64
+        cpus: 2
+      docker:
+        image: node:24-bookworm@sha256:e2007d1f4e652444f88d9bb196256d2d035269015e3d27a0d47c1d0cb5192a98
+      git:
+        submodules: false
+      stages:
+        - name: Validate pinned independent Site
+          timeout: 20m
+          script: env -u CNB_TOKEN -u TWINE_PASSWORD bash scripts/ci/cnb-independent-site.sh

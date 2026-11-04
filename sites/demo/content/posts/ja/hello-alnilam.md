@@ -2,6 +2,7 @@
 title: "こんにちは、ALNILAM"
 description: "独立して所有される Site の最初の記事（日本語訳）。"
 pubDate: 2026-10-25
+category: "release"
 tags: ["ALNILAM", "Astro"]
 cover: "/site-assets/orion.svg"
 lang: "ja"
@@ -15,5 +16,5 @@ Core は独立してアップグレードできます。Site が記事とアセ�
 ## Core / Site の構成
 
 1. コンテンツは `content/posts/` に置きます。
-2. 設定は `alnilam.config.toml` に書きます。
+2. 設定は `alnilam.config.yaml` に書きます。
 3. `pnpm compose --site /path/to/site --out /path/to/output` でビルドします。
