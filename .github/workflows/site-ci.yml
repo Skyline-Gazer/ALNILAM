@@ -78,7 +78,7 @@ jobs:
     steps:
       - name: Guard the caller-supplied inputs
         run: |
-          echo "${{ inputs.site_ref }}" | grep -Eq '^[0-9a-f]{40}$' || {
+          [[ "$SITE_REF" =~ ^[0-9a-f]{40}$ ]] || {
             echo "::error::site_ref must be a full 40-hex lowercase commit SHA"
             exit 1
           }
@@ -86,12 +86,14 @@ jobs:
             node -e 'const u = new URL(process.env.SITE_URL); if (u.protocol !== "https:" || u.username || u.password) { console.error("site_url must be an absolute https URL without credentials"); process.exit(1); }'
           fi
         env:
+          SITE_REF: ${{ inputs.site_ref }}
           SITE_URL_PRESENT: ${{ inputs.site_url != '' && '1' || '' }}
           SITE_URL: ${{ inputs.site_url }}
 
       - name: Check out Core at the requested revision
         uses: actions/checkout@v4
         with:
+          repository: Skyline-Gazer/ALNILAM
           ref: ${{ inputs.core_ref }}
           submodules: false
           persist-credentials: false
@@ -123,10 +125,13 @@ jobs:
         run: |
           actual="$(git -C site-checkout rev-parse HEAD)"
           echo "site sha: $actual"
-          test "$actual" = "${{ inputs.site_ref }}" || {
-            echo "::error::checked-out Site SHA $actual does not match requested ${{ inputs.site_ref }}"
+          test "$actual" = "$EXPECTED_SITE_REF" || {
+            echo "::error::checked-out Site SHA does not match the requested SHA"
             exit 1
           }
+
+        env:
+          EXPECTED_SITE_REF: ${{ inputs.site_ref }}
 
       - name: Validate the Site contract
         run: |
@@ -134,7 +139,8 @@ jobs:
             import { validateSiteRoot } from './scripts/site-contract.mjs';
             try {
               const { digest } = validateSiteRoot('site-checkout');
-              console.log('Site contract OK:', digest.slice(0, 12) + '…');
+              (await import('node:fs')).writeFileSync(process.env.RUNNER_TEMP + '/alnilam-site-digest', digest);
+              console.log('Site contract OK:', digest);
             } catch (error) {
               console.error(error.message);
               console.error('See docs/SITE_ONBOARDING.md for the YAML-only v2 contract.');
@@ -163,13 +169,19 @@ jobs:
       - name: Verify the Site was not modified and provenance binds the inputs
         run: |
           actual="$(git -C site-checkout rev-parse HEAD)"
-          test "$actual" = "${{ inputs.site_ref }}" || {
+          test "$actual" = "$EXPECTED_SITE_REF" || {
             echo "::error::Site checkout changed during the build"
             exit 1
           }
           node --input-type=module <<'EOF'
           import fs from "node:fs";
+          import { execFileSync } from "node:child_process";
+          import { validateSiteRoot } from "./scripts/site-contract.mjs";
           const expected = process.env.EXPECTED_SITE_REF;
+          const before = fs.readFileSync(`${process.env.RUNNER_TEMP}/alnilam-site-digest`, "utf8");
+          const after = validateSiteRoot("site-checkout").digest;
+          if (before !== after) throw Error("Site input digest changed during builds");
+          const core = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
           const dirs = fs.globSync("dist/site-*");
           if (!dirs.includes("dist/site-root")) {
             console.error("dist/site-root is missing: compose did not produce the required artifact");
@@ -181,7 +193,10 @@ jobs:
               console.error(`${dir}: provenance site.ref ${prov.site?.ref} does not bind ${expected}`);
               process.exit(1);
             }
-            console.log(`${dir}: provenance binds site ${expected} @ digest ${String(prov.site?.digest ?? "").slice(0, 12)}…`);
+            if (prov.site?.digest !== before || prov.core?.revision !== core) {
+              throw Error(`${dir}: provenance digest or Core revision mismatch`);
+            }
+            console.log(`${dir}: Core ${core}, Site ${expected}, digest ${before}`);
           }
           EOF
         env:
