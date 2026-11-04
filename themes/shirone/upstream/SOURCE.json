@@ -1961,7 +1961,7 @@
     "src/utils/nav-utils.ts": "Map ALNILAM /posts, /archives, /tags, and /bangumi routes in resolvePageKey for native active-link highlighting.",
     "src/components/molecules/FloatingActionButton.astro": "Render static FAB button shell without redundant per-button client:load island hydration.",
     "src/components/organisms/TopAppBar.astro": "Gate DisplaySettings island on !siteConfig.themeColor.fixed and consolidate TopAppBar navigation runtime into Layout.",
-    "src/layouts/MainGridLayout.astro": "Gate BannerStage when banner images and homeText are disabled; render RouteProgress without redundant island hydration.",
+    "src/layouts/MainGridLayout.astro": "Gate BannerStage when banner images and homeText are disabled; render RouteProgress without redundant island hydration; move the sidebar elements after the main content column so mobile DOM/parse order matches the visual order (content → sidebar → footer) and the already-painted aside is no longer pushed down by late-parsed article blocks (real mobile CLS); desktop columns stay on explicit lg:/xl: col-start/row-start.",
     "src/components/organisms/SideBar.astro": "Render only widgets visible on the current page in static MPA mode and omit unused Swup polling script.",
     "src/components/organisms/FloatingControls.astro": "Render TOC floating panel/button only on pages where TOC is visible and consolidate FAB init into Layout.",
     "src/components/organisms/PostPage.astro": "Consolidate post-list masonry initialization into Layout runtime script.",
