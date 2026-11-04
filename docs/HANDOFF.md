@@ -10,8 +10,15 @@ Issue, CI and next-task statements are stale; check live CNB and Project state f
   and #38 as Done. No open P2 Issue was found at this update.
 - #55 records both [Site push](https://cnb.cool/KoolingMachine/Test-Site/-/build/logs/cnb-cl4-1k6ims308)
   and [Core push](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-f5o-1k6iuqj87)
-  validation of the independent Test-Site. GitHub's reusable Site workflow was not
-  run on its mirror; mirror changes remain separately authorized.
+  validation of the independent Test-Site. A separately authorized GitHub
+  [`workflow_call` run](https://github.com/Skyline-Gazer/Test-Site/actions/runs/41836937453)
+  passed with Core `bc02fc2dea5c35218100fb320f695b7127fdf6ad`, Site
+  `6c0246f31cf6af04167c9ec7d09237731167c38d` and unchanged digest
+  `74fa5cd5b8ba0f0ce0658a5760539fbe63ddb4986fd23825cf85c78267aa3a42`.
+  The public test Site called the Core workflow at an exact SHA with its read-only
+  `GITHUB_TOKEN`; root and `/ALNILAM/` outputs and provenance passed. GitHub `dev`
+  does not yet contain this workflow; the authorized non-production Core ref is
+  `tmp/site-ci-core-bc02fc2`. No production mirror or deployment was performed.
 - [CNB PR #53](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/53) merged the
   local-first test and evidence-upload workflow as `68e80e4b34b4b69308b37399dbd527567f5d5291`.
   Its pre-merge [trusted gate](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-8oj-1k6j70sg8)
