@@ -70,6 +70,16 @@ $:
             allowExts: .mjs
             lines: 77
             breakIfNoCoverage: true
+        - name: Prepare uniquely named evidence receipt
+          script: |
+            case "$CNB_BUILD_ID" in ''|*[!a-zA-Z0-9-]*) exit 1;; esac
+            cp artifacts/platform.json "artifacts/platform-${CNB_BUILD_ID}.json"
+        - name: Publish verified evidence to the target commit
+          image: cnbcool/attachments:latest@sha256:79bff7d36daca45e67e5ab1ba0f44c9bdd8e7acbecd9968efbecd62200cae1fc
+          settings:
+            attachments:
+              - artifacts/cnb-evidence-*.tgz
+              - artifacts/platform-*.json
       failStages:
         - name: Preserve available test diagnostics
           script: |
