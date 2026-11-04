@@ -191,17 +191,18 @@ Compose copies validated Site inputs into a digest-keyed snapshot inside the man
 
 ### Ready-made CI: the reusable `site-ci` workflow
 
-The two-checkout pattern ships as a reusable workflow in the Core repository —
-`.github/workflows/site-ci.yml`. Call it from your Site repository (no local
-service, no runner of your own):
+The two-checkout pattern ships as `.github/workflows/site-ci.yml` in Core. GitHub
+`dev` may lag CNB `dev`, so the workflow must exist at the GitHub ref named in
+`uses`. The GitHub cross-repository call was [validated on a non-production ref](https://github.com/Skyline-Gazer/Test-Site/actions/runs/41836937453).
+Pin the same published Core SHA in `uses` and `core_ref`:
 
 ```yaml
 on: workflow_dispatch
 jobs:
   validate:
-    uses: Skyline-Gazer/ALNILAM/.github/workflows/site-ci.yml@dev
+    uses: Skyline-Gazer/ALNILAM/.github/workflows/site-ci.yml@<published-core-commit-sha>
     with:
-      core_ref: dev                      # Core revision to build against
+      core_ref: <published-core-commit-sha> # same SHA as uses
       site_repository: you/your-site     # your Site repository
       site_ref: <full commit SHA>        # pin an exact Site commit
       site_url: https://you.example.com/ # where the Site will be served
@@ -220,6 +221,12 @@ this job only on trusted events and refs (for example, `workflow_dispatch` or
 a push to a protected branch). Use a
 fine-grained token with `contents: read` scoped to your Site repository alone.
 For a direct dispatch, configure `site_token` as a secret in the Core repository.
+
+When the caller is the public Site repository itself, its `GITHUB_TOKEN` with
+`contents: read` can be passed as `site_token`; the linked validation run used
+that configuration. Private or cross-repository Sites require an appropriately
+scoped read-only credential.
+
 The reusable workflow must be available at the referenced Core ref before a
 Site can invoke it.
 

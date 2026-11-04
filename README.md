@@ -4,7 +4,7 @@
 
 Apache-2.0 licensed, static-first Astro 7 / Svelte 5 / Tailwind CSS 4 blogging platform, with a strict Core/Site ownership boundary. Released v0.1.3 uses the Editorial theme; the P1 preview on `dev` uses the Shirone-derived theme.
 
-> **Status:** v0.1.3 is released; current CNB `dev` development is not a production release. P2 Core/Site work is accepted on the tracker: independent CNB Site and Core push runs are recorded in [#55](https://github.com/Skyline-Gazer/ALNILAM/issues/55). GitHub's reusable Site workflow has not been exercised on its mirror. See [Handoff](docs/HANDOFF.md) for historical recovery context and check live Issues and CNB before starting work.
+> **Status:** v0.1.3 is released; current CNB `dev` development is not a production release. P2 Core/Site work is accepted on the tracker: independent CNB Site and Core push runs are recorded in [#55](https://github.com/Skyline-Gazer/ALNILAM/issues/55). A GitHub reusable Site workflow [passed on an authorized non-production ref](https://github.com/Skyline-Gazer/Test-Site/actions/runs/41836937453); GitHub `dev` is not yet synchronized. See [Handoff](docs/HANDOFF.md) and check live Issues and CNB before starting work.
 
 ## Quickstart
 
