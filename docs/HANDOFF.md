@@ -1,5 +1,28 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-04
+
+The remainder of this document is the **2026-11-03 historical snapshot**. Its PR,
+Issue, CI and next-task statements are stale; check live CNB and Project state first.
+
+- CNB PR #47 (native Shirone) was merged; #53 (derived-state lifecycle), #55
+  (independent Site CI) and parent #38 are closed. Project #17 records P2 #51–#56
+  and #38 as Done. No open P2 Issue was found at this update.
+- #55 records both [Site push](https://cnb.cool/KoolingMachine/Test-Site/-/build/logs/cnb-cl4-1k6ims308)
+  and [Core push](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-f5o-1k6iuqj87)
+  validation of the independent Test-Site. GitHub's reusable Site workflow was not
+  run on its mirror; mirror changes remain separately authorized.
+- [CNB PR #53](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/53) merged the
+  local-first test and evidence-upload workflow as `68e80e4b34b4b69308b37399dbd527567f5d5291`.
+  Its pre-merge [trusted gate](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-8oj-1k6j70sg8)
+  passed in 24m44s using the preceding target-owned harness. It does not prove that
+  the merged harness itself has run; consult subsequent CNB runs.
+- Use the local commands in [README](../README.md#local-browser-and-performance-checks)
+  before pushing relevant changes. A 101 MiB synthetic attachment was uploaded,
+  downloaded and SHA-256 verified using the official plugin on PR #53's source commit.
+  That transport sample is not product-test evidence. Lighthouse reported LCP warnings
+  and missing LCP values in the local audit; do not call those measurements a pass.
+
 现场核实：2026-11-03 06:45 UTC。产品终态：**TRUE_RUN_INCOMPLETE**。
 本文为零上下文接手入口，取代本文件旧版的“下一任务”清单；旧记录仍保存在 Git 历史。
 功能证据绑定下述产品 SHA，本次交接文档提交不构成功能 CI 通过或合并。
