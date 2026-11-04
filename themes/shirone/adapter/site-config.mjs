@@ -1,6 +1,9 @@
 // ALNILAM adapter: only read the validated Site; never run upstream content:sync.
+import fs from 'node:fs';
+import path from 'node:path';
 import {loadSite} from '../../../apps/web/src/lib/site-source.mjs';
-const {config} = loadSite();
+const {root, config} = loadSite();
+const hasSeries = fs.existsSync(path.join(root, 'content/series'));
 const base = new URL(config.site.url).pathname.replace(/\/$/, '') || '/';
 const disabled = {enable: false};
 export const userConfigOverrides = {
@@ -26,14 +29,16 @@ export const userConfigOverrides = {
   navBar: {links: [
     {name: '首页', url: '/', pageKey: 'home'},
     {name: '文章', url: '/posts/', pageKey: 'posts'},
+    {name: '分类', url: '/categories/', pageKey: 'categories'},
     {name: '归档', url: '/archives/', pageKey: 'archive'},
     {name: '标签', url: '/tags/', pageKey: 'tags'},
+    ...(hasSeries ? [{name: '系列', url: '/series/', pageKey: 'series'}] : []),
     ...(config.bangumi.enabled ? [{name: '番组', url: '/bangumi/', pageKey: 'bangumi'}] : []),
   ]},
   music: disabled, umami: disabled, contextMenu: disabled, albums: disabled,
   moments: disabled, anime: disabled, friends: disabled, projects: disabled,
   skills: disabled, games: disabled, timeline: disabled, devices: disabled,
-  compass: disabled, about: disabled, series: disabled,
+  compass: disabled, about: disabled, series: {enable: hasSeries},
   // Upstream CommentSection is disabled because ALNILAM mounts its Core Giscus Comments island via slot="comments".
   comment: disabled,
 };

@@ -3,8 +3,8 @@
 import MainGridLayout from '@alnilam/theme-shirone/MainGridLayout.astro';
 import PostPage from '@alnilam/theme-shirone/PostPage.astro';
 import {getCollection} from 'astro:content';
-const posts = (await getCollection('posts', ({data}) => !data.draft))
-  .sort((a,b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+import {comparePosts} from '../lib/taxonomy';
+const posts = (await getCollection('posts', ({data}) => !data.draft)).sort(comparePosts);
 const latest = posts.slice(0, 5);
 const page = {
   data: latest,

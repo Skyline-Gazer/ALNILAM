@@ -2,6 +2,7 @@
 title: "Hello, ALNILAM"
 description: "First article in an independently owned Site."
 pubDate: 2026-10-25
+category: "release"
 tags: ["ALNILAM", "Astro"]
 cover: "/site-assets/orion.svg"
 lang: "zh-CN"

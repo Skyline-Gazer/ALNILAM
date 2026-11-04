@@ -91,14 +91,15 @@ const hasBanner =
     <!-- The pointer-events-none here prevent blocking the click event of the TOC -->
     <div class="relative max-w-[var(--page-width)] mx-auto pointer-events-auto">
 		<div id="main-grid" class:list={["transition duration-[var(--m3e-duration-long)] w-full left-0 right-0 grid grid-rows-[auto_1fr_auto] lg:grid-rows-[auto] mx-auto gap-4 px-2 md:px-4", gridClasses]}>
-			<SideBar class={sidebarClasses} currentPage={page} headings={headings}></SideBar>
-			{isDualColumn(sidebarResponsive) && (
-				<SideBar id="sidebar-secondary" column="secondary" class={secondarySidebarClasses} currentPage={page} headings={headings}></SideBar>
-			)}
-
-            <!-- 主内容列：分类导航栏静态渲染（位于 Swup 容器外），
-                 页面切换时保持固定不重渲染；仅内容区随导航替换 -->
-            <div id="main-content-column" class={mainContentClasses.replace("transition-swup-fade", "").trim()}>
+			<!-- DOM 顺序 = 移动端（<1024px）视觉顺序：内容 → 侧栏 → 页脚。
+			     慢网络/低性能下浏览器边解析边绘制，侧栏必须在其上游内容
+			     解析完成后才进入 DOM，否则先绘制的侧栏会被后续解析出的
+			     文章块反复下推（真实 LayoutShift，reduced-motion 下无
+			     onload 淡入遮蔽）。桌面端各栏位均由下方 lg:/xl: 显式
+			     col-start/row-start 指定，不受书写顺序影响。 -->
+			<!-- 主内容列：分类导航栏静态渲染（位于 Swup 容器外），
+			     页面切换时保持固定不重渲染；仅内容区随导航替换 -->
+			<div id="main-content-column" class={mainContentClasses.replace("transition-swup-fade", "").trim()}>
                 <CategoryBar currentPostCategory={postCategory}></CategoryBar>
                 <main
                     id="swup-container"
@@ -120,6 +121,11 @@ const hasBanner =
                     </div>
                 </main>
             </div>
+
+			<SideBar class={sidebarClasses} currentPage={page} headings={headings}></SideBar>
+			{isDualColumn(sidebarResponsive) && (
+				<SideBar id="sidebar-secondary" column="secondary" class={secondarySidebarClasses} currentPage={page} headings={headings}></SideBar>
+			)}
 
             <div class="footer col-span-2 onload-animation block lg:hidden">
                 <Footer></Footer>

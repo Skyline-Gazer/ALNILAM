@@ -38,7 +38,7 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
       const page=await context.newPage(); const errors:string[]=[]; const checkedLinks=new Set<string>();
       page.on('pageerror',e=>errors.push(String(e)));
       try {
-        for (const route of ['/posts/', '/posts/hello-alnilam/', '/tags/', '/tags/Astro/', '/archives/', '/posts/en/hello-alnilam/']) {
+        for (const route of ['/posts/', '/posts/hello-alnilam/', '/tags/', '/tags/Astro/', '/categories/', '/categories/guide/', '/archives/', '/posts/en/hello-alnilam/']) {
           const response=await page.goto(origin+route,{waitUntil:'networkidle'});
           expect(response?.status()).toBe(200);
           await expect(page.locator('#navbar.top-app-bar')).toBeVisible();
