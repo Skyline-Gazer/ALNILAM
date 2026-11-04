@@ -2,6 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
+import {gunzipSync} from 'node:zlib';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
@@ -33,6 +34,9 @@ import child from 'node:child_process';
 import fs from 'node:fs';
 import {syncBuiltinESMExports} from 'node:module';
 child.spawnSync = (command, args, options) => {
+  if (args.includes('--experimental-test-coverage')) {
+    fs.writeFileSync('artifacts/coverage/lcov.info', 'SF:dependency.mjs\\nDA:1,1\\nend_of_record\\n');
+  }
   if (args.some(arg => String(arg).endsWith('/scripts/compose.mjs'))) {
     fs.appendFileSync(process.env.CNB_TEST_LOG, JSON.stringify({
       repo: options.env.ALNILAM_REPO_ROOT, tools: options.env.ALNILAM_TOOLCHAIN_ROOT,
@@ -52,6 +56,9 @@ syncBuiltinESMExports();
           CNB_TEST_LOG: log, ALNILAM_TOOLCHAIN_ROOT: override},
       });
       assert.equal(result.status, 0, result.stderr);
+      assert.equal(fs.existsSync(path.join(candidate, 'artifacts/coverage/lcov.info')), false);
+      assert.equal(gunzipSync(fs.readFileSync(path.join(candidate, 'artifacts/coverage/lcov.info.gz'))).toString(),
+        'SF:dependency.mjs\nDA:1,1\nend_of_record\n');
       const calls = fs.readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse);
       assert.equal(calls.length, 3);
       for (const call of calls) assert.deepEqual(call, {repo: expectedRepo, tools: target});
