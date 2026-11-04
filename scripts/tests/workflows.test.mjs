@@ -32,11 +32,12 @@ test("site-ci validates external Sites with explicit input and checkout bindings
   // secret, so the token can never enter a shell or the build environment.
   const steps = workflow.jobs.validate.steps;
   const coreCheckout = steps.find((step) => step.name === "Check out Core at the requested revision");
+  assert.ok(coreCheckout, "the Core checkout step must exist");
   assert.equal(coreCheckout.with.repository, "Skyline-Gazer/ALNILAM");
   assert.equal(coreCheckout.with.ref, "${{ inputs.core_ref }}");
   const siteCheckout = steps.find((step) => step.name === "Check out the external Site at the pinned SHA");
-  assert.equal(siteCheckout.with.repository, "${{ inputs.site_repository }}");
   assert.ok(siteCheckout, "the Site checkout step must exist");
+  assert.equal(siteCheckout.with.repository, "${{ inputs.site_repository }}");
   assert.equal(siteCheckout.with["persist-credentials"], false);
   assert.equal(siteCheckout.with.token, "${{ secrets.site_token }}");
   for (const step of steps) {
