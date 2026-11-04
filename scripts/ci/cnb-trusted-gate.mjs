@@ -187,7 +187,9 @@ export function safeFailureEvidence(root) {
 }
 
 function readJson(file) {
-  if (!fs.lstatSync(file).isFile()) throw Error(`Evidence is not a regular file: ${file}`);
+  const stat = fs.lstatSync(file);
+  if (!stat.isFile()) throw Error(`Evidence is not a regular file: ${file}`);
+  if (stat.size > 64 * 1024 * 1024) throw Error(`Evidence JSON exceeds 64 MiB: ${file}`);
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
   catch (error) { throw new Error(`Invalid evidence JSON at ${file}: ${error.message}`, {cause: error}); }
 }
@@ -240,14 +242,23 @@ export function validateEvidence(root, identity) {
     const attachment = negative.attachments[name];
     const filename = path.resolve(negativeRoot, attachment.path || '');
     if (!filename.startsWith(negativeRoot + path.sep)) throw Error('Browser negative attachment escapes its run directory');
-    let bytes;
+    let actualBytes = 0;
+    const hash = createHash('sha256');
     try {
       if (!fs.lstatSync(filename).isFile()) throw Error('not a file');
-      bytes = fs.readFileSync(filename);
+      const fd = fs.openSync(filename, 'r');
+      try {
+        const buffer = Buffer.allocUnsafe(1024 * 1024);
+        let count;
+        while ((count = fs.readSync(fd, buffer, 0, buffer.length, null)) > 0) {
+          actualBytes += count;
+          hash.update(buffer.subarray(0, count));
+        }
+      } finally { fs.closeSync(fd); }
     } catch (error) {
-      throw new Error(`Browser negative ${name} is missing`, {cause: error});
+      throw new Error(`Browser negative ${name} is missing or unreadable`, {cause: error});
     }
-    if (bytes.length !== expectedBytes || createHash('sha256').update(bytes).digest('hex') !== attachment.sha256) {
+    if (actualBytes !== expectedBytes || hash.digest('hex') !== attachment.sha256) {
       throw Error(`Browser negative ${name} does not match its receipt`);
     }
   }
