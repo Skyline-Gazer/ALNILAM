@@ -1,7 +1,8 @@
 import { test, expect, type Page } from "@playwright/test";
 import { CLS_BUDGET, calculateCLS, assertCLSBudget, observeLayoutShifts } from "../../scripts/ci/cnb-metrics.mjs";
 
-test.use({ trace: "on" });
+// Preserve actionable failure traces without archiving successful navigation recordings.
+test.use({ trace: "retain-on-failure" });
 const origins = ["http://127.0.0.1:4323", "http://127.0.0.1:4324/ALNILAM"];
 const captureScreenshot = async (page: Page, path: string) =>
   page.screenshot({
