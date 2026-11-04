@@ -4,7 +4,8 @@
 //
 // Budgets (Issue #4/#7/#61 acceptance: measured native Shirone client JS, CLS, a11y floor):
 //   - list/index pages: at most 1 runtime <script> (unified Layout shell runtime)
-//   - article pages:    at most 3 runtime <script>s (Layout + SidebarTOC + FloatingTOC)
+//   - article pages:    at most 3 runtime <script>s (Layout + SidebarTOC + FloatingTOC);
+//                       series detail pages render Markdown bodies and share this budget
 //   - any page:         at most 6 Astro islands (4 shell + ArticleShare + optional Comments/Bangumi)
 //   - every <img> carries explicit width/height (CLS guard)
 //   - every page: <html lang>, <title>, <main> landmark, exactly one <h1>
@@ -38,7 +39,11 @@ function checkPage(file) {
   const scripts = [...html.matchAll(/<script[^>]*src="([^"]+)"/g)].map((m) => m[1]);
   scriptRefs += scripts.length;
   const isPostList = rel === "posts/index.html" || /^posts\/\d+\/index\.html$/.test(rel);
-  const isArticle = rel.startsWith("posts/") && !isPostList;
+  // Series detail pages render a Markdown overview body through the same
+  // content runtime as articles, so they share the article budget rather
+  // than the pure list-page budget.
+  const isArticle =
+    (rel.startsWith("posts/") && !isPostList) || /^series\/[^/]+\/index\.html$/.test(rel);
   const maxScripts = isArticle ? 3 : 1;
   if (scripts.length > maxScripts) {
     failures.push(`${rel}: expected at most ${maxScripts} runtime script(s), found ${scripts.length}`);
