@@ -797,7 +797,7 @@ test("taxonomy, series and pinned frontmatter compose category, tag and series r
   );
   fs.writeFileSync(
     path.join(site, "content", "posts", "series-part-one.md"),
-    ["---", 'title: "Series one"', 'description: "Series order one."', "pubDate: 2026-05-01", 'series: "demo-series"', "seriesOrder: 1", 'category: "guide"', 'tags: ["Test", "Series"]', "---", "", "First member.", ""].join("\n"),
+    ["---", 'title: "Series one"', 'description: "Series order one."', "pubDate: 2026-05-01", 'series: "demo-series"', "seriesOrder: 1", 'tags: ["Test", "Series"]', "---", "", "First member.", ""].join("\n"),
   );
   const digest = validateSiteRoot(site).digest;
   const out = path.join(root, "out");
@@ -816,6 +816,7 @@ test("taxonomy, series and pinned frontmatter compose category, tag and series r
   const labPage = fs.readFileSync(path.join(out, "categories", "lab", "index.html"), "utf8");
   assert.match(labPage, /<title>实验室 - ALNILAM<\/title>/, "category page uses the zh-CN catalog label");
   assert.match(labPage, /\/posts\/pinned-post\//, "category page lists its posts");
+  assert.match(labPage, /\/posts\/series-part-one\//, "category page includes the series default category");
   const guidePage = fs.readFileSync(path.join(out, "categories", "guide", "index.html"), "utf8");
   assert.match(guidePage, /<title>指南 - ALNILAM<\/title>/);
   // Tags routes exist for catalog and free-form tags.

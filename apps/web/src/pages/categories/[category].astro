@@ -11,9 +11,11 @@ export async function getStaticPaths() {
   const { root, config } = loadSite();
   const taxonomy = loadSiteTaxonomy(root, config);
   const posts = await getCollection("posts", ({ data }) => !data.draft);
+  const series = await getCollection("series");
+  const seriesCategories = new Map(series.map((entry) => [entry.id, entry.data.defaultCategory]));
   const byCategory = new Map<string, CollectionEntry<"posts">[]>();
   for (const post of posts) {
-    const category = post.data.category?.trim();
+    const category = post.data.category?.trim() || seriesCategories.get(post.data.series?.trim())?.trim();
     if (!category) continue;
     if (!byCategory.has(category)) byCategory.set(category, []);
     byCategory.get(category)!.push(post);
