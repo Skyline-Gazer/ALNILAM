@@ -12,7 +12,7 @@
 // realistic post volume — locale-scoped taxonomy pagination is later-phase
 // scope (#63/#65). This test asserts those breaches are *exactly* that class
 // and route set, and that every other budget class is clean.
-import { after, test } from "node:test";
+import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
@@ -43,7 +43,9 @@ const ctx = {};
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "ALNI-content-model-site-"));
 after(() => fs.rmSync(root, { recursive: true, force: true }));
 
-test("content-model fixture composes with localized taxonomy, series, pinned and draft semantics", (t) => {
+// Compose once up front: a failing compose fails the hook (and therefore the
+// whole file) with the real error instead of cascading undefined fixtures.
+before(() => {
   const site = path.join(root, "site");
   fs.cpSync(FIXTURE, site, { recursive: true });
   const digest = validateSiteRoot(site).digest;
@@ -65,17 +67,21 @@ test("content-model fixture composes with localized taxonomy, series, pinned and
   assert.equal(result.status, 0, "content-model compose failed: " + result.stderr.slice(-2500));
   assert.equal(validateSiteRoot(site).digest, digest, "Site digest must stay unchanged across the run");
   assert.deepEqual(
-    fs.readdirSync(site).filter((n) => n.startsWith(".alnilam-")),
+    fs.readdirSync(site).filter((n) => n.startsWith(".alnilam")),
     [],
     "no compose bookkeeping may leak into the Site",
   );
+  Object.assign(ctx, { out, site, digest });
+});
 
-  // Provenance binds the same Site digest and the requested Core revision.
-  const prov = JSON.parse(read(out, "alnilam-provenance.json"));
-  assert.equal(prov.site.digest, digest);
+test("provenance binds the composed Site digest and the requested Core revision", () => {
+  const prov = JSON.parse(read(ctx.out, "alnilam-provenance.json"));
+  assert.equal(prov.site.digest, ctx.digest);
   assert.equal(prov.core.revision, "content-model-test");
+});
 
-  // --- Pagination on /posts/ (page size 5, pinned first) ---
+test("posts paginate globally with the pinned post first and rel prev/next links", () => {
+  const { out } = ctx;
   for (let page = 1; page <= EXPECTED_PAGES; page++) {
     const rel = page === 1 ? "posts/index.html" : `posts/${page}/index.html`;
     assert.ok(fs.existsSync(path.join(out, rel)), `pagination page /posts/${page === 1 ? "" : page + "/"} must exist`);
@@ -97,9 +103,6 @@ test("content-model fixture composes with localized taxonomy, series, pinned and
   const page5 = read(out, "posts/5/index.html");
   assert.match(page5, /href="\/posts\/4\/" rel="prev"/);
   assert.ok(!/rel="next"/.test(page5), "the last page must not offer a next link");
-  ctx.out = out;
-  ctx.site = site;
-  ctx.digest = digest;
 });
 
 test("draft posts are excluded from every list, route and feed", (t) => {
@@ -219,47 +222,53 @@ test("translationKey groups render hreflang alternates plus self-canonical on ar
   assert.ok(!sitemap.includes("draft-preview"), "drafts must not enter the sitemap");
 });
 
-test("artifact budgets: every class except the recorded page-weight breaches is clean", (t) => {
+test("artifact budgets: exactly the recorded unpaginated-listing page-weight breaches, nothing else", () => {
   const { out } = ctx;
   const result = spawnSync(process.execPath, ["scripts/artifact-check.mjs", out], {
     cwd: REPO,
     encoding: "utf8",
   });
+  // artifact-check exits 1 when any budget fails; anything else (2 = no pages,
+  // crash) must not be accepted as a "recorded breach" set.
+  assert.equal(result.status, 1, "artifact-check must fail exactly on budget breaches: " + result.stderr);
+
+  // Scanned page count must equal the composed output, so an empty scan cannot pass.
+  const scanned = Number(/artifact-check: (\d+) pages,/.exec(result.stdout)?.[1]);
+  const composedPages = fs
+    .globSync("**/index.html", { cwd: out })
+    .filter((rel) => !rel.includes("/pagefind/")).length;
+  assert.equal(scanned, composedPages, "artifact-check must scan every composed page");
+
   const failures = result.stdout + result.stderr;
   const recorded = failures
     .split("\n")
     .filter((line) => line.startsWith("FAIL: "))
     .map((line) => line.slice("FAIL: ".length));
-  // Every recorded failure must be the page-weight budget on an unpaginated
-  // listing route (archives / taxonomy detail). Locale-scoped pagination for
-  // these routes is later-phase scope (#63/#65); until then the 64 KiB budget
-  // cannot hold for Sites with realistic content volume.
-  const unpaginatedListing = /^(archives|categories|tags)\/[^/]*\/?index\.html$/;
   for (const failure of recorded) {
-    assert.match(
-      failure,
-      /^(\S+): HTML [\d.]+ KiB exceeds 64 KiB budget$/,
-      `unexpected non-page-weight budget failure: ${failure}`,
-    );
-    assert.match(
-      failure,
-      new RegExp(`^${unpaginatedListing.source.replace(/^\^|\$$/g, "")}`),
-      `page-weight breach outside unpaginated listing routes: ${failure}`,
-    );
+    assert.match(failure, /^(\S+): HTML [\d.]+ KiB exceeds 64 KiB budget$/, `unexpected budget failure: ${failure}`);
   }
-  // Any other route class must stay fully within budget: paginated posts
-  // pages, articles, the series detail page and the home page.
-  const paginated = ["index.html", "posts/index.html"];
-  for (let page = 2; page <= EXPECTED_PAGES; page++) paginated.push(`posts/${page}/index.html`);
-  for (const rel of paginated) {
-    assert.ok(
-      !recorded.some((f) => f.startsWith(rel + ":")),
-      `paginated route ${rel} must stay within every budget: ${recorded.join(" | ")}`,
-    );
-  }
-  assert.ok(
-    !recorded.some((f) => f.startsWith("series/")),
-    `series pages must stay within every budget: ${recorded.join(" | ")}`,
+  // Locale-scoped pagination for unpaginated listing routes is later-phase
+  // scope (#63/#65); until then exactly these routes exceed 64 KiB at this
+  // fixture volume. A new or removed breach must update this list explicitly.
+  const expectedBreaches = [
+    "archives/index.html",
+    "categories/guide/index.html",
+    "categories/notes/index.html",
+    "tags/alnilam/index.html",
+    "tags/i18n/index.html",
+    "tags/series/index.html",
+  ];
+  assert.deepEqual(
+    recorded.map((line) => line.split(": ")[0]).sort(),
+    [...expectedBreaches].sort(),
+    `recorded budget breaches changed: ${recorded.join(" | ")}`,
   );
-  assert.ok(result.stdout.includes("pages,"), "artifact-check must have scanned the composed output");
+});
+
+test("series detail pages stay within the article-class budget (3 scripts, 6 islands)", () => {
+  const detail = read(ctx.out, "series/getting-started/index.html");
+  const scripts = [...detail.matchAll(/<script[^>]*src="([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(scripts.length, 2, "series detail renders the Layout and Markdown runtimes: " + scripts.join(","));
+  for (const src of scripts) assert.match(src, /Layout\.astro|Markdown\.astro/);
+  assert.ok((detail.match(/<astro-island/g) ?? []).length <= 6, "series detail stays within the island budget");
 });

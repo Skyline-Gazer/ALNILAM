@@ -5,7 +5,8 @@
 // Budgets (Issue #4/#7/#61 acceptance: measured native Shirone client JS, CLS, a11y floor):
 //   - list/index pages: at most 1 runtime <script> (unified Layout shell runtime)
 //   - article pages:    at most 3 runtime <script>s (Layout + SidebarTOC + FloatingTOC);
-//                       series detail pages render Markdown bodies and share this budget
+//                       series detail pages render a Markdown body (Layout + Markdown)
+//                       and are treated as article-class pages, not list pages
 //   - any page:         at most 6 Astro islands (4 shell + ArticleShare + optional Comments/Bangumi)
 //   - every <img> carries explicit width/height (CLS guard)
 //   - every page: <html lang>, <title>, <main> landmark, exactly one <h1>
