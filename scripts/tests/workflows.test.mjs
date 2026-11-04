@@ -73,7 +73,6 @@ test("every workflow declares exactly its allowed permissions", () => {
     "deploy.yml": { contents: "read", pages: "write", "id-token": "write" },
     "p0-evidence.yml": { contents: "read" },
     "p1-astro-compatibility.yml": { contents: "read" },
-    "p1-browser-baseline.yml": { contents: "read" },
     "site-ci.yml": { contents: "read" },
   };
   const files = fs.readdirSync(workflowsDir).filter((name) => name.endsWith(".yml"));
