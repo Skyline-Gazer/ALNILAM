@@ -15,6 +15,10 @@
     "check": "pnpm --filter @alnilam/web check",
     "test": "node --test --test-concurrency=1 scripts/tests/*.test.mjs scripts/ci/*.test.mjs",
     "browser": "playwright test",
+    "browser:local": "node scripts/local-browser.mjs browser",
+    "cls:local": "node scripts/local-browser.mjs cls",
+    "lighthouse:local": "node scripts/local-browser.mjs lighthouse",
+    "audit:local": "node scripts/local-browser.mjs all",
     "verify": "pnpm test && pnpm check && pnpm build"
   },
   "devDependencies": {

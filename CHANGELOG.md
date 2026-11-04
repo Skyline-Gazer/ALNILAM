@@ -12,6 +12,7 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 
 ### Changed
 - **Site configuration is YAML-only**: `alnilam.config.yaml` replaces `alnilam.config.toml`; a TOML-only Site now fails closed with an actionable message. No automatic v1→v2 migration is provided.
+- Local browser, CLS and Lighthouse commands share the CNB test configuration; CNB evidence upload verifies downloaded commit attachments and supports a confirmed per-file-limit fallback.
 
 ### Removed
 - Runtime TOML Site config parsing (`smol-toml` dependency), `alnilam.config.toml` support, and the in-repo `sites/legacy-demo` path (the v1 fixture moved to `tests/fixtures/site-v1-legacy`).

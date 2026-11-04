@@ -443,23 +443,33 @@ test("external image URLs pass through and local site assets are served as-is", 
 test("build cache is version-isolated across Core revisions and cleanable", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cacheiso-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  const site = path.join(root, "site-source");
+  const site = path.join(root, "site");
   fs.cpSync(DEMO, site, { recursive: true });
   const cache = path.join(root, "cache");
   const composeEnv = { ...process.env, ALNILAM_CACHE_DIR: cache, SOURCE_DATE_EPOCH: "1700000000" };
-  for (const rev of ["rev-a", "rev-b"]) {
+  for (const rev of ["test-core-rev-1234", "rev-b"]) {
     const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
       env: { ...composeEnv, ALNILAM_CORE_REV: rev }, encoding: "utf8",
     });
     assert.equal(result.status, 0, "compose failed for " + rev + ": " + result.stderr);
+    if (rev === "test-core-rev-1234") {
+      const prov = JSON.parse(fs.readFileSync(path.join(root, "out", "alnilam-provenance.json"), "utf8"));
+      assert.equal(prov.core.revision, "test-core-rev-1234");
+      assert.equal(prov.site.digest, validateSiteRoot(DEMO).digest);
+      // The demo fixture is not a Git repository and no ref was supplied.
+      assert.equal(prov.site.ref, "unversioned");
+      // Provenance schema versions the document format, independent of Site schemaVersion.
+      assert.equal(prov.schema, 1);
+      assert.match(prov.generatedAt, /^\d{4}-\d{2}-\d{2}T/);
+    }
   }
   const keyOf = (rev) => crypto.createHash("sha256").update(rev).digest("hex").slice(0, 16);
-  assert.deepEqual(fs.readdirSync(path.join(cache, "v1")).sort(), [keyOf("rev-a"), keyOf("rev-b")].sort());
+  assert.deepEqual(fs.readdirSync(path.join(cache, "v1")).sort(), [keyOf("test-core-rev-1234"), keyOf("rev-b")].sort());
   const digest = validateSiteRoot(site).digest;
-  assert.equal(fs.existsSync(path.join(cache, "v1", keyOf("rev-a"), digest, "site", "alnilam.config.yaml")), true);
-  assert.equal(fs.existsSync(path.join(cache, "v1", keyOf("rev-a"), digest, "astro", "data-store.json")), true);
+  assert.equal(fs.existsSync(path.join(cache, "v1", keyOf("test-core-rev-1234"), digest, "site", "alnilam.config.yaml")), true);
+  assert.equal(fs.existsSync(path.join(cache, "v1", keyOf("test-core-rev-1234"), digest, "astro", "data-store.json")), true);
   assert.equal(fs.existsSync(path.join(cache, "v1", keyOf("rev-b"), digest, "astro", "data-store.json")), true);
-  assert.equal(fs.existsSync(path.join(cache, "v1", keyOf("rev-a"), digest, "shirone", "generated", "local-icon-collections.ts")), true);
+  assert.equal(fs.existsSync(path.join(cache, "v1", keyOf("test-core-rev-1234"), digest, "shirone", "generated", "local-icon-collections.ts")), true);
   assert.equal(fs.existsSync(path.join(cache, "v1", keyOf("rev-b"), digest, "shirone", "generated", "local-icon-collections.ts")), true);
   // Legacy cache locations are cleaned regardless of the cache root choice.
   const legacyRoot = path.join(root, "legacy-repo");
@@ -480,24 +490,6 @@ test("build cache is version-isolated across Core revisions and cleanable", (t) 
   assert.equal(fs.existsSync(path.join(legacyRoot, "apps/web/node_modules/.astro")), false);
   assert.equal(fs.existsSync(path.join(legacyRoot, "apps/web/.shirones")), false);
   assert.equal(fs.existsSync(path.join(legacyRoot, "apps/web/src/generated")), false);
-});
-
-test("compose writes deterministic provenance binding Core rev and Site digest", (t) => {
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-prov-"));
-  t.after(() => fs.rmSync(out, { recursive: true, force: true }));
-  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", DEMO, "--out", path.join(out, "site")], {
-    env: { ...process.env, ALNILAM_CORE_REV: "test-core-rev-1234", SOURCE_DATE_EPOCH: "1700000000" },
-  });
-  assert.equal(result.status, 0, "compose failed: " + result.stderr);
-  const prov = JSON.parse(fs.readFileSync(path.join(out, "site", "alnilam-provenance.json"), "utf8"));
-  assert.equal(prov.core.revision, "test-core-rev-1234");
-  assert.equal(prov.site.digest, validateSiteRoot(DEMO).digest);
-  // The demo fixture is not a Git repository and no ref was supplied.
-  assert.equal(prov.site.ref, "unversioned");
-  // Provenance schema versions the document format, independent of Site schemaVersion
-  // (docs/ARCHITECTURE.md, build algorithm).
-  assert.equal(prov.schema, 1);
-  assert.match(prov.generatedAt, /^\d{4}-\d{2}-\d{2}T/);
 });
 
 test("provenance writes the Site ref into the published document", (t) => {
