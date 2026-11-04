@@ -19,17 +19,15 @@ export async function getStaticPaths() {
     }
   }
   for (const entry of taxonomy.tags) {
-    const matching = posts.filter((post) =>
-      post.data.tags.some(
-        (tag) =>
-          tag === entry.slug ||
-          tag === entry.id ||
-          tag.toLowerCase() === entry.slug ||
-          tag.toLowerCase() === entry.id ||
-          Object.values(entry.label).includes(tag),
-      ),
-    );
+    const matchesEntry = (tag: string) =>
+      tag === entry.slug || tag === entry.id ||
+      tag.toLowerCase() === entry.slug || tag.toLowerCase() === entry.id ||
+      Object.values(entry.label).includes(tag);
+    const matching = posts.filter((post) => post.data.tags.some(matchesEntry));
     if (matching.length > 0) {
+      for (const tag of byTag.keys()) {
+        if (matchesEntry(tag)) byTag.set(tag, matching);
+      }
       byTag.set(entry.slug, matching);
     }
   }
