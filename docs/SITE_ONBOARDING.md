@@ -196,6 +196,7 @@ The two-checkout pattern ships as a reusable workflow in the Core repository —
 service, no runner of your own):
 
 ```yaml
+on: workflow_dispatch
 jobs:
   validate:
     uses: Skyline-Gazer/ALNILAM/.github/workflows/site-ci.yml@dev
@@ -212,10 +213,15 @@ It runs the Core contract tests, validates your Site against the YAML-only v2
 contract, composes it (root base, plus your `site_url` base when different),
 runs artifact budgets, asserts `alnilam-provenance.json` binds `site.ref` to
 the exact SHA you asked for, and uploads the composed output for inspection.
-The workflow runs with `contents: read` only and never executes on pull
-requests, so the Site token cannot leak into PR logs. The token itself should
-be a fine-grained token with `contents: read` scoped to your Site repository
-alone.
+The workflow uses `contents: read` and disables persisted checkout credentials.
+A reusable workflow runs on the caller’s chosen event, including pull requests;
+do not pass the Site token from pull-request jobs; configure the caller to run
+this job only on trusted events and refs (for example, `workflow_dispatch` or
+a push to a protected branch). Use a
+fine-grained token with `contents: read` scoped to your Site repository alone.
+For a direct dispatch, configure `site_token` as a secret in the Core repository.
+The reusable workflow must be available at the referenced Core ref before a
+Site can invoke it.
 
 ### Static publishing (multi-host)
 

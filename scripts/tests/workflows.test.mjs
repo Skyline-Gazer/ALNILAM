@@ -1,5 +1,4 @@
-// Workflow contract tests (#55): least privilege, no secret exposure on
-// pull requests, and owner-gated production publishing.
+// Workflow contract tests (#55): least privilege and owner-gated publishing.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -22,10 +21,9 @@ function triggers(workflow) {
   return Object.keys(workflow.on);
 }
 
-test("site-ci validates external Sites without running on pull requests", () => {
+test("site-ci validates external Sites with explicit input and checkout bindings", () => {
   const workflow = loadWorkflow("site-ci.yml");
-  // No pull_request/push trigger: an untrusted PR can never run a job that
-  // receives the Site token, so the token cannot leak into PR logs.
+  // A caller controls the event used to invoke the reusable workflow.
   assert.deepEqual(triggers(workflow).sort(), ["workflow_call", "workflow_dispatch"]);
   assert.deepEqual(workflow.permissions, { contents: "read" });
   assert.equal(workflow.on.workflow_call.secrets.site_token.required, true);
@@ -33,8 +31,13 @@ test("site-ci validates external Sites without running on pull requests", () => 
   // with persist-credentials disabled. No run or env step may reference any
   // secret, so the token can never enter a shell or the build environment.
   const steps = workflow.jobs.validate.steps;
-  const siteCheckout = steps.find((step) => step.uses === "actions/checkout@v4" && step.with?.repository);
+  const coreCheckout = steps.find((step) => step.name === "Check out Core at the requested revision");
+  assert.ok(coreCheckout, "the Core checkout step must exist");
+  assert.equal(coreCheckout.with.repository, "Skyline-Gazer/ALNILAM");
+  assert.equal(coreCheckout.with.ref, "${{ inputs.core_ref }}");
+  const siteCheckout = steps.find((step) => step.name === "Check out the external Site at the pinned SHA");
   assert.ok(siteCheckout, "the Site checkout step must exist");
+  assert.equal(siteCheckout.with.repository, "${{ inputs.site_repository }}");
   assert.equal(siteCheckout.with["persist-credentials"], false);
   assert.equal(siteCheckout.with.token, "${{ secrets.site_token }}");
   for (const step of steps) {
@@ -42,7 +45,13 @@ test("site-ci validates external Sites without running on pull requests", () => 
     assert.doesNotMatch(JSON.stringify(step), /secrets\./, "no other step may reference secrets");
   }
   // The guard step validates the caller-supplied SHA/URL before they are used.
-  assert.ok(steps.some((step) => /Guard the caller-supplied inputs/.test(step.name ?? "")));
+  const guard = steps.find((step) => /Guard the caller-supplied inputs/.test(step.name ?? ""));
+  assert.equal(guard.env.SITE_REF, "${{ inputs.site_ref }}");
+  for (const step of steps.filter((step) => step.run)) {
+    assert.doesNotMatch(step.run, /\$\{\{\s*inputs\./, "caller inputs must not be interpolated into shell source");
+  }
+  const verify = steps.find((step) => /Verify the Site was not modified/.test(step.name ?? ""));
+  assert.ok(verify, "Site validation must verify inputs after composing");
 });
 
 test("deploy publishing is dispatch-only and owner-gated", () => {
