@@ -214,7 +214,9 @@ runs artifact budgets, asserts `alnilam-provenance.json` binds `site.ref` to
 the exact SHA you asked for, and uploads the composed output for inspection.
 The workflow uses `contents: read` and disables persisted checkout credentials.
 A reusable workflow runs on the caller’s chosen event, including pull requests;
-configure the caller to pass secrets only for trusted events and refs. Use a
+do not pass the Site token from pull-request jobs; configure the caller to run
+this job only on trusted events and refs (for example, `workflow_dispatch` or
+a push to a protected branch). Use a
 fine-grained token with `contents: read` scoped to your Site repository alone.
 For a direct dispatch, configure `site_token` as a secret in the Core repository.
 The reusable workflow must be available at the referenced Core ref before a

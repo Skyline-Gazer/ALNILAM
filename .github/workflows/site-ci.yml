@@ -125,6 +125,10 @@ jobs:
         run: |
           actual="$(git -C site-checkout rev-parse HEAD)"
           echo "site sha: $actual"
+          test -z "$(git -C site-checkout status --porcelain --untracked-files=all)" || {
+            echo "::error::Site checkout is not clean"
+            exit 1
+          }
           test "$actual" = "$EXPECTED_SITE_REF" || {
             echo "::error::checked-out Site SHA does not match the requested SHA"
             exit 1
@@ -173,12 +177,16 @@ jobs:
             echo "::error::Site checkout changed during the build"
             exit 1
           }
+          test -z "$(git -C site-checkout status --porcelain --untracked-files=all)" || {
+            echo "::error::Site working tree changed during the build"
+            exit 1
+          }
           node --input-type=module <<'EOF'
           import fs from "node:fs";
           import { execFileSync } from "node:child_process";
           import { validateSiteRoot } from "./scripts/site-contract.mjs";
           const expected = process.env.EXPECTED_SITE_REF;
-          const before = fs.readFileSync(`${process.env.RUNNER_TEMP}/alnilam-site-digest`, "utf8");
+          const before = fs.readFileSync(`${process.env.RUNNER_TEMP}/alnilam-site-digest`, "utf8").trim();
           const after = validateSiteRoot("site-checkout").digest;
           if (before !== after) throw Error("Site input digest changed during builds");
           const core = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
