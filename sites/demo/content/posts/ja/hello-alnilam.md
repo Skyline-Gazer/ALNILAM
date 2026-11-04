@@ -2,6 +2,7 @@
 title: "こんにちは、ALNILAM"
 description: "独立して所有される Site の最初の記事（日本語訳）。"
 pubDate: 2026-10-25
+category: "release"
 tags: ["ALNILAM", "Astro"]
 cover: "/site-assets/orion.svg"
 lang: "ja"

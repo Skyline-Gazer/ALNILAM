@@ -5,10 +5,10 @@ import PostPage from "@alnilam/theme-shirone/PostPage.astro";
 import Pagination from "@alnilam/theme-shirone/Pagination.astro";
 import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
 import { POSTS_PAGE_SIZE } from "../../lib/pagination.mjs";
+import { comparePosts } from "../../lib/taxonomy";
 import type { GetStaticPaths } from "astro";
 export const getStaticPaths = (async ({paginate}) => {
-  const posts = (await getCollection("posts", ({data}) => !data.draft))
-    .sort((a,b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+  const posts = (await getCollection("posts", ({data}) => !data.draft)).sort(comparePosts);
   return paginate(posts, {pageSize: POSTS_PAGE_SIZE});
 }) satisfies GetStaticPaths;
 const {page} = Astro.props;

@@ -10,6 +10,19 @@ locales:
   - ja
 theme:
   appearance: dark
+categories:
+  - id: guide
+    slug: guide
+    label:
+      zh-CN: 指南
+      en: Guide
+      ja: ガイド
+  - id: release
+    slug: release
+    label:
+      zh-CN: 发布
+      en: Release
+      ja: リリース
 tags:
   - id: alnilam
     slug: alnilam

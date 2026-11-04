@@ -7,6 +7,13 @@ import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { normalizeSiteConfig, parseSiteConfigDocument } from "../../packages/core/src/index.mjs";
 import { assertExternalOutput, validateSiteRoot } from "../site-contract.mjs";
+import {
+  categoryDisplayLabel,
+  comparePosts,
+  loadSiteTaxonomy,
+  resolvePostCategory,
+  tagDisplayLabel,
+} from "../../apps/web/src/lib/taxonomy.ts";
 
 const DEMO = "sites/demo";
 const YAML_CONFIG = "alnilam.config.yaml";
@@ -638,4 +645,228 @@ test("upgrade-check resolveRevision verifies known local commits", async () => {
   assert.equal(resolveRevision(full, repoTop), full);
   // Unresolvable revision throws; no worktree side effects.
   assert.throws(() => resolveRevision("zzzzzzz", repoTop), /fetch/);
+});
+
+// ---------------------------------------------------------------------------
+// #62 content model: taxonomy catalog, category resolution, series and ordering
+// ---------------------------------------------------------------------------
+
+const taxonomyConfig = parseConfig(`
+schemaVersion: 2
+site:
+  title: Taxonomy fixture
+  url: https://example.com
+  locale: zh-CN
+locales:
+  - zh-CN
+  - en
+categories:
+  - id: guide
+    slug: guide
+    label:
+      zh-CN: 指南
+      en: Guide
+tags:
+  - id: astro
+    slug: astro
+    label:
+      zh-CN: Astro
+      en: Astro
+`);
+
+test("taxonomy catalog resolves ids, slugs and localized labels to canonical slugs", () => {
+  const entries = taxonomyConfig.categories;
+  assert.equal(resolvePostCategory("guide", entries), "guide");
+  assert.equal(resolvePostCategory("指南", entries), "guide");
+  assert.equal(resolvePostCategory("  guide  ", entries), "guide");
+  assert.equal(resolvePostCategory("", entries), "");
+  assert.equal(resolvePostCategory(undefined, entries), "");
+  // Without a declared catalog, frontmatter values pass through untouched.
+  assert.equal(resolvePostCategory("anything", []), "anything");
+  assert.equal(categoryDisplayLabel("guide", entries, "zh-CN"), "指南");
+  assert.equal(categoryDisplayLabel("guide", entries, "en"), "Guide");
+  // Unknown locales fall back through zh-CN then en then the slug.
+  assert.equal(categoryDisplayLabel("guide", entries, "ja"), "指南");
+  assert.equal(categoryDisplayLabel("bare", entries, "en"), "bare");
+});
+
+test("unknown post category fails closed against a declared catalog", () => {
+  assert.throws(
+    () => resolvePostCategory("nope", taxonomyConfig.categories),
+    /post references unknown category "nope" \(declared categories: guide\)/,
+  );
+});
+
+test("display tags and taxonomy.yaml merging stay catalog-consistent", () => {
+  assert.equal(tagDisplayLabel("Astro", taxonomyConfig.tags, "zh-CN"), "Astro");
+  assert.equal(tagDisplayLabel("guide", [{ id: "guide", slug: "guide", label: { "zh-CN": "指南", en: "Guide" } }], "en"), "Guide");
+  assert.equal(tagDisplayLabel("freeform", [], "en"), "freeform");
+});
+
+test("data/taxonomy.yaml extends the catalog; duplicates and unknown fields fail closed", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-taxonomy-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  // Absent file: config catalog passes through unchanged.
+  const bare = loadSiteTaxonomy(root, taxonomyConfig);
+  assert.deepEqual(bare.categories, taxonomyConfig.categories);
+  fs.mkdirSync(path.join(root, "data"));
+  fs.writeFileSync(
+    path.join(root, "data/taxonomy.yaml"),
+    "categories:\n  - id: lab\n    slug: lab\n    label:\n      zh-CN: 实验室\n      en: Lab\n",
+  );
+  const merged = loadSiteTaxonomy(root, taxonomyConfig);
+  assert.deepEqual(merged.categories.map((e) => e.slug), ["guide", "lab"]);
+  // Duplicate id against the config catalog fails closed.
+  fs.writeFileSync(
+    path.join(root, "data/taxonomy.yaml"),
+    "categories:\n  - id: guide\n    slug: other\n    label:\n      en: Other\n",
+  );
+  assert.throws(() => loadSiteTaxonomy(root, taxonomyConfig), /duplicate categories id "guide"/);
+  // Unknown top-level fields are rejected.
+  fs.writeFileSync(path.join(root, "data/taxonomy.yaml"), "collections: []\n");
+  assert.throws(() => loadSiteTaxonomy(root, taxonomyConfig), /unknown data\/taxonomy\.yaml field/);
+});
+
+test("comparePosts pins first, then newest, then id for a deterministic order", () => {
+  const mk = (id, pubDate, pinned) => ({ id, data: { pubDate: new Date(pubDate), pinned } });
+  const posts = [
+    mk("b", "2026-01-02"),
+    mk("c", "2026-01-01", true),
+    mk("a", "2026-01-01"),
+    mk("d", "2026-03-01"),
+  ];
+  assert.deepEqual([...posts].sort(comparePosts).map((p) => p.id), ["c", "d", "b", "a"]);
+});
+
+test("compose fails closed on an unknown post category without touching the Site", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-badcat-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site-source");
+  fs.cpSync(DEMO, site, { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "bad-category.md"),
+    ["---", 'title: "Bad category"', 'description: "Unknown taxonomy reference."', "pubDate: 2026-10-28", 'category: "ghost"', 'tags: ["Test"]', "---", "", "Unknown category fixture.", ""].join("\n"),
+  );
+  const digest = validateSiteRoot(site).digest;
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" }, encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0, "an unknown category must fail the build");
+  assert.match(result.stderr + result.stdout, /post references unknown category "ghost"/);
+  assert.equal(validateSiteRoot(site).digest, digest, "Site inputs must stay untouched");
+  assert.equal(fs.existsSync(path.join(root, "out")), false, "failed build must not publish");
+});
+
+test("compose fails closed on a duplicate translationKey within one locale", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-duptk-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site-source");
+  fs.cpSync(DEMO, site, { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "en", "hello-duplicate.md"),
+    ["---", 'title: "Hello duplicate"', 'description: "Duplicate translationKey fixture."', "pubDate: 2026-10-29", 'category: "release"', 'lang: "en"', 'translationKey: "hello-alnilam"', 'tags: ["Test"]', "---", "", "Duplicate translationKey fixture.", ""].join("\n"),
+  );
+  const digest = validateSiteRoot(site).digest;
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" }, encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0, "a duplicate translationKey per locale must fail the build");
+  assert.match(result.stderr + result.stdout, /duplicate translationKey "hello-alnilam" for locale "en"/);
+  assert.equal(validateSiteRoot(site).digest, digest);
+  assert.equal(fs.existsSync(path.join(root, "out")), false);
+});
+
+test("taxonomy, series and pinned frontmatter compose category, tag and series routes", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-content-model-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site-source");
+  fs.cpSync(DEMO, site, { recursive: true });
+  fs.mkdirSync(path.join(site, "data"), { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "data/taxonomy.yaml"),
+    "categories:\n  - id: lab\n    slug: lab\n    label:\n      zh-CN: 实验室\n      en: Lab\ntags:\n  - id: series\n    slug: series\n    label:\n      zh-CN: 系列\n      en: Series\n",
+  );
+  fs.mkdirSync(path.join(site, "content", "series"), { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "content", "series", "demo-series.md"),
+    ["---", 'title: "Demo Series"', "status: completed", 'defaultCategory: "lab"', "---", "", "Series overview body.", ""].join("\n"),
+  );
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "pinned-post.md"),
+    ["---", 'title: "置顶文章"', 'description: "Pinned fixture."', "pubDate: 2020-01-01", 'category: "lab"', 'pinned: true', 'series: "demo-series"', "seriesOrder: 2", 'tags: ["Test", "series"]', "---", "", "Pinned fixture.", ""].join("\n"),
+  );
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "series-part-one.md"),
+    ["---", 'title: "Series one"', 'description: "Series order one."', "pubDate: 2026-05-01", 'series: "demo-series"', "seriesOrder: 1", 'tags: ["Test", "Series"]', "---", "", "First member.", ""].join("\n"),
+  );
+  const digest = validateSiteRoot(site).digest;
+  const out = path.join(root, "out");
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", out], {
+    env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" }, encoding: "utf8",
+  });
+  assert.equal(result.status, 0, "content-model compose failed: " + result.stderr.slice(-2500));
+  assert.equal(validateSiteRoot(site).digest, digest, "Site inputs must stay untouched");
+
+  // /categories/ index links both catalog-backed slugs.
+  const catIndex = fs.readFileSync(path.join(out, "categories", "index.html"), "utf8");
+  for (const slug of ["guide", "release", "lab"]) {
+    assert.match(catIndex, new RegExp(`href="/categories/${slug}/"`), `categories index must link ${slug}`);
+  }
+  // /categories/<slug>/ renders the localized catalog label and its members.
+  const labPage = fs.readFileSync(path.join(out, "categories", "lab", "index.html"), "utf8");
+  assert.match(labPage, /<title>实验室 - ALNILAM<\/title>/, "category page uses the zh-CN catalog label");
+  assert.match(labPage, /\/posts\/pinned-post\//, "category page lists its posts");
+  assert.match(labPage, /\/posts\/series-part-one\//, "category page includes the series default category");
+  const guidePage = fs.readFileSync(path.join(out, "categories", "guide", "index.html"), "utf8");
+  assert.match(guidePage, /<title>指南 - ALNILAM<\/title>/);
+  // Tags routes exist for catalog and free-form tags.
+  const labTag = fs.readFileSync(path.join(out, "tags", "test", "index.html"), "utf8");
+  assert.match(labTag, /\/posts\/pinned-post\//, "tag route lists matching posts");
+
+  const seriesTag = fs.readFileSync(path.join(out, "tags", "series", "index.html"), "utf8");
+  assert.match(seriesTag, /<title>#系列 - ALNILAM<\/title>/, "tag page uses the localized label");
+  assert.match(seriesTag, /\/posts\/pinned-post\//, "canonical tag includes slug matches");
+  assert.match(seriesTag, /\/posts\/series-part-one\//, "canonical tag includes alias matches");
+
+  const aliasTag = fs.readFileSync(path.join(out, "tags", "Series", "index.html"), "utf8");
+  assert.match(aliasTag, /\/posts\/pinned-post\//, "alias tag includes slug matches");
+  assert.match(aliasTag, /\/posts\/series-part-one\//, "alias tag includes alias matches");
+
+  // Series collection drives /series/ and /series/<slug>/ ordering.
+  const seriesIndex = fs.readFileSync(path.join(out, "series", "index.html"), "utf8");
+  assert.match(seriesIndex, /\/series\/demo-series\//, "series index links the series");
+  const seriesDetail = fs.readFileSync(path.join(out, "series", "demo-series", "index.html"), "utf8");
+  assert.match(seriesDetail, /<title>Demo Series - ALNILAM<\/title>/);
+  const memberOrder = [...seriesDetail.matchAll(/href="\/posts\/([^"/]+)\/"/g)].map((m) => m[1]);
+  assert.deepEqual(memberOrder, ["series-part-one", "pinned-post"], "members follow seriesOrder, not pubDate");
+
+  // Pinned posts sort first on the paginated list even with an old pubDate:
+  // the pinned fixture must precede the newest regular post.
+  const postsPage = fs.readFileSync(path.join(out, "posts", "index.html"), "utf8");
+  const cardOrder = [...postsPage.matchAll(/href="\/posts\/([^"/]+)\/"/g)].map((m) => m[1]).filter((slug) => slug !== "page");
+  assert.ok(cardOrder.length >= 2, "post list must render card links: " + cardOrder.join(","));
+  assert.equal(cardOrder[0], "pinned-post", "pinned fixture must lead the list");
+
+  // Article pages expose the resolved category as article:section.
+  const article = fs.readFileSync(path.join(out, "posts", "pinned-post", "index.html"), "utf8");
+  assert.match(article, /<meta property="article:section" content="lab">/);
+  assert.match(article, /\/categories\/lab\//, "article links its category route");
+});
+
+
+test("free-form categories containing slashes link to the archive filter", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-slash-category-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.mkdirSync(path.join(site, "content/posts"), { recursive: true });
+  fs.writeFileSync(path.join(site, "alnilam.config.yaml"), "schemaVersion: 2\nsite:\n  title: Test\n  url: https://example.com\n  locale: zh-CN\nlocales: [zh-CN]\ntheme:\n  appearance: dark\n");
+  fs.writeFileSync(path.join(site, "content/posts/slash.md"), '---\ntitle: Slash category\npubDate: 2026-01-01\ncategory: "A/B"\n---\n\nExample.\n');
+  const out = path.join(root, "out");
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", out], {
+    env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" }, encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr.slice(-2500));
+  const post = fs.readFileSync(path.join(out, "posts/slash/index.html"), "utf8");
+  assert.match(post, /href="\/archives\/\?category=A%2FB"/);
+  assert.ok(fs.existsSync(path.join(out, "archives/index.html")));
 });

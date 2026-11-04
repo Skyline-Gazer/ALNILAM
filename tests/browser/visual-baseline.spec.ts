@@ -5,7 +5,8 @@ import {execFileSync} from 'node:child_process';
 
 const targets = [
   ['home', '/'], ['posts', '/posts/'], ['article', '/posts/getting-started/'],
-  ['tags', '/tags/'], ['tag', '/tags/Guide/'], ['archives', '/archives/'],
+  ['tags', '/tags/'], ['tag', '/tags/Guide/'], ['categories', '/categories/'],
+  ['category', '/categories/guide/'], ['archives', '/archives/'],
 ] as const;
 const deployments = [['root', 'http://127.0.0.1:4323'], ['nested', 'http://127.0.0.1:4324/ALNILAM']] as const;
 const widths = [1440, 390];
@@ -88,19 +89,14 @@ for (const [deployment, origin] of deployments) {
         }
         await expect(page.locator('#search-panel a.m3-blog-searchpanel__item').first()).toBeVisible();
         await snapshot('search');
-        const categoryStatus = (await page.request.get(`${origin}/categories/`)).status();
-        if (categoryStatus === 200) {
-          await page.goto(`${origin}/categories/`, {waitUntil: 'networkidle'});
-          await snapshot('categories');
-        } else expect(categoryStatus).toBe(404);
         expect(errors).toEqual([]);
         const testRunHead = execFileSync('git', ['rev-parse', 'HEAD'], {encoding: 'utf8', cwd: process.env.CNB_CANDIDATE_ROOT ?? process.cwd()}).trim();
         const response = await page.request.get(`${origin}/alnilam-provenance.json`);
         expect(response.ok()).toBe(true);
         const provenance = await response.json();
         expect(provenance.site.digest).toMatch(/^[a-f0-9]{64}$/);
-        const findings = categoryStatus === 404 ? [{severity: 'P2', feature: 'categories', status: 'NOT_IMPLEMENTED', issue: '#62'}] : [];
-        const manifest = {testRunHead, buildProvenance: provenance, deployment, width, height: 1000, theme, reducedMotion: true, key, pairedKey, themeKey, captures, categoryStatus, findings, errors};
+        const findings: unknown[] = [];
+        const manifest = {testRunHead, buildProvenance: provenance, deployment, width, height: 1000, theme, reducedMotion: true, key, pairedKey, themeKey, captures, findings, errors};
         const manifestPath = path.join(directory, 'visual-baseline.json');
         fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
         await info.attach('visual-baseline.json', {path: manifestPath, contentType: 'application/json'});
