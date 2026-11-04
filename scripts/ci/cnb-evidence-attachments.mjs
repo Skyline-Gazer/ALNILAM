@@ -192,13 +192,19 @@ async function deliver(archive, commit) {
       const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
       for (const part of manifest.parts) {
         result = await plugin('UPLOAD', [part.file], uploadDir, commit);
-        if (!result.ok) throw new Error(`Evidence part upload failed: ${part.file}`);
+        if (!result.ok) {
+          if (quotaExceeded(result.log)) throw new Error(`Evidence part upload failed: ${part.file}: storage quota or capacity exceeded; splitting cannot resolve total quota`);
+          throw new Error(`Evidence part upload failed: ${part.file}`);
+        }
       }
     }
     const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
     await copyFile(manifestPath, path.join(uploadDir, manifestName));
     result = await plugin('UPLOAD', [manifestName], uploadDir, commit);
-    if (!result.ok) throw new Error('Evidence manifest upload failed');
+    if (!result.ok) {
+      if (quotaExceeded(result.log)) throw new Error('Evidence manifest upload failed: storage quota or capacity exceeded');
+      throw new Error('Evidence manifest upload failed');
+    }
     for (const file of [...manifest.parts.map(part => part.file), manifestName]) {
       result = await plugin('DOWNLOAD', [file], downloadDir, commit);
       if (!result.ok) throw new Error(`Evidence download failed: ${file}`);
