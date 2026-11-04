@@ -196,6 +196,10 @@ test('verified evidence requires exact SHA receipts, browser negative evidence, 
     });
     put('coverage/source-summary.json', {percent: 77, minimum: 77, files: 1, lines: 1});
     assert.equal(validateEvidence(root, {source, target, merge}).coverage.percent, 77);
+    const buildReceipt = path.join(root, 'artifacts/build-receipt.json');
+    fs.truncateSync(buildReceipt, 64 * 1024 * 1024 + 1);
+    assert.throws(() => validateEvidence(root, {source, target, merge}), /Evidence JSON exceeds 64 MiB/);
+    put('build-receipt.json', {coreSha: merge, siteDigestBefore: 'site', siteDigestAfter: 'site', steps: [{status: 0}]});
     fs.writeFileSync(path.join(root, 'artifacts/coverage/source-summary.json'), '{');
     assert.throws(() => validateEvidence(root, {source, target, merge}), /Invalid evidence JSON.*source-summary\.json/);
     put('coverage/source-summary.json', {percent: 77, minimum: 77, files: 1, lines: 1});

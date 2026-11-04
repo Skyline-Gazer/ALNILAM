@@ -16,3 +16,11 @@ test-results/
 
 artifacts/
 .lighthouseci/
+
+__pycache__/
+*.pyc
+/.cache/
+
+# Native Shirone integration cache (Core-owned derived output).
+.shirones/
+apps/web/src/generated/

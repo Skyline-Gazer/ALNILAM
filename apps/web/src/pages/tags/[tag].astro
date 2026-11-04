@@ -1,11 +1,15 @@
 ---
 import { getCollection, type CollectionEntry } from "astro:content";
-import BaseLayout from "@alnilam/theme-shirone/BaseLayout.astro";
-import PostCard from "@alnilam/theme-shirone/PostCard.astro";
+import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
+import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
+import PostPage from "@alnilam/theme-shirone/PostPage.astro";
+import { withBase } from "../../lib/i18n.mjs";
 import { loadSite } from "../../lib/site-source.mjs";
-import { canonicalUrl, postPath, withBase } from "../../lib/i18n.mjs";
+import { comparePosts, loadSiteTaxonomy, tagDisplayLabel } from "../../lib/taxonomy";
 
 export async function getStaticPaths() {
+  const { root, config } = loadSite();
+  const taxonomy = loadSiteTaxonomy(root, config);
   const posts = await getCollection("posts", ({ data }) => !data.draft);
   const byTag = new Map<string, CollectionEntry<"posts">[]>();
   for (const post of posts) {
@@ -14,32 +18,31 @@ export async function getStaticPaths() {
       byTag.get(tag)!.push(post);
     }
   }
+  for (const entry of taxonomy.tags) {
+    const matchesEntry = (tag: string) =>
+      tag === entry.slug || tag === entry.id ||
+      tag.toLowerCase() === entry.slug || tag.toLowerCase() === entry.id ||
+      Object.values(entry.label).includes(tag);
+    const matching = posts.filter((post) => post.data.tags.some(matchesEntry));
+    if (matching.length > 0) {
+      for (const tag of byTag.keys()) {
+        if (matchesEntry(tag)) byTag.set(tag, matching);
+      }
+      byTag.set(entry.slug, matching);
+    }
+  }
   return [...byTag.entries()].map(([tag, list]) => ({
     params: { tag },
-    props: { list: list.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()) },
+    props: {
+      list: [...list].sort(comparePosts),
+      label: tagDisplayLabel(tag, taxonomy.tags, config.site.locale),
+    },
   }));
 }
-const { tag } = Astro.params;
-const { list } = Astro.props as { list: CollectionEntry<"posts">[] };
-const { config } = loadSite();
-const layout = { siteTitle: config.site.title, appearance: config.theme.appearance, locale: config.site.locale, showBangumi: config.bangumi?.enabled ?? false };
+const { list, label } = Astro.props as { list: CollectionEntry<"posts">[]; label: string };
 ---
-<BaseLayout title={`#${tag}`} {...layout} description={`标签 ${tag} 下的全部文章`} canonical={canonicalUrl(`/tags/${tag}/`, config.site.url)}>
-  <header class="page-heading">
-    <p class="page-heading__eyebrow"><a href={withBase("/tags/")}>← 全部标签</a></p>
-    <h1>#{tag}</h1>
-    <p>{list.length} 篇文章</p>
-  </header>
-  <div class="post-list">
-    {list.map((post) => (
-      <PostCard
-        title={post.data.title}
-        description={post.data.description}
-        href={withBase(postPath(post, config.site.locale)) + "/"}
-        published={post.data.pubDate}
-        tags={post.data.tags}
-        cover={post.data.cover}
-      />
-    ))}
-  </div>
-</BaseLayout>
+<MainGridLayout title={`#${label}`} description={`标签 ${label} 下的全部文章`} page="tags">
+  <a href={withBase("/tags/")} class="text-[var(--primary)]">← 全部标签</a>
+  <PageHeader title={`#${label}`} subtitle={`${list.length} 篇文章`} />
+  <PostPage page={{data: list}} />
+</MainGridLayout>

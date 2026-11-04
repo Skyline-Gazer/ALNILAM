@@ -2,9 +2,10 @@
 // Artifact budget + regression guards over a composed output directory.
 // Fails the build when a deliverable regresses. Run after `pnpm build`.
 //
-// Budgets (Issue #4/#7 acceptance: measured client JS, CLS, a11y floor):
-//   - posts pages: ZERO runtime <script> from ALNILAM (static content only)
-//   - any page:    at most TWO Astro islands (homepage ships Status + Search)
+// Budgets (Issue #4/#7/#61 acceptance: measured native Shirone client JS, CLS, a11y floor):
+//   - list/index pages: at most 1 runtime <script> (unified Layout shell runtime)
+//   - article pages:    at most 3 runtime <script>s (Layout + SidebarTOC + FloatingTOC)
+//   - any page:         at most 6 Astro islands (4 shell + ArticleShare + optional Comments/Bangumi)
 //   - every <img> carries explicit width/height (CLS guard)
 //   - every page: <html lang>, <title>, <main> landmark, exactly one <h1>
 //   - every page: skip link target present
@@ -32,17 +33,25 @@ function walk(dir) {
 }
 function checkPage(file) {
   pagesChecked++;
-  const rel = path.relative(outDir, file);
+  const rel = path.relative(outDir, file).replace(/\\/g, "/");
   const html = fs.readFileSync(file, "utf8");
   const scripts = [...html.matchAll(/<script[^>]*src="([^"]+)"/g)].map((m) => m[1]);
   scriptRefs += scripts.length;
-  if (rel.startsWith("posts") && scripts.length > 0) {
-    failures.push(`${rel}: posts pages must ship zero runtime scripts, found ${scripts.length}`);
+  const isPostList = rel === "posts/index.html" || /^posts\/\d+\/index\.html$/.test(rel);
+  const isArticle = rel.startsWith("posts/") && !isPostList;
+  const maxScripts = isArticle ? 3 : 1;
+  if (scripts.length > maxScripts) {
+    failures.push(`${rel}: expected at most ${maxScripts} runtime script(s), found ${scripts.length}`);
   }
   const pageIslands = (html.match(/<astro-island/g) || []).length;
   islands += pageIslands;
-  // Budget: ≤2 islands per page (homepage legitimately ships Status + Search).
-  if (pageIslands > 2) failures.push(`${rel}: more than two islands on a page (${pageIslands})`);
+  // Native Shirone shell ships 4 interactive M3E controls (Snackbar, Search,
+  // LightDarkSwitch, SiteNavigationDrawer) plus up to 2 route islands
+  // (ArticleShare + optional Comments, or BangumiSection).
+  const maxIslands = isArticle ? 6 : 5;
+  if (pageIslands > maxIslands) {
+    failures.push(`${rel}: more than ${maxIslands} islands on a page (${pageIslands})`);
+  }
   for (const img of html.matchAll(/<img[^>]*>/g)) {
     const tag = img[0];
     if (!/\bwidth=/.test(tag) || !/\bheight=/.test(tag)) {

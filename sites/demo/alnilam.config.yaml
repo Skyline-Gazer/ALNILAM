@@ -1,0 +1,50 @@
+schemaVersion: 2
+site:
+  title: ALNILAM
+  description: An open blogging platform inspired by the stars.
+  url: https://example.com
+  locale: zh-CN
+locales:
+  - zh-CN
+  - en
+  - ja
+theme:
+  appearance: dark
+categories:
+  - id: guide
+    slug: guide
+    label:
+      zh-CN: 指南
+      en: Guide
+      ja: ガイド
+  - id: release
+    slug: release
+    label:
+      zh-CN: 发布
+      en: Release
+      ja: リリース
+tags:
+  - id: alnilam
+    slug: alnilam
+    label:
+      zh-CN: ALNILAM
+      en: ALNILAM
+      ja: ALNILAM
+  - id: astro
+    slug: astro
+    label:
+      zh-CN: Astro
+      en: Astro
+      ja: Astro
+  - id: guide
+    slug: guide
+    label:
+      zh-CN: 指南
+      en: Guide
+      ja: ガイド
+  - id: test
+    slug: test
+    label:
+      zh-CN: 测试
+      en: Test
+      ja: テスト
