@@ -443,7 +443,8 @@ test("external image URLs pass through and local site assets are served as-is", 
 test("build cache is version-isolated across Core revisions and cleanable", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cacheiso-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  const site = DEMO;
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
   const cache = path.join(root, "cache");
   const composeEnv = { ...process.env, ALNILAM_CACHE_DIR: cache, SOURCE_DATE_EPOCH: "1700000000" };
   for (const rev of ["test-core-rev-1234", "rev-b"]) {
