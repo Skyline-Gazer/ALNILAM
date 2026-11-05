@@ -18,10 +18,13 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
 import { validateSiteRoot } from "../site-contract.mjs";
 
-const REPO = fileURLToPath(new URL("../../", import.meta.url));
+// Resolve the fixture and compose script from the working tree, like the other
+// contract tests: the trusted gate copies this test file into a harness and
+// runs it with cwd = the candidate checkout, where only cwd-relative paths
+// exist (the harness has no tests/fixtures or scripts/compose.mjs).
+const REPO = process.cwd();
 const FIXTURE = path.join(REPO, "tests/fixtures/content-model-site");
 
 // 13 published zh + 6 en + 4 ja = 23 published posts; page size 5 → 5 pages.
