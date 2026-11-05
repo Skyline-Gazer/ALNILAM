@@ -149,8 +149,10 @@ for (const [name, origin] of deployments) {
 
 			await page.goto(`${origin}/posts/`, { waitUntil: "networkidle" });
 
-			await page.locator('a.m3-blog-postcard__title[href$="/posts/hello-alnilam/"]').first().click();
-			await expect(page).toHaveURL(new RegExp("hello-alnilam"));
+			// hello-alnilam now paginates to page 3; drive the lightbox lifecycle
+			// from a page-1 card instead.
+			await page.locator('a.m3-blog-postcard__title[href$="/posts/en/pagination-sample/"]').first().click();
+			await expect(page).toHaveURL(new RegExp("en/pagination-sample"));
 			await waitForLightboxReady(page);
 
 			const container = await openSlide(page, 0, responses);
@@ -160,7 +162,7 @@ for (const [name, origin] of deployments) {
 			await page.goBack();
 			await expect(page).toHaveURL(new RegExp("/posts/?$"));
 			await page.goForward();
-			await expect(page).toHaveURL(new RegExp("hello-alnilam"));
+			await expect(page).toHaveURL(new RegExp("en/pagination-sample"));
 			await context.close();
 		});
 	}
