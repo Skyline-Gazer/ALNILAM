@@ -1970,6 +1970,8 @@
     "src/components/molecules/SidebarTOC.astro": "Respect prefers-reduced-motion when scrolling to TOC anchors.",
     "src/styles/markdown/generic.styl": "Ensure unbroken prose URLs wrap and wide code/table blocks scroll horizontally within .custom-md.",
     "src/components/atoms/blog/PostCard.astro": "Allow long unbroken card titles to wrap within .m3-blog-postcard__title.",
-    "src/styles/transition.css": "Disable onload-animation initial translateY/opacity under prefers-reduced-motion and motion-reduced."
+    "src/styles/transition.css": "Disable onload-animation initial translateY/opacity under prefers-reduced-motion and motion-reduced.",
+    "src/utils/fancybox-handler.ts": "ALNILAM addition: syncArticleImageSrcTargets() mirrors syncImageGridLinkTargets() for bare article <img> triggers, syncing currentSrc to data-src on every init/doInit and Swup remount so the lightbox resolves the rendered asset address (#123).",
+    "src/styles/fancybox-custom.css": "ALNILAM addition: restore the missing .f-panzoom__wrapper.is-fullsize width/height that vendor v6.1.15 CSS omits; without it the Panzoom wrapper collapses to 0x0 inside the slide flex column and the lightbox renders an empty frame at scale(0) (#123)."
   }
 }

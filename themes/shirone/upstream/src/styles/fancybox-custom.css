@@ -3,6 +3,16 @@
    改为 .f-carousel__toolbar / .f-button / .f-caption / .f-button.is-arrow / .f-counter，
    并通过 --f-* 变量暴露外观；这里优先覆盖变量，只在变量覆盖不到的地方写规则。 */
 
+
+/* Fancybox v6.1.15 为可缩放图片内容切换 .f-panzoom__wrapper.is-fullsize，
+   但 vendor 样式表没有为该状态提供宽高规则。幻灯片是 align-items:center
+   的纵向 flex 容器，wrapper 因此塌缩为 0×0；Panzoom 以 0 尺寸测量后把
+   viewport 固定在 scale(0)（空画框），且 wrapper 尺寸不再变化导致其
+   ResizeObserver 永不重算。这里补上缺失的填充尺寸。 */
+.fancybox__container .fancybox__slide .f-panzoom__wrapper.is-fullsize {
+	width: 100%;
+	height: 100%;
+}
 .fancybox__container {
 	--fancybox-bg: rgba(0, 0, 0, 0.88);
 
