@@ -50,10 +50,16 @@ const { list, label, tagLabels } = Astro.props as {
 };
 const { root, config } = loadSite();
 const taxonomy = loadSiteTaxonomy(root, config);
-// Case- and label-variant routes stay reachable for old links, but every one
-// canonicalizes to the catalog slug so duplicates never compete in search.
+// Case- and label-variant routes stay reachable for existing links, but they
+// duplicate the catalog-slug page: mark them noindex and keep them out of the
+// sitemap. Static output cannot issue a 301, so this is a compatibility page,
+// never a claimed redirect or an indexed canonical.
 const canonicalSlug = canonicalTagSlug(Astro.params.tag, taxonomy.tags);
-const canonical = canonicalUrl(`/tags/${encodeURIComponent(canonicalSlug)}/`, config.site.url);
+const isAlias = Astro.params.tag !== canonicalSlug;
+const canonical = canonicalUrl(
+  `/tags/${encodeURIComponent(Astro.params.tag)}/`,
+  config.site.url,
+);
 const mappedPosts = list.map((post) => ({
   slug: post.id,
   url: withBase(postPath(post, config.site.locale) + "/"),
@@ -77,7 +83,7 @@ const breadcrumbJsonLd = breadcrumbListJsonLd([
   { name: `#${label}`, url: canonical },
 ]);
 ---
-<MainGridLayout title={`#${label}`} description={`标签 ${label} 下的全部文章`} page="tags" canonical={canonical}>
+<MainGridLayout title={`#${label}`} description={`标签 ${label} 下的全部文章`} page="tags" noindex={isAlias}>
   <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(collectionJsonLd)} />
   <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
   <a href={withBase("/tags/")} class="text-[var(--primary)]">← 全部标签</a>
