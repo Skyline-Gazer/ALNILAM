@@ -2,7 +2,7 @@
 import { getCollection, type CollectionEntry } from "astro:content";
 import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
 import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
-import PostPage from "@alnilam/theme-shirone/PostPage.astro";
+import ArchivePanel from "@alnilam/theme-shirone/ArchivePanel.svelte";
 import { withBase } from "../../lib/i18n.mjs";
 import { loadSite } from "../../lib/site-source.mjs";
 import { categoryDisplayLabel, comparePosts, loadSiteTaxonomy } from "../../lib/taxonomy";
@@ -36,14 +36,41 @@ export async function getStaticPaths() {
     props: {
       list: [...list].sort(comparePosts),
       label: categoryDisplayLabel(category, taxonomy.categories, config.site.locale),
+      categoryLabels: Object.fromEntries(
+        taxonomy.categories.map((entry) => [
+          entry.slug,
+          categoryDisplayLabel(entry.slug, taxonomy.categories, config.site.locale),
+        ]),
+      ),
     },
   }));
 }
 
-const { list, label } = Astro.props as { list: CollectionEntry<"posts">[]; label: string };
+const { list, label, categoryLabels } = Astro.props as {
+  list: CollectionEntry<"posts">[];
+  label: string;
+  categoryLabels: Record<string, string>;
+};
+const mappedPosts = list.map((post) => ({
+  slug: post.id,
+  url: withBase(`/posts/${post.id}/`),
+  data: {
+    title: post.data.title,
+    tags: post.data.tags,
+    category: post.data.category || null,
+    published: post.data.pubDate,
+  },
+}));
 ---
 <MainGridLayout title={label} description={`分类 ${label} 下的全部文章`} page="categories">
   <a href={withBase("/categories/")} class="text-[var(--primary)]">← 全部分类</a>
   <PageHeader icon="material-symbols:folder-outline-rounded" title={label} subtitle={`${list.length} 篇文章`} />
-  <PostPage page={{ data: list }} />
+  <ArchivePanel
+    client:visible
+    sortedPosts={mappedPosts}
+    initialCategory={Astro.params.category}
+    preScoped
+    breadcrumb={{ href: withBase("/categories/"), label: "分类", value: label }}
+    categoryLabels={categoryLabels}
+  />
 </MainGridLayout>
