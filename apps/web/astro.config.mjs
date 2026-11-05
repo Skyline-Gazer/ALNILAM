@@ -4,6 +4,7 @@ import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import shirones from "../../themes/shirone/upstream/src/integration/index.ts";
 import {createSeoInventory} from "./seo-inventory.mjs";
+import {sitemapCompat} from "./sitemap-compat.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
@@ -140,6 +141,8 @@ export default defineConfig({
       filter: (url) => seoInventory.filter(url),
       serialize: (item) => seoInventory.serialize(item),
     }),
+    // Older consumers read a single /sitemap.xml; mirror the official entries.
+    sitemapCompat(),
   ],
   // compose.mjs relocates Vite's dependency cache into the managed, Core-
   // revision-keyed build cache; stale optimized deps once served broken

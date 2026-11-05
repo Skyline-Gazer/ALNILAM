@@ -344,6 +344,19 @@ for (const url of selfCanonical) {
 for (const banned of ["rss.xml", "robots.txt", "404.html"]) {
   if (sitemapLocs.has(new URL(banned, originHref).href)) fail(`sitemap must not list ${banned}`);
 }
+// The compatibility mirror, when present, must describe the same entries.
+const compatPath = path.join(outDir, "sitemap.xml");
+if (fs.existsSync(compatPath)) {
+  const compatLocs = new Set(
+    [...fs.readFileSync(compatPath, "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => decodeEntities(match[1])),
+  );
+  for (const loc of compatLocs) {
+    if (!sitemapLocs.has(loc)) fail(`sitemap.xml mirror lists an entry the index does not: ${loc}`);
+  }
+  for (const loc of sitemapLocs) {
+    if (!compatLocs.has(loc)) fail(`sitemap.xml mirror is missing ${loc}`);
+  }
+}
 
 // 7. robots.txt and the 404 contract.
 const robotsTxt = read("robots.txt");
