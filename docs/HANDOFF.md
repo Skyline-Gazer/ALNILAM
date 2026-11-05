@@ -1,5 +1,78 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-05 (current, supersedes 2026-11-04 below)
+
+Everything from "## Historical snapshot — 2026-11-04" downward is historical
+(2026-11-03/04). This section is the authoritative handoff state.
+
+### Git / remotes (verified live 2026-11-05)
+
+| Ref | Value |
+| --- | --- |
+| CNB `dev` | `f35059c…` (tree `b9501d5…`) — Phase-0 baseline `d3b58a9…` + PRs #59/#60/#61 |
+| GitHub `dev` | `d3b58a9…` — **pending one authorized mirror push**; do not auto-push (Vercel Production tracks this tip) |
+| CNB `main` | `285a62ce…` — untouched; release-only, Owner-authorized changes only |
+| ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` — unchanged |
+
+### Product changes this session (merged to CNB `dev`)
+
+- **Lightbox empty-frame fix** — CNB PR [#59](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/59),
+  head `a5f2bae…`, merge commit `78284b6…`. Root cause: Fancybox v6.1.15 ships no sizing CSS for
+  `.f-panzoom__wrapper.is-fullsize`; the Panzoom wrapper collapsed to 0×0 and the viewport pinned
+  at `scale(0)` (empty frame). Fixed in `fancybox-custom.css` + `fancybox-handler.ts`
+  (`syncArticleImageSrcTargets`), ledgered in `SOURCE.json`. GitHub Issue
+  [#123](https://github.com/Skyline-Gazer/ALNILAM/issues/123) closed with browser proof.
+- **Archive/category detail UX restore** — CNB PR
+  [#60](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/60), head `d9a9e9f…`, merge commit
+  `6978882…`. `/categories/<slug>/` and `/tags/<tag>/` render the native Shirone ArchivePanel
+  timeline (pre-scoped SSR filter, explicit-params-only `onMount`, localized label maps,
+  `preScoped` for the app's alias/series membership); nested-base `CategoryBar` hide fixed.
+  GitHub Issue [#124](https://github.com/Skyline-Gazer/ALNILAM/issues/124) closed with proof.
+- New fixtures: `sites/demo/assets/lighthouse.png` + body images in `hello-alnilam.md`.
+- New specs: `tests/browser/lightbox.spec.ts` (14/14), `tests/browser/archive-taxonomy.spec.ts`
+  (10/10); `content-model.test.mjs` 9/9; `pnpm test` 145/145; `pnpm check` 0 errors;
+  `cnb-quality`/`navigation-lifecycle`/`native-shirone-base` green.
+
+### Online truth (do not conflate with `dev` merges)
+
+- GitHub Pages still serves old build `0591e4b4…` — older than the Phase-0 baseline.
+- Vercel Production tracks the **GitHub** `dev` tip (`d3b58a9…`), so it does **not** host either
+  fix yet. Publishing requires an Owner-authorized sync/deploy of CNB `dev` (`f35059c…`).
+- Repair + deployed-site acceptance remains open as Issue #34.
+
+### Project / audit
+
+- `docs/AUDIT-P0-P6-2026-11-05.md` (merged via CNB PR #61, `de9465c…`) is the live P0–P6 evidence
+  audit; statuses read from live Issues, not from old HANDOFF prose.
+- GitHub Project #17 (renamed **ALNILAM Dev**) rebuilt: native sub-issue trees
+  (#37←#47–#50,#79; #38←#51–#56; #39←#57–#61,#123,#124; #40←#62–#66,#78; #41←#70,#71;
+  #42←#72–#76,#81,#90–#94), statuses per audit (P3 `Done`, P4 `In Progress`, P5/P6 `Todo`),
+  views `Roadmap`/`Hierarchy`/`Active` created via API (`Active` filters `Status in (Todo, In
+  Progress)`), `Start date`/`Target date` fields created, release items `v0.1.0`–`v0.1.3` dated
+  2026-10-25 (tag-commit-date-derived; no recorded release date found).
+- Remaining UI-only steps (no GraphQL API; no GitHub web session in this DevBox):
+  Roadmap view → select `Start date`/`Target date` as the date fields; Hierarchy view → enable
+  native "Show hierarchy". One click each in the web UI.
+
+### Branches
+
+- CNB: 48 → **4** (`dev`, `main`, `codex/agent-pr-source-20261030` — unique unmerged #94 work,
+  `codex/mirror-release-acceptance-20261030` — one-off mirror acceptance evidence).
+- GitHub: 26 → **5** (`dev`, `main`, two `codex/mirror-*-acceptance-20261030` evidence branches,
+  `sync/cnb-main` — prepared main-sync state ahead of `main`; keep until an authorized promotion).
+
+### Next task
+
+**#63 — pagination + Pagefind end-to-end** (P4/T02). No blocker Issue ahead of it was found in
+the audit. Branch from the post-merge CNB `dev` tip (`f35059c…` or later).
+
+---
+
+## Historical snapshot — 2026-11-04 (superseded)
+
+The remainder of this document is the **2026-11-03 historical snapshot**. Its PR,
+Issue, CI and next-task statements are stale; check live CNB and Project state first.
+
 ## Live-state update — 2026-11-04
 
 The remainder of this document is the **2026-11-03 historical snapshot**. Its PR,
