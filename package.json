@@ -19,6 +19,7 @@
     "cls:local": "node scripts/local-browser.mjs cls",
     "lighthouse:local": "node scripts/local-browser.mjs lighthouse",
     "audit:local": "node scripts/local-browser.mjs all",
+    "vercel-build": "node scripts/vercel-build.mjs",
     "verify": "pnpm test && pnpm check && pnpm build"
   },
   "devDependencies": {

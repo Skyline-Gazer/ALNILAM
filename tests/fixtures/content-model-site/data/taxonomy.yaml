@@ -1,0 +1,20 @@
+categories:
+  - id: notes
+    slug: notes
+    label:
+      zh-CN: 随笔
+      en: Essays
+      ja: エッセイ
+tags:
+  - id: pagination
+    slug: pagination
+    label:
+      zh-CN: 分页
+      en: Pagination
+      ja: ページネーション
+  - id: series
+    slug: series
+    label:
+      zh-CN: 系列
+      en: Series
+      ja: シリーズ

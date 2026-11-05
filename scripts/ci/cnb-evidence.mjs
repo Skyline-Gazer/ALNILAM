@@ -19,6 +19,19 @@ export function readPlaywrightReport(filename) {
   }
 }
 
+// A failing trusted step must surface its own evidence: the actionable error
+// (test names, assertion output) lives in the step log, and the isolated
+// candidate's artifacts are not reachable from the pipeline workspace.
+export function failureTail(filename, lines = 60) {
+  const label = path.relative(process.cwd(), filename) || filename;
+  try {
+    const all = fs.readFileSync(filename, 'utf8').trimEnd().split('\n');
+    return `--- ${label} (last ${Math.min(lines, all.length)} of ${all.length} lines) ---\n${all.slice(-lines).join('\n')}`;
+  } catch (error) {
+    return `--- ${label}: unreadable (${error.message}) ---`;
+  }
+}
+
 export function evidenceDiagnostic(error, fallback = 'EVIDENCE_INVALID') {
   const message = error?.message || String(error);
   return /^[A-Z_]+:/.test(message) ? message : `${fallback}: ${message}`;
