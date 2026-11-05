@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
-import {trackChild, stopChildren, assertSuccessfulResponses, validateLighthouseReports, validateLighthouseRegression, validateBrowserNegative} from './cnb-evidence.mjs';
+import {trackChild, stopChildren, assertSuccessfulResponses, validateLighthouseReports, validateLighthouseRegression, validateBrowserNegative, failureTail} from './cnb-evidence.mjs';
 
 test('teardown handles an already-signalled child without waiting for a past event', async () => {
   const child = Object.assign(new EventEmitter(), {exitCode: null, signalCode: 'SIGKILL', kill() {throw Error('Already ended');}});
@@ -64,5 +64,18 @@ test('browser negative rejects stale, signalled and unrelated failures', () => {
     fs.utimesSync(path.join(root, 'shot.png'), old, old);
     fs.utimesSync(path.join(root, 'trace.zip'), old, old);
     assert.throws(() => validateBrowserNegative({status: 1}, report, started, root), /stale/);
+  } finally {fs.rmSync(root, {recursive: true, force: true});}
+});
+
+test('failure tail surfaces the step log end and never throws on a missing log', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cnb-failure-tail-'));
+  try {
+    const log = path.join(root, 'unit-coverage.log');
+    fs.writeFileSync(log, Array.from({length: 80}, (_, i) => `line ${i + 1}`).join('\n') + '\n');
+    const tail = failureTail(log, 5);
+    assert.match(tail, /last 5 of 80 lines/);
+    assert.match(tail, /line 76\nline 77\nline 78\nline 79\nline 80$/);
+    assert.doesNotMatch(tail, /line 75\n/);
+    assert.match(failureTail(path.join(root, 'missing.log')), /unreadable/);
   } finally {fs.rmSync(root, {recursive: true, force: true});}
 });

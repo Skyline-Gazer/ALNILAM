@@ -331,6 +331,12 @@ function prepareTrustedTests(harnessRoot, candidateRoot) {
     const source = path.join(candidateRoot, directory);
     if (fs.existsSync(source)) fs.symlinkSync(source, path.join(testRoot, directory), 'dir');
   }
+  // Fixtures are test inputs: keep the target-owned copies available under the
+  // test root so a test that resolves relative to its own file still finds them
+  // (the candidate controls only product code, never these inputs).
+  if (fs.existsSync(path.join(ROOT, 'tests/fixtures'))) {
+    copyTree(path.join(ROOT, 'tests/fixtures'), path.join(testRoot, 'tests/fixtures'));
+  }
   copyReadonlyFile(path.join(ROOT, 'scripts/site-contract.mjs'), path.join(testRoot, 'scripts/site-contract.mjs'));
   // The workflow contract tests read .github/workflows/*.yml from the
   // trusted-tests root; without this copy every pull_request.target run
