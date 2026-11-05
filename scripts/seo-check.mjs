@@ -176,9 +176,10 @@ for (const page of pages) {
   if (ogUrl.length !== 1) fail(`${page.relative}: expected one og:url, found ${ogUrl.length}`);
   else if (ogUrl[0] !== value) fail(`${page.relative}: og:url ${ogUrl[0]} != canonical ${value}`);
   if (ogImage.length !== 1) fail(`${page.relative}: expected one og:image, found ${ogImage.length}`);
-  else {
-    if (!ogImage[0].startsWith(originHref)) fail(`${page.relative}: og:image is not absolute: ${ogImage[0]}`);
-    if (!existsForUrl(ogImage[0])) fail(`${page.relative}: og:image target missing: ${ogImage[0]}`);
+  else if (!/^https?:\/\//i.test(ogImage[0])) {
+    fail(`${page.relative}: og:image is not absolute: ${ogImage[0]}`);
+  } else if (ogImage[0].startsWith(originHref) && !existsForUrl(ogImage[0])) {
+    fail(`${page.relative}: og:image target missing: ${ogImage[0]}`);
   }
   // X/Twitter falls back to og:*; a dedicated twitter:url, if present, must agree.
   if (twitterUrl.length > 0 && twitterUrl[0] !== value) {
