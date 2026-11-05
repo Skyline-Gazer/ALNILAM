@@ -393,3 +393,25 @@ python3 -m unittest scripts.tests.docs_test
 
 完整历史材料可用 `git show d6a21217c4c260f9afe77f754042a162a0aa77d2:docs/HANDOFF.md` 查阅。
 旧bootstrap/P1“下一任务”清单、旧GitHub Primary/旧ADS pin、旧Done状态不能覆盖本交接与实时Owner决定。
+## 2026-11-05 · P4/T03 #64 — SEO / Canonical / OG / RSS / Sitemap / BasePath
+
+- 基线：CNB `dev` @ `b5cb4339d614e3c48b973a0d55c23563f7ef1e72`（GitHub `dev` 仍落后，不作基线）。
+- 分支/PR：`feat/64-seo-base` → CNB PR #64（target `dev`），GitHub Issue #64（Parent #40，Project #17）。
+- 实现：`apps/web/src/lib/i18n.mjs`（base 单次前缀、canonical 去 query、hreflang 组）、
+  `apps/web/src/lib/seo.mjs`（WebSite/BlogPosting/Breadcrumb/CollectionPage）、
+  `apps/web/src/lib/feed.mjs` + `/rss.xml` + `/[lang]/rss.xml`（官方 `@astrojs/rss`，按语言）、
+  `apps/web/seo-inventory.mjs` + `@astrojs/sitemap`（按真实产物收集；排除 alias/404/feed；
+  lastmod 仅真实更新；alternate 双向）、`apps/web/sitemap-compat.mjs`（`/sitemap.xml` 兼容镜像，
+  robots 仍指向官方 index）、`robots.txt`（声明 Pages 子路径不控制 origin）、`404.astro`（noindex）。
+- 标签大小写/本地化别名路由保留可达但 `noindex`，catalog slug 页为唯一索引与 sitemap 条目；
+  静态输出不能 301，故不声称重定向。旧 `/posts/en/<slug>/` 路由保持 canonical。
+- 验证（真实产物，非 helper 快照）：`pnpm test` 151 pass；`pnpm check` 0/0/0；
+  `pnpm browser:local` 83 pass / 1 skipped（root + `/ALNILAM/`，1440/390）；
+  GitHub Pages 子路径与自定义根域两套 compose 均 `artifact-check` BUDGETS OK、
+  `scripts/seo-check.mjs` SEO CONTRACT OK（39 pages、2114 内部引用、34 sitemap URL、3 feeds）。
+- 远端 CI：CNB PR #64（https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/64）的
+  `pull_request.target` trusted-consumer 与 ai-review-advisory 均为 success；
+  被测代码 head `1d05c2271d0201446fb4bc65bcbd560779a81e8f`，merge `4e842ef4`（26m01s）。
+  该 PASS 绑定上述代码 head；本地 PASS 不替代远端结果。
+- 未完成/边界：locale 前缀路由（`/en/posts/…`）与 locale taxonomy 分页属 #65；无 HTTP 301；
+  `/ALNILAM/robots.txt` 不是 origin 级 robots；未改 `main`、tag、生产配置、ADS pin。
