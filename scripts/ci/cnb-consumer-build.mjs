@@ -5,6 +5,7 @@ import path from 'node:path';
 import {spawnSync, execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {trustedAstroCheckArgs, trustedTestFiles} from './cnb-trusted-gate.mjs';
+import {failureTail} from './cnb-evidence.mjs';
 import {siteConfigPath, validateSiteRoot} from '../site-contract.mjs';
 
 const trustedRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -24,12 +25,17 @@ const fixtureContract = path.basename(siteConfigPath(site)) === 'alnilam.config.
 const steps = [];
 function run(name, command, args, extra = {}, output) {
   const started = Date.now();
-  const log = fs.openSync(output || `artifacts/${name}.log`, 'w');
+  const logPath = output || `artifacts/${name}.log`;
+  const log = fs.openSync(logPath, 'w');
+  let result;
   try {
-    const result = spawnSync(command, args, {env: {...env, ...extra}, stdio: ['ignore', log, log]});
-    steps.push({name, status: result.status, signal: result.signal, error: result.error?.message, elapsedMs: Date.now() - started});
-    if (result.status !== 0) throw Error(`${name} failed; see artifacts/${name}.log`);
+    result = spawnSync(command, args, {env: {...env, ...extra}, stdio: ['ignore', log, log]});
   } finally { fs.closeSync(log); }
+  steps.push({name, status: result.status, signal: result.signal, error: result.error?.message, elapsedMs: Date.now() - started});
+  if (result.status !== 0) {
+    console.error(failureTail(logPath));
+    throw Error(`${name} failed; see artifacts/${name}.log`);
+  }
 }
 try {
   run('unit-coverage', process.execPath, [
