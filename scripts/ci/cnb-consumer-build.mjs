@@ -53,10 +53,12 @@ try {
   run('demo-compose', process.execPath, [path.join(trustedRoot, 'scripts/compose.mjs'), '--site', 'sites/demo', '--out', 'dist/demo'],
     composeEnv);
   run('demo-artifact', process.execPath, [path.join(trustedRoot, 'scripts/artifact-check.mjs'), 'dist/demo']);
+  run('demo-seo', process.execPath, [path.join(trustedRoot, 'scripts/seo-check.mjs'), 'dist/demo']);
   for (const [name, url] of [['site', 'https://example.com/'], ['nested-base', 'https://example.com/ALNILAM/']]) {
     run(`compose-${name}`, process.execPath, [path.join(trustedRoot, 'scripts/compose.mjs'), '--site', site, '--out', `dist/${name}`],
       {...composeEnv, ALNILAM_SITE_URL: url});
     run(`artifact-${name}`, process.execPath, [path.join(trustedRoot, 'scripts/artifact-check.mjs'), `dist/${name}`]);
+    run(`seo-${name}`, process.execPath, [path.join(trustedRoot, 'scripts/seo-check.mjs'), `dist/${name}`]);
   }
   if (validateSiteRoot(site).digest !== before) throw Error('External Site mutated');
 } catch (error) { console.error(error.message); process.exitCode = 1; }

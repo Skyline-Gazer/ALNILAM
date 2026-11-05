@@ -45,10 +45,29 @@ interface Props {
 	lang?: string;
 	setOGTypeArticle?: boolean;
 	page?: SidebarPage;
+	/** Absolute canonical override for alias routes (must point at a real page). */
+	canonical?: string;
+	/** Reciprocal hreflang alternates: { lang, href } absolute URLs. */
+	alternates?: Array<{ lang: string; href: string }>;
+	/** Keep compatibility routes crawlable but out of the index. */
+	noindex?: boolean;
+	/** Absolute RSS URL for this page's locale. */
+	feedUrl?: string;
 }
 
-let { title, banner, ogImage, description, lang, setOGTypeArticle, page } =
-	Astro.props;
+let {
+	title,
+	banner,
+	ogImage,
+	description,
+	lang,
+	setOGTypeArticle,
+	page,
+	canonical,
+	alternates,
+	noindex,
+	feedUrl,
+} = Astro.props;
 
 const initialPage =
 	page ?? (pathsEqual(Astro.url.pathname, url("/")) ? "home" : undefined);
@@ -57,9 +76,12 @@ const initialPage =
 // integration's `updateConfig()` — Astro snapshots the build origin in the
 // build constructor before the `astro:config:setup` hook runs. Derive the
 // absolute URL from `Astro.site` ourselves so og/twitter URLs stay correct.
-const canonicalUrl = Astro.site
-	? new URL(Astro.url.pathname + Astro.url.search, Astro.site)
-	: Astro.url;
+// Query strings and fragments are tracking/UI state, never canonical content.
+const canonicalUrl = canonical
+	? new URL(canonical)
+	: Astro.site
+		? new URL(Astro.url.pathname, Astro.site)
+		: new URL(Astro.url.pathname, Astro.url);
 function getFirstBannerImage(source: BannerSourceValue | undefined): string {
 	if (!source) return "";
 	if (Array.isArray(source)) return source[0] || "";
@@ -79,7 +101,22 @@ const defaultSocialImage =
 	"";
 const candidateOgImage = ogImage || banner || defaultSocialImage;
 const resolvedOgImage = await resolveAsset(candidateOgImage);
-const absoluteOgImage = toAbsoluteUrl(resolvedOgImage, canonicalUrl);
+// Social platforms do not render SVG previews. Fall back to the Site's raster
+// default card instead of advertising an image those crawlers cannot use.
+const socialImage = /\.svg(?:[?#]|$)/i.test(resolvedOgImage)
+	? await resolveAsset(siteConfig.ogImage ?? "")
+	: resolvedOgImage;
+const absoluteOgImage = socialImage
+	? toAbsoluteUrl(socialImage, canonicalUrl)
+	: "";
+const pageLocale = (lang || siteConfig.lang).replace("_", "-");
+// The Site serves one feed per enabled locale: default at /rss.xml, others
+// under their locale prefix. Pages without a locale keep the default feed.
+const resolvedFeedUrl = feedUrl
+	? new URL(feedUrl, Astro.site ?? Astro.url)
+	: siteConfig.lang && pageLocale !== siteConfig.lang.replace("_", "-")
+		? new URL(`${pageLocale}/rss.xml`, Astro.site ?? Astro.url)
+		: new URL("rss.xml", Astro.site ?? Astro.url);
 
 const configHue = siteConfig.themeColor.hue;
 const lightTheme =
@@ -129,6 +166,10 @@ const defaultSchemeStyle = createDefaultSchemeStyle();
 		<meta property="og:url" content={canonicalUrl}>
 		<meta property="og:title" content={pageTitle}>
 		<meta property="og:description" content={description || pageTitle}>
+		<meta property="og:locale" content={siteLang.replace(/-/g, "_")}>
+		{alternates?.filter((alternate) => alternate.lang !== siteLang && alternate.lang !== "x-default").map((alternate) => (
+			<meta property="og:locale:alternate" content={alternate.lang.replace(/-/g, "_")} />
+		))}
 		{absoluteOgImage && <meta property="og:image" content={absoluteOgImage} />}
 		{setOGTypeArticle ? (
 			<meta property="og:type" content="article" />
@@ -136,15 +177,18 @@ const defaultSchemeStyle = createDefaultSchemeStyle();
 			<meta property="og:type" content="website" />
 		)}
 
+		{/* X falls back to og:url/title/description/image; only the card type
+		    needs a dedicated tag (and avoids a second copy of every value). */}
 		<meta name="twitter:card" content={absoluteOgImage ? "summary_large_image" : "summary"}>
-		<meta property="twitter:url" content={canonicalUrl}>
-		<meta name="twitter:title" content={pageTitle}>
-		<meta name="twitter:description" content={description || pageTitle}>
-		{absoluteOgImage && <meta name="twitter:image" content={absoluteOgImage} />}
 
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
+		{noindex && <meta name="robots" content="noindex, follow" />}
 		<link rel="canonical" href={canonicalUrl} />
+		{alternates?.map((alternate) => (
+			<link rel="alternate" hreflang={alternate.lang} href={alternate.href} />
+		))}
+
 		<style is:inline set:html={defaultSchemeStyle}></style>
 		{fontRoleStyle && <style is:inline set:html={fontRoleStyle}></style>}
 		{textureEnabled && <style is:inline set:html={textureStyles}></style>}
@@ -221,7 +265,7 @@ const defaultSchemeStyle = createDefaultSchemeStyle();
 		}}></style>
 
 		<slot name="head"></slot>
-		<link rel="alternate" type="application/rss+xml" title={profileConfig.name} href={`${Astro.site}rss.xml`}/>
+		<link rel="alternate" type="application/rss+xml" title={siteConfig.title} href={resolvedFeedUrl}/>
 	</head>
 	<body
 		class="min-h-screen transition"

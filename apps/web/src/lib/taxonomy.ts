@@ -116,6 +116,26 @@ export function tagDisplayLabel(
   return matched.label[locale] || tag;
 }
 
+/**
+ * Stable URL slug for a tag. Catalog entries resolve ids, slugs and localized
+ * labels to the one canonical slug; free-form tags keep their own value.
+ * Alias routes still render but canonicalize here, so the same term never
+ * appears as two competing indexable URLs.
+ */
+export function canonicalTagSlug(tag: string, tags: readonly TaxonomyEntry[]): string {
+  const value = tag.trim();
+  const lower = value.toLowerCase();
+  const matched = tags.find(
+    (entry) =>
+      entry.slug === value ||
+      entry.id === value ||
+      entry.slug === lower ||
+      entry.id === lower ||
+      Object.values(entry.label).some((label) => label.toLowerCase() === lower),
+  );
+  return matched ? matched.slug : value;
+}
+
 export function comparePosts<
   T extends { id: string; data: { pinned?: boolean; pubDate: Date } },
 >(a: T, b: T): number {

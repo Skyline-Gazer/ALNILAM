@@ -44,6 +44,7 @@ import {
 	getPostUrl,
 	getPostUrlBySlug,
 	removeFileExtension,
+	toAbsoluteUrl,
 } from "@utils/url-utils";
 import katexStylesheet from "katex/dist/katex.css?url";
 import overlayScrollbarsStylesheet from "overlayscrollbars/overlayscrollbars.css?url";
@@ -194,24 +195,32 @@ const ogImage = entry.data.image
 	: undefined;
 
 const canonicalPostUrl = getPostUrl(entry);
+const absolutePostUrl = toAbsoluteUrl(canonicalPostUrl, Astro.site);
+// Structured data must advertise an image consumers can use; SVG covers fall
+// back to the Site's raster card, matching the og:image used by the layout.
+const socialImage =
+	ogImage && !/\.svg(?:[?#]|$)/i.test(ogImage) ? ogImage : siteConfig.ogImage;
+const absolutePostImage = socialImage
+	? toAbsoluteUrl(socialImage, Astro.site)
+	: undefined;
 
+// Only facts the Site owns: no fabricated author/publisher, and dateModified
+// appears only when the post declares a real update date.
 const jsonLd = {
 	"@context": "https://schema.org",
 	"@type": "BlogPosting",
 	headline: entry.data.title,
 	description: effectiveDescription,
 	keywords: entry.data.tags,
-	author: {
-		"@type": "Person",
-		name: profileConfig.name,
-		url: Astro.site,
-	},
+	url: absolutePostUrl,
+	mainEntityOfPage: { "@type": "WebPage", "@id": absolutePostUrl },
+	...(absolutePostImage ? { image: absolutePostImage } : {}),
 	datePublished: entry.data.publishedAt
 		? publishedInstant.toISOString()
 		: formatDateToYYYYMMDD(entry.data.published),
-	dateModified: entry.data.updatedAt
-		? updatedInstant.toISOString()
-		: formatDateToYYYYMMDD(effectiveUpdatedDate),
+	...(entry.data.updatedAt || entry.data.updated
+		? { dateModified: updatedInstant.toISOString() }
+		: {}),
 	inLanguage: entry.data.lang
 		? entry.data.lang.replace("_", "-")
 		: siteConfig.lang.replace("_", "-"),

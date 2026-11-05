@@ -44,7 +44,9 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
           await expect(page.locator('#navbar.top-app-bar')).toBeVisible();
           await expect(page.locator('#main-grid')).toBeVisible();
           await expect(page.locator('h1')).toHaveCount(1);
-          expect(await page.locator('link[rel="canonical"]').getAttribute('href')).toBe('https://example.com'+new URL(origin).pathname.replace(/\/$/,'')+route);
+          // Label/case variants stay reachable but canonicalize to the catalog slug.
+          const canonicalRoute = route === '/tags/Astro/' ? '/tags/astro/' : route;
+          expect(await page.locator('link[rel="canonical"]').getAttribute('href')).toBe('https://example.com'+new URL(origin).pathname.replace(/\/$/,'')+canonicalRoute);
           expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
           const hrefs=await page.locator('a[href^="/"]').evaluateAll(links=>links.map(link=>(link as HTMLAnchorElement).href));
           for(const href of new Set(hrefs)) {

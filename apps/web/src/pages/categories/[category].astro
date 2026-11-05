@@ -3,8 +3,9 @@ import { getCollection, type CollectionEntry } from "astro:content";
 import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
 import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
 import ArchivePanel from "@alnilam/theme-shirone/ArchivePanel.svelte";
-import { withBase } from "../../lib/i18n.mjs";
+import { canonicalUrl, postPath, withBase } from "../../lib/i18n.mjs";
 import { loadSite } from "../../lib/site-source.mjs";
+import { breadcrumbListJsonLd, collectionPageJsonLd } from "../../lib/seo.mjs";
 import { categoryDisplayLabel, comparePosts, loadSiteTaxonomy } from "../../lib/taxonomy";
 
 export async function getStaticPaths() {
@@ -51,9 +52,11 @@ const { list, label, categoryLabels } = Astro.props as {
   label: string;
   categoryLabels: Record<string, string>;
 };
+const { config } = loadSite();
+const canonical = canonicalUrl(`/categories/${Astro.params.category}/`, config.site.url);
 const mappedPosts = list.map((post) => ({
   slug: post.id,
-  url: withBase(`/posts/${post.id}/`),
+  url: withBase(postPath(post, config.site.locale) + "/"),
   data: {
     title: post.data.title,
     tags: post.data.tags,
@@ -61,8 +64,22 @@ const mappedPosts = list.map((post) => ({
     published: post.data.pubDate,
   },
 }));
+const collectionJsonLd = collectionPageJsonLd({
+  name: label,
+  description: `分类 ${label} 下的全部文章`,
+  url: canonical,
+  inLanguage: config.site.locale,
+  items: list.map((post) => canonicalUrl(postPath(post, config.site.locale) + "/", config.site.url)),
+});
+const breadcrumbJsonLd = breadcrumbListJsonLd([
+  { name: "首页", url: canonicalUrl("/", config.site.url) },
+  { name: "分类", url: canonicalUrl("/categories/", config.site.url) },
+  { name: label, url: canonical },
+]);
 ---
-<MainGridLayout title={label} description={`分类 ${label} 下的全部文章`} page="categories">
+<MainGridLayout title={label} description={`分类 ${label} 下的全部文章`} page="categories" canonical={canonical}>
+  <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(collectionJsonLd)} />
+  <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
   <a href={withBase("/categories/")} class="text-[var(--primary)]">← 全部分类</a>
   <PageHeader icon="material-symbols:folder-outline-rounded" title={label} subtitle={`${list.length} 篇文章`} />
   <ArchivePanel
