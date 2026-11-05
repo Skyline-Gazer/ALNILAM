@@ -240,6 +240,7 @@ file host works. Supported in detail:
 | GitHub Pages project page | `https://<org>.github.io/<repo>/` | subpath; set `site_url` accordingly, add `.nojekyll` |
 | GitHub Pages user/org page or custom domain | `https://<your-domain>/` | root base |
 | Any static host (nginx, Netlify, Cloudflare Pages…) | your choice | copy `dist/` as-is |
+| Vercel (this repository's preview project) | root | `vercel.json` builds `dist/site` via `pnpm vercel-build`; the script derives the Site URL from `VERCEL_PROJECT_PRODUCTION_URL`/`VERCEL_URL` so canonical, sitemap, robots and RSS name the deployed host |
 
 The owner-gated `deploy` workflow (`.github/workflows/deploy.yml`) publishes to
 GitHub Pages with `deploy_base: subpath | root`, and can publish an external
@@ -247,3 +248,7 @@ Site (`site_repository` + `site_ref`) after running the same contract tests and
 provenance binding checks. It only ever runs via `workflow_dispatch` against the
 protected `github-pages` environment — production publishing remains an explicit
 owner action and is never triggered by pushes or pull requests.
+
+Vercel builds serve `dist/site` directly (`outputDirectory` in `vercel.json`).
+Set `ALNILAM_SITE_URL` in the project environment to pin a custom domain; the
+derived deployment host is used only when it is absent.
