@@ -105,13 +105,13 @@ for (const [name, origin, width, height] of [
       await captureScreenshot(page, `browser-results/${name}-article-dark.png`);
       await selectTheme(page, "light");
       await captureScreenshot(page, `browser-results/${name}-article-light.png`);
-      await page.locator('#navbar nav[aria-label="Main navigation"]').getByRole("link", { name: "文章" }).click();
+      await page.locator('#navbar nav[aria-label="Main navigation"]').getByRole("link", { name: /^(文章|Posts|記事)$/ }).click();
       await expect(page.locator("#post-list")).toBeVisible();
       await expect(page.locator("html")).not.toHaveClass(/dark/);
       await expect(page.locator("html")).toHaveAttribute("data-theme", "github-light");
       await page.goBack({ waitUntil: "domcontentloaded" });
       await expect(page.locator(".post-card")).toBeVisible();
-      await page.locator('#navbar nav[aria-label="Main navigation"]').getByRole("link", { name: "文章" }).click();
+      await page.locator('#navbar nav[aria-label="Main navigation"]').getByRole("link", { name: /^(文章|Posts|記事)$/ }).click();
       await expect(page.locator("#post-list")).toBeVisible();
       await page.keyboard.press("Home");
       await page.keyboard.press("Tab");
@@ -167,7 +167,7 @@ test("mobile cards place the cover before content", async ({ browser }) => {
     await expect(page.locator("h1")).toHaveCount(1);
     await page.screenshot({ path: "browser-results/root-mobile-article.png", fullPage: true });
     await page.locator("#nav-drawer-switch").click();
-    await page.locator(".site-drawer__nav").getByRole("link", { name: "文章" }).click();
+    await page.locator(".site-drawer__nav").getByRole("link", { name: /^(文章|Posts|記事)$/ }).click();
     await expect(page.locator("#post-list")).toBeVisible();
   } finally {
     await context.close();
