@@ -209,11 +209,8 @@ const defaultSchemeStyle = createDefaultSchemeStyle();
 			/>
 		))}
 
-		<script is:inline set:html={`(()=>{const d=document.documentElement,s=localStorage,t=s.getItem('theme')||${JSON.stringify(DEFAULT_THEME)},k=t===${JSON.stringify(DARK_MODE)}||(t===${JSON.stringify(AUTO_MODE)}&&matchMedia('(prefers-color-scheme: dark)').matches);d.classList.toggle('dark',k);d.setAttribute('data-theme',k?${JSON.stringify(darkTheme)}:${JSON.stringify(lightTheme)});d.style.setProperty('--hue',s.getItem('hue')||${JSON.stringify(configHue)});if(s.getItem('mc-motion')==='reduced')d.classList.add('motion-reduced');const w=s.getItem('wallpaper-mode');d.dataset.wallpaperMode=w==='banner'||w==='none'?w:${JSON.stringify(defaultWallpaperMode)};if(${JSON.stringify(textureEnabled)}){const p=s.getItem('texture-preset'),o=parseFloat(s.getItem('texture-opacity')||'');d.dataset.texturePreset=['none','starlight','cyber-dots','topography','geometric','sakura'].includes(p)?p:${JSON.stringify(defaultTexturePreset)};d.style.setProperty('--texture-opacity',String(isNaN(o)?${JSON.stringify(defaultTextureOpacity)}:o));}d.style.setProperty('--banner-height-extend',((innerHeight*${BANNER_HEIGHT_EXTEND/100})&~3)+'px');})()`}></script>
-		<style define:vars={{
-			configHue,
-			'page-width': resolvePageWidth(),
-		}}></style>
+		<script is:inline set:html={`(()=>{const d=document.documentElement,s=localStorage,t=s.getItem('theme')||${JSON.stringify(DEFAULT_THEME)},k=t===${JSON.stringify(DARK_MODE)}||(t===${JSON.stringify(AUTO_MODE)}&&matchMedia('(prefers-color-scheme: dark)').matches);d.classList.toggle('dark',k);d.setAttribute('data-theme',k?${JSON.stringify(darkTheme)}:${JSON.stringify(lightTheme)});d.style.setProperty('--hue',s.getItem('hue')||${JSON.stringify(configHue)});if(s.getItem('mc-motion')==='reduced')d.classList.add('motion-reduced');const w=s.getItem('wallpaper-mode');d.dataset.wallpaperMode=w==='banner'||w==='none'?w:${JSON.stringify(defaultWallpaperMode)};${textureEnabled ? `const p=s.getItem('texture-preset'),o=parseFloat(s.getItem('texture-opacity')||'');d.dataset.texturePreset=['none','starlight','cyber-dots','topography','geometric','sakura'].includes(p)?p:${JSON.stringify(defaultTexturePreset)};d.style.setProperty('--texture-opacity',String(isNaN(o)?${JSON.stringify(defaultTextureOpacity)}:o));` : ''}d.style.setProperty('--banner-height-extend',((innerHeight*${BANNER_HEIGHT_EXTEND/100})&~3)+'px');})()`}></script>
+		<style is:inline set:html={`:root{--configHue:${configHue};--page-width:${resolvePageWidth()};--banner-height-home:${BANNER_HEIGHT_HOME}vh;--banner-height:${BANNER_HEIGHT}vh;--banner-panel-overlap:${MAIN_PANEL_OVERLAPS_BANNER_HEIGHT}rem}`}></style>
 
 		<slot name="head"></slot>
 		<link rel="alternate" type="application/rss+xml" title={siteConfig.title} href={resolvedFeedUrl}/>
@@ -252,11 +249,7 @@ const defaultSchemeStyle = createDefaultSchemeStyle();
 @import "../styles/variables.styl"
 </style>
 
-<style is:global define:vars={{
-	'banner-height-home': `${BANNER_HEIGHT_HOME}vh`,
-	'banner-height': `${BANNER_HEIGHT}vh`,
-	'banner-panel-overlap': `${MAIN_PANEL_OVERLAPS_BANNER_HEIGHT}rem`,
-}}>
+<style is:global>
 @reference "../styles/main.css";
 	@layer components {
 		:root {
