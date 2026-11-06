@@ -67,8 +67,13 @@ function restoreWritableModes() {
   }
 }
 after(() => {
-  restoreWritableModes();
-  fs.rmSync(root, { recursive: true, force: true });
+  try {
+    restoreWritableModes();
+    fs.rmSync(root, { recursive: true, force: true });
+  } catch {
+    // Leftover tmp is cleaned with the disposable gate tree; never fail tests
+    // on teardown.
+  }
 });
 
 // Compose once up front: a failing compose fails the hook (and therefore the
