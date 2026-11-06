@@ -6,11 +6,47 @@
  * 链接由 Swup 自动接管，点击后收起抽屉；高亮与当前路由/分类筛选同步。
  */
 import Icon from "@iconify/svelte";
+import I18nKey from "@i18n/i18nKey";
+import { getTranslation } from "@i18n/translation";
 import { resolveNavBarLinks, resolvePageKey } from "@utils/nav-utils";
 import { url } from "@utils/url-utils";
 import { onMount, tick } from "svelte";
 import { siteConfig } from "@/config";
 import { navBarConfig } from "@/config/navBarConfig";
+import { siteLocales } from "../../user/user-config";
+
+let { lang, pathname }: { lang?: string; pathname: string } = $props();
+const defaultLocale = siteConfig.lang.replaceAll("_", "-");
+let pageLocale = $state((lang || defaultLocale).replaceAll("_", "-"));
+let localizedRoute = $state(false);
+
+function routeLocale(path: string): string | undefined {
+	const base = (import.meta.env?.BASE_URL ?? "/").replace(/\/+$/, "");
+	const stripped = base && (path === base || path.startsWith(`${base}/`)) ? path.slice(base.length) : path;
+	return siteLocales.find((locale: string) => locale !== defaultLocale && (stripped === `/${locale}` || stripped.startsWith(`/${locale}/`)));
+}
+localizedRoute = routeLocale(pathname) === pageLocale && pageLocale !== defaultLocale;
+
+function localizedHref(path?: string, external = false) {
+	if (!path || external) return path;
+	const localized = localizedRoute && path.startsWith("/") && !path.startsWith("//") && !path.startsWith("/series") && !path.startsWith("/bangumi")
+		? `/${pageLocale}${path}` : path;
+	return url(localized);
+}
+
+function localizedLabel(name: string, pageKey?: string) {
+	if (!localizedRoute || !pageKey) return name;
+	const t = getTranslation(pageLocale.replaceAll("-", "_"));
+	const labels: Record<string, string> = {
+		home: t[I18nKey.home],
+		posts: pageLocale === "ja" ? "記事" : pageLocale.startsWith("en") ? "Posts" : "文章",
+		categories: t[I18nKey.categories],
+		archive: t[I18nKey.archive],
+		tags: t[I18nKey.tags],
+		series: t[I18nKey.series],
+	};
+	return labels[pageKey] ?? name;
+}
 
 let open = $state(false);
 let activePrimary = $state("");
@@ -18,31 +54,30 @@ const openGroups = $state<Record<string, boolean>>({});
 
 const links = resolveNavBarLinks(navBarConfig.links);
 
-const primaryItems = links.map((link) => {
+const primaryItems = $derived(links.map((link) => {
 	const key = link.name.toLowerCase();
 	return {
 		value: key,
-		label: link.name,
+		label: localizedLabel(link.name, link.pageKey),
 		icon: link.icon,
-		href: link.url ? (link.external ? link.url : url(link.url)) : undefined,
+		href: localizedHref(link.url, link.external),
 		external: !!link.external,
 		pageKey: link.pageKey ?? "",
 		children: link.children?.map((child) => ({
 			value: child.name.toLowerCase(),
-			label: child.name,
+			label: localizedLabel(child.name, child.pageKey),
 			icon: child.icon,
-			href: child.url
-				? child.external
-					? child.url
-					: url(child.url)
-				: undefined,
+			href: localizedHref(child.url, child.external),
 			external: !!child.external,
 			pageKey: child.pageKey ?? "",
 		})),
 	};
-});
+}));
 
 function syncFromRoute() {
+	const locale = routeLocale(window.location.pathname);
+	pageLocale = locale ?? defaultLocale;
+	localizedRoute = Boolean(locale);
 	const pageKey = resolvePageKey(new URL(window.location.href));
 	activePrimary = "";
 	for (const item of primaryItems) {
@@ -106,11 +141,13 @@ onMount(() => {
 	};
 	document.addEventListener("site-drawer:toggle", onToggle);
 	document.addEventListener("swup:content:replace", syncFromRoute);
+	document.addEventListener("swup:page:view", syncFromRoute);
 	window.addEventListener("keydown", onKey);
 	desktopMedia.addEventListener("change", onDesktopChange);
 	return () => {
 		document.removeEventListener("site-drawer:toggle", onToggle);
 		document.removeEventListener("swup:content:replace", syncFromRoute);
+		document.removeEventListener("swup:page:view", syncFromRoute);
 		window.removeEventListener("keydown", onKey);
 		desktopMedia.removeEventListener("change", onDesktopChange);
 	};

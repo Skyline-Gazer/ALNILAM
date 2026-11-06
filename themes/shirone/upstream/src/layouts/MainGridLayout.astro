@@ -145,7 +145,7 @@ const hasBanner =
     </div>
 </div>
 
-<SiteNavigationDrawer client:load />
+<SiteNavigationDrawer client:load lang={lang} pathname={Astro.url.pathname} />
 {contextMenuConfig.enable && (
 	<ContextMenu
 		actions={contextMenuConfig.actions}

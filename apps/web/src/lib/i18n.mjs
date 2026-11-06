@@ -1,12 +1,9 @@
 /**
  * i18n routing helpers (schema v1 additive fields: `lang`, `translationKey`).
  *
- * URL scheme: posts in the site's default locale keep /posts/<slug>/; posts
- * with an explicit `lang` differing from the site default live under
- * /posts/<lang>/<slug>/. The slug is the content file path under
- * content/posts (Astro glob id) — recommended layout is one directory per
- * non-default locale (content/posts/en/…, content/posts/ja/…), which keeps
- * ids clean; the URL lang prefix comes from frontmatter `lang`, not the path.
+ * Default-locale articles live at /posts/<slug>/; other locales live at
+ * /<lang>/posts/<slug>/. A matching locale directory in the content id is
+ * removed from the URL slug.
  * hreflang alternates: pages sharing a `translationKey` cross-link each other.
  */
 
@@ -44,10 +41,8 @@ export function postLang(post, defaultLocale) {
 /** URL path (callers append "/"). */
 export function postPath(post, defaultLocale) {
   const lang = postLang(post, defaultLocale);
-  if (lang === defaultLocale) return `/posts/${post.id}`;
-  // If the file already lives in a content/posts/<lang>/ directory, the glob id
-  // starts with "<lang>/" — reuse it instead of double-prefixing.
-  return post.id.startsWith(lang + "/") ? `/posts/${post.id}` : `/posts/${lang}/${post.id}`;
+  const slug = postLocalSlug(post, defaultLocale);
+  return lang === defaultLocale ? `/posts/${slug}` : `/${lang}/posts/${slug}`;
 }
 
 /** Layout props shared by every page; reflects optional-module feature flags. */
@@ -115,8 +110,7 @@ export function localeRoutePath(locale, defaultLocale, segment = "") {
 }
 
 /**
- * Post slug without leading `<lang>/` directory prefix, used under
- * `/<lang>/posts/<slug>/` compatibility routes.
+ * Post slug without a leading matching `<lang>/` content directory prefix.
  */
 export function postLocalSlug(post, defaultLocale) {
   const lang = postLang(post, defaultLocale);
@@ -159,8 +153,8 @@ export function routeAlternates(activeLocales, defaultLocale, enabledLocales, se
  * current page to `targetLocale` (ROUTE-05):
  * - If the current entity (article, category, tag, listing) exists in
  *   `targetLocale` inside `entityAlternates`, navigate directly to it.
- * - Otherwise fall back to `fallbackSegment` in `targetLocale` when available,
- *   or to the target locale's homepage. Never fabricate a missing translation URL.
+ * - Otherwise use an available target-locale listing or homepage. Return null
+ *   when neither exists, so the caller can omit the unavailable locale.
  */
 export function resolveLanguageSwitchTarget({
   targetLocale,
@@ -168,6 +162,7 @@ export function resolveLanguageSwitchTarget({
   entityAlternates,
   fallbackSegment = "",
   availableFallbackLocales = [],
+  availableHomeLocales = [],
 }) {
   if (entityAlternates && typeof entityAlternates.get === "function") {
     const direct = entityAlternates.get(targetLocale);
@@ -179,7 +174,9 @@ export function resolveLanguageSwitchTarget({
   if (fallbackSegment && availableFallbackLocales.includes(targetLocale)) {
     return localeRoutePath(targetLocale, defaultLocale, fallbackSegment);
   }
-  return localeRoutePath(targetLocale, defaultLocale, "");
+  return targetLocale === defaultLocale || availableHomeLocales.includes(targetLocale)
+    ? localeRoutePath(targetLocale, defaultLocale, "")
+    : null;
 }
 
 const UI_STRINGS = {

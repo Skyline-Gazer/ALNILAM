@@ -46,10 +46,12 @@ test("withBase prefixes once and canonicalUrl stays absolute and query-free", ()
   );
 });
 
-test("post URLs stay stable and locale feeds are one per enabled locale", () => {
+test("post URLs use locale-first paths and locale feeds are one per enabled locale", () => {
   assert.equal(postPath(post("hello", "zh-CN"), "zh-CN"), "/posts/hello");
-  assert.equal(postPath(post("hello", "en"), "zh-CN"), "/posts/en/hello");
-  assert.equal(postPath(post("en/hello", "en"), "zh-CN"), "/posts/en/hello");
+  assert.equal(postPath(post("hello", "en"), "zh-CN"), "/en/posts/hello");
+  assert.equal(postPath(post("en/hello", "en"), "zh-CN"), "/en/posts/hello");
+  assert.equal(postPath(post("en/guides/deep/topic", "en"), "zh-CN"), "/en/posts/guides/deep/topic");
+  assert.equal(withBase(postPath(post("en/guides/deep/topic", "en"), "zh-CN"), "/ALNILAM"), "/ALNILAM/en/posts/guides/deep/topic");
   assert.equal(feedPath("zh-CN", "zh-CN"), "/rss.xml");
   assert.equal(feedPath("en", "zh-CN"), "/en/rss.xml");
 });
@@ -63,6 +65,7 @@ test("hreflang groups include only enabled locales and a real x-default", () => 
   ];
   const map = translationAlternates(posts[0], posts, "zh-CN", ["zh-CN", "en", "ja"]);
   assert.deepEqual([...map.keys()], ["zh-CN", "en", "x-default"]);
+  assert.equal(map.get("en"), "/en/posts/hello");
   assert.equal(map.get("x-default"), "/posts/hello");
   assert.equal(map.has("de"), false, "an undeclared locale must not claim equivalence");
 
@@ -117,13 +120,13 @@ test("structured data carries only Site-owned facts", () => {
 test("the sitemap inventory reads the same head facts the pages publish", () => {
   const head = parseSeoHead(
     '<html><head><link rel="canonical" href="https://example.com/posts/a/">' +
-      '<link rel="alternate" hreflang="en" href="https://example.com/posts/en/a/">' +
+      '<link rel="alternate" hreflang="en" href="https://example.com/en/posts/a/">' +
       '<link rel="alternate" type="application/rss+xml" href="https://example.com/en/rss.xml">' +
       '<meta name="robots" content="noindex, follow">' +
       '<meta property="article:modified_time" content="2026-02-01T00:00:00.000Z"></head></html>',
   );
   assert.equal(head.canonical, "https://example.com/posts/a/");
-  assert.deepEqual(head.alternates, [{ lang: "en", href: "https://example.com/posts/en/a/" }]);
+  assert.deepEqual(head.alternates, [{ lang: "en", href: "https://example.com/en/posts/a/" }]);
   assert.equal(head.noindex, true);
   assert.equal(head.lastmod, "2026-02-01T00:00:00.000Z");
 });
@@ -153,18 +156,24 @@ test("localeRoutePath, postLocalSlug, routeAlternates and resolveLanguageSwitchT
     resolveLanguageSwitchTarget({
       targetLocale: "en",
       defaultLocale: "zh-CN",
-      entityAlternates: new Map([["zh-CN", "/posts/hello"], ["en", "/posts/en/hello"]]),
+      entityAlternates: new Map([["zh-CN", "/posts/hello"], ["en", "/en/posts/hello"]]),
     }),
-    "/posts/en/hello/",
+    "/en/posts/hello/",
   );
   // Missing translation -> fall back to target locale homepage, never fabricate URL
   assert.equal(
     resolveLanguageSwitchTarget({
       targetLocale: "ja",
       defaultLocale: "zh-CN",
-      entityAlternates: [{ lang: "zh-CN", href: "/posts/hello/" }, { lang: "en", href: "/posts/en/hello/" }],
+      entityAlternates: [{ lang: "zh-CN", href: "/posts/hello/" }, { lang: "en", href: "/en/posts/hello/" }],
+      availableHomeLocales: ["ja"],
     }),
     "/ja/",
+  );
+  assert.equal(
+    resolveLanguageSwitchTarget({ targetLocale: "ja", defaultLocale: "zh-CN", availableHomeLocales: ["en"] }),
+    null,
+    "a missing locale homepage must not become a switch target",
   );
 
   assert.equal(uiStrings("zh-CN").categories, "分类");

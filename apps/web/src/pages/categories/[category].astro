@@ -14,6 +14,13 @@ export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
   const series = await getCollection("series");
   const seriesCategories = new Map(series.map((entry) => [entry.id, entry.data.defaultCategory]));
+  const postCategory = (post: CollectionEntry<"posts">) =>
+    post.data.category?.trim() || seriesCategories.get(post.data.series?.trim())?.trim() || "";
+  const matchesCategory = (cat: string, target: string) => {
+    if (cat === target) return true;
+    const entry = taxonomy.categories.find((item) => item.slug === target || item.id === target);
+    return !!entry && (cat === entry.slug || cat === entry.id || Object.values(entry.label).includes(cat));
+  };
   const byCategory = new Map<string, CollectionEntry<"posts">[]>();
   for (const post of posts) {
     const category = post.data.category?.trim() || seriesCategories.get(post.data.series?.trim())?.trim();
@@ -48,7 +55,7 @@ export async function getStaticPaths() {
         ...config.locales.filter(
           (loc) =>
             loc !== config.site.locale &&
-            list.some((post) => postLang(post, config.site.locale) === loc),
+            posts.some((post) => postLang(post, config.site.locale) === loc && matchesCategory(postCategory(post), category)),
         ),
       ],
     },

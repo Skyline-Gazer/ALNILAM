@@ -38,7 +38,7 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
       const page=await context.newPage(); const errors:string[]=[]; const checkedLinks=new Set<string>();
       page.on('pageerror',e=>errors.push(String(e)));
       try {
-        for (const route of ['/posts/', '/posts/hello-alnilam/', '/tags/', '/tags/Astro/', '/categories/', '/categories/guide/', '/archives/', '/posts/en/hello-alnilam/']) {
+        for (const route of ['/posts/', '/posts/hello-alnilam/', '/tags/', '/tags/Astro/', '/categories/', '/categories/guide/', '/archives/', '/en/posts/hello-alnilam/']) {
           const response=await page.goto(origin+route,{waitUntil:'networkidle'});
           expect(response?.status()).toBe(200);
           await expect(page.locator('#navbar.top-app-bar')).toBeVisible();
@@ -61,15 +61,45 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
         const zhTarget=await page.locator('[data-lang-switcher] a[data-lang-target="zh-CN"]').getAttribute('href');
         expect(zhTarget).toBe(new URL(origin).pathname.replace(/\/$/,'')+'/posts/hello-alnilam/');
         expect(await page.locator('[data-lang-switcher] a[data-lang-target="zh-CN"]').getAttribute('data-lang-exact')).toBe('true');
+        await expect(page.locator('.markdown-content')).toContainText('This article lives in');
+        await expect(page.locator('meta[name="robots"][content*="noindex"]')).toHaveCount(0);
+        await page.locator('#lang-switch').click();
+        await page.locator('[data-lang-switcher] a[data-lang-target="zh-CN"]').click();
+        await expect(page).toHaveURL(origin+'/posts/hello-alnilam/');
+        const canonicalPath = new URL(origin).pathname.replace(/\/$/,'')+'/en/posts/hello-alnilam/';
+        await page.goto(origin+'/posts/en/hello-alnilam/',{waitUntil:'networkidle'});
+        await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content',/noindex/);
+        await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href','https://example.com'+canonicalPath);
+        await expect(page.locator(`a[href="${canonicalPath}"]`).first()).toBeVisible();
+        await expect(page.locator('.markdown-content')).toHaveCount(0);
+        const feed=await (await page.request.get(origin+'/en/rss.xml')).text();
+        expect(feed).toContain('https://example.com'+canonicalPath);
+        expect(feed).not.toContain('/posts/en/hello-alnilam/');
         // Localized taxonomy & listing routes (/en/categories/guide/, /en/posts/)
         const enCatResp=await page.goto(origin+'/en/categories/guide/',{waitUntil:'networkidle'});
         expect(enCatResp?.status()).toBe(200);
         await expect(page.locator('html')).toHaveAttribute('lang','en');
         expect(await page.locator('link[rel="canonical"]').getAttribute('href')).toBe('https://example.com'+new URL(origin).pathname.replace(/\/$/,'')+'/en/categories/guide/');
+        if(width===390) {
+          await page.locator('#nav-drawer-switch').click();
+          const postsLink=page.locator('.site-drawer__nav').getByRole('link',{name:'Posts'});
+          await expect(postsLink).toHaveAttribute('href',new URL(origin).pathname.replace(/\/$/,'')+'/en/posts/');
+          await postsLink.click();
+          await expect(page).toHaveURL(origin+'/en/posts/');
+          await expect(page.locator('html')).toHaveAttribute('lang','en');
+          await page.locator('#nav-drawer-switch').click();
+          const categoriesLink=page.locator('.site-drawer__nav').getByRole('link',{name:'Categories'});
+          await expect(categoriesLink).toHaveAttribute('href',new URL(origin).pathname.replace(/\/$/,'')+'/en/categories/');
+          await categoriesLink.click();
+          await expect(page).toHaveURL(origin+'/en/categories/');
+        }
         // Untranslated article falls back to target locale homepage (/ja/)
         await page.goto(origin+'/posts/fixture-beta-zh/',{waitUntil:'networkidle'});
         expect(await page.locator('[data-lang-switcher] a[data-lang-target="ja"]').getAttribute('href')).toBe(new URL(origin).pathname.replace(/\/$/,'')+'/ja/');
         expect(await page.locator('[data-lang-switcher] a[data-lang-target="ja"]').getAttribute('data-lang-exact')).toBe('false');
+        await page.locator('#lang-switch').click();
+        await page.locator('[data-lang-switcher] a[data-lang-target="ja"]').click();
+        await expect(page).toHaveURL(origin+'/ja/');
         await page.goto(origin+'/',{waitUntil:'networkidle'});
         if(width===390) {
           await page.locator('#search-switch').click();

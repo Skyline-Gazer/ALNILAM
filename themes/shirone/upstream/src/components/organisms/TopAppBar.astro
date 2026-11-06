@@ -6,6 +6,7 @@
  * 菜单按钮点击派发 site-drawer:toggle 事件，由 SiteNavigationDrawer 监听开合。
  */
 import IconButton from "@components/atoms/action/IconButton.svelte";
+import { getCollection } from "astro:content";
 import Icon from "@iconify/svelte";
 import { siteLocales } from "../../user/user-config";
 import I18nKey from "@i18n/i18nKey";
@@ -65,9 +66,11 @@ const localeNames: Record<string, string> = {
 	en: "EN",
 	ja: "日本語",
 };
+const publishedPosts = await getCollection("posts", ({ data }) => !data.draft);
+const homeLocales = new Set([defaultLocale, ...publishedPosts.map((post) => post.data.lang || defaultLocale)]);
 const switchTargets =
 	Array.isArray(siteLocales) && siteLocales.length > 1
-		? siteLocales.map((targetLocale: string) => {
+		? siteLocales.filter((locale: string) => homeLocales.has(locale)).map((targetLocale: string) => {
 				const direct = alternates?.find((alt) => alt.lang === targetLocale)?.href;
 				let href: string;
 				if (direct) {

@@ -82,10 +82,11 @@ export function getPostUrl(
 		(post as { id?: string; slug?: string }).id ??
 		(post as { id?: string; slug?: string }).slug ??
 		"";
-	// ALNILAM preserves its existing language-prefixed URLs.
-	const lang = (post as {data?: {lang?: string}}).data?.lang;
+	const lang = post.data && "lang" in post.data && typeof post.data.lang === "string" ? post.data.lang : undefined;
 	const locale = siteConfig.lang.replace("_", "-");
-	return getPostUrlBySlug(lang && lang !== locale && !postId.startsWith(`${lang}/`) ? `${lang}/${postId}` : postId);
+	const contentLocale = lang || locale;
+	const slug = postId.startsWith(`${contentLocale}/`) ? postId.slice(contentLocale.length + 1) : postId;
+	return lang && lang !== locale ? url(`/${lang}/posts/${slug}/`) : getPostUrlBySlug(slug);
 }
 
 export function getTagUrl(tag: string): string {

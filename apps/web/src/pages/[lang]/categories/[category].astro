@@ -39,9 +39,15 @@ export async function getStaticPaths() {
     const cat = postCategory(post);
     if (cat && !cat.includes("/")) allCategorySlugs.add(cat);
   }
+  // The default route also accepts raw category values, but adds taxonomy
+  // slugs only for explicit post categories (not inherited series categories).
+  const defaultCategorySlugs = new Set(allCategorySlugs);
   for (const entry of taxonomy.categories) {
     if (posts.some((p) => matchesCategory(postCategory(p), entry.slug))) {
       allCategorySlugs.add(entry.slug);
+    }
+    if (posts.some((p) => p.data.category === entry.slug || p.data.category === entry.id || Object.values(entry.label).includes(p.data.category))) {
+      defaultCategorySlugs.add(entry.slug);
     }
   }
 
@@ -59,11 +65,11 @@ export async function getStaticPaths() {
         .map((category) => {
           const list = localePosts.filter((p) => matchesCategory(postCategory(p), category));
           if (list.length === 0) return null;
-          // Active locales for this category: default locale (since /categories/<slug>/ has all posts)
-          // plus any non-default locale that has >=1 post in this category.
+          // The default page has a different route-generation rule for
+          // categories inherited from a series; link it only if it exists.
           const activeLocales = config.locales.filter((loc) =>
             loc === config.site.locale
-              ? posts.some((p) => matchesCategory(postCategory(p), category))
+              ? defaultCategorySlugs.has(category)
               : (filterPostsByLocale(posts, loc, config.site.locale) as CollectionEntry<"posts">[]).some((p) =>
                   matchesCategory(postCategory(p), category),
                 ),
