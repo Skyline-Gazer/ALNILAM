@@ -51,11 +51,13 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
           // noindex compatibility alias for the locale-first layout. Either
           // way its canonical must name a real, self-consistent page.
           const canonical=await page.locator('link[rel="canonical"]').getAttribute('href');
-          expect(canonical).toBeTruthy();
-          expect(canonical!.startsWith('https://example.com'+prefix+'/')).toBe(true);
-          const canonicalLocal=new URL(new URL(canonical!).pathname,origin).href;
+          expect(canonical,`route ${route} must render a canonical link`).toBeTruthy();
+          expect(canonical!.startsWith('https://example.com'+prefix+'/'),`canonical ${canonical} must stay on the deploy origin+base`).toBe(true);
+          const canonicalPath=new URL(canonical!).pathname;
+          const canonicalLocal=new URL(canonicalPath,origin).href;
           if(canonicalLocal!==origin+route) {
-            expect((await page.goto(canonicalLocal,{waitUntil:'networkidle'}))?.status()).toBe(200);
+            const canonicalResponse=await page.goto(canonicalLocal,{waitUntil:'networkidle'});
+            expect(canonicalResponse?.status(),`canonical target ${canonicalPath} must return 200`).toBe(200);
             await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href',canonical!);
             await expect(page.locator('h1')).toHaveCount(1);
           }

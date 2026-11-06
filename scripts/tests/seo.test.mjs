@@ -43,7 +43,9 @@ test("withBase prefixes once and canonicalUrl stays absolute and query-free", ()
 test("post URLs stay stable and locale feeds are one per enabled locale", () => {
   assert.equal(postPath(post("hello", "zh-CN"), "zh-CN"), "/posts/hello");
   const english = postPath(post("hello", "en"), "zh-CN");
-  assert.ok(["/posts/en/hello", "/en/posts/hello"].includes(english), `unexpected English article path: ${english}`);
+  // Transitional contract: either accepted layout, but always absolute-rooted,
+  // slug-bearing and consistent across both postPath overloads.
+  assert.match(english, /^\/(?:posts\/en\/|en\/posts\/)hello$/, `unexpected English article path: ${english}`);
   assert.equal(postPath(post("en/hello", "en"), "zh-CN"), english);
   assert.equal(feedPath("zh-CN", "zh-CN"), "/rss.xml");
   assert.equal(feedPath("en", "zh-CN"), "/en/rss.xml");
