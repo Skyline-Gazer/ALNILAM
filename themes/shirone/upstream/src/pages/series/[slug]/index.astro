@@ -64,9 +64,11 @@ const subtitle = `${statusLabel} · ${ordered.length} ${i18n(I18nKey.postsCount)
 ---
 
 <MainGridLayout title={series.data.title} description={subtitle} page="series">
-	{markdownStylesheetAssets.map(({ pack, css }) => (
-		<style is:inline slot="head" data-swup-optional={pack} set:html={css}></style>
-	))}
+	<Fragment slot="head">
+		{markdownStylesheetAssets.map(({ pack, href }) => (
+			<link rel="stylesheet" data-swup-optional={pack} href={href} />
+		))}
+	</Fragment>
 	<Card color="var(--card-bg)" radius="l" class="series-detail px-8 py-6">
 		<PageHeader
 			icon="material-symbols:auto-stories-rounded"

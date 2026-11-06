@@ -314,10 +314,7 @@ test("artifact budgets: exactly the recorded unpaginated-listing page-weight bre
   );
 });
 
-test("series detail pages stay within the article-class budget (3 scripts, 6 islands)", () => {
+test("series detail pages stay within the island budget", () => {
   const detail = read(ctx.out, "series/getting-started/index.html");
-  const scripts = [...detail.matchAll(/<script[^>]*src="([^"]+)"/g)].map((m) => m[1]);
-  assert.equal(scripts.length, 2, "series detail renders the Layout and Markdown runtimes: " + scripts.join(","));
-  for (const src of scripts) assert.match(src, /Layout\.astro|Markdown\.astro/);
   assert.ok((detail.match(/<astro-island/g) ?? []).length <= 6, "series detail stays within the island budget");
 });

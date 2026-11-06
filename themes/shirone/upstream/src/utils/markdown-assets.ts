@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync } from "node:fs";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import markdownManifest from "../plugins/markdown/manifest.json" with {
 	type: "json",
@@ -19,62 +19,49 @@ type MarkdownSyntaxSnapshot = {
 const stylesheetPacks =
 	markdownManifest.stylesheetPacks as readonly MarkdownStylesheetPack[];
 
-/**
- * Every stylesheet a pack can reference, inlined by the bundler.
- *
- * The manifest addresses stylesheets as repository-relative paths
- * (`src/styles/markdown/trees.css`), which cannot be turned into a filesystem
- * read: rendering resolves paths against `process.cwd()`, and when the theme is
- * installed as an npm package that is the *user's* project, which has no
- * `src/styles/`. Every article using a deferred pack would fail the build.
- *
- * Globbing keeps the manifest as the single source of truth while letting Vite
- * resolve the files relative to this module, which is correct in both modes.
- *
- * `import.meta.glob` is a Vite-only API: under plain Node (the unit test
- * runner) it does not exist, so the glob is guarded and the fallback below
- * reads straight from the working tree.
- */
-let stylesheetSources: Record<string, string> | undefined;
+/** Resolve manifest paths through Vite so emitted URLs include the configured base. */
+let stylesheetUrls: Record<string, string> | undefined;
 try {
-	stylesheetSources = import.meta.glob("../styles/**/*.css", {
-		query: "?raw",
+	stylesheetUrls = import.meta.glob("../styles/**/*.css", {
+		query: "?url&no-inline",
 		import: "default",
 		eager: true,
 	}) as Record<string, string>;
 } catch {
-	stylesheetSources = undefined;
+	// Plain Node does not provide import.meta.glob (for example, in unit tests).
+	stylesheetUrls = undefined;
 }
 
-/** `src/styles/markdown/trees.css` → the glob key `../styles/markdown/trees.css`. */
-function readStylesheet(stylePath: string): string {
-	if (stylesheetSources) {
+function getStylesheetUrl(stylePath: string): string {
+	if (stylesheetUrls) {
 		const key = `../${stylePath.replace(/^src\//, "")}`;
-		const css = stylesheetSources[key];
-		if (css === undefined) {
+		const url = stylesheetUrls[key];
+		if (url === undefined) {
 			throw new Error(
 				`[markdown-assets] ${stylePath} is declared in the Markdown manifest but was not found under src/styles/.`,
 			);
 		}
-		return css;
+		return url;
 	}
-	return readFileSync(resolve(process.cwd(), stylePath), "utf8");
+	const path = fileURLToPath(new URL(`../${stylePath.replace(/^src\//, "")}`, import.meta.url));
+	if (!existsSync(path)) {
+		throw new Error(`[markdown-assets] ${stylePath} was not found.`);
+	}
+	return pathToFileURL(path).href;
 }
 
 /**
- * Resolves page-scoped stylesheets from manifest-owned syntax declarations.
- * The template marks each style block as Swup-optional so stale syntax styles
- * are removed during Swup navigation.
+ * Resolves each stylesheet from manifest-owned syntax declarations.
+ * Templates mark links as Swup-optional so stale styles are removed on navigation.
  */
 export async function getMarkdownStylesheetAssets(
 	snapshot: MarkdownSyntaxSnapshot,
-): Promise<Array<{ pack: string; css: string }>> {
+): Promise<Array<{ pack: string; href: string }>> {
 	const activePacks = stylesheetPacks.filter(({ syntaxes }) =>
 		syntaxes.some((syntaxId) => snapshot.syntaxes.includes(syntaxId)),
 	);
 
-	return activePacks.map(({ id, styles }) => ({
-		pack: id,
-		css: styles.map(readStylesheet).join("\n"),
-	}));
+	return activePacks.flatMap(({ id, styles }) =>
+		styles.map((style) => ({ pack: id, href: getStylesheetUrl(style) })),
+	);
 }
