@@ -142,7 +142,16 @@ export async function getStaticPaths() {
 	return paths;
 }
 
-const { entry, discovery, series } = Astro.props;
+interface Props {
+	entry: CollectionEntry<"posts">;
+	discovery: { related: PostForList[]; random: PostForList[] };
+	series: SeriesPostContext | null;
+	canonical?: string;
+	alternates?: Array<{ lang: string; href: string }>;
+	noindex?: boolean;
+}
+
+const { entry, discovery, series, canonical, alternates, noindex } = Astro.props;
 const seriesCardAtTop = seriesConfig.cardPosition !== "bottom";
 const isEncrypted = Boolean(
 	entry.data.password && entry.data.password.trim().length > 0,
@@ -227,7 +236,7 @@ const jsonLd = {
 };
 ---
 
-<MainGridLayout banner={entry.data.image} ogImage={ogImage} title={entry.data.title} description={effectiveDescription} bannerDate={formatDateToYYYYMMDD(entry.data.published)} lang={entry.data.lang} setOGTypeArticle={true} headings={effectiveHeadings} postCategory={entry.data.category || undefined} page="post" hasComments={postCommentEnabled}>
+<MainGridLayout banner={entry.data.image} ogImage={ogImage} title={entry.data.title} description={effectiveDescription} bannerDate={formatDateToYYYYMMDD(entry.data.published)} lang={entry.data.lang} setOGTypeArticle={true} headings={effectiveHeadings} postCategory={entry.data.category || undefined} page="post" hasComments={postCommentEnabled} canonical={canonical} alternates={alternates} noindex={noindex}>
     <slot name="head" slot="head" />
     {hasMath && <link slot="head" rel="stylesheet" data-swup-optional="math" href={katexStylesheet} />}
     {hasMath && <link slot="head" rel="stylesheet" data-swup-optional="math" href={overlayScrollbarsStylesheet} />}
@@ -259,7 +268,7 @@ const jsonLd = {
 			<!-- title -->
 			<div class="relative onload-animation">
 				<div
-					data-pagefind-body data-pagefind-weight="10" data-pagefind-meta="title"
+					data-pagefind-body={noindex ? undefined : ""} data-pagefind-weight="10" data-pagefind-meta="title"
 					class="transition w-full block font-bold mb-3
 					text-3xl md:text-[2.25rem]/[2.75rem]
 					text-[var(--on-surface)]
@@ -329,7 +338,7 @@ const jsonLd = {
                     <Content />
                 </EncryptedContent>
             ) : (
-                <Markdown class="mb-6 onload-animation">
+                <Markdown class="mb-6 onload-animation" noindex={noindex}>
                     <Content />
                 </Markdown>
             )}

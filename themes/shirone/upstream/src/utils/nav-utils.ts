@@ -75,6 +75,11 @@ export function resolvePageKey(
 		pathname = pathname.replace(/\/+$/, "") || "/";
 	}
 
+	const localeMatch = /^\/(?:[a-z]{2}(?:-[A-Z]{2})?)(\/.*|$)/.exec(pathname);
+	if (localeMatch) {
+		pathname = (localeMatch[1] || "/").replace(/\/+$/, "") || "/";
+	}
+
 	if (pathname === "/") return "home";
 	if (pathname === "/posts" || /^\/posts\/\d+$/.test(pathname)) return "posts";
 	if (

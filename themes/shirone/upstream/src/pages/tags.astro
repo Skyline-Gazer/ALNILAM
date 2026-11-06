@@ -9,28 +9,38 @@ import Chip from "@components/atoms/action/Chip.astro";
 import Card from "@components/atoms/display/Card.svelte";
 import PageHeader from "@components/atoms/display/PageHeader.astro";
 import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
+import { getTranslation, i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getTagList } from "@utils/content-utils";
 import { getTagUrl } from "@utils/url-utils";
 
-const tags = await getTagList();
+const {
+	tags: propTags,
+	lang,
+	alternates,
+} = Astro.props as {
+	tags?: Array<{ name: string; count: number; url?: string }>;
+	lang?: string;
+	alternates?: Array<{ lang: string; href: string }>;
+};
+const t = lang ? (key: I18nKey) => getTranslation(lang.replace("-", "_"))[key] : i18n;
+const tags = propTags ?? (await getTagList());
 const totalPosts = tags.reduce((sum, tag) => sum + tag.count, 0);
-const tagSummary = `${tags.length} ${i18n(I18nKey.tagsCount)} · ${totalPosts} ${i18n(I18nKey.postsCount)}`;
+const tagSummary = `${tags.length} ${t(I18nKey.tagsCount)} · ${totalPosts} ${t(I18nKey.postsCount)}`;
 ---
 
-<MainGridLayout title={i18n(I18nKey.tags)} description={tagSummary} page="tags">
+<MainGridLayout title={t(I18nKey.tags)} description={tagSummary} page="tags" lang={lang} alternates={alternates}>
 	<Card color="var(--card-bg)" radius="l" class="tag-index px-8 py-6">
 		<PageHeader
 			icon="material-symbols:tag-rounded"
-			title={i18n(I18nKey.tags)}
+			title={t(I18nKey.tags)}
 				subtitle={tagSummary}
 		/>
 		{tags.length > 0 && (
 			<div class="tag-index__cloud">
 				{tags.map((tag) => (
 					<Chip
-						href={getTagUrl(tag.name)}
+						href={tag.url ?? getTagUrl(tag.name)}
 						variant="tonal"
 						class="tag-index__chip"
 						label={`View all posts with the ${tag.name} tag`}
@@ -43,7 +53,7 @@ const tagSummary = `${tags.length} ${i18n(I18nKey.tagsCount)} · ${totalPosts} $
 		)}
 		{tags.length === 0 && (
 			<div class="tag-index__empty">
-				<span>{i18n(I18nKey.noData)}</span>
+				<span>{t(I18nKey.noData)}</span>
 			</div>
 		)}
 	</Card>

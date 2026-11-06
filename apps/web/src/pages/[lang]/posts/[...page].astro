@@ -1,0 +1,56 @@
+---
+import { getCollection } from "astro:content";
+import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
+import PostPage from "@alnilam/theme-shirone/PostPage.astro";
+import Pagination from "@alnilam/theme-shirone/Pagination.astro";
+import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
+import { POSTS_PAGE_SIZE } from "../../../lib/pagination.mjs";
+import { comparePosts } from "../../../lib/taxonomy";
+import {
+  canonicalUrl,
+  filterPostsByLocale,
+  localeRoutePath,
+  postLang,
+  routeAlternates,
+  uiStrings,
+} from "../../../lib/i18n.mjs";
+import { loadSite } from "../../../lib/site-source.mjs";
+import type { GetStaticPaths } from "astro";
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const { config } = loadSite();
+  const allPosts = (await getCollection("posts", ({ data }) => !data.draft)).sort(comparePosts);
+  const activeLocales = config.locales.filter((locale) =>
+    allPosts.some((post) => postLang(post, config.site.locale) === locale),
+  );
+  return activeLocales
+    .filter((locale) => locale !== config.site.locale)
+    .flatMap((locale) => {
+      const localePosts = filterPostsByLocale(allPosts, locale, config.site.locale);
+      return paginate(localePosts, {
+        params: { lang: locale },
+        props: { locale, activeLocales },
+        pageSize: POSTS_PAGE_SIZE,
+      });
+    });
+}) satisfies GetStaticPaths;
+
+const { page, locale, activeLocales } = Astro.props;
+const { config } = loadSite();
+const canonical = canonicalUrl(page.url.current, config.site.url);
+const t = uiStrings(locale);
+const title = page.currentPage === 1 ? t.postsTitle : t.pageTitle(page.currentPage);
+const alts =
+  page.currentPage === 1
+    ? routeAlternates(activeLocales, config.site.locale, config.locales, "posts")
+    : null;
+const alternates = alts
+  ? [...alts].map(([lang, path]) => ({ lang, href: canonicalUrl(path, config.site.url) }))
+  : undefined;
+const basePath = localeRoutePath(locale, config.site.locale, "posts");
+---
+<MainGridLayout title={title} description={t.allPosts} page="archive" lang={locale} canonical={canonical} alternates={alternates}>
+  <PageHeader title={t.allPosts} subtitle={t.postsSubtitle(page.total, page.currentPage, page.lastPage)} />
+  <PostPage page={page} />
+  <Pagination page={page} basePath={basePath} />
+</MainGridLayout>

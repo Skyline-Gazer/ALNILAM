@@ -1,0 +1,61 @@
+---
+import { getCollection } from "astro:content";
+import NativeCategories from "@alnilam/theme-shirone/Categories.astro";
+import {
+  canonicalUrl,
+  filterPostsByLocale,
+  localeRoutePath,
+  postLang,
+  routeAlternates,
+  withBase,
+} from "../../../lib/i18n.mjs";
+import { loadSite } from "../../../lib/site-source.mjs";
+import { categoryDisplayLabel, loadSiteTaxonomy } from "../../../lib/taxonomy";
+
+export async function getStaticPaths() {
+  const { root, config } = loadSite();
+  const taxonomy = loadSiteTaxonomy(root, config);
+  const posts = await getCollection("posts", ({ data }) => !data.draft);
+  const series = await getCollection("series");
+  const seriesCategories = new Map(series.map((entry) => [entry.id, entry.data.defaultCategory]));
+
+  const hasCategorizedPost = (locale: string) =>
+    posts.some(
+      (post) =>
+        postLang(post, config.site.locale) === locale &&
+        Boolean((post.data.category?.trim() || seriesCategories.get(post.data.series?.trim())?.trim())),
+    );
+  const activeLocales = config.locales.filter(hasCategorizedPost);
+
+  return activeLocales
+    .filter((locale) => locale !== config.site.locale)
+    .map((locale) => {
+      const localePosts = filterPostsByLocale(posts, locale, config.site.locale);
+      const countMap = new Map<string, number>();
+      for (const post of localePosts) {
+        const category = post.data.category?.trim() || seriesCategories.get(post.data.series?.trim())?.trim();
+        if (!category || category.includes("/")) continue;
+        countMap.set(category, (countMap.get(category) ?? 0) + 1);
+      }
+      const categories = [...countMap.entries()]
+        .sort(([a], [b]) => a.toLowerCase().localeCompare(b.toLowerCase()))
+        .map(([slug, count]) => ({
+          name: categoryDisplayLabel(slug, taxonomy.categories, locale),
+          count,
+          url: withBase(localeRoutePath(locale, config.site.locale, `categories/${encodeURIComponent(slug)}`)),
+        }));
+      return {
+        params: { lang: locale },
+        props: { locale, categories, activeLocales },
+      };
+    });
+}
+
+const { locale, categories, activeLocales } = Astro.props;
+const { config } = loadSite();
+const alts = routeAlternates(activeLocales, config.site.locale, config.locales, "categories");
+const alternates = alts
+  ? [...alts].map(([lang, path]) => ({ lang, href: canonicalUrl(path, config.site.url) }))
+  : undefined;
+---
+<NativeCategories lang={locale} categories={categories} alternates={alternates} />

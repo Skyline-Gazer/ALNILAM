@@ -4,10 +4,18 @@ import MainGridLayout from '@alnilam/theme-shirone/MainGridLayout.astro';
 import PostPage from '@alnilam/theme-shirone/PostPage.astro';
 import {getCollection} from 'astro:content';
 import {comparePosts} from '../lib/taxonomy';
-import {canonicalUrl} from '../lib/i18n.mjs';
+import {canonicalUrl, postLang, routeAlternates} from '../lib/i18n.mjs';
 import {loadSite} from '../lib/site-source.mjs';
 import {websiteJsonLd} from '../lib/seo.mjs';
+const {config} = loadSite();
 const posts = (await getCollection('posts', ({data}) => !data.draft)).sort(comparePosts);
+const activeLocales = config.locales.filter((locale) =>
+  posts.some((post) => postLang(post, config.site.locale) === locale),
+);
+const alts = routeAlternates(activeLocales, config.site.locale, config.locales, '');
+const alternates = alts
+  ? [...alts].map(([lang, path]) => ({lang, href: canonicalUrl(path, config.site.url)}))
+  : undefined;
 const latest = posts.slice(0, 5);
 const page = {
   data: latest,
@@ -19,7 +27,6 @@ const page = {
   end: Math.max(0, latest.length - 1),
   url: { current: '/', prev: undefined, next: undefined, first: undefined, last: undefined },
 };
-const {config} = loadSite();
 // The site root is the one page that describes the Site itself.
 const jsonLd = websiteJsonLd({
   name: config.site.title,
@@ -28,7 +35,7 @@ const jsonLd = websiteJsonLd({
   inLanguage: config.site.locale,
 });
 ---
-<MainGridLayout page="home">
+<MainGridLayout page="home" alternates={alternates}>
   <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   <h1 class="sr-only">最近文章</h1>
   <PostPage page={page} />

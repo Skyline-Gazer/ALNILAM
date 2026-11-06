@@ -39,12 +39,13 @@ function checkPage(file) {
   const html = fs.readFileSync(file, "utf8");
   const scripts = [...html.matchAll(/<script[^>]*src="([^"]+)"/g)].map((m) => m[1]);
   scriptRefs += scripts.length;
-  const isPostList = rel === "posts/index.html" || /^posts\/\d+\/index\.html$/.test(rel);
+  const unlocalizedRel = rel.replace(/^[a-z]{2}(?:-[A-Z]{2})?\//, "");
+  const isPostList = unlocalizedRel === "posts/index.html" || /^posts\/\d+\/index\.html$/.test(unlocalizedRel);
   // Series detail pages render a Markdown overview body through the same
   // content runtime as articles, so they share the article budget rather
   // than the pure list-page budget.
   const isArticle =
-    (rel.startsWith("posts/") && !isPostList) || /^series\/[^/]+\/index\.html$/.test(rel);
+    (unlocalizedRel.startsWith("posts/") && !isPostList) || /^series\/[^/]+\/index\.html$/.test(unlocalizedRel);
   const maxScripts = isArticle ? 3 : 1;
   if (scripts.length > maxScripts) {
     failures.push(`${rel}: expected at most ${maxScripts} runtime script(s), found ${scripts.length}`);

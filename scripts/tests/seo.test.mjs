@@ -6,8 +6,14 @@ import assert from "node:assert/strict";
 import {
   canonicalUrl,
   feedPath,
+  filterPostsByLocale,
+  localeRoutePath,
+  postLocalSlug,
   postPath,
+  resolveLanguageSwitchTarget,
+  routeAlternates,
   translationAlternates,
+  uiStrings,
   withBase,
 } from "../../apps/web/src/lib/i18n.mjs";
 import { localeFeedPosts } from "../../apps/web/src/lib/feed.mjs";
@@ -120,4 +126,48 @@ test("the sitemap inventory reads the same head facts the pages publish", () => 
   assert.deepEqual(head.alternates, [{ lang: "en", href: "https://example.com/posts/en/a/" }]);
   assert.equal(head.noindex, true);
   assert.equal(head.lastmod, "2026-02-01T00:00:00.000Z");
+});
+
+test("localeRoutePath, postLocalSlug, routeAlternates and resolveLanguageSwitchTarget follow ROUTE-01..06", () => {
+  assert.equal(localeRoutePath("zh-CN", "zh-CN", ""), "/");
+  assert.equal(localeRoutePath("zh-CN", "zh-CN", "categories/guide"), "/categories/guide/");
+  assert.equal(localeRoutePath("en", "zh-CN", ""), "/en/");
+  assert.equal(localeRoutePath("en", "zh-CN", "/categories/guide/"), "/en/categories/guide/");
+
+  assert.equal(postLocalSlug(post("en/hello", "en"), "zh-CN"), "hello");
+  assert.equal(postLocalSlug(post("hello", "en"), "zh-CN"), "hello");
+
+  const posts = [post("a", "zh-CN"), post("en/b", "en")];
+  assert.deepEqual(filterPostsByLocale(posts, "en", "zh-CN").map((p) => p.id), ["en/b"]);
+
+  const catAlts = routeAlternates(["zh-CN", "en"], "zh-CN", ["zh-CN", "en", "ja"], "categories/guide");
+  assert.deepEqual([...catAlts.entries()], [
+    ["zh-CN", "/categories/guide/"],
+    ["en", "/en/categories/guide/"],
+    ["x-default", "/categories/guide/"],
+  ]);
+  assert.equal(routeAlternates(["zh-CN"], "zh-CN", ["zh-CN", "en"], "categories/only-zh"), null);
+
+  // Direct entity translation exists -> navigate to translated entity
+  assert.equal(
+    resolveLanguageSwitchTarget({
+      targetLocale: "en",
+      defaultLocale: "zh-CN",
+      entityAlternates: new Map([["zh-CN", "/posts/hello"], ["en", "/posts/en/hello"]]),
+    }),
+    "/posts/en/hello/",
+  );
+  // Missing translation -> fall back to target locale homepage, never fabricate URL
+  assert.equal(
+    resolveLanguageSwitchTarget({
+      targetLocale: "ja",
+      defaultLocale: "zh-CN",
+      entityAlternates: [{ lang: "zh-CN", href: "/posts/hello/" }, { lang: "en", href: "/posts/en/hello/" }],
+    }),
+    "/ja/",
+  );
+
+  assert.equal(uiStrings("zh-CN").categories, "分类");
+  assert.equal(uiStrings("en").categories, "Categories");
+  assert.equal(uiStrings("ja").categories, "カテゴリ");
 });

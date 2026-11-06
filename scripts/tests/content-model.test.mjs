@@ -241,6 +241,55 @@ test("translationKey groups render hreflang alternates plus self-canonical on ar
   assert.ok(!sitemap.includes("draft-preview"), "drafts must not enter the sitemap");
 });
 
+test("locale-prefixed routes (/en/*, /ja/*) render locale-filtered content, reciprocal hreflang and missing-translation fallback", (t) => {
+  const { out } = ctx;
+  for (const rel of [
+    "en/index.html",
+    "en/posts/index.html",
+    "en/posts/2/index.html",
+    "en/categories/index.html",
+    "en/categories/guide/index.html",
+    "en/tags/index.html",
+    "en/tags/i18n/index.html",
+    "en/archives/index.html",
+    "ja/index.html",
+    "ja/posts/index.html",
+    "ja/categories/index.html",
+    "ja/categories/guide/index.html",
+    "ja/tags/index.html",
+    "ja/tags/i18n/index.html",
+    "ja/archives/index.html",
+  ]) {
+    assert.ok(fs.existsSync(path.join(out, rel)), `localized route ${rel} must exist`);
+  }
+  const enGuide = read(out, "en/categories/guide/index.html");
+  assert.match(enGuide, /<html lang="en"/);
+  assert.match(enGuide, /<title>Guide - Content Model<\/title>/);
+  assert.match(
+    enGuide,
+    /<link rel="canonical" href="https:\/\/content-model\.example\.com\/en\/categories\/guide\/">/,
+  );
+  assert.match(
+    enGuide,
+    /<link rel="alternate" hreflang="zh-CN" href="https:\/\/content-model\.example\.com\/categories\/guide\/">/,
+  );
+  assert.match(
+    enGuide,
+    /<link rel="alternate" hreflang="ja" href="https:\/\/content-model\.example\.com\/ja\/categories\/guide\/">/,
+  );
+  const enGuidePosts = postLinks(enGuide);
+  assert.ok(enGuidePosts.length > 0 && enGuidePosts.every((slug) => slug.startsWith("en/")), "en category detail lists only en posts");
+
+  // Empty localized tag (pagination has only zh/en posts, no ja posts) must not be emitted.
+  assert.equal(fs.existsSync(path.join(out, "en/tags/pagination/index.html")), true, "en has pagination tag");
+  assert.equal(fs.existsSync(path.join(out, "ja/tags/pagination/index.html")), false, "empty localized tag must not exist");
+
+  // Language switcher on untranslated zh post falls back to /en/ and /ja/ homepages.
+  const untranslated = read(out, "posts/pagination-overview/index.html");
+  assert.match(untranslated, /data-lang-target="en" data-lang-exact="false"[^>]*href="\/en\/"|href="\/en\/"[^>]*data-lang-target="en" data-lang-exact="false"/);
+  assert.match(untranslated, /data-lang-target="ja" data-lang-exact="false"[^>]*href="\/ja\/"|href="\/ja\/"[^>]*data-lang-target="ja" data-lang-exact="false"/);
+});
+
 test("artifact budgets: exactly the recorded unpaginated-listing page-weight breaches, nothing else", () => {
   const { out } = ctx;
   const result = spawnSync(process.execPath, ["scripts/artifact-check.mjs", out], {

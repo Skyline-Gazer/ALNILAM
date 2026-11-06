@@ -8,7 +8,7 @@ import {sitemapCompat} from "./sitemap-compat.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
-import {userConfigOverrides, userConfigSources, siteAppearance} from '../../themes/shirone/adapter/site-config.mjs';
+import {userConfigOverrides, userConfigSources, siteAppearance, siteLocales} from '../../themes/shirone/adapter/site-config.mjs';
 import { loadSite } from "./src/lib/site-source.mjs";
 const { root: siteRoot, config } = loadSite();
 process.env.ALNILAM_SITE_DIR ||= siteRoot;
@@ -158,7 +158,7 @@ export default defineConfig({
         if (!clean || !path.isAbsolute(clean)) return;
         try {
           if (fs.realpathSync(clean) === userConfigTarget) {
-            return `export const userConfigOverrides = ${JSON.stringify(userConfigOverrides)};\nexport const userConfigSources = ${JSON.stringify(userConfigSources)};\nexport const siteAppearance = ${JSON.stringify(siteAppearance)};`;
+            return `export const userConfigOverrides = ${JSON.stringify(userConfigOverrides)};\nexport const userConfigSources = ${JSON.stringify(userConfigSources)};\nexport const siteAppearance = ${JSON.stringify(siteAppearance)};\nexport const siteLocales = ${JSON.stringify(siteLocales)};`;
           }
         } catch {
           return;

@@ -44,8 +44,9 @@ const rootRelativePath =
 	normalizedBase !== "/" && pathname.startsWith(normalizedBase)
 		? pathname.slice(normalizedBase.length - 1)
 		: pathname;
+const unlocalizedPath = rootRelativePath.replace(/^\/[a-z]{2}(?:-[A-Z]{2})?(?=\/|$)/, "") || "/";
 const hideOnTaxonomy =
-	rootRelativePath.startsWith("/categories") || rootRelativePath.startsWith("/tags");
+	unlocalizedPath.startsWith("/categories") || unlocalizedPath.startsWith("/tags");
 
 ---
 

@@ -57,6 +57,19 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
         }
         await expect(page.locator('html')).toHaveAttribute('lang','en');
         await expect(page.locator('link[hreflang="zh-CN"]')).toHaveCount(1);
+        // Language switcher on translated article points directly to translated equivalent
+        const zhTarget=await page.locator('[data-lang-switcher] a[data-lang-target="zh-CN"]').getAttribute('href');
+        expect(zhTarget).toBe(new URL(origin).pathname.replace(/\/$/,'')+'/posts/hello-alnilam/');
+        expect(await page.locator('[data-lang-switcher] a[data-lang-target="zh-CN"]').getAttribute('data-lang-exact')).toBe('true');
+        // Localized taxonomy & listing routes (/en/categories/guide/, /en/posts/)
+        const enCatResp=await page.goto(origin+'/en/categories/guide/',{waitUntil:'networkidle'});
+        expect(enCatResp?.status()).toBe(200);
+        await expect(page.locator('html')).toHaveAttribute('lang','en');
+        expect(await page.locator('link[rel="canonical"]').getAttribute('href')).toBe('https://example.com'+new URL(origin).pathname.replace(/\/$/,'')+'/en/categories/guide/');
+        // Untranslated article falls back to target locale homepage (/ja/)
+        await page.goto(origin+'/posts/fixture-beta-zh/',{waitUntil:'networkidle'});
+        expect(await page.locator('[data-lang-switcher] a[data-lang-target="ja"]').getAttribute('href')).toBe(new URL(origin).pathname.replace(/\/$/,'')+'/ja/');
+        expect(await page.locator('[data-lang-switcher] a[data-lang-target="ja"]').getAttribute('data-lang-exact')).toBe('false');
         await page.goto(origin+'/',{waitUntil:'networkidle'});
         if(width===390) {
           await page.locator('#search-switch').click();

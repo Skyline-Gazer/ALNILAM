@@ -7,6 +7,9 @@
  */
 import IconButton from "@components/atoms/action/IconButton.svelte";
 import Icon from "@iconify/svelte";
+import { siteLocales } from "../../user/user-config";
+import I18nKey from "@i18n/i18nKey";
+import { getTranslation } from "@i18n/translation";
 import { resolveNavBarLinks, resolvePageKey } from "@utils/nav-utils";
 import { url } from "@utils/url-utils";
 import { siteConfig } from "@/config";
@@ -15,13 +18,68 @@ import DisplaySettings from "./DisplaySettings.svelte";
 import LightDarkSwitch from "./LightDarkSwitch.svelte";
 import Search from "./Search.svelte";
 
-const className = Astro.props.class;
+const {
+	class: className,
+	lang,
+	alternates,
+} = Astro.props as {
+	class?: string;
+	lang?: string;
+	alternates?: Array<{ lang: string; href: string }>;
+};
+const defaultLocale = siteConfig.lang.replace("_", "-");
+const pageLocale = (lang || defaultLocale).replace("_", "-");
+const t = (key: I18nKey) => getTranslation(pageLocale.replace("-", "_"))[key];
+const localePrefix = pageLocale === defaultLocale ? "" : `/${pageLocale}`;
 const links = resolveNavBarLinks(navBarConfig.links);
 const currentPageKey = resolvePageKey(Astro.url);
 
+const navLabelMap: Record<string, string> = {
+	home: t(I18nKey.home),
+	posts: pageLocale === "ja" ? "記事" : pageLocale.startsWith("en") ? "Posts" : "文章",
+	categories: t(I18nKey.categories),
+	archive: t(I18nKey.archive),
+	tags: t(I18nKey.tags),
+	series: t(I18nKey.series),
+};
+
 function hrefFor(path?: string) {
-	return path ? url(path) : undefined;
+	if (!path) return undefined;
+	const localized =
+		localePrefix && path.startsWith("/") && !path.startsWith("/series") && !path.startsWith("/bangumi")
+			? `${localePrefix}${path}`
+			: path;
+	return url(localized);
 }
+
+const localeNames: Record<string, string> = {
+	"zh-CN": "中文",
+	en: "EN",
+	ja: "日本語",
+};
+const switchTargets =
+	Array.isArray(siteLocales) && siteLocales.length > 1
+		? siteLocales.map((targetLocale: string) => {
+				const direct = alternates?.find((alt) => alt.lang === targetLocale)?.href;
+				let href: string;
+				if (direct) {
+					try {
+						href = new URL(direct).pathname;
+					} catch {
+						href = direct;
+					}
+				} else {
+					href = url(targetLocale === defaultLocale ? "/" : `/${targetLocale}/`);
+				}
+				return {
+					locale: targetLocale,
+					label: localeNames[targetLocale] ?? targetLocale,
+					href,
+					active: targetLocale === pageLocale,
+					exact: Boolean(direct),
+				};
+			})
+		: [];
 
 function isActive(link: (typeof links)[number]): boolean {
 	return Boolean(
@@ -43,7 +101,7 @@ function isActive(link: (typeof links)[number]): boolean {
 			<Icon icon="material-symbols:menu-rounded" class="text-[1.25rem]"></Icon>
 		</IconButton>
 		<a
-			href={url("/")}
+			href={hrefFor("/")}
 			class="group flex h-10 items-center gap-2 px-2 text-[var(--on-surface)] transition whitespace-nowrap"
 		>
 			<span class="h-5 w-1 rounded-full bg-[var(--primary)] transition-all group-hover:h-7"></span>
@@ -68,7 +126,7 @@ function isActive(link: (typeof links)[number]): boolean {
 							<a href={href} target={link.external ? "_blank" : undefined} rel={link.external ? "noopener noreferrer" : undefined}
 								aria-current={active ? "page" : undefined} data-nav-key={link.pageKey ?? ""}
 								class:list={["top-app-bar__nav-link m3-state-layer relative flex h-10 items-center gap-1 px-3 text-sm font-bold text-[var(--on-surface-variant)] transition-colors hover:text-[var(--on-surface)]", active && "top-app-bar__nav-link--active"]}>
-								{link.icon && <Icon icon={link.icon} class="text-[1.1rem]"></Icon>}{link.name}
+								{link.icon && <Icon icon={link.icon} class="text-[1.1rem]"></Icon>}{link.pageKey && navLabelMap[link.pageKey] ? navLabelMap[link.pageKey] : link.name}
 								{link.external && <Icon icon="material-symbols:arrow-outward-rounded" class="ml-1 text-[0.875rem]"></Icon>}
 							</a>
 						)}
@@ -86,6 +144,16 @@ function isActive(link: (typeof links)[number]): boolean {
 		</nav>
 		<div class="flex-1"></div>
 		<Search client:only="svelte"></Search>
+		{switchTargets.length > 1 && (
+			<div class="top-app-bar__nav-group" data-nav-group data-lang-switcher>
+				<button type="button" id="lang-switch" aria-label="Language" aria-expanded="false" class="top-app-bar__nav-link m3-state-layer relative flex h-10 items-center px-2 text-xs font-bold text-[var(--on-surface-variant)]">{localeNames[pageLocale] ?? pageLocale}</button>
+				<div class="top-app-bar__submenu right-0 left-auto min-w-[7rem]" role="menu">
+					{switchTargets.map((item) => (
+						<a href={item.href} role="menuitem" lang={item.locale} data-lang-target={item.locale} data-lang-exact={item.exact ? "true" : "false"} class:list={["top-app-bar__submenu-item", item.active && "top-app-bar__nav-link--active"]}>{item.label}</a>
+					))}
+				</div>
+			</div>
+		)}
 		{!siteConfig.themeColor.fixed && (
 			<IconButton id="display-settings-switch" label="Display Settings" class="shrink-0">
 				<Icon icon="material-symbols:palette-outline" class="text-[1.25rem]"></Icon>
