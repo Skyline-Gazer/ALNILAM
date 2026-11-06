@@ -29,20 +29,28 @@ const {
 };
 const defaultLocale = siteConfig.lang.replace("_", "-");
 const pageLocale = (lang || defaultLocale).replace("_", "-");
+const rawBase = import.meta.env?.BASE_URL ?? "/";
+const strippedPath =
+	rawBase !== "/" && Astro.url.pathname.startsWith(rawBase.replace(/\/+$/, ""))
+		? Astro.url.pathname.slice(rawBase.replace(/\/+$/, "").length) || "/"
+		: Astro.url.pathname;
+const isLocalizedRoute =
+	pageLocale !== defaultLocale && strippedPath.startsWith(`/${pageLocale}/`);
 const t = (key: I18nKey) => getTranslation(pageLocale.replace("-", "_"))[key];
-const localePrefix = pageLocale === defaultLocale ? "" : `/${pageLocale}`;
+const localePrefix = isLocalizedRoute ? `/${pageLocale}` : "";
 const links = resolveNavBarLinks(navBarConfig.links);
 const currentPageKey = resolvePageKey(Astro.url);
 
-const navLabelMap: Record<string, string> = {
-	home: t(I18nKey.home),
-	posts: pageLocale === "ja" ? "記事" : pageLocale.startsWith("en") ? "Posts" : "文章",
-	categories: t(I18nKey.categories),
-	archive: t(I18nKey.archive),
-	tags: t(I18nKey.tags),
-	series: t(I18nKey.series),
-};
-
+const navLabelMap: Record<string, string> = isLocalizedRoute
+	? {
+			home: t(I18nKey.home),
+			posts: pageLocale === "ja" ? "記事" : pageLocale.startsWith("en") ? "Posts" : "文章",
+			categories: t(I18nKey.categories),
+			archive: t(I18nKey.archive),
+			tags: t(I18nKey.tags),
+			series: t(I18nKey.series),
+		}
+	: {};
 function hrefFor(path?: string) {
 	if (!path) return undefined;
 	const localized =
