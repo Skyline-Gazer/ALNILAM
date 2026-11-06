@@ -163,6 +163,7 @@ for (const page of pages) {
 
 // 2. Canonical / og:url / twitter:url agree and point at a real page.
 const selfCanonical = new Set();
+const aliasCanonicals = [];
 for (const page of pages) {
   const { canonical, ogUrl, twitterUrl, ogImage, robots } = page.head;
   if (canonical.length !== 1) {
@@ -189,14 +190,23 @@ for (const page of pages) {
   const canonicalUrl = norm(value);
   const noindex = robots.some((content) => /noindex/i.test(content));
   if (canonicalUrl === ownUrl && !noindex) selfCanonical.add(ownUrl);
-  if (canonicalUrl !== ownUrl && !existsForUrl(value)) fail(`${page.relative}: alias canonical missing`);
+  if (canonicalUrl !== ownUrl) {
+    if (!existsForUrl(value)) fail(`${page.relative}: alias canonical missing`);
+    else aliasCanonicals.push({ page: page.relative, canonicalUrl });
+  }
+}
+// Compatibility aliases must point at an indexable page, never at another
+// alias or at a noindex-only page.
+for (const { page, canonicalUrl } of aliasCanonicals) {
+  if (!selfCanonical.has(canonicalUrl)) fail(`${page}: alias canonical is not an indexable page: ${canonicalUrl}`);
 }
 
 // 3. hreflang: real targets, self language, reciprocal links, optional x-default.
 for (const page of pages) {
+  const ownUrl = norm(page.url);
+  if (!selfCanonical.has(ownUrl)) continue;
   const alternates = page.head.alternates.filter((alternate) => alternate.lang);
   if (alternates.length === 0) continue;
-  const ownUrl = norm(page.url);
   const ownLang = /<html[^>]*\blang="([^"]+)"/i.exec(fs.readFileSync(page.file, "utf8"))?.[1];
   const selfEntry = alternates.find((alternate) => alternate.lang === ownLang);
   if (!selfEntry) fail(`${page.relative}: hreflang set omits its own language ${ownLang}`);
@@ -218,13 +228,15 @@ for (const page of pages) {
 // 4. Structured data per page type, and every internal URL resolves.
 const jsonLdTypes = (values) => values.map((value) => value?.["@type"]).filter(Boolean);
 for (const page of pages) {
+  const ownUrl = norm(page.url);
   const types = jsonLdTypes(page.head.jsonLd);
-  const isPost = page.relative.startsWith("posts/") && !/^posts\/(?:\d+\/)?index\.html$/.test(page.relative);
-  if (page.relative === "index.html") {
-    if (!types.includes("WebSite")) fail("index.html: WebSite JSON-LD missing");
+  const unlocalized = page.relative.replace(/^[a-z]{2}(?:-[A-Z]{2})?\//, "");
+  const isPost = selfCanonical.has(ownUrl) && unlocalized.startsWith("posts/") && !/^posts\/(?:\d+\/)?index\.html$/.test(unlocalized);
+  if (unlocalized === "index.html") {
+    if (!types.includes("WebSite")) fail(`${page.relative}: WebSite JSON-LD missing`);
   }
   if (isPost && !types.includes("BlogPosting")) fail(`${page.relative}: BlogPosting JSON-LD missing`);
-  if (/^(?:categories|tags)\/[^/]+\/index\.html$/.test(page.relative)) {
+  if (/^(?:categories|tags)\/[^/]+\/index\.html$/.test(unlocalized)) {
     if (!types.includes("CollectionPage")) fail(`${page.relative}: CollectionPage JSON-LD missing`);
     if (!types.includes("BreadcrumbList")) fail(`${page.relative}: BreadcrumbList JSON-LD missing`);
   }
@@ -266,6 +278,7 @@ for (const file of feeds) {
     const language = /<language>([^<]+)<\/language>/.exec(item)?.[1];
     if (!link || !link.startsWith(originHref)) fail(`${relative}: item link is not absolute: ${link}`);
     else if (!existsForUrl(link)) fail(`${relative}: item link target missing: ${link}`);
+    else if (!selfCanonical.has(norm(link))) fail(`${relative}: item link is not an indexable canonical page: ${link}`);
     if (guid !== link) fail(`${relative}: guid does not equal the canonical item link`);
     if (language !== channelLanguage) fail(`${relative}: item language ${language} != channel ${channelLanguage}`);
   }
