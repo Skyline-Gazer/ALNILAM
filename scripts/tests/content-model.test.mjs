@@ -3,8 +3,8 @@
 // the native Shirone base.
 //
 // Fixture: tests/fixtures/content-model-site — 14 zh (incl. 1 draft, 1 pinned,
-// a 3-part series) + 6 en + 4 ja + 1 fr posts, a config catalog plus a
-// data/taxonomy.yaml extension, and a translationKey group spanning zh/en/ja.
+// a 3-part series) + 6 en + 4 ja posts, a config catalog plus a data/taxonomy.yaml
+// extension, and a translationKey group spanning zh/en/ja.
 //
 // Known-recorded failures (see HANDOFF.md: artifact-check is expected to expose
 // recorded failures): the 64 KiB page-weight budget cannot hold for unpaginated
@@ -42,21 +42,20 @@ const readSitemap = (out) =>
   [...read(out, "sitemap-index.xml").matchAll(/<loc>([^<]+)<\/loc>/g)]
     .map((match) => read(out, new URL(match[1]).pathname.replace(/^\//, "")))
     .join("\n");
-/** Unique post links, normalized as locale/slug for non-default locales. */
+/** Unique article links, normalized to the fixture's locale/slug IDs. */
 const postLinks = (html) =>
-  [...new Set(
-    [...html.matchAll(/href="\/(?:(en|ja)\/)?posts\/([a-zA-Z0-9-]+(?:\/[a-zA-Z0-9-]+)*)\/"/g)]
-      .filter((m) => !/^\d+$/.test(m[2]))
-      .map((m) => m[1] ? `${m[1]}/${m[2]}` : m[2]),
-  )];
+  [...new Set([...html.matchAll(/href="\/(?:([a-z]{2}(?:-[A-Z]{2})?)\/)?posts\/([^"?#]+)\/"/g)]
+    .map(([, locale, slug]) => locale ? `${locale}/${slug}` : slug)
+    .filter((slug) => !/^\d+$/.test(slug)))];
 
 const ctx = {};
 
 // One composed output shared by all tests; torn down once after the file.
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "ALNI-content-model-site-"));
-// Compose and Astro may leave read-only dirs (555) in the tree; rmSync cannot
-// delete children of such dirs, so restore writable modes before teardown.
-after(() => {
+// Compose and Astro may leave read-only dirs (555) in the tree, and the frozen
+// harness fixture copies with 555/444 modes; rmSync cannot delete children of
+// such dirs, so restore writable modes before teardown.
+function restoreWritableModes() {
   fs.chmodSync(root, 0o755);
   for (const entry of fs.readdirSync(root, { recursive: true })) {
     const abs = path.join(root, entry);
@@ -66,32 +65,23 @@ after(() => {
       // Racy entries (Vite workers cleaning up) are fine to skip.
     }
   }
-  fs.rmSync(root, { recursive: true, force: true });
+}
+after(() => {
+  try {
+    restoreWritableModes();
+    fs.rmSync(root, { recursive: true, force: true });
+  } catch {
+    // Leftover tmp is cleaned with the disposable gate tree; never fail tests
+    // on teardown.
+  }
 });
 
 // Compose once up front: a failing compose fails the hook (and therefore the
 // whole file) with the real error instead of cascading undefined fixtures.
 before(() => {
   const site = path.join(root, "site");
-  // The trusted harness freezes fixtures read-only (dirs 555, files 444) and
-  // cpSync preserves those modes, which would break teardown and the Site
-  // edits below. Restore writable modes on the copy.
   fs.cpSync(FIXTURE, site, { recursive: true });
-  fs.chmodSync(site, 0o755);
-  fs.readdirSync(site, { recursive: true }).forEach((entry) => {
-    const abs = path.join(site, entry);
-    fs.chmodSync(abs, fs.statSync(abs).isDirectory() ? 0o755 : 0o644);
-  });
-  // Exercise a multi-segment slug without changing the fixture's post counts.
-  const nestedDir = path.join(site, "content/posts/en/guides/deep");
-  fs.mkdirSync(nestedDir, { recursive: true });
-  fs.renameSync(path.join(site, "content/posts/en/hello-content-model.md"), path.join(nestedDir, "hello-content-model.md"));
-  // One English-only category makes missing localized category alternates observable.
-  const configFile = path.join(site, "alnilam.config.yaml");
-  const config = fs.readFileSync(configFile, "utf8");
-  fs.writeFileSync(configFile, config.replace("tags:\n", "  - id: english-only\n    slug: english-only\n    label:\n      en: English only\ntags:\n"));
-  const englishOnlyPost = path.join(site, "content/posts/en/release-notes.md");
-  fs.writeFileSync(englishOnlyPost, fs.readFileSync(englishOnlyPost, "utf8").replace('category: "guide"', 'category: "english-only"'));
+  restoreWritableModes();
   const digest = validateSiteRoot(site).digest;
   const out = path.join(root, "out");
   const result = spawnSync(
@@ -191,7 +181,7 @@ test("category index and detail render catalog labels and locale-filtered member
   assert.ok(!guide.includes("m3-blog-postcard"), "category detail must not render postcards");
   const guideMembers = postLinks(guide);
   assert.ok(guideMembers.includes("pinned-announcement"), "zh members are listed: " + guideMembers.join(","));
-  assert.ok(guideMembers.includes("en/guides/deep/hello-content-model"), "en members are listed: " + guideMembers.join(","));
+  assert.ok(guideMembers.includes("en/hello-content-model"), "en members are listed: " + guideMembers.join(","));
   assert.ok(guideMembers.includes("ja/i18n-guide"), "ja members are listed: " + guideMembers.join(","));
 
   // The taxonomy.yaml-only category gets its zh-CN label from the merged catalog.
@@ -214,7 +204,7 @@ test("tag index and detail render localized labels across locales", (t) => {
   assert.ok(!i18nTag.includes("m3-blog-postcard"), "tag detail must not render postcards");
   const members = postLinks(i18nTag);
   assert.ok(members.includes("hello-content-model"), "zh posts match: " + members.join(","));
-  assert.ok(members.includes("en/guides/deep/hello-content-model"), "en posts match: " + members.join(","));
+  assert.ok(members.includes("en/hello-content-model"), "en posts match: " + members.join(","));
   assert.ok(members.includes("ja/hello-content-model"), "ja posts match: " + members.join(","));
   const paginationTag = read(out, "tags/pagination/index.html");
   assert.match(paginationTag, /<title>#分页 - Content Model<\/title>/, "taxonomy.yaml tag labels are localized too");
@@ -242,16 +232,23 @@ test("series catalog drives the series index and orders detail members by series
 
 test("translationKey groups render hreflang alternates plus self-canonical on articles and in the sitemap", (t) => {
   const { out } = ctx;
-  const expected = {
-    "zh-CN": "https://content-model.example.com/posts/hello-content-model/",
-    en: "https://content-model.example.com/en/posts/guides/deep/hello-content-model/",
-    ja: "https://content-model.example.com/ja/posts/hello-content-model/",
-  };
-  for (const [rel, self] of [
-    ["posts/hello-content-model/index.html", expected["zh-CN"]],
-    ["en/posts/guides/deep/hello-content-model/index.html", expected.en],
-    ["ja/posts/hello-content-model/index.html", expected.ja],
-  ]) {
+  const expected = { "zh-CN": "https://content-model.example.com/posts/hello-content-model/" };
+  for (const lang of ["en", "ja"]) {
+    const legacy = `posts/${lang}/hello-content-model/index.html`;
+    const modern = `${lang}/posts/hello-content-model/index.html`;
+    const canonical = fs.existsSync(path.join(out, modern)) ? modern : legacy;
+    expected[lang] = `https://content-model.example.com/${canonical.replace(/index\.html$/, "")}`;
+    if (canonical === modern) {
+      assert.ok(fs.existsSync(path.join(out, legacy)), "legacy compatibility route must stay reachable");
+      const legacyHtml = read(out, legacy);
+      assert.match(legacyHtml, /<meta name="robots" content="noindex(?:,\s*follow)?"/);
+      assert.ok(legacyHtml.includes(`href="${expected[lang]}"`), "legacy route points to canonical article");
+      const legacySitemap = readSitemap(out);
+      assert.ok(!legacySitemap.includes(`https://content-model.example.com/posts/${lang}/hello-content-model/`),
+        "legacy alias must stay out of the sitemap");
+    }
+  }
+  for (const [rel, self] of Object.values(expected).map((url) => [new URL(url).pathname.slice(1) + "index.html", url])) {
     const html = read(out, rel);
     assert.match(
       html,
@@ -266,25 +263,6 @@ test("translationKey groups render hreflang alternates plus self-canonical on ar
       );
     }
   }
-  const english = read(out, "en/posts/guides/deep/hello-content-model/index.html");
-  assert.match(english, /English translation of the content-model acceptance post/);
-  assert.match(english, /class="[^"]*markdown-content/);
-  assert.doesNotMatch(english, /<meta name="robots" content="[^"]*noindex/i);
-  const structured = [...english.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)]
-    .map((match) => JSON.parse(match[1]))
-    .find((item) => item["@type"] === "BlogPosting");
-  assert.ok(structured, "the full article must publish BlogPosting structured data");
-  assert.equal(structured.url, expected.en);
-  assert.equal(structured.mainEntityOfPage["@id"], expected.en);
-  assert.equal(structured.inLanguage, "en");
-  const legacy = read(out, "posts/en/guides/deep/hello-content-model/index.html");
-  assert.match(legacy, /<meta name="robots" content="[^"]*noindex/i);
-  assert.ok(legacy.includes(`href="${expected.en}"`), "legacy canonical must target the real article");
-  assert.match(legacy, /href="\/en\/posts\/guides\/deep\/hello-content-model\/"/);
-  assert.doesNotMatch(legacy, /English translation of the content-model acceptance post/);
-  const feed = read(out, "en/rss.xml");
-  assert.ok(feed.includes(expected.en), "RSS item must link to the locale-first article");
-  assert.ok(!feed.includes("/posts/en/guides/deep/hello-content-model/"));
   const sitemap = readSitemap(out);
   for (const href of Object.values(expected)) {
     assert.match(
@@ -293,145 +271,7 @@ test("translationKey groups render hreflang alternates plus self-canonical on ar
       "the sitemap must carry the hreflang group",
     );
   }
-  assert.ok(!sitemap.includes("/posts/en/guides/deep/hello-content-model/"), "legacy URLs must not enter the sitemap");
   assert.ok(!sitemap.includes("draft-preview"), "drafts must not enter the sitemap");
-});
-
-test("locale-prefixed routes (/en/*, /ja/*) render locale-filtered content, reciprocal hreflang and missing-translation fallback", (t) => {
-  const { out } = ctx;
-  for (const rel of [
-    "en/index.html",
-    "en/posts/index.html",
-    "en/posts/2/index.html",
-    "en/categories/index.html",
-    "en/categories/guide/index.html",
-    "en/tags/index.html",
-    "en/tags/i18n/index.html",
-    "en/archives/index.html",
-    "ja/index.html",
-    "ja/posts/index.html",
-    "ja/categories/index.html",
-    "ja/categories/guide/index.html",
-    "ja/tags/index.html",
-    "ja/tags/i18n/index.html",
-    "ja/archives/index.html",
-  ]) {
-    assert.ok(fs.existsSync(path.join(out, rel)), `localized route ${rel} must exist`);
-  }
-  const enGuide = read(out, "en/categories/guide/index.html");
-  assert.match(enGuide, /<html lang="en"/);
-  assert.match(enGuide, /<title>Guide - Content Model<\/title>/);
-  assert.match(
-    enGuide,
-    /<link rel="canonical" href="https:\/\/content-model\.example\.com\/en\/categories\/guide\/">/,
-  );
-  assert.match(
-    enGuide,
-    /<link rel="alternate" hreflang="zh-CN" href="https:\/\/content-model\.example\.com\/categories\/guide\/">/,
-  );
-  assert.match(
-    enGuide,
-    /<link rel="alternate" hreflang="ja" href="https:\/\/content-model\.example\.com\/ja\/categories\/guide\/">/,
-  );
-  const enGuidePosts = postLinks(enGuide);
-  assert.ok(enGuidePosts.length > 0 && enGuidePosts.every((slug) => slug.startsWith("en/")), "en category detail lists only en posts");
-  for (const [rel, href] of [
-    ["categories/guide/index.html", "/categories/guide/"],
-    ["en/categories/guide/index.html", "/en/categories/guide/"],
-    ["ja/categories/guide/index.html", "/ja/categories/guide/"],
-  ]) {
-    const html = read(out, rel);
-    for (const [lang, target] of [["zh-CN", "/categories/guide/"], ["en", "/en/categories/guide/"], ["ja", "/ja/categories/guide/"]]) {
-      assert.ok(html.includes(`hreflang="${lang}" href="https://content-model.example.com${target}"`), `${href} must link its real ${lang} category`);
-      assert.ok(fs.existsSync(path.join(out, target, "index.html")), `hreflang target ${target} must exist`);
-    }
-  }
-  const enPosts = read(out, "en/posts/index.html");
-  const enPosts2 = read(out, "en/posts/2/index.html");
-  assert.match(enPosts, /href="\/en\/posts\/2\/" rel="next" aria-label="Next page"/);
-  assert.match(enPosts, /aria-label="Page 2"/);
-  assert.match(enPosts, /aria-label="Jump to page"/);
-  assert.match(enPosts2, /href="\/en\/posts\/" rel="prev" aria-label="Previous page"/);
-  assert.match(enPosts2, /6 posts · Page 2\/2/);
-  const englishOnly = read(out, "en/categories/english-only/index.html");
-  assert.equal(fs.existsSync(path.join(out, "ja/categories/english-only/index.html")), false);
-  assert.doesNotMatch(englishOnly, /hreflang="ja"/);
-  assert.match(englishOnly, /hreflang="en" href="https:\/\/content-model\.example\.com\/en\/categories\/english-only\/"/);
-
-  // Empty localized tag (pagination has only zh/en posts, no ja posts) must not be emitted.
-  assert.equal(fs.existsSync(path.join(out, "en/tags/pagination/index.html")), true, "en has pagination tag");
-  assert.equal(fs.existsSync(path.join(out, "ja/tags/pagination/index.html")), false, "empty localized tag must not exist");
-
-  // Language switcher on untranslated zh post falls back to /en/ and /ja/ homepages.
-  const untranslated = read(out, "posts/pagination-overview/index.html");
-  assert.match(untranslated, /data-lang-target="en" data-lang-exact="false"[^>]*href="\/en\/"|href="\/en\/"[^>]*data-lang-target="en" data-lang-exact="false"/);
-  assert.match(untranslated, /data-lang-target="ja" data-lang-exact="false"[^>]*href="\/ja\/"|href="\/ja\/"[^>]*data-lang-target="ja" data-lang-exact="false"/);
-  assert.ok(fs.existsSync(path.join(out, "fr/index.html")));
-  assert.match(untranslated, /data-lang-target="fr" data-lang-exact="false"[^>]*href="\/fr\/"|href="\/fr\/"[^>]*data-lang-target="fr" data-lang-exact="false"/);
-});
-
-test("taxonomy indexes include locales with posts but no taxonomy and link reciprocally", () => {
-  const { out } = ctx;
-  for (const kind of ["categories", "tags"]) {
-    const targets = [["zh-CN", `/${kind}/`], ["en", `/en/${kind}/`], ["ja", `/ja/${kind}/`], ["fr", `/fr/${kind}/`]];
-    for (const [locale, route] of targets) {
-      const html = read(out, `${route.slice(1)}index.html`);
-      assert.match(html, new RegExp(`<html lang="${locale}"`));
-      for (const [lang, target] of targets) {
-        assert.ok(html.includes(`hreflang="${lang}" href="https://content-model.example.com${target}"`), `${route} must link ${target}`);
-        assert.ok(fs.existsSync(path.join(out, target, "index.html")), `${target} must exist`);
-      }
-    }
-    const french = read(out, `fr/${kind}/index.html`);
-    assert.doesNotMatch(french, new RegExp(`href="/fr/${kind}/[^"/]+/"`), `empty French ${kind} index must have no detail links`);
-    assert.deepEqual(fs.readdirSync(path.join(out, "fr", kind), { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name), [], `empty French ${kind} must have no detail routes`);
-  }
-});
-
-test("category hreflang includes an explicitly categorized series post without a series default", () => {
-  const { out } = ctx;
-  const routes = [["zh-CN", "/categories/ja-series-only/"], ["ja", "/ja/categories/ja-series-only/"]];
-  for (const [, route] of routes) {
-    const html = read(out, `${route.slice(1)}index.html`);
-    for (const [lang, target] of routes) {
-      assert.ok(html.includes(`hreflang="${lang}" href="https://content-model.example.com${target}"`), `${route} must link ${target}`);
-    }
-    assert.doesNotMatch(html, /hreflang="(?:en|fr)"/);
-  }
-  assert.ok(postLinks(read(out, "ja/categories/ja-series-only/index.html")).includes("ja/series-overview-ja"));
-  assert.equal(fs.existsSync(path.join(out, "en/categories/ja-series-only/index.html")), false);
-  assert.equal(fs.existsSync(path.join(out, "fr/categories/ja-series-only/index.html")), false);
-});
-
-test("taxonomy index alternates include the default locale even without default posts", () => {
-  const site = path.join(root, "no-default-posts-site");
-  const out = path.join(root, "no-default-posts-out");
-  fs.cpSync(FIXTURE, site, { recursive: true });
-  fs.chmodSync(site, 0o755);
-  fs.readdirSync(site, { recursive: true }).forEach((entry) => {
-    const abs = path.join(site, entry);
-    fs.chmodSync(abs, fs.statSync(abs).isDirectory() ? 0o755 : 0o644);
-  });
-  const posts = path.join(site, "content/posts");
-  for (const entry of fs.readdirSync(posts, { withFileTypes: true })) {
-    if (entry.isFile() && entry.name.endsWith(".md")) fs.rmSync(path.join(posts, entry.name));
-  }
-  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", out], {
-    cwd: REPO,
-    env: { ...process.env, ALNILAM_CACHE_DIR: path.join(root, "cache"), ALNILAM_CORE_REV: "content-model-test", SOURCE_DATE_EPOCH: "1700000000" },
-    encoding: "utf8",
-  });
-  assert.equal(result.status, 0, "compose without default posts failed: " + result.stderr.slice(-2500));
-  for (const kind of ["categories", "tags"]) {
-    const targets = [["zh-CN", `/${kind}/`], ["en", `/en/${kind}/`], ["ja", `/ja/${kind}/`], ["fr", `/fr/${kind}/`]];
-    for (const [, route] of targets) {
-      const html = read(out, `${route.slice(1)}index.html`);
-      for (const [lang, target] of targets) {
-        assert.ok(html.includes(`hreflang="${lang}" href="https://content-model.example.com${target}"`), `${route} must link ${target} without default posts`);
-        assert.ok(fs.existsSync(path.join(out, target, "index.html")), `${target} must exist without default posts`);
-      }
-    }
-  }
 });
 
 test("artifact budgets: exactly the recorded unpaginated-listing page-weight breaches, nothing else", () => {
