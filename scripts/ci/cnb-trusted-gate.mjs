@@ -18,6 +18,7 @@ export const HARNESS_FILES = [
   'lighthouserc.cjs',
   'playwright.config.ts',
   'scripts/artifact-check.mjs',
+  'scripts/seo-check.mjs',
   'scripts/build-lock.mjs',
   'scripts/compose.mjs',
   'scripts/preview-server.mjs',

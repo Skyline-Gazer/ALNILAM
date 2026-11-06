@@ -2,6 +2,7 @@
 title: "开始使用 ALNILAM"
 description: "展示多语言内容组织的第二篇文章（中文版）。"
 pubDate: 2026-11-01
+updatedDate: 2026-11-02
 category: "guide"
 tags: ["指南"]
 lang: "zh-CN"

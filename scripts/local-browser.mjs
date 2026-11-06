@@ -27,6 +27,7 @@ try {
     const out = `dist/${name}`;
     run(process.execPath, ['scripts/compose.mjs', '--site', site, '--out', out], {ALNILAM_SITE_URL: url, ALNILAM_REPO_ROOT: root, ALNILAM_TOOLCHAIN_ROOT: root});
     run(process.execPath, ['scripts/artifact-check.mjs', out]);
+    run(process.execPath, ['scripts/seo-check.mjs', out]);
   }
   if (mode === 'all' || mode === 'browser' || mode === 'cls') {
     const specs = mode === 'cls' ? ['tests/browser/cnb-quality.spec.ts', 'tests/browser/navigation-lifecycle.spec.ts', 'tests/browser/first-paint-order.spec.ts'] : [];

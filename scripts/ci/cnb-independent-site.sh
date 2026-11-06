@@ -16,8 +16,10 @@ before="$(node --input-type=module -e 'import {validateSiteRoot} from "./scripts
 export ALNILAM_SITE_REF="$site_sha" SOURCE_DATE_EPOCH=1700000000
 node scripts/compose.mjs --site "$work_dir/site" --out "$work_dir/root"
 node scripts/artifact-check.mjs "$work_dir/root"
+node scripts/seo-check.mjs "$work_dir/root"
 ALNILAM_SITE_URL=https://example.com/ALNILAM/ node scripts/compose.mjs --site "$work_dir/site" --out "$work_dir/nested"
 node scripts/artifact-check.mjs "$work_dir/nested"
+node scripts/seo-check.mjs "$work_dir/nested"
 after="$(node --input-type=module -e 'import {validateSiteRoot} from "./scripts/site-contract.mjs"; console.log(validateSiteRoot(process.argv[1]).digest)' "$work_dir/site")"
 test "$before" = "$after"
 test "$(git -C "$work_dir/site" rev-parse HEAD)" = "$site_sha"

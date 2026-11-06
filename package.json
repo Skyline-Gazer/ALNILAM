@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "pnpm --filter @alnilam/web dev",
-    "build": "node scripts/compose.mjs --site sites/demo --out dist/site && node scripts/artifact-check.mjs dist/site",
+    "build": "node scripts/compose.mjs --site sites/demo --out dist/site && node scripts/artifact-check.mjs dist/site && node scripts/seo-check.mjs dist/site",
     "compose": "node scripts/compose.mjs",
     "artifact-check": "node scripts/artifact-check.mjs",
     "check": "pnpm --filter @alnilam/web check",

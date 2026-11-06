@@ -32,6 +32,11 @@ const EXPECTED_TOTAL = 23;
 const EXPECTED_PAGES = 5;
 
 const read = (out, rel) => fs.readFileSync(path.join(out, rel), "utf8");
+/** Concatenate the official sitemap chunks referenced by sitemap-index.xml. */
+const readSitemap = (out) =>
+  [...read(out, "sitemap-index.xml").matchAll(/<loc>([^<]+)<\/loc>/g)]
+    .map((match) => read(out, new URL(match[1]).pathname.replace(/^\//, "")))
+    .join("\n");
 /** Unique, non-pagination post links (zh slugs or "<lang>/<slug>"). */
 const postLinks = (html) =>
   [...new Set(
@@ -124,7 +129,9 @@ test("draft posts are excluded from every list, route and feed", (t) => {
     "tags/index.html",
     "tags/alnilam/index.html",
     "rss.xml",
-    "sitemap.xml",
+    "en/rss.xml",
+    "ja/rss.xml",
+    "sitemap-index.xml",
   ];
   for (const rel of surfaces) {
     assert.ok(!read(out, rel).includes("draft-preview"), `draft must not leak into ${rel}`);
@@ -223,7 +230,7 @@ test("translationKey groups render hreflang alternates plus self-canonical on ar
       );
     }
   }
-  const sitemap = read(out, "sitemap.xml");
+  const sitemap = readSitemap(out);
   for (const href of Object.values(expected)) {
     assert.match(
       sitemap,

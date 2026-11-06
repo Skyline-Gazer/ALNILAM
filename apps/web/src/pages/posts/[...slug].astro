@@ -46,12 +46,13 @@ export async function getStaticPaths() {
 }
 const { post, allPosts } = Astro.props as { post: CollectionEntry<"posts">; allPosts: CollectionEntry<"posts">[] };
 const { config } = loadSite();
-const alternates = translationAlternates(post, allPosts, config.site.locale);
+const alternates = translationAlternates(post, allPosts, config.site.locale, config.locales);
 ---
 <NativeArticle entry={post} discovery={{related: [], random: []}} series={null}>
   <Fragment slot="head">
     {alternates && [...alternates].map(([lang, path]) => <link rel="alternate" hreflang={lang} href={canonicalUrl(path + "/", config.site.url)} />)}
     <meta property="article:published_time" content={post.data.pubDate.toISOString()} />
+    {post.data.updatedDate && <meta property="article:modified_time" content={post.data.updatedDate.toISOString()} />}
     {post.data.category && <meta property="article:section" content={post.data.category} />}
     {post.data.tags.map(tag => <meta property="article:tag" content={tag} />)}
   </Fragment>
