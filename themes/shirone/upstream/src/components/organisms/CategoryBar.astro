@@ -35,14 +35,29 @@ const postCategory = (currentPostCategory || "").trim();
 // - 其它（关于等）→ 无高亮。
 // query 分类（?category=）在静态站点构建期不可知，由客户端校正。
 const softCategory = !isHome && !isArchive && postCategory ? postCategory : "";
+
+// 嵌套部署（如 /ALNILAM/categories/…）下 Astro.url.pathname 以 base 开头，
+// 直接 startsWith("/categories") 永远不命中。
+const basePath = import.meta.env?.BASE_URL ?? "/";
+const normalizedBase = basePath.endsWith("/") ? basePath : `${basePath}/`;
+const rootRelativePath =
+	normalizedBase !== "/" && pathname.startsWith(normalizedBase)
+		? pathname.slice(normalizedBase.length - 1)
+		: pathname;
+const hideOnTaxonomy =
+	rootRelativePath.startsWith("/categories") || rootRelativePath.startsWith("/tags");
+
 ---
 
 <!-- nav landmark：分类栏静态渲染在 Swup 容器外，需要独立 landmark 才能通过
      axe region 规则（内容必须处于某个 landmark 区域内） -->
+<!-- 分类栏在分类/标签详情页隐藏。比较必须用剥离 base 的路径：
+     嵌套部署（如 /ALNILAM/…）下 pathname 以 base 开头，
+     直接 startsWith("/categories") 永远不命中，栏不会隐藏。 -->
 <nav
 	id="category-bar-region"
 	aria-label={i18n(I18nKey.categories)}
-	class:list={{ hidden: Astro.url.pathname.startsWith("/categories") || Astro.url.pathname.startsWith("/tags") }}
+	class:list={{ hidden: hideOnTaxonomy }}
 >
 	<Card color="var(--card-bg)" radius="l" class="category-bar onload-animation mb-4 p-2" id="category-bar">
 		<div class="category-bar-inner flex gap-2 items-center">

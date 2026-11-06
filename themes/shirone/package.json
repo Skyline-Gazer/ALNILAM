@@ -13,6 +13,7 @@
     "./Pagination.astro": "./upstream/src/components/molecules/Pagination.astro",
     "./Article.astro": "./upstream/src/pages/posts/[...slug].astro",
     "./Archive.astro": "./upstream/src/pages/archive.astro",
+    "./ArchivePanel.svelte": "./upstream/src/components/organisms/ArchivePanel.svelte",
     "./Categories.astro": "./upstream/src/pages/categories.astro",
     "./Series.astro": "./upstream/src/pages/series.astro",
     "./SeriesDetail.astro": "./upstream/src/pages/series/[slug]/index.astro",

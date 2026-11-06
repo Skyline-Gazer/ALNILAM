@@ -13,6 +13,10 @@ This article lives in **Site**, not inside the platform's Astro application.
 
 Core can be upgraded independently. Site owns the post and its assets.
 
+![Orion constellation artwork](/site-assets/orion.svg)
+
+![Lighthouse lightbox fixture](/site-assets/lighthouse.png)
+
 ## Core / Site composition
 
 1. Keep your content under `content/posts/`.
