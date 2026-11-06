@@ -60,7 +60,15 @@ after(() => fs.rmSync(root, { recursive: true, force: true }));
 // whole file) with the real error instead of cascading undefined fixtures.
 before(() => {
   const site = path.join(root, "site");
+  // The trusted harness freezes fixtures read-only (dirs 555, files 444) and
+  // cpSync preserves those modes, which would break teardown and the Site
+  // edits below. Restore writable modes on the copy.
   fs.cpSync(FIXTURE, site, { recursive: true });
+  fs.chmodSync(site, 0o755);
+  fs.readdirSync(site, { recursive: true }).forEach((entry) => {
+    const abs = path.join(site, entry);
+    fs.chmodSync(abs, fs.statSync(abs).isDirectory() ? 0o755 : 0o644);
+  });
   // Exercise a multi-segment slug without changing the fixture's post counts.
   const nestedDir = path.join(site, "content/posts/en/guides/deep");
   fs.mkdirSync(nestedDir, { recursive: true });
@@ -386,6 +394,11 @@ test("taxonomy index alternates include the default locale even without default 
   const site = path.join(root, "no-default-posts-site");
   const out = path.join(root, "no-default-posts-out");
   fs.cpSync(FIXTURE, site, { recursive: true });
+  fs.chmodSync(site, 0o755);
+  fs.readdirSync(site, { recursive: true }).forEach((entry) => {
+    const abs = path.join(site, entry);
+    fs.chmodSync(abs, fs.statSync(abs).isDirectory() ? 0o755 : 0o644);
+  });
   const posts = path.join(site, "content/posts");
   for (const entry of fs.readdirSync(posts, { withFileTypes: true })) {
     if (entry.isFile() && entry.name.endsWith(".md")) fs.rmSync(path.join(posts, entry.name));
