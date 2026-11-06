@@ -34,11 +34,20 @@ async function assertSlideLoaded(page: Page, responses: Map<string, number>) {
 
 	// Empty-frame guards: the wrapper must be sized and the viewport must not
 	// be stuck at the degenerate scale(0) layout. Under 2-CPU CI load the
-	// panzoom init can lag behind the slide switch, so poll the geometry
-	// instead of sampling it once.
+	// panzoom transform oscillates while a slide switch settles, so poll until
+	// every guard holds simultaneously and assert on that captured state —
+	// a fresh re-sample after the poll could catch a transient frame again.
+	let last: {
+		src: string | null;
+		currentSrc: string | null;
+		naturalWidth: number;
+		rect: number;
+		wrapperRect: number;
+		viewportTransform: string;
+	} | undefined;
 	await expect
 		.poll(async () => {
-			const state = await img.evaluate((el: HTMLImageElement) => ({
+			last = await img.evaluate((el: HTMLImageElement) => ({
 				src: el.getAttribute("src"),
 				currentSrc: el.currentSrc,
 				naturalWidth: el.naturalWidth,
@@ -47,25 +56,18 @@ async function assertSlideLoaded(page: Page, responses: Map<string, number>) {
 				viewportTransform: (el.closest(".f-panzoom__viewport") as HTMLElement | null)?.style.transform ?? "",
 			}));
 			return (
-				state.wrapperRect > 0 &&
-				state.rect > 0 &&
-				!state.viewportTransform.includes("scale(0)") &&
-				state.naturalWidth > 0 &&
-				Boolean(state.src) &&
-				Boolean(state.currentSrc) &&
-				responses.get(state.currentSrc) === 200
+				last.wrapperRect > 0 &&
+				last.rect > 0 &&
+				!last.viewportTransform.includes("scale(0)") &&
+				last.naturalWidth > 0 &&
+				Boolean(last.src) &&
+				Boolean(last.currentSrc) &&
+				responses.get(last.currentSrc) === 200
 			);
 		}, { timeout: 10_000 })
 		.toBe(true);
 
-	const state = await img.evaluate((el: HTMLImageElement) => ({
-		src: el.getAttribute("src"),
-		currentSrc: el.currentSrc,
-		naturalWidth: el.naturalWidth,
-		rect: el.getBoundingClientRect().width,
-		wrapperRect: el.closest(".f-panzoom__wrapper")?.getBoundingClientRect().width ?? 0,
-		viewportTransform: (el.closest(".f-panzoom__viewport") as HTMLElement | null)?.style.transform ?? "",
-	}));
+	const state = last!;
 	expect(state.wrapperRect).toBeGreaterThan(0);
 	expect(state.rect).toBeGreaterThan(0);
 	expect(state.viewportTransform).not.toContain("scale(0)");
@@ -75,6 +77,7 @@ async function assertSlideLoaded(page: Page, responses: Map<string, number>) {
 	expect(responses.get(state.currentSrc)).toBe(200);
 	return state;
 }
+
 
 
 async function openSlide(page: Page, index: number, responses: Map<string, number>) {
