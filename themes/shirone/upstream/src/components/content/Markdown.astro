@@ -7,6 +7,12 @@ const { class: className } = Astro.props;
 <div data-pagefind-body class={`prose dark:prose-invert prose-base !max-w-none custom-md markdown-content ${className}`}>
 	<slot />
 </div>
+<script>
+import "virtual:ec-runtime";
+import { bindMarkdownRuntime } from "../../utils/markdown-runtime";
+
+bindMarkdownRuntime();
+</script>
 
 <style lang="stylus" is:global>
 @import "../../styles/markdown/generic.styl"
