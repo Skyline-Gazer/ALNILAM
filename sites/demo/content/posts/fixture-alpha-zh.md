@@ -30,6 +30,12 @@ export function fibonacci(n: number): number {
 
 ![示例图片](/site-assets/orion.svg)
 
+[安全外链](https://example.org/markdown) · [站内锚点](#表格) · [邮件链接](mailto:hello@example.org)
+
+[不安全链接](javascript:alert%281%29) · [不安全引用链接][unsafe-link]
+
+[unsafe-link]: data:text/html,unsafe
+
 ### 嵌套标题
 
 目录应包含上面所有二级标题与本三级标题。
