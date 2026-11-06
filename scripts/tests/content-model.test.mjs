@@ -54,7 +54,20 @@ const ctx = {};
 
 // One composed output shared by all tests; torn down once after the file.
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "ALNI-content-model-site-"));
-after(() => fs.rmSync(root, { recursive: true, force: true }));
+// Compose and Astro may leave read-only dirs (555) in the tree; rmSync cannot
+// delete children of such dirs, so restore writable modes before teardown.
+after(() => {
+  fs.chmodSync(root, 0o755);
+  for (const entry of fs.readdirSync(root, { recursive: true })) {
+    const abs = path.join(root, entry);
+    try {
+      fs.chmodSync(abs, fs.statSync(abs).isDirectory() ? 0o755 : 0o644);
+    } catch {
+      // Racy entries (Vite workers cleaning up) are fine to skip.
+    }
+  }
+  fs.rmSync(root, { recursive: true, force: true });
+});
 
 // Compose once up front: a failing compose fails the hook (and therefore the
 // whole file) with the real error instead of cascading undefined fixtures.
