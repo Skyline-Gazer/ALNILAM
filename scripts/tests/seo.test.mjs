@@ -6,8 +6,13 @@ import assert from "node:assert/strict";
 import {
   canonicalUrl,
   feedPath,
+  filterPostsByLocale,
+  localeRoutePath,
+  postLocalSlug,
   postPath,
+  routeAlternates,
   translationAlternates,
+  uiStrings,
   withBase,
 } from "../../apps/web/src/lib/i18n.mjs";
 import { localeFeedPosts } from "../../apps/web/src/lib/feed.mjs";
@@ -40,10 +45,12 @@ test("withBase prefixes once and canonicalUrl stays absolute and query-free", ()
   );
 });
 
-test("post URLs stay stable and locale feeds are one per enabled locale", () => {
+test("post URLs use locale-first paths and locale feeds are one per enabled locale", () => {
   assert.equal(postPath(post("hello", "zh-CN"), "zh-CN"), "/posts/hello");
-  assert.equal(postPath(post("hello", "en"), "zh-CN"), "/posts/en/hello");
-  assert.equal(postPath(post("en/hello", "en"), "zh-CN"), "/posts/en/hello");
+  assert.equal(postPath(post("hello", "en"), "zh-CN"), "/en/posts/hello");
+  assert.equal(postPath(post("en/hello", "en"), "zh-CN"), "/en/posts/hello");
+  assert.equal(postPath(post("en/guides/deep/topic", "en"), "zh-CN"), "/en/posts/guides/deep/topic");
+  assert.equal(withBase(postPath(post("en/guides/deep/topic", "en"), "zh-CN"), "/ALNILAM"), "/ALNILAM/en/posts/guides/deep/topic");
   assert.equal(feedPath("zh-CN", "zh-CN"), "/rss.xml");
   assert.equal(feedPath("en", "zh-CN"), "/en/rss.xml");
 });
@@ -57,6 +64,7 @@ test("hreflang groups include only enabled locales and a real x-default", () => 
   ];
   const map = translationAlternates(posts[0], posts, "zh-CN", ["zh-CN", "en", "ja"]);
   assert.deepEqual([...map.keys()], ["zh-CN", "en", "x-default"]);
+  assert.equal(map.get("en"), "/en/posts/hello");
   assert.equal(map.get("x-default"), "/posts/hello");
   assert.equal(map.has("de"), false, "an undeclared locale must not claim equivalence");
 
@@ -111,13 +119,37 @@ test("structured data carries only Site-owned facts", () => {
 test("the sitemap inventory reads the same head facts the pages publish", () => {
   const head = parseSeoHead(
     '<html><head><link rel="canonical" href="https://example.com/posts/a/">' +
-      '<link rel="alternate" hreflang="en" href="https://example.com/posts/en/a/">' +
+      '<link rel="alternate" hreflang="en" href="https://example.com/en/posts/a/">' +
       '<link rel="alternate" type="application/rss+xml" href="https://example.com/en/rss.xml">' +
       '<meta name="robots" content="noindex, follow">' +
       '<meta property="article:modified_time" content="2026-02-01T00:00:00.000Z"></head></html>',
   );
   assert.equal(head.canonical, "https://example.com/posts/a/");
-  assert.deepEqual(head.alternates, [{ lang: "en", href: "https://example.com/posts/en/a/" }]);
+  assert.deepEqual(head.alternates, [{ lang: "en", href: "https://example.com/en/posts/a/" }]);
   assert.equal(head.noindex, true);
   assert.equal(head.lastmod, "2026-02-01T00:00:00.000Z");
+});
+
+test("localeRoutePath, postLocalSlug and routeAlternates follow ROUTE-01..06", () => {
+  assert.equal(localeRoutePath("zh-CN", "zh-CN", ""), "/");
+  assert.equal(localeRoutePath("zh-CN", "zh-CN", "categories/guide"), "/categories/guide/");
+  assert.equal(localeRoutePath("en", "zh-CN", ""), "/en/");
+  assert.equal(localeRoutePath("en", "zh-CN", "/categories/guide/"), "/en/categories/guide/");
+
+  assert.equal(postLocalSlug(post("en/hello", "en"), "zh-CN"), "hello");
+  assert.equal(postLocalSlug(post("hello", "en"), "zh-CN"), "hello");
+
+  const posts = [post("a", "zh-CN"), post("en/b", "en")];
+  assert.deepEqual(filterPostsByLocale(posts, "en", "zh-CN").map((p) => p.id), ["en/b"]);
+
+  const catAlts = routeAlternates(["zh-CN", "en"], "zh-CN", ["zh-CN", "en", "ja"], "categories/guide");
+  assert.deepEqual([...catAlts.entries()], [
+    ["zh-CN", "/categories/guide/"],
+    ["en", "/en/categories/guide/"],
+  ], "listing pages omit x-default: the default-locale link is already the fallback");
+  assert.equal(routeAlternates(["zh-CN"], "zh-CN", ["zh-CN", "en"], "categories/only-zh"), null);
+
+  assert.equal(uiStrings("zh-CN").categories, "分类");
+  assert.equal(uiStrings("en").categories, "Categories");
+  assert.equal(uiStrings("ja").categories, "カテゴリ");
 });

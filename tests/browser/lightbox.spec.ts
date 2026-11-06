@@ -32,16 +32,42 @@ async function assertSlideLoaded(page: Page, responses: Map<string, number>) {
 	const img = slide.locator(".f-panzoom__viewport img");
 	await expect(img).toBeVisible();
 
-	const state = await img.evaluate((el: HTMLImageElement) => ({
-		src: el.getAttribute("src"),
-		currentSrc: el.currentSrc,
-		naturalWidth: el.naturalWidth,
-		rect: el.getBoundingClientRect().width,
-		wrapperRect: el.closest(".f-panzoom__wrapper")?.getBoundingClientRect().width ?? 0,
-		viewportTransform: (el.closest(".f-panzoom__viewport") as HTMLElement | null)?.style.transform ?? "",
-	}));
-	// Empty-frame guards: wrapper must be sized and the viewport must not be
-	// stuck at the degenerate scale(0) layout.
+	// Empty-frame guards: the wrapper must be sized and the viewport must not
+	// be stuck at the degenerate scale(0) layout. Under 2-CPU CI load the
+	// panzoom transform oscillates while a slide switch settles, so poll until
+	// every guard holds simultaneously and assert on that captured state —
+	// a fresh re-sample after the poll could catch a transient frame again.
+	let last: {
+		src: string | null;
+		currentSrc: string | null;
+		naturalWidth: number;
+		rect: number;
+		wrapperRect: number;
+		viewportTransform: string;
+	} | undefined;
+	await expect
+		.poll(async () => {
+			last = await img.evaluate((el: HTMLImageElement) => ({
+				src: el.getAttribute("src"),
+				currentSrc: el.currentSrc,
+				naturalWidth: el.naturalWidth,
+				rect: el.getBoundingClientRect().width,
+				wrapperRect: el.closest(".f-panzoom__wrapper")?.getBoundingClientRect().width ?? 0,
+				viewportTransform: (el.closest(".f-panzoom__viewport") as HTMLElement | null)?.style.transform ?? "",
+			}));
+			return (
+				last.wrapperRect > 0 &&
+				last.rect > 0 &&
+				!last.viewportTransform.includes("scale(0)") &&
+				last.naturalWidth > 0 &&
+				Boolean(last.src) &&
+				Boolean(last.currentSrc) &&
+				responses.get(last.currentSrc) === 200
+			);
+		}, { timeout: 10_000 })
+		.toBe(true);
+
+	const state = last!;
 	expect(state.wrapperRect).toBeGreaterThan(0);
 	expect(state.rect).toBeGreaterThan(0);
 	expect(state.viewportTransform).not.toContain("scale(0)");
@@ -51,6 +77,8 @@ async function assertSlideLoaded(page: Page, responses: Map<string, number>) {
 	expect(responses.get(state.currentSrc)).toBe(200);
 	return state;
 }
+
+
 
 async function openSlide(page: Page, index: number, responses: Map<string, number>) {
 	const image = page.locator(".custom-md img").nth(index);
@@ -151,8 +179,8 @@ for (const [name, origin] of deployments) {
 
 			// hello-alnilam now paginates to page 3; drive the lightbox lifecycle
 			// from a page-1 card instead.
-			await page.locator('a.m3-blog-postcard__title[href$="/posts/en/pagination-sample/"]').first().click();
-			await expect(page).toHaveURL(new RegExp("en/pagination-sample"));
+			await page.locator('a.m3-blog-postcard__title[href$="/en/posts/pagination-sample/"]').first().click();
+			await expect(page).toHaveURL(new RegExp("/en/posts/pagination-sample/?$"));
 			await waitForLightboxReady(page);
 
 			const container = await openSlide(page, 0, responses);
@@ -162,7 +190,7 @@ for (const [name, origin] of deployments) {
 			await page.goBack();
 			await expect(page).toHaveURL(new RegExp("/posts/?$"));
 			await page.goForward();
-			await expect(page).toHaveURL(new RegExp("en/pagination-sample"));
+			await expect(page).toHaveURL(new RegExp("/en/posts/pagination-sample/?$"));
 			await context.close();
 		});
 	}

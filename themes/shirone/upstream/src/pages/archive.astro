@@ -2,16 +2,26 @@
 import PageHeader from "@components/atoms/display/PageHeader.astro";
 import ArchivePanel from "@components/organisms/ArchivePanel.svelte";
 import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
+import { getTranslation, i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getSortedPostsList } from "../utils/content-utils";
 
-const sortedPostsList = await getSortedPostsList();
-const archiveSummary = `${sortedPostsList.length} ${i18n(I18nKey.postsCount)}`;
+const {
+	sortedPosts,
+	lang,
+	alternates,
+} = Astro.props as {
+	sortedPosts?: Awaited<ReturnType<typeof getSortedPostsList>>;
+	lang?: string;
+	alternates?: Array<{ lang: string; href: string }>;
+};
+const t = lang ? (key: I18nKey) => getTranslation(lang.replace("-", "_"))[key] : i18n;
+const sortedPostsList = sortedPosts ?? (await getSortedPostsList());
+const archiveSummary = `${sortedPostsList.length} ${t(I18nKey.postsCount)}`;
 ---
 
-<MainGridLayout title={i18n(I18nKey.archive)} description={archiveSummary} page="archive">
-    <PageHeader title={i18n(I18nKey.archive)} subtitle={archiveSummary} />
+<MainGridLayout title={t(I18nKey.archive)} description={archiveSummary} page="archive" lang={lang} alternates={alternates}>
+    <PageHeader title={t(I18nKey.archive)} subtitle={archiveSummary} />
     <ArchivePanel sortedPosts={sortedPostsList} client:visible></ArchivePanel>
 </MainGridLayout>
 

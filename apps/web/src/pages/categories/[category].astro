@@ -3,7 +3,7 @@ import { getCollection, type CollectionEntry } from "astro:content";
 import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
 import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
 import ArchivePanel from "@alnilam/theme-shirone/ArchivePanel.svelte";
-import { canonicalUrl, postPath, withBase } from "../../lib/i18n.mjs";
+import { canonicalUrl, postLang, postPath, routeAlternates, withBase } from "../../lib/i18n.mjs";
 import { loadSite } from "../../lib/site-source.mjs";
 import { breadcrumbListJsonLd, collectionPageJsonLd } from "../../lib/seo.mjs";
 import { categoryDisplayLabel, comparePosts, loadSiteTaxonomy } from "../../lib/taxonomy";
@@ -14,6 +14,13 @@ export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
   const series = await getCollection("series");
   const seriesCategories = new Map(series.map((entry) => [entry.id, entry.data.defaultCategory]));
+  const postCategory = (post: CollectionEntry<"posts">) =>
+    post.data.category?.trim() || seriesCategories.get(post.data.series?.trim())?.trim() || "";
+  const matchesCategory = (cat: string, target: string) => {
+    if (cat === target) return true;
+    const entry = taxonomy.categories.find((item) => item.slug === target || item.id === target);
+    return !!entry && (cat === entry.slug || cat === entry.id || Object.values(entry.label).includes(cat));
+  };
   const byCategory = new Map<string, CollectionEntry<"posts">[]>();
   for (const post of posts) {
     const category = post.data.category?.trim() || seriesCategories.get(post.data.series?.trim())?.trim();
@@ -43,17 +50,31 @@ export async function getStaticPaths() {
           categoryDisplayLabel(entry.slug, taxonomy.categories, config.site.locale),
         ]),
       ),
+      activeLocales: [
+        config.site.locale,
+        ...config.locales.filter(
+          (loc) =>
+            loc !== config.site.locale &&
+            posts.some((post) => postLang(post, config.site.locale) === loc && matchesCategory(postCategory(post), category)),
+        ),
+      ],
     },
   }));
 }
 
-const { list, label, categoryLabels } = Astro.props as {
+const { list, label, categoryLabels, activeLocales } = Astro.props as {
   list: CollectionEntry<"posts">[];
   label: string;
   categoryLabels: Record<string, string>;
+  activeLocales: string[];
 };
 const { config } = loadSite();
-const canonical = canonicalUrl(`/categories/${Astro.params.category}/`, config.site.url);
+const routeSegment = `categories/${encodeURIComponent(Astro.params.category)}`;
+const canonical = canonicalUrl(`/${routeSegment}/`, config.site.url);
+const alts = routeAlternates(activeLocales, config.site.locale, config.locales, routeSegment);
+const alternates = alts
+  ? [...alts].map(([lang, path]) => ({ lang, href: canonicalUrl(path, config.site.url) }))
+  : undefined;
 const mappedPosts = list.map((post) => ({
   slug: post.id,
   url: withBase(postPath(post, config.site.locale) + "/"),
@@ -77,7 +98,7 @@ const breadcrumbJsonLd = breadcrumbListJsonLd([
   { name: label, url: canonical },
 ]);
 ---
-<MainGridLayout title={label} description={`分类 ${label} 下的全部文章`} page="categories" canonical={canonical}>
+<MainGridLayout title={label} description={`分类 ${label} 下的全部文章`} page="categories" canonical={canonical} alternates={alternates}>
   <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(collectionJsonLd)} />
   <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
   <a href={withBase("/categories/")} class="text-[var(--primary)]">← 全部分类</a>
