@@ -32,6 +32,32 @@ async function assertSlideLoaded(page: Page, responses: Map<string, number>) {
 	const img = slide.locator(".f-panzoom__viewport img");
 	await expect(img).toBeVisible();
 
+	// Empty-frame guards: the wrapper must be sized and the viewport must not
+	// be stuck at the degenerate scale(0) layout. Under 2-CPU CI load the
+	// panzoom init can lag behind the slide switch, so poll the geometry
+	// instead of sampling it once.
+	await expect
+		.poll(async () => {
+			const state = await img.evaluate((el: HTMLImageElement) => ({
+				src: el.getAttribute("src"),
+				currentSrc: el.currentSrc,
+				naturalWidth: el.naturalWidth,
+				rect: el.getBoundingClientRect().width,
+				wrapperRect: el.closest(".f-panzoom__wrapper")?.getBoundingClientRect().width ?? 0,
+				viewportTransform: (el.closest(".f-panzoom__viewport") as HTMLElement | null)?.style.transform ?? "",
+			}));
+			return (
+				state.wrapperRect > 0 &&
+				state.rect > 0 &&
+				!state.viewportTransform.includes("scale(0)") &&
+				state.naturalWidth > 0 &&
+				Boolean(state.src) &&
+				Boolean(state.currentSrc) &&
+				responses.get(state.currentSrc) === 200
+			);
+		}, { timeout: 10_000 })
+		.toBe(true);
+
 	const state = await img.evaluate((el: HTMLImageElement) => ({
 		src: el.getAttribute("src"),
 		currentSrc: el.currentSrc,
@@ -40,8 +66,6 @@ async function assertSlideLoaded(page: Page, responses: Map<string, number>) {
 		wrapperRect: el.closest(".f-panzoom__wrapper")?.getBoundingClientRect().width ?? 0,
 		viewportTransform: (el.closest(".f-panzoom__viewport") as HTMLElement | null)?.style.transform ?? "",
 	}));
-	// Empty-frame guards: wrapper must be sized and the viewport must not be
-	// stuck at the degenerate scale(0) layout.
 	expect(state.wrapperRect).toBeGreaterThan(0);
 	expect(state.rect).toBeGreaterThan(0);
 	expect(state.viewportTransform).not.toContain("scale(0)");
@@ -51,6 +75,7 @@ async function assertSlideLoaded(page: Page, responses: Map<string, number>) {
 	expect(responses.get(state.currentSrc)).toBe(200);
 	return state;
 }
+
 
 async function openSlide(page: Page, index: number, responses: Map<string, number>) {
 	const image = page.locator(".custom-md img").nth(index);
