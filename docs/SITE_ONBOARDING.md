@@ -50,11 +50,14 @@ them in Sites. Tag pages derive from post frontmatter.
   `content/posts/2026/hello.md` is served at `/posts/2026/hello/`. Renaming or moving a
   file changes its public URL — treat paths as stable identifiers.
 - **i18n layout (recommended)**: put non-default-locale posts in
-  `content/posts/<lang>/` (e.g. `content/posts/en/hello.md` → `/posts/en/hello/`) and
+  `content/posts/<lang>/` (e.g. `content/posts/en/hello.md` → `/en/posts/hello/`) and
   set frontmatter `lang` + `translationKey` on every member of a translation group.
-  Pages sharing a `translationKey` get automatic `hreflang` alternates (and
-  sitemap `xhtml:link` entries). Default-locale posts live directly under
-  `content/posts/`.
+  Nested source paths remain nested in the article URL. Pages sharing a
+  `translationKey` get `hreflang` alternates only for published translations.
+  Default-locale posts live directly under `content/posts/` and retain their
+  unprefixed `/posts/<slug>/` URLs. Old `/posts/<lang>/<slug>/` URLs serve a
+  noindex static page linking to the canonical article; this is not an HTTP redirect.
+  All paths include the configured deployment base when hosted under a subpath.
 - `draft = true` posts are excluded from all builds.
 
 ### Images policy

@@ -3,8 +3,10 @@ import { getCollection, type CollectionEntry } from "astro:content";
 import NativeArticle from "@alnilam/theme-shirone/Article.astro";
 import Card from "@alnilam/theme-shirone/Card.svelte";
 import Comments from "@alnilam/ui/Comments.svelte";
+import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
+import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
 import { loadSite } from "../../lib/site-source.mjs";
-import { canonicalUrl, postLang, translationAlternates } from "../../lib/i18n.mjs";
+import { canonicalUrl, postLang, postLocalSlug, postPath, translationAlternates, withBase } from "../../lib/i18n.mjs";
 import { POSTS_PAGE_SIZE } from "../../lib/pagination.mjs";
 
 export async function getStaticPaths() {
@@ -16,9 +18,10 @@ export async function getStaticPaths() {
   for (const post of allPosts) {
     const lang = postLang(post, config.site.locale);
     if (lang === config.site.locale) {
-      const page = Number(post.id);
-      if (String(page) === post.id && page >= 2 && page <= lastPage) {
-        throw new Error(`Post slug "${post.id}" conflicts with pagination route /posts/${page}/.`);
+      const slug = postLocalSlug(post, config.site.locale);
+      const page = Number(slug);
+      if (String(page) === slug && page >= 2 && page <= lastPage) {
+        throw new Error(`Post slug "${slug}" conflicts with pagination route /posts/${page}/.`);
       }
     }
     if (post.data.translationKey) {
@@ -29,28 +32,38 @@ export async function getStaticPaths() {
       seenTranslations.add(tk);
     }
   }
-  return allPosts.map((post) => {
+  return allPosts.flatMap((post) => {
     const lang = postLang(post, config.site.locale);
-    const slug = lang === config.site.locale || post.id.startsWith(lang + "/") ? post.id : `${lang}/${post.id}`;
-    if (seenRoutes.has(slug)) {
-      throw new Error(`ALNILAM: duplicate post route "/posts/${slug}/"`);
-    }
-    seenRoutes.add(slug);
-    return {
-      // [...slug] rest param: id already contains "<lang>/" when the file lives
-      // in a locale directory; otherwise prefix explicitly.
-      params: { slug },
-      props: { post, allPosts },
-    };
+    const localSlug = postLocalSlug(post, config.site.locale);
+    const oldSlug = lang === config.site.locale || post.id.startsWith(lang + "/") ? post.id : `${lang}/${post.id}`;
+    const slugs = lang === config.site.locale && oldSlug !== localSlug ? [localSlug, oldSlug] : [oldSlug];
+    return slugs.map((slug) => {
+      if (seenRoutes.has(slug)) throw new Error(`ALNILAM: duplicate post route "/posts/${slug}/"`);
+      seenRoutes.add(slug);
+      return { params: { slug }, props: { post, allPosts, isLegacy: lang !== config.site.locale || slug !== localSlug } };
+    });
   });
 }
-const { post, allPosts } = Astro.props as { post: CollectionEntry<"posts">; allPosts: CollectionEntry<"posts">[] };
+const { post, allPosts, isLegacy } = Astro.props as { post: CollectionEntry<"posts">; allPosts: CollectionEntry<"posts">[]; isLegacy: boolean };
 const { config } = loadSite();
-const alternates = translationAlternates(post, allPosts, config.site.locale, config.locales);
+const lang = postLang(post, config.site.locale);
+const targetPath = postPath(post, config.site.locale) + "/";
+const canonical = canonicalUrl(targetPath, config.site.url);
+const altMap = translationAlternates(post, allPosts, config.site.locale, config.locales);
+const alternates = altMap
+  ? [...altMap].map(([lang, path]) => ({ lang, href: canonicalUrl(path + "/", config.site.url) }))
+  : undefined;
 ---
-<NativeArticle entry={post} discovery={{related: [], random: []}} series={null}>
+{isLegacy ? (
+<MainGridLayout title={post.data.title} description={post.data.description || post.data.title} page="archive" lang={lang} canonical={canonical} noindex>
+  <Card color="var(--card-bg)" radius="l" class="p-6">
+    <PageHeader title={post.data.title} subtitle={post.data.description} />
+    <p class="mt-4"><a href={withBase(targetPath)} class="text-[var(--primary)] font-semibold underline">{canonical}</a></p>
+  </Card>
+</MainGridLayout>
+) : (
+<NativeArticle entry={post} discovery={{related: [], random: []}} series={null} canonical={canonical} alternates={alternates}>
   <Fragment slot="head">
-    {alternates && [...alternates].map(([lang, path]) => <link rel="alternate" hreflang={lang} href={canonicalUrl(path + "/", config.site.url)} />)}
     <meta property="article:published_time" content={post.data.pubDate.toISOString()} />
     {post.data.updatedDate && <meta property="article:modified_time" content={post.data.updatedDate.toISOString()} />}
     {post.data.category && <meta property="article:section" content={post.data.category} />}
@@ -66,3 +79,4 @@ const alternates = translationAlternates(post, allPosts, config.site.locale, con
     </section>
   )}
 </NativeArticle>
+)}

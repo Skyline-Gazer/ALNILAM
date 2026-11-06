@@ -3,7 +3,7 @@ import { getCollection, type CollectionEntry } from "astro:content";
 import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
 import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
 import ArchivePanel from "@alnilam/theme-shirone/ArchivePanel.svelte";
-import { canonicalUrl, postPath, withBase } from "../../lib/i18n.mjs";
+import { canonicalUrl, postLang, postPath, routeAlternates, withBase } from "../../lib/i18n.mjs";
 import { loadSite } from "../../lib/site-source.mjs";
 import { breadcrumbListJsonLd, collectionPageJsonLd } from "../../lib/seo.mjs";
 import { canonicalTagSlug, comparePosts, loadSiteTaxonomy, tagDisplayLabel } from "../../lib/taxonomy";
@@ -12,23 +12,18 @@ export async function getStaticPaths() {
   const { root, config } = loadSite();
   const taxonomy = loadSiteTaxonomy(root, config);
   const posts = await getCollection("posts", ({ data }) => !data.draft);
+  const canonicalTag = (tag: string) => canonicalTagSlug(tag, taxonomy.tags);
   const byTag = new Map<string, CollectionEntry<"posts">[]>();
   for (const post of posts) {
     for (const tag of post.data.tags) {
-      if (!byTag.has(tag)) byTag.set(tag, []);
-      byTag.get(tag)!.push(post);
+      const slug = canonicalTag(tag);
+      if (!byTag.has(slug)) byTag.set(slug, []);
+      byTag.get(slug)!.push(post);
     }
   }
   for (const entry of taxonomy.tags) {
-    const matchesEntry = (tag: string) =>
-      tag === entry.slug || tag === entry.id ||
-      tag.toLowerCase() === entry.slug || tag.toLowerCase() === entry.id ||
-      Object.values(entry.label).includes(tag);
-    const matching = posts.filter((post) => post.data.tags.some(matchesEntry));
-    if (matching.length > 0) {
-      for (const tag of byTag.keys()) {
-        if (matchesEntry(tag)) byTag.set(tag, matching);
-      }
+    const matching = posts.filter((post) => post.data.tags.some((tag) => canonicalTag(tag) === entry.slug));
+    if (matching.length > 0 && !byTag.has(entry.slug)) {
       byTag.set(entry.slug, matching);
     }
   }
@@ -40,13 +35,24 @@ export async function getStaticPaths() {
       tagLabels: Object.fromEntries(
         taxonomy.tags.map((entry) => [entry.slug, tagDisplayLabel(entry.slug, taxonomy.tags, config.site.locale)]),
       ),
+      // The default generator emits `/tags/<slug>/` for exactly these slugs,
+      // so the default-locale alternate is real for every localized route.
+      activeLocales: [
+        config.site.locale,
+        ...config.locales.filter(
+          (loc) =>
+            loc !== config.site.locale &&
+            list.some((post) => postLang(post, config.site.locale) === loc),
+        ),
+      ],
     },
   }));
 }
-const { list, label, tagLabels } = Astro.props as {
+const { list, label, tagLabels, activeLocales } = Astro.props as {
   list: CollectionEntry<"posts">[];
   label: string;
   tagLabels: Record<string, string>;
+  activeLocales: string[];
 };
 const { root, config } = loadSite();
 const taxonomy = loadSiteTaxonomy(root, config);
@@ -56,10 +62,14 @@ const taxonomy = loadSiteTaxonomy(root, config);
 // never a claimed redirect or an indexed canonical.
 const canonicalSlug = canonicalTagSlug(Astro.params.tag, taxonomy.tags);
 const isAlias = Astro.params.tag !== canonicalSlug;
-const canonical = canonicalUrl(
-  `/tags/${encodeURIComponent(Astro.params.tag)}/`,
-  config.site.url,
-);
+const routeSegment = `tags/${encodeURIComponent(Astro.params.tag)}`;
+const canonical = canonicalUrl(`/${routeSegment}/`, config.site.url);
+const alts = !isAlias
+  ? routeAlternates(activeLocales, config.site.locale, config.locales, routeSegment)
+  : null;
+const alternates = alts
+  ? [...alts].map(([lang, path]) => ({ lang, href: canonicalUrl(path, config.site.url) }))
+  : undefined;
 const mappedPosts = list.map((post) => ({
   slug: post.id,
   url: withBase(postPath(post, config.site.locale) + "/"),
@@ -83,7 +93,7 @@ const breadcrumbJsonLd = breadcrumbListJsonLd([
   { name: `#${label}`, url: canonical },
 ]);
 ---
-<MainGridLayout title={`#${label}`} description={`标签 ${label} 下的全部文章`} page="tags" noindex={isAlias}>
+<MainGridLayout title={`#${label}`} description={`标签 ${label} 下的全部文章`} page="tags" noindex={isAlias} alternates={alternates}>
   <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(collectionJsonLd)} />
   <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
   <a href={withBase("/tags/")} class="text-[var(--primary)]">← 全部标签</a>

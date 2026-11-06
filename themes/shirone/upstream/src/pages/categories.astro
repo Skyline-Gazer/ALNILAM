@@ -9,23 +9,33 @@ import Card from "@components/atoms/display/Card.svelte";
 import MetaIcon from "@components/atoms/display/MetaIcon.astro";
 import PageHeader from "@components/atoms/display/PageHeader.astro";
 import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
+import { getTranslation, i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getCategoryList } from "@utils/content-utils";
 
-const categories = await getCategoryList();
+const {
+	categories: propCategories,
+	lang,
+	alternates,
+} = Astro.props as {
+	categories?: Array<{ name: string; count: number; url: string }>;
+	lang?: string;
+	alternates?: Array<{ lang: string; href: string }>;
+};
+const t = lang ? (key: I18nKey) => getTranslation(lang.replace("-", "_"))[key] : i18n;
+const categories = propCategories ?? (await getCategoryList());
 const totalPosts = categories.reduce(
 	(sum, category) => sum + category.count,
 	0,
 );
-const categorySummary = `${categories.length} ${i18n(I18nKey.categoriesCount)} · ${totalPosts} ${i18n(I18nKey.postsCount)}`;
+const categorySummary = `${categories.length} ${t(I18nKey.categoriesCount)} · ${totalPosts} ${t(I18nKey.postsCount)}`;
 ---
 
-<MainGridLayout title={i18n(I18nKey.categories)} description={categorySummary} page="categories">
+<MainGridLayout title={t(I18nKey.categories)} description={categorySummary} page="categories" lang={lang} alternates={alternates}>
 	<Card color="var(--card-bg)" radius="l" class="category-index px-8 py-6">
 		<PageHeader
 			icon="material-symbols:folder-outline-rounded"
-			title={i18n(I18nKey.categories)}
+			title={t(I18nKey.categories)}
 				subtitle={categorySummary}
 		/>
 		{categories.length > 0 && (
@@ -44,7 +54,7 @@ const categorySummary = `${categories.length} ${i18n(I18nKey.categoriesCount)} �
 		)}
 		{categories.length === 0 && (
 			<div class="category-index__empty">
-				<span>{i18n(I18nKey.noData)}</span>
+				<span>{t(I18nKey.noData)}</span>
 			</div>
 		)}
 	</Card>

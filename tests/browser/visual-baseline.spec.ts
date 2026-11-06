@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 
 const targets = [
   ['home', '/'], ['posts', '/posts/'], ['article', '/posts/getting-started/'],
-  ['tags', '/tags/'], ['tag', '/tags/Guide/'], ['categories', '/categories/'],
+  ['tags', '/tags/'], ['tag', '/tags/guide/'], ['categories', '/categories/'],
   ['category', '/categories/guide/'], ['archives', '/archives/'],
 ] as const;
 const deployments = [['root', 'http://127.0.0.1:4323'], ['nested', 'http://127.0.0.1:4324/ALNILAM']] as const;
