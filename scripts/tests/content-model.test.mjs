@@ -20,16 +20,21 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { validateSiteRoot } from "../site-contract.mjs";
 
-// Resolve the fixture and compose script from the working tree, like the other
-// contract tests: the trusted gate copies this test file into a harness and
-// runs it with cwd = the candidate checkout, where only cwd-relative paths
-// exist (the harness has no tests/fixtures or scripts/compose.mjs).
+// The candidate supplies product code; the target supplies immutable test fixtures.
 const REPO = process.cwd();
-const FIXTURE = path.join(REPO, "tests/fixtures/content-model-site");
+const FIXTURE = path.join(process.env.CNB_TRUSTED_TEST_ROOT || REPO, "tests/fixtures/content-model-site");
 
-// 13 published zh + 6 en + 4 ja + 1 fr = 24 published posts; page size 5 → 5 pages.
-const EXPECTED_TOTAL = 24;
-const EXPECTED_PAGES = 5;
+// Counts come from the target-owned fixture, so adding an article or draft
+// cannot silently weaken the pagination assertions.
+const FIXTURE_PAGE_SIZE = 5;
+const fixturePosts = fs.globSync("content/posts/**/*.md", { cwd: FIXTURE });
+const EXPECTED_TOTAL = fixturePosts.filter((rel) => {
+  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(
+    fs.readFileSync(path.join(FIXTURE, rel), "utf8"),
+  )?.[1] ?? "";
+  return !/^draft:\s*true\s*$/m.test(frontmatter);
+}).length;
+const EXPECTED_PAGES = Math.ceil(EXPECTED_TOTAL / FIXTURE_PAGE_SIZE);
 
 const read = (out, rel) => fs.readFileSync(path.join(out, rel), "utf8");
 /** Concatenate the official sitemap chunks referenced by sitemap-index.xml. */

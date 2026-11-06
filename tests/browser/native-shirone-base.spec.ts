@@ -57,14 +57,29 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
       const page=await context.newPage(); const errors:string[]=[]; const checkedLinks=new Set<string>();
       page.on('pageerror',e=>errors.push(String(e)));
       try {
+        const prefix=new URL(origin).pathname.replace(/\/$/,'');
+        // /tags/Astro/ is a catalog tag; under the locale-first contract label
+        // spellings collapse into canonical slugs, so probe the slug route.
         for (const route of ['/posts/', '/posts/hello-alnilam/', '/tags/', '/tags/astro/', '/categories/', '/categories/guide/', '/archives/', '/en/posts/hello-alnilam/']) {
           const response=await page.goto(origin+route,{waitUntil:'networkidle'});
           expect(response?.status()).toBe(200);
           await expect(page.locator('#navbar.top-app-bar')).toBeVisible();
           await expect(page.locator('#main-grid')).toBeVisible();
           await expect(page.locator('h1')).toHaveCount(1);
-          // Compatible self-canonical page; label variants are noindex duplicates.
-          expect(await page.locator('link[rel="canonical"]').getAttribute('href')).toBe('https://example.com'+new URL(origin).pathname.replace(/\/$/,'')+route);
+          // The route may be the canonical article (legacy layout) or a
+          // noindex compatibility alias for the locale-first layout. Either
+          // way its canonical must name a real, self-consistent page.
+          const canonical=await page.locator('link[rel="canonical"]').getAttribute('href');
+          expect(canonical,`route ${route} must render a canonical link`).toBeTruthy();
+          expect(canonical!.startsWith('https://example.com'+prefix+'/'),`canonical ${canonical} must stay on the deploy origin+base`).toBe(true);
+          const canonicalPath=new URL(canonical!).pathname;
+          const canonicalLocal=new URL(canonicalPath,origin).href;
+          if(canonicalLocal!==origin+route) {
+            const canonicalResponse=await page.goto(canonicalLocal,{waitUntil:'networkidle'});
+            expect(canonicalResponse?.status(),`canonical target ${canonicalPath} must return 200`).toBe(200);
+            await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href',canonical!);
+            await expect(page.locator('h1')).toHaveCount(1);
+          }
           expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
           const hrefs=await page.locator('a[href^="/"]').evaluateAll(links=>links.map(link=>(link as HTMLAnchorElement).href));
           for(const href of new Set(hrefs)) {
