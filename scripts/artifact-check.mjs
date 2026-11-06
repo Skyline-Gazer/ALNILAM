@@ -38,8 +38,10 @@ function checkPage(file) {
   const rel = path.relative(outDir, file).replace(/\\/g, "/");
   const html = fs.readFileSync(file, "utf8");
   const scripts = [...html.matchAll(/<script[^>]*src="([^"]+)"/g)].map((m) => m[1]);
-  scriptRefs += scripts.length;
-  const unlocalizedRel = rel.replace(/^[a-z]{2}(?:-[A-Z]{2})?\//, "");
+  // Strip a leading BCP-47 locale segment (the Core's validated `lang`
+  // syntax: 2-3 language letters, optional region/script subtags).
+  const localePrefix = /^[a-z]{2,3}(?:-[A-Za-z0-9]+)*/;
+  const unlocalizedRel = rel.replace(new RegExp(`^${localePrefix.source}/`), "");
   const isPostList = unlocalizedRel === "posts/index.html" || /^posts\/\d+\/index\.html$/.test(unlocalizedRel);
   // Series detail pages render a Markdown overview body through the same
   // content runtime as articles, so they share the article budget rather

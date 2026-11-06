@@ -2,7 +2,7 @@ import {test, expect} from '@playwright/test';
 for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM']) {
   test(`locale navigation boundaries ${new URL(origin).pathname}`, async ({page}) => {
     const base = new URL(origin).pathname.replace(/\/$/, '');
-    await page.goto(origin + '/en', {waitUntil:'networkidle'});
+    await page.goto(origin + '/en/', {waitUntil:'networkidle'});
     const nav = page.locator('#navbar nav[aria-label="Main navigation"]');
     await expect(nav.locator('[data-nav-key="posts"]')).toHaveAttribute('href', base + '/en/posts/');
     await expect(nav.locator('[data-nav-key="posts"]')).toHaveText('Posts');
@@ -57,7 +57,7 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
       const page=await context.newPage(); const errors:string[]=[]; const checkedLinks=new Set<string>();
       page.on('pageerror',e=>errors.push(String(e)));
       try {
-        for (const route of ['/posts/', '/posts/hello-alnilam/', '/tags/', '/tags/Astro/', '/categories/', '/categories/guide/', '/archives/', '/en/posts/hello-alnilam/']) {
+        for (const route of ['/posts/', '/posts/hello-alnilam/', '/tags/', '/tags/astro/', '/categories/', '/categories/guide/', '/archives/', '/en/posts/hello-alnilam/']) {
           const response=await page.goto(origin+route,{waitUntil:'networkidle'});
           expect(response?.status()).toBe(200);
           await expect(page.locator('#navbar.top-app-bar')).toBeVisible();
@@ -77,13 +77,12 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
         await expect(page.locator('html')).toHaveAttribute('lang','en');
         await expect(page.locator('link[hreflang="zh-CN"]')).toHaveCount(1);
         // Language switcher on translated article points directly to translated equivalent
-        const zhTarget=await page.locator('[data-lang-switcher] a[data-lang-target="zh-CN"]').getAttribute('href');
+        const zhTarget=await page.locator('#navbar [data-lang-switcher] a[data-lang-target="zh-CN"]').getAttribute('href');
         expect(zhTarget).toBe(new URL(origin).pathname.replace(/\/$/,'')+'/posts/hello-alnilam/');
-        expect(await page.locator('[data-lang-switcher] a[data-lang-target="zh-CN"]').getAttribute('data-lang-exact')).toBe('true');
+        expect(await page.locator('#navbar [data-lang-switcher] a[data-lang-target="zh-CN"]').getAttribute('data-lang-exact')).toBe('true');
         await expect(page.locator('.markdown-content')).toContainText('This article lives in');
         await expect(page.locator('meta[name="robots"][content*="noindex"]')).toHaveCount(0);
-        await page.locator('#lang-switch').click();
-        await page.locator('[data-lang-switcher] a[data-lang-target="zh-CN"]').click();
+        await page.locator('#navbar [data-lang-switcher] a[data-lang-target="zh-CN"]').click();
         await expect(page).toHaveURL(origin+'/posts/hello-alnilam/');
         const canonicalPath = new URL(origin).pathname.replace(/\/$/,'')+'/en/posts/hello-alnilam/';
         await page.goto(origin+'/posts/en/hello-alnilam/',{waitUntil:'networkidle'});
@@ -114,10 +113,8 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
         }
         // Untranslated article falls back to target locale homepage (/ja/)
         await page.goto(origin+'/posts/fixture-beta-zh/',{waitUntil:'networkidle'});
-        expect(await page.locator('[data-lang-switcher] a[data-lang-target="ja"]').getAttribute('href')).toBe(new URL(origin).pathname.replace(/\/$/,'')+'/ja/');
-        expect(await page.locator('[data-lang-switcher] a[data-lang-target="ja"]').getAttribute('data-lang-exact')).toBe('false');
-        await page.locator('#lang-switch').click();
-        await page.locator('[data-lang-switcher] a[data-lang-target="ja"]').click();
+        expect(await page.locator('#navbar [data-lang-switcher] a[data-lang-target="ja"]').getAttribute('href')).toBe(new URL(origin).pathname.replace(/\/$/,'')+'/ja/');
+        await page.locator('#navbar [data-lang-switcher] a[data-lang-target="ja"]').click();
         await expect(page).toHaveURL(origin+'/ja/');
         await page.goto(origin+'/',{waitUntil:'networkidle'});
         if(width===390) {

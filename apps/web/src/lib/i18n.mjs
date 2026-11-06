@@ -128,6 +128,10 @@ export function filterPostsByLocale(posts, locale, defaultLocale) {
  * Reciprocal hreflang alternates across locales that actually publish a given
  * logical route segment (e.g. `""`, `"posts"`, `"categories/guide"`).
  * Returns null when fewer than 2 locales publish the route.
+ *
+ * No `x-default` entry: on listing and taxonomy pages the default-locale link
+ * is already the fallback URL, and SEO-02 requires x-default to point at a real
+ * page without duplicating an existing alternate.
  */
 export function routeAlternates(activeLocales, defaultLocale, enabledLocales, segment = "") {
   const enabled = Array.isArray(enabledLocales) && enabledLocales.length > 0 ? new Set(enabledLocales) : null;
@@ -141,9 +145,6 @@ export function routeAlternates(activeLocales, defaultLocale, enabledLocales, se
   const map = new Map();
   for (const locale of ordered) {
     map.set(locale, localeRoutePath(locale, defaultLocale, segment));
-  }
-  if (map.has(defaultLocale)) {
-    map.set("x-default", map.get(defaultLocale));
   }
   return map;
 }

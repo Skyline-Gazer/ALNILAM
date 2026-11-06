@@ -91,7 +91,17 @@ export function getPostUrl(
 
 export function getTagUrl(tag: string): string {
 	if (!tag) return url("/tags/");
-	return url(`/tags/${encodeURIComponent(tag.trim())}/`);
+	// ALNILAM: catalog slugs win over raw label spellings, so a tag rendered as
+	// "Astro" resolves to the canonical /tags/astro/ route (and its localized
+	// variants) instead of a duplicate label-only route. The resolver is a
+	// DI boundary so the theme never imports the Site loader directly.
+	const slug = tagSlugResolver ? tagSlugResolver(tag.trim()) : tag.trim();
+	return url(`/tags/${encodeURIComponent(slug)}/`);
+}
+
+let tagSlugResolver: ((tag: string) => string) | undefined;
+export function setTagSlugResolver(resolver: (tag: string) => string): void {
+	tagSlugResolver = resolver;
 }
 
 export function getCategoryUrl(category: string | null): string {

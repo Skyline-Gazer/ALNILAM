@@ -221,7 +221,9 @@ const jsonLdTypes = (values) => values.map((value) => value?.["@type"]).filter(B
 for (const page of pages) {
   const ownUrl = norm(page.url);
   const types = jsonLdTypes(page.head.jsonLd);
-  const unlocalized = page.relative.replace(/^[a-z]{2}(?:-[A-Z]{2})?\//, "");
+  // Strip a leading BCP-47 locale segment (the Core's validated `lang`
+  // syntax: 2-3 language letters, optional region/script subtags).
+  const unlocalized = page.relative.replace(/^\/?[a-z]{2,3}(?:-[A-Za-z0-9]+)*\//, "");
   const isPost = selfCanonical.has(ownUrl) && unlocalized.startsWith("posts/") && !/^posts\/(?:\d+\/)?index\.html$/.test(unlocalized);
   if (unlocalized === "index.html") {
     if (!types.includes("WebSite")) fail(`${page.relative}: WebSite JSON-LD missing`);

@@ -146,8 +146,7 @@ test("localeRoutePath, postLocalSlug and routeAlternates follow ROUTE-01..06", (
   assert.deepEqual([...catAlts.entries()], [
     ["zh-CN", "/categories/guide/"],
     ["en", "/en/categories/guide/"],
-    ["x-default", "/categories/guide/"],
-  ]);
+  ], "listing pages omit x-default: the default-locale link is already the fallback");
   assert.equal(routeAlternates(["zh-CN"], "zh-CN", ["zh-CN", "en"], "categories/only-zh"), null);
 
   assert.equal(uiStrings("zh-CN").categories, "分类");

@@ -12,23 +12,18 @@ export async function getStaticPaths() {
   const { root, config } = loadSite();
   const taxonomy = loadSiteTaxonomy(root, config);
   const posts = await getCollection("posts", ({ data }) => !data.draft);
+  const canonicalTag = (tag: string) => canonicalTagSlug(tag, taxonomy.tags);
   const byTag = new Map<string, CollectionEntry<"posts">[]>();
   for (const post of posts) {
     for (const tag of post.data.tags) {
-      if (!byTag.has(tag)) byTag.set(tag, []);
-      byTag.get(tag)!.push(post);
+      const slug = canonicalTag(tag);
+      if (!byTag.has(slug)) byTag.set(slug, []);
+      byTag.get(slug)!.push(post);
     }
   }
   for (const entry of taxonomy.tags) {
-    const matchesEntry = (tag: string) =>
-      tag === entry.slug || tag === entry.id ||
-      tag.toLowerCase() === entry.slug || tag.toLowerCase() === entry.id ||
-      Object.values(entry.label).includes(tag);
-    const matching = posts.filter((post) => post.data.tags.some(matchesEntry));
-    if (matching.length > 0) {
-      for (const tag of byTag.keys()) {
-        if (matchesEntry(tag)) byTag.set(tag, matching);
-      }
+    const matching = posts.filter((post) => post.data.tags.some((tag) => canonicalTag(tag) === entry.slug));
+    if (matching.length > 0 && !byTag.has(entry.slug)) {
       byTag.set(entry.slug, matching);
     }
   }
@@ -40,6 +35,8 @@ export async function getStaticPaths() {
       tagLabels: Object.fromEntries(
         taxonomy.tags.map((entry) => [entry.slug, tagDisplayLabel(entry.slug, taxonomy.tags, config.site.locale)]),
       ),
+      // The default generator emits `/tags/<slug>/` for exactly these slugs,
+      // so the default-locale alternate is real for every localized route.
       activeLocales: [
         config.site.locale,
         ...config.locales.filter(

@@ -9,9 +9,16 @@ import {loadSite} from '../lib/site-source.mjs';
 import {websiteJsonLd} from '../lib/seo.mjs';
 const {config} = loadSite();
 const posts = (await getCollection('posts', ({data}) => !data.draft)).sort(comparePosts);
-const activeLocales = config.locales.filter((locale) =>
-  posts.some((post) => postLang(post, config.site.locale) === locale),
-);
+// The default homepage is always emitted; localized homepages exist only for
+// locales that publish at least one post.
+const activeLocales = [
+  config.site.locale,
+  ...config.locales.filter(
+    (locale) =>
+      locale !== config.site.locale &&
+      posts.some((post) => postLang(post, config.site.locale) === locale),
+  ),
+];
 const alts = routeAlternates(activeLocales, config.site.locale, config.locales, '');
 const alternates = alts
   ? [...alts].map(([lang, path]) => ({lang, href: canonicalUrl(path, config.site.url)}))

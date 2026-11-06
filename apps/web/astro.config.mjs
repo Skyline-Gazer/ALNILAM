@@ -150,21 +150,42 @@ export default defineConfig({
   vite: {
     // Publish only resolved values to Shirone's shared config module. Its browser
     // consumers must never import ALNILAM's Node-only YAML/filesystem loader.
-    plugins: [{
-      name: 'alnilam-shirone-site-values',
-      enforce: 'pre',
-      load(id) {
-        const clean = id.split('?')[0];
-        if (!clean || !path.isAbsolute(clean)) return;
-        try {
-          if (fs.realpathSync(clean) === userConfigTarget) {
-            return `export const userConfigOverrides = ${JSON.stringify(userConfigOverrides)};\nexport const userConfigSources = ${JSON.stringify(userConfigSources)};\nexport const siteAppearance = ${JSON.stringify(siteAppearance)};\nexport const siteLocales = ${JSON.stringify(siteLocales)};`;
+    plugins: [
+      {
+        name: 'alnilam-shirone-site-values',
+        enforce: 'pre',
+        load(id) {
+          const clean = id.split('?')[0];
+          if (!clean || !path.isAbsolute(clean)) return;
+          try {
+            if (fs.realpathSync(clean) === userConfigTarget) {
+              return `export const userConfigOverrides = ${JSON.stringify(userConfigOverrides)};\nexport const userConfigSources = ${JSON.stringify(userConfigSources)};\nexport const siteAppearance = ${JSON.stringify(siteAppearance)};\nexport const siteLocales = ${JSON.stringify(siteLocales)};`;
+            }
+          } catch {
+            return;
           }
-        } catch {
-          return;
-        }
+        },
       },
-    }],
+      {
+        // Side-effect module: registers the Site tag-catalog slug resolver so
+        // theme components emit canonical tag URLs without importing the
+        // Node-only Site loader.
+        name: 'alnilam-tag-resolver',
+        enforce: 'pre',
+        resolveId: (id) => (id === 'alnilam-tag-resolver' ? '\0alnilam-tag-resolver' : undefined),
+        load(id) {
+          if (id !== '\0alnilam-tag-resolver') return;
+          return [
+            `import { loadSite } from ${JSON.stringify(fileURLToPath(new URL("./src/lib/site-source.mjs", import.meta.url)))};`,
+            `import { loadSiteTaxonomy, canonicalTagSlug } from ${JSON.stringify(fileURLToPath(new URL("./src/lib/taxonomy.ts", import.meta.url)))};`,
+            `import { setTagSlugResolver } from ${JSON.stringify(fileURLToPath(new URL("../../themes/shirone/upstream/src/utils/url-utils.ts", import.meta.url)))};`,
+            `const { root, config } = loadSite();`,
+            `const taxonomy = loadSiteTaxonomy(root, config);`,
+            `setTagSlugResolver((tag) => canonicalTagSlug(tag, taxonomy.tags));`,
+          ].join("\n");
+        },
+      },
+    ],
     cacheDir: process.env.ALNILAM_VITE_CACHE || undefined,
   },
 });

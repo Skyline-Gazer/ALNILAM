@@ -15,7 +15,7 @@ import { siteConfig } from "@/config";
 import { navBarConfig } from "@/config/navBarConfig";
 import { siteLocales } from "../../user/user-config";
 
-let { lang, pathname }: { lang?: string; pathname: string } = $props();
+let { lang }: { lang?: string } = $props();
 const defaultLocale = siteConfig.lang.replaceAll("_", "-");
 let pageLocale = $state((lang || defaultLocale).replaceAll("_", "-"));
 let localizedRoute = $state(false);
@@ -25,7 +25,7 @@ function routeLocale(path: string): string | undefined {
 	const stripped = base && (path === base || path.startsWith(`${base}/`)) ? path.slice(base.length) : path;
 	return siteLocales.find((locale: string) => locale !== defaultLocale && (stripped === `/${locale}` || stripped.startsWith(`/${locale}/`)));
 }
-localizedRoute = routeLocale(pathname) === pageLocale && pageLocale !== defaultLocale;
+localizedRoute = false;
 
 function localizedHref(path?: string, external = false) {
 	if (!path || external) return path;
@@ -53,6 +53,48 @@ let activePrimary = $state("");
 const openGroups = $state<Record<string, boolean>>({});
 
 const links = resolveNavBarLinks(navBarConfig.links);
+
+const localeNames: Record<string, string> = {
+	"zh-CN": "中文",
+	en: "EN",
+	ja: "日本語",
+};
+// Language-switch targets reuse the same availability contract as TopAppBar:
+// a real translated entity when provided, otherwise the target locale homepage.
+// The switcher derives its targets on the client from the page hreflang links
+// (already serialized in <head>), keeping the serialized island payload tiny.
+let hydrated = $state(false);
+let pageAlternates = $state<Array<{ lang: string; href: string }> | undefined>(undefined);
+$effect(() => {
+	hydrated = true;
+	pageAlternates = [...document.head.querySelectorAll<HTMLLinkElement>('link[rel="alternate"][hreflang]')]
+		.map((link) => ({ lang: link.getAttribute("hreflang") ?? "", href: link.href }));
+});
+const languageSwitchTargets = $derived.by(() => {
+	const alts = pageAlternates ?? [];
+	return (siteLocales as string[])
+		.filter((locale: string) => locale !== pageLocale)
+		.map((locale: string) => {
+			const direct = alts.find((alt) => alt.lang === locale)?.href;
+			let href: string;
+			if (direct) {
+				try {
+					href = new URL(direct).pathname;
+				} catch {
+					href = direct;
+				}
+			} else {
+				href = url(locale === defaultLocale ? "/" : `/${locale}/`);
+			}
+			return {
+				locale,
+				label: localeNames[locale] ?? locale,
+				href,
+				active: locale === pageLocale,
+				exact: Boolean(direct),
+			};
+		});
+});
 
 const primaryItems = $derived(links.map((link) => {
 	const key = link.name.toLowerCase();
@@ -200,7 +242,13 @@ let drawerEl: HTMLElement | undefined = $state();
 					</a>
 				{/if}
 			{/each}
-
+			{#if hydrated && languageSwitchTargets.length > 0}
+				<div class="site-drawer__lang-row" data-lang-switcher>
+					{#each languageSwitchTargets as target (target.locale)}
+						<a href={target.href} data-lang-target={target.locale} data-lang-exact={target.exact ? "true" : "false"} class:site-drawer__lang-item--active={target.active} aria-current={target.active ? "true" : undefined} onclick={handleNavClick}>{target.label}</a>
+					{/each}
+				</div>
+			{/if}
 		</nav>
 	</aside>
 </div>
@@ -369,6 +417,31 @@ let drawerEl: HTMLElement | undefined = $state();
 		&--open
 			transform: rotate(180deg)
 
-	&__group-body
-		padding: 4px 0 8px
+	/* 语言切换：紧凑 pill 行，不占用可折叠分组 */
+	&__lang-row
+		display: flex
+		gap: var(--m3e-space-2)
+		padding: var(--m3e-space-2) var(--m3e-space-2) 0
+
+	&__lang-item
+		flex: 1
+		display: flex
+		align-items: center
+		justify-content: center
+		min-height: 40px
+		border-radius: var(--shape-corner-full)
+		color: var(--on-surface-variant)
+		font: var(--m3e-type-label-large)
+		text-decoration: none
+		background: var(--surface-container)
+		transition: background-color var(--m3e-duration-short) var(--m3e-easing-standard)
+		&:hover
+			background: unquote("color-mix(in oklab, var(--on-surface) 8%, transparent)")
+		&:focus-visible
+			outline: 2px solid var(--secondary)
+			outline-offset: -2px
+
+		&--active
+			background: var(--secondary-container)
+			color: var(--on-secondary-container)
 </style>
