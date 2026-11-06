@@ -219,9 +219,10 @@ for (const page of pages) {
 // 4. Structured data per page type, and every internal URL resolves.
 const jsonLdTypes = (values) => values.map((value) => value?.["@type"]).filter(Boolean);
 for (const page of pages) {
+  const ownUrl = norm(page.url);
   const types = jsonLdTypes(page.head.jsonLd);
   const unlocalized = page.relative.replace(/^[a-z]{2}(?:-[A-Z]{2})?\//, "");
-  const isPost = unlocalized.startsWith("posts/") && !/^posts\/(?:\d+\/)?index\.html$/.test(unlocalized);
+  const isPost = selfCanonical.has(ownUrl) && unlocalized.startsWith("posts/") && !/^posts\/(?:\d+\/)?index\.html$/.test(unlocalized);
   if (unlocalized === "index.html") {
     if (!types.includes("WebSite")) fail(`${page.relative}: WebSite JSON-LD missing`);
   }
