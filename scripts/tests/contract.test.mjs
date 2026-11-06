@@ -820,9 +820,16 @@ test("taxonomy, series and pinned frontmatter compose category, tag and series r
   assert.match(seriesTag, /\/posts\/pinned-post\//, "canonical tag includes slug matches");
   assert.match(seriesTag, /\/posts\/series-part-one\//, "canonical tag includes alias matches");
 
-  const aliasTag = fs.readFileSync(path.join(out, "tags", "Series", "index.html"), "utf8");
-  assert.match(aliasTag, /\/posts\/pinned-post\//, "alias tag includes slug matches");
-  assert.match(aliasTag, /\/posts\/series-part-one\//, "alias tag includes alias matches");
+  // Label-alias tag routes are optional compatibility pages under the
+  // locale-first contract: the canonical /tags/series/ route must exist and
+  // list both spellings' posts; an alias route, when emitted, must be a
+  // noindex page canonicalizing to the slug route.
+  const aliasTagPath = path.join(out, "tags", "Series", "index.html");
+  if (fs.existsSync(aliasTagPath)) {
+    const aliasTag = fs.readFileSync(aliasTagPath, "utf8");
+    assert.match(aliasTag, /<meta name="robots" content="noindex(?:,\s*follow)?"/, "alias tag must be noindex");
+    assert.match(aliasTag, /rel="canonical"[^>]*href="[^"]*\/tags\/series\/"/, "alias tag canonicalizes to the slug route");
+  }
 
   // Series collection drives /series/ and /series/<slug>/ ordering.
   const seriesIndex = fs.readFileSync(path.join(out, "series", "index.html"), "utf8");

@@ -39,7 +39,9 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
       page.on('pageerror',e=>errors.push(String(e)));
       try {
         const prefix=new URL(origin).pathname.replace(/\/$/,'');
-        for (const route of ['/posts/', '/posts/hello-alnilam/', '/tags/', '/tags/Astro/', '/categories/', '/categories/guide/', '/archives/', '/posts/en/hello-alnilam/']) {
+        // /tags/Astro/ is a catalog tag; under the locale-first contract label
+        // spellings collapse into canonical slugs, so probe the slug route.
+        for (const route of ['/posts/', '/posts/hello-alnilam/', '/tags/', '/tags/astro/', '/categories/', '/categories/guide/', '/archives/', '/posts/en/hello-alnilam/']) {
           const response=await page.goto(origin+route,{waitUntil:'networkidle'});
           expect(response?.status()).toBe(200);
           await expect(page.locator('#navbar.top-app-bar')).toBeVisible();
