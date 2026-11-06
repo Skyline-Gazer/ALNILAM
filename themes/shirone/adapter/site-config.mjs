@@ -10,6 +10,9 @@ export const userConfigOverrides = {
   site: {
     site: config.site.url, base, title: config.site.title,
     subtitle: config.site.description, lang: config.site.locale.replace('-', '_'),
+    // Build-time generated raster card; SVG covers fall back to this because
+    // social crawlers do not render SVG previews.
+    ogImage: '/og-default.png',
     themeColor: {hue: 315, fixed: true},
     wallpaperMode: {defaultMode: 'none'},
     banner: {src: {desktop: [], mobile: []}, homeText: {enable: false}},

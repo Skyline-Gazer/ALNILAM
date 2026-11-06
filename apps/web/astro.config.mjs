@@ -1,7 +1,10 @@
 import { defineConfig } from "astro/config";
 import svelte, {vitePreprocess} from "@astrojs/svelte";
 import mdx from "@astrojs/mdx";
+import sitemap from "@astrojs/sitemap";
 import shirones from "../../themes/shirone/upstream/src/integration/index.ts";
+import {createSeoInventory} from "./seo-inventory.mjs";
+import {sitemapCompat} from "./sitemap-compat.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
@@ -45,6 +48,9 @@ fs.promises.rename = async (oldPath, newPath) => {
  */
 
 const base = new URL(config.site.url).pathname.replace(/\/$/, "") || "/";
+// Reads the emitted HTML during astro:build:done; register it before the
+// sitemap integration so the sitemap sees the same canonical/hreflang facts.
+const seoInventory = createSeoInventory({ base });
 const shironeCacheDir =
   process.env.ALNILAM_SHIRONE_CACHE ||
   (process.env.ALNILAM_ASTRO_CACHE
@@ -57,6 +63,15 @@ export default defineConfig({
   // base so internal links and assets are prefixed correctly. Root-hosted
   // Sites (custom domains) get "/".
   base,
+  // Site config owns the locale set and the default-locale prefix policy;
+  // astro:i18n helpers compose /<locale>/ paths against `site` and `base`.
+  i18n: {
+    defaultLocale: config.site.locale,
+    locales: [...config.locales],
+    routing: {
+      prefixDefaultLocale: config.routing.prefixDefaultLocale,
+    },
+  },
   output: "static",
   outDir: process.env.ALNILAM_OUTPUT_DIR || "./dist",
   build: {
@@ -68,6 +83,7 @@ export default defineConfig({
   // (direct `pnpm dev`) keeps Astro's default location.
   cacheDir: process.env.ALNILAM_ASTRO_CACHE || undefined,
   integrations: [
+    seoInventory,
     shirones({
       bundledIntegrations: false,
       injectRoutes: false,
@@ -119,6 +135,14 @@ export default defineConfig({
         },
       },
     },
+    // Official sitemap: URL collection, chunking and XML escaping. Inclusion,
+    // lastmod and hreflang links come from the real emitted HTML above.
+    sitemap({
+      filter: (url) => seoInventory.filter(url),
+      serialize: (item) => seoInventory.serialize(item),
+    }),
+    // Older consumers read a single /sitemap.xml; mirror the official entries.
+    sitemapCompat(),
   ],
   // compose.mjs relocates Vite's dependency cache into the managed, Core-
   // revision-keyed build cache; stale optimized deps once served broken

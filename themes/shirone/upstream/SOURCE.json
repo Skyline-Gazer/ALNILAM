@@ -1947,7 +1947,7 @@
     "src/components/organisms/Search.svelte": "Preserve request ordering, Escape/focus restoration and remove listeners on unmount using native Search/Panel.",
     "src/components/organisms/Footer.astro": "Link to existing Core rss.xml/sitemap.xml; omit unimplemented Atom route.",
     "src/components/organisms/Profile.astro": "Use configured Site name for avatar fallback; disabled About module links home.",
-    "src/components/organisms/CategoryBar.astro": "Use existing plural /archives/ route and active-link matching; consolidate query-category highlight into Layout.",
+    "src/components/organisms/CategoryBar.astro": "ALNILAM addition: hide the category bar on category/tag detail routes using the base-stripped root-relative path; the upstream startsWith('/categories') check never matched under a nested base such as /ALNILAM/ (#124).",
     "src/config/integrationsConfig.ts": "Use installed Vite8 native Oxc/LightningCSS minifiers instead of forcing its optional esbuild peer in the target toolchain; minification remains enabled.",
     "src/integration/types.ts": "Add optional cache path override to ShironesPaths for Core-managed derived state isolation.",
     "src/integration/resolve/paths.ts": "Resolve cacheDir under Core-managed ALNILAM_SHIRONE_CACHE / ALNILAM_ASTRO_CACHE.",
@@ -1970,6 +1970,9 @@
     "src/components/molecules/SidebarTOC.astro": "Respect prefers-reduced-motion when scrolling to TOC anchors.",
     "src/styles/markdown/generic.styl": "Ensure unbroken prose URLs wrap and wide code/table blocks scroll horizontally within .custom-md.",
     "src/components/atoms/blog/PostCard.astro": "Allow long unbroken card titles to wrap within .m3-blog-postcard__title.",
-    "src/styles/transition.css": "Disable onload-animation initial translateY/opacity under prefers-reduced-motion and motion-reduced."
+    "src/styles/transition.css": "Disable onload-animation initial translateY/opacity under prefers-reduced-motion and motion-reduced.",
+    "src/utils/fancybox-handler.ts": "ALNILAM addition: syncArticleImageSrcTargets() mirrors syncImageGridLinkTargets() for bare article <img> triggers, syncing currentSrc to data-src on every init/doInit and Swup remount so the lightbox resolves the rendered asset address (#123).",
+    "src/styles/fancybox-custom.css": "ALNILAM addition: restore the missing .f-panzoom__wrapper.is-fullsize width/height that vendor v6.1.15 CSS omits; without it the Panzoom wrapper collapses to 0x0 inside the slide flex column and the lightbox renders an empty frame at scale(0) (#123).",
+    "src/components/organisms/ArchivePanel.svelte": "ALNILAM addition: SSR initial filter props (initialCategory/initialTag/initialUncategorized/initialGroupBy), explicit-params-only onMount override so detail routes without query keep their SSR filter, preScoped flag so host pages that pre-filter members (alias/series fallback) skip panel-side re-filtering, optional breadcrumb override, and categoryLabels/tagLabels display maps so localized names never participate in filter matching (#124)."
   }
 }

@@ -29,13 +29,50 @@ interface Post {
 	};
 }
 
-let { sortedPosts = [] as Post[] }: { sortedPosts?: Post[] } = $props();
+interface Breadcrumb {
+	href: string;
+	label: string;
+	value: string;
+}
 
-let category = $state("");
-let tag = $state("");
-let uncategorized = $state(false);
+interface Props {
+	sortedPosts?: Post[];
+	/** SSR 初始筛选：分类稳定键（slug/id）。仅预置，URL 显式参数仍可覆盖。 */
+	initialCategory?: string;
+	/** SSR 初始筛选：标签稳定键。 */
+	initialTag?: string;
+	/** SSR 初始筛选：仅未分类。 */
+	initialUncategorized?: boolean;
+	/** SSR 初始分组维度：year / category / tag。 */
+	initialGroupBy?: string;
+	/** 视图已由宿主页面预过滤（如分类/标签详情页）：面板跳过自身筛选，避免二次过滤致空。 */
+	preScoped?: boolean;
+	/** 定向视图面包屑覆盖；缺省时由当前筛选推导。 */
+	breadcrumb?: Breadcrumb | null;
+	/** 分类稳定键 → 本地化展示名（仅用于展示，绝不参与筛选匹配）。 */
+	categoryLabels?: Record<string, string>;
+	/** 标签稳定键 → 本地化展示名（仅用于展示）。 */
+	tagLabels?: Record<string, string>;
+}
+
+let {
+	sortedPosts = [] as Post[],
+	initialCategory = "",
+	initialTag = "",
+	initialUncategorized = false,
+	initialGroupBy = "year",
+	preScoped = false,
+	breadcrumb = null,
+	categoryLabels = {},
+	tagLabels = {},
+}: Props = $props();
+
+let category = $state(initialCategory);
+let tag = $state(initialTag);
+let uncategorized = $state(initialUncategorized);
 /** 分组维度（SegmentedButton 驱动）：year / category / tag，string 以匹配 bind:value */
-let groupBy = $state<string>("year");
+let groupBy = $state<string>(initialGroupBy);
+
 let restoredCollapsed = $state<Record<string, boolean> | undefined>(undefined);
 
 const COLLAPSED_STORAGE_KEY = "shirone:archive-collapsed";
@@ -70,8 +107,12 @@ function persistCollapsedState(next: Record<string, boolean>) {
 	}
 }
 
-/** 筛选头数据：类别（决定索引链接）+ 展示值；无筛选为 null */
-const filterCrumb = $derived.by(() => {
+/** 展示名：稳定键 → 本地化标签（缺省回退原始键）；仅用于展示，绝不参与筛选匹配 */
+const categoryDisplay = (key: string) => categoryLabels[key] ?? key;
+const tagDisplay = (key: string) => `#${tagLabels[key] ?? key}`;
+
+/** 筛选头数据：类别（决定索引链接）+ 展示值；无筛选为 null；宿主可提供面包屑覆盖 */
+const derivedCrumb = $derived.by(() => {
 	if (uncategorized) {
 		return {
 			href: url("/categories/"),
@@ -83,18 +124,19 @@ const filterCrumb = $derived.by(() => {
 		return {
 			href: url("/categories/"),
 			label: i18n(I18nKey.categories),
-			value: category,
+			value: categoryDisplay(category),
 		};
 	}
 	if (tag) {
 		return {
 			href: url("/tags/"),
 			label: i18n(I18nKey.tags),
-			value: `#${tag}`,
+			value: tagDisplay(tag),
 		};
 	}
 	return null;
 });
+const filterCrumb = $derived(breadcrumb ?? derivedCrumb);
 
 const groupOptions = [
 	{ value: "year", label: i18n(I18nKey.archiveGroupYear) },
@@ -102,14 +144,18 @@ const groupOptions = [
 	{ value: "tag", label: i18n(I18nKey.archiveGroupTag) },
 ];
 
-/** 筛选后的文章（分组维度与之正交，均在下方消费） */
+/** 筛选后的文章（分组维度与之正交，均在下方消费）；
+    preScoped 时宿主页面已按自身分类体系（别名/系列回退）完成成员筛选，
+    面板不再二次过滤，避免键口径不一致把非空成员集过滤成空 */
 const filtered = $derived(
-	sortedPosts.filter((p) => {
-		if (uncategorized && p.data.category) return false;
-		if (category && p.data.category !== category) return false;
-		if (tag && !p.data.tags.includes(tag)) return false;
-		return true;
-	}),
+	preScoped
+		? sortedPosts
+		: sortedPosts.filter((p) => {
+				if (uncategorized && p.data.category) return false;
+				if (category && p.data.category !== category) return false;
+				if (tag && !p.data.tags.includes(tag)) return false;
+				return true;
+			}),
 );
 
 function formatDate(date: Date) {
@@ -154,7 +200,12 @@ const groups = $derived.by((): ArchiveGroup[] => {
 	}
 	const list = [...buckets.entries()].map(([id, items]) => ({
 		id,
-		title: id,
+		title:
+			groupBy === "tag"
+				? tagDisplay(id.slice(1))
+				: groupBy === "category"
+					? (categoryLabels[id] ?? id)
+					: id,
 		items,
 	}));
 	if (groupBy === "year") {
@@ -167,9 +218,11 @@ const groups = $derived.by((): ArchiveGroup[] => {
 
 onMount(() => {
 	const params = new URLSearchParams(window.location.search);
-	category = params.get("category") || "";
-	tag = params.get("tag") || "";
-	uncategorized = params.has("uncategorized");
+	// 仅当对应键显式出现在 URL 中才覆盖：详情路由（无 query）保持
+	// SSR 传入的初始筛选，而不是被重置为空。`?category=` 等定向浏览行为不变。
+	if (params.has("category")) category = params.get("category") ?? "";
+	if (params.has("tag")) tag = params.get("tag") ?? "";
+	if (params.has("uncategorized")) uncategorized = true;
 	readCollapsedState();
 });
 

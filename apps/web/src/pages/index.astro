@@ -4,6 +4,9 @@ import MainGridLayout from '@alnilam/theme-shirone/MainGridLayout.astro';
 import PostPage from '@alnilam/theme-shirone/PostPage.astro';
 import {getCollection} from 'astro:content';
 import {comparePosts} from '../lib/taxonomy';
+import {canonicalUrl} from '../lib/i18n.mjs';
+import {loadSite} from '../lib/site-source.mjs';
+import {websiteJsonLd} from '../lib/seo.mjs';
 const posts = (await getCollection('posts', ({data}) => !data.draft)).sort(comparePosts);
 const latest = posts.slice(0, 5);
 const page = {
@@ -16,8 +19,17 @@ const page = {
   end: Math.max(0, latest.length - 1),
   url: { current: '/', prev: undefined, next: undefined, first: undefined, last: undefined },
 };
+const {config} = loadSite();
+// The site root is the one page that describes the Site itself.
+const jsonLd = websiteJsonLd({
+  name: config.site.title,
+  description: config.site.description,
+  url: canonicalUrl('/', config.site.url),
+  inLanguage: config.site.locale,
+});
 ---
 <MainGridLayout page="home">
+  <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   <h1 class="sr-only">最近文章</h1>
   <PostPage page={page} />
 </MainGridLayout>

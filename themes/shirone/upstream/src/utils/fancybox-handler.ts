@@ -50,12 +50,31 @@ export class FancyboxHandler {
 		if (this.boundSelectors.length > 0) {
 			return;
 		}
-
+		this.syncArticleImageSrcTargets();
 		this.syncImageGridLinkTargets();
 		this.bindSelectors();
 		this.initialized = true;
 		// 供测试与外部脚本等待绑定就绪的稳定契约（cleanup 时移除）
 		document.documentElement.dataset.fancyboxReady = "true";
+	}
+
+	/**
+	 * 对齐文章图片的灯箱目标地址。
+	 * 正文图片是裸 <img>，Fancybox 解析幻灯片地址时依次读取
+	 * data-src、href、currentSrc「属性」与 src 属性；其中 currentSrc 是 DOM
+	 * 属性而非 HTML 属性，getAttribute("currentSrc") 恒为空。这里把渲染后的
+	 * 真实地址（currentSrc，响应式资源下与 src 属性不同）同步到 data-src，
+	 * 确保灯箱始终读取最终地址。每次 init/doInit 与 Swup 重新挂载都会执行。
+	 */
+	private syncArticleImageSrcTargets(): void {
+		for (const img of document.querySelectorAll<HTMLImageElement>(
+			FANCYBOX_SELECTORS.articleImages,
+		)) {
+			const target = img.currentSrc || img.src;
+			if (target && img.dataset.src !== target) {
+				img.dataset.src = target;
+			}
+		}
 	}
 
 	/**

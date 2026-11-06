@@ -86,7 +86,7 @@ for (const origin of origins)
         const tag = page.locator('main a[href*="/tags/"]').first();
         await expect(tag).toBeVisible();
         await tag.click();
-        await expect(page.locator(".m3-blog-postcard").first()).toBeVisible();
+        await expect(page.locator(".m3-blog-archive__item").first()).toBeVisible();
         await sample("tags");
         if (width === 390) {
           await page.locator("#search-switch").click();

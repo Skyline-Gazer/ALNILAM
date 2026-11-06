@@ -32,6 +32,11 @@ const EXPECTED_TOTAL = 23;
 const EXPECTED_PAGES = 5;
 
 const read = (out, rel) => fs.readFileSync(path.join(out, rel), "utf8");
+/** Concatenate the official sitemap chunks referenced by sitemap-index.xml. */
+const readSitemap = (out) =>
+  [...read(out, "sitemap-index.xml").matchAll(/<loc>([^<]+)<\/loc>/g)]
+    .map((match) => read(out, new URL(match[1]).pathname.replace(/^\//, "")))
+    .join("\n");
 /** Unique, non-pagination post links (zh slugs or "<lang>/<slug>"). */
 const postLinks = (html) =>
   [...new Set(
@@ -124,7 +129,9 @@ test("draft posts are excluded from every list, route and feed", (t) => {
     "tags/index.html",
     "tags/alnilam/index.html",
     "rss.xml",
-    "sitemap.xml",
+    "en/rss.xml",
+    "ja/rss.xml",
+    "sitemap-index.xml",
   ];
   for (const rel of surfaces) {
     assert.ok(!read(out, rel).includes("draft-preview"), `draft must not leak into ${rel}`);
@@ -141,6 +148,11 @@ test("category index and detail render catalog labels and locale-filtered member
   const guide = read(out, "categories/guide/index.html");
   assert.match(guide, /<title>指南 - Content Model<\/title>/);
   assert.match(guide, /<link rel="canonical" href="https:\/\/content-model\.example\.com\/categories\/guide\/">/);
+  // Detail routes render the Shirone ArchivePanel timeline, not a postcard grid:
+  // SSR markup carries archive items and the crumb shows the localized label.
+  assert.match(guide, /m3-blog-archive__item/, "category detail must render the archive timeline");
+  assert.ok(guide.includes("archive-panel"), "category detail must mount the ArchivePanel island");
+  assert.ok(!guide.includes("m3-blog-postcard"), "category detail must not render postcards");
   const guideMembers = postLinks(guide);
   assert.ok(guideMembers.includes("pinned-announcement"), "zh members are listed: " + guideMembers.join(","));
   assert.ok(guideMembers.includes("en/hello-content-model"), "en members are listed: " + guideMembers.join(","));
@@ -161,12 +173,16 @@ test("tag index and detail render localized labels across locales", (t) => {
   }
   const i18nTag = read(out, "tags/i18n/index.html");
   assert.match(i18nTag, /<title>#国际化 - Content Model<\/title>/, "tag detail uses the localized zh-CN catalog label");
+  assert.match(i18nTag, /m3-blog-archive__item/, "tag detail must render the archive timeline");
+  assert.ok(i18nTag.includes("archive-panel"), "tag detail must mount the ArchivePanel island");
+  assert.ok(!i18nTag.includes("m3-blog-postcard"), "tag detail must not render postcards");
   const members = postLinks(i18nTag);
   assert.ok(members.includes("hello-content-model"), "zh posts match: " + members.join(","));
   assert.ok(members.includes("en/hello-content-model"), "en posts match: " + members.join(","));
   assert.ok(members.includes("ja/hello-content-model"), "ja posts match: " + members.join(","));
   const paginationTag = read(out, "tags/pagination/index.html");
   assert.match(paginationTag, /<title>#分页 - Content Model<\/title>/, "taxonomy.yaml tag labels are localized too");
+  assert.match(paginationTag, /m3-blog-archive__item/, "taxonomy.yaml-only tag renders the timeline too");
   assert.ok(postLinks(paginationTag).includes("pinned-announcement"));
 });
 
@@ -214,7 +230,7 @@ test("translationKey groups render hreflang alternates plus self-canonical on ar
       );
     }
   }
-  const sitemap = read(out, "sitemap.xml");
+  const sitemap = readSitemap(out);
   for (const href of Object.values(expected)) {
     assert.match(
       sitemap,
@@ -251,15 +267,12 @@ test("artifact budgets: exactly the recorded unpaginated-listing page-weight bre
     assert.match(failure, /^(\S+): HTML [\d.]+ KiB exceeds 64 KiB budget$/, `unexpected budget failure: ${failure}`);
   }
   // Locale-scoped pagination for unpaginated listing routes is later-phase
-  // scope (#63/#65); until then exactly these routes exceed 64 KiB at this
-  // fixture volume. A new or removed breach must update this list explicitly.
+  // scope (#63/#65); until then exactly this route exceeds 64 KiB at this
+  // fixture volume. Category/tag detail routes left the breach list when they
+  // switched from PostPage grids to the lighter ArchivePanel timeline (#124).
+  // A new or removed breach must update this list explicitly.
   const expectedBreaches = [
     "archives/index.html",
-    "categories/guide/index.html",
-    "categories/notes/index.html",
-    "tags/alnilam/index.html",
-    "tags/i18n/index.html",
-    "tags/series/index.html",
   ];
   assert.deepEqual(
     recorded.map((line) => line.split(": ")[0]).sort(),
