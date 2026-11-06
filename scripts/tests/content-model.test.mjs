@@ -20,16 +20,21 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { validateSiteRoot } from "../site-contract.mjs";
 
-// Resolve the fixture and compose script from the working tree, like the other
-// contract tests: the trusted gate copies this test file into a harness and
-// runs it with cwd = the candidate checkout, where only cwd-relative paths
-// exist (the harness has no tests/fixtures or scripts/compose.mjs).
+// The candidate supplies product code; the target supplies immutable test fixtures.
 const REPO = process.cwd();
-const FIXTURE = path.join(REPO, "tests/fixtures/content-model-site");
+const FIXTURE = path.join(process.env.CNB_TRUSTED_TEST_ROOT || REPO, "tests/fixtures/content-model-site");
 
-// 13 published zh + 6 en + 4 ja = 23 published posts; page size 5 → 5 pages.
-const EXPECTED_TOTAL = 23;
-const EXPECTED_PAGES = 5;
+// Counts come from the target-owned fixture, so adding an article or draft
+// cannot silently weaken the pagination assertions.
+const FIXTURE_PAGE_SIZE = 5;
+const fixturePosts = fs.globSync("content/posts/**/*.md", { cwd: FIXTURE });
+const EXPECTED_TOTAL = fixturePosts.filter((rel) => {
+  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(
+    fs.readFileSync(path.join(FIXTURE, rel), "utf8"),
+  )?.[1] ?? "";
+  return !/^draft:\s*true\s*$/m.test(frontmatter);
+}).length;
+const EXPECTED_PAGES = Math.ceil(EXPECTED_TOTAL / FIXTURE_PAGE_SIZE);
 
 const read = (out, rel) => fs.readFileSync(path.join(out, rel), "utf8");
 /** Concatenate the official sitemap chunks referenced by sitemap-index.xml. */
@@ -37,13 +42,11 @@ const readSitemap = (out) =>
   [...read(out, "sitemap-index.xml").matchAll(/<loc>([^<]+)<\/loc>/g)]
     .map((match) => read(out, new URL(match[1]).pathname.replace(/^\//, "")))
     .join("\n");
-/** Unique, non-pagination post links (zh slugs or "<lang>/<slug>"). */
+/** Unique article links, normalized to the fixture's locale/slug IDs. */
 const postLinks = (html) =>
-  [...new Set(
-    [...html.matchAll(/href="\/posts\/([a-zA-Z0-9-]+(?:\/[a-zA-Z0-9-]+)?)\/"/g)]
-      .map((m) => m[1])
-      .filter((slug) => !/^\d+$/.test(slug)),
-  )];
+  [...new Set([...html.matchAll(/href="\/(?:([a-z]{2}(?:-[A-Z]{2})?)\/)?posts\/([^"?#]+)\/"/g)]
+    .map(([, locale, slug]) => locale ? `${locale}/${slug}` : slug)
+    .filter((slug) => !/^\d+$/.test(slug)))];
 
 const ctx = {};
 
@@ -206,16 +209,23 @@ test("series catalog drives the series index and orders detail members by series
 
 test("translationKey groups render hreflang alternates plus self-canonical on articles and in the sitemap", (t) => {
   const { out } = ctx;
-  const expected = {
-    "zh-CN": "https://content-model.example.com/posts/hello-content-model/",
-    en: "https://content-model.example.com/posts/en/hello-content-model/",
-    ja: "https://content-model.example.com/posts/ja/hello-content-model/",
-  };
-  for (const [rel, self] of [
-    ["posts/hello-content-model/index.html", expected["zh-CN"]],
-    ["posts/en/hello-content-model/index.html", expected.en],
-    ["posts/ja/hello-content-model/index.html", expected.ja],
-  ]) {
+  const expected = { "zh-CN": "https://content-model.example.com/posts/hello-content-model/" };
+  for (const lang of ["en", "ja"]) {
+    const legacy = `posts/${lang}/hello-content-model/index.html`;
+    const modern = `${lang}/posts/hello-content-model/index.html`;
+    const canonical = fs.existsSync(path.join(out, modern)) ? modern : legacy;
+    expected[lang] = `https://content-model.example.com/${canonical.replace(/index\.html$/, "")}`;
+    if (canonical === modern) {
+      assert.ok(fs.existsSync(path.join(out, legacy)), "legacy compatibility route must stay reachable");
+      const legacyHtml = read(out, legacy);
+      assert.match(legacyHtml, /<meta name="robots" content="noindex(?:,\s*follow)?"/);
+      assert.ok(legacyHtml.includes(`href="${expected[lang]}"`), "legacy route points to canonical article");
+      const legacySitemap = readSitemap(out);
+      assert.ok(!legacySitemap.includes(`https://content-model.example.com/posts/${lang}/hello-content-model/`),
+        "legacy alias must stay out of the sitemap");
+    }
+  }
+  for (const [rel, self] of Object.values(expected).map((url) => [new URL(url).pathname.slice(1) + "index.html", url])) {
     const html = read(out, rel);
     assert.match(
       html,

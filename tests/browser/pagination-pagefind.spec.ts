@@ -86,10 +86,12 @@ for (const [name, origin] of deployments) {
 		const page = await context.newPage();
 		// Search from the en post itself so the locale context is en.
 		await page.goto(`${origin}/posts/en/pagination-sample/`, { waitUntil: "networkidle" });
+		const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
+		await page.goto(new URL(canonical!).pathname.replace(new URL(origin).pathname.replace(/\/$/, ""), origin), { waitUntil: "networkidle" });
 
 		const input = await openSearch(page, "desktop");
 		const href = await searchAndClickFirstResult(page, input, "comet-locator");
-		expect(href).toContain("en/pagination-sample");
+		expect(new URL(href!, origin).pathname).toBe(new URL(canonical!).pathname);
 		await expect(page.locator("main h1")).toBeVisible();
 		await context.close();
 	});
@@ -98,6 +100,8 @@ for (const [name, origin] of deployments) {
 		const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
 		const page = await context.newPage();
 		await page.goto(`${origin}/posts/ja/pagination-sample/`, { waitUntil: "networkidle" });
+		const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
+		await page.goto(new URL(canonical!).pathname.replace(new URL(origin).pathname.replace(/\/$/, ""), origin), { waitUntil: "networkidle" });
 
 		const input = await openSearch(page, "mobile");
 		// Pagefind's ja wasm segments standard words; ほしぞろ手帖-style

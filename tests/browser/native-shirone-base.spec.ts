@@ -38,14 +38,25 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
       const page=await context.newPage(); const errors:string[]=[]; const checkedLinks=new Set<string>();
       page.on('pageerror',e=>errors.push(String(e)));
       try {
+        const prefix=new URL(origin).pathname.replace(/\/$/,'');
         for (const route of ['/posts/', '/posts/hello-alnilam/', '/tags/', '/tags/Astro/', '/categories/', '/categories/guide/', '/archives/', '/posts/en/hello-alnilam/']) {
           const response=await page.goto(origin+route,{waitUntil:'networkidle'});
           expect(response?.status()).toBe(200);
           await expect(page.locator('#navbar.top-app-bar')).toBeVisible();
           await expect(page.locator('#main-grid')).toBeVisible();
           await expect(page.locator('h1')).toHaveCount(1);
-          // Compatible self-canonical page; label variants are noindex duplicates.
-          expect(await page.locator('link[rel="canonical"]').getAttribute('href')).toBe('https://example.com'+new URL(origin).pathname.replace(/\/$/,'')+route);
+          // The route may be the canonical article (legacy layout) or a
+          // noindex compatibility alias for the locale-first layout. Either
+          // way its canonical must name a real, self-consistent page.
+          const canonical=await page.locator('link[rel="canonical"]').getAttribute('href');
+          expect(canonical).toBeTruthy();
+          expect(canonical!.startsWith('https://example.com'+prefix+'/')).toBe(true);
+          const canonicalLocal=new URL(new URL(canonical!).pathname,origin).href;
+          if(canonicalLocal!==origin+route) {
+            expect((await page.goto(canonicalLocal,{waitUntil:'networkidle'}))?.status()).toBe(200);
+            await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href',canonical!);
+            await expect(page.locator('h1')).toHaveCount(1);
+          }
           expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
           const hrefs=await page.locator('a[href^="/"]').evaluateAll(links=>links.map(link=>(link as HTMLAnchorElement).href));
           for(const href of new Set(hrefs)) {
