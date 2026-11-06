@@ -148,37 +148,6 @@ export function routeAlternates(activeLocales, defaultLocale, enabledLocales, se
   return map;
 }
 
-/**
- * Resolve where a language switcher should navigate when switching from the
- * current page to `targetLocale` (ROUTE-05):
- * - If the current entity (article, category, tag, listing) exists in
- *   `targetLocale` inside `entityAlternates`, navigate directly to it.
- * - Otherwise use an available target-locale listing or homepage. Return null
- *   when neither exists, so the caller can omit the unavailable locale.
- */
-export function resolveLanguageSwitchTarget({
-  targetLocale,
-  defaultLocale,
-  entityAlternates,
-  fallbackSegment = "",
-  availableFallbackLocales = [],
-  availableHomeLocales = [],
-}) {
-  if (entityAlternates && typeof entityAlternates.get === "function") {
-    const direct = entityAlternates.get(targetLocale);
-    if (direct) return direct.endsWith("/") ? direct : `${direct}/`;
-  } else if (Array.isArray(entityAlternates)) {
-    const found = entityAlternates.find((item) => item.lang === targetLocale);
-    if (found?.href) return found.href;
-  }
-  if (fallbackSegment && availableFallbackLocales.includes(targetLocale)) {
-    return localeRoutePath(targetLocale, defaultLocale, fallbackSegment);
-  }
-  return targetLocale === defaultLocale || availableHomeLocales.includes(targetLocale)
-    ? localeRoutePath(targetLocale, defaultLocale, "")
-    : null;
-}
-
 const UI_STRINGS = {
   "zh-CN": {
     recentPosts: "最近文章",

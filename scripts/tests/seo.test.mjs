@@ -10,7 +10,6 @@ import {
   localeRoutePath,
   postLocalSlug,
   postPath,
-  resolveLanguageSwitchTarget,
   routeAlternates,
   translationAlternates,
   uiStrings,
@@ -131,7 +130,7 @@ test("the sitemap inventory reads the same head facts the pages publish", () => 
   assert.equal(head.lastmod, "2026-02-01T00:00:00.000Z");
 });
 
-test("localeRoutePath, postLocalSlug, routeAlternates and resolveLanguageSwitchTarget follow ROUTE-01..06", () => {
+test("localeRoutePath, postLocalSlug and routeAlternates follow ROUTE-01..06", () => {
   assert.equal(localeRoutePath("zh-CN", "zh-CN", ""), "/");
   assert.equal(localeRoutePath("zh-CN", "zh-CN", "categories/guide"), "/categories/guide/");
   assert.equal(localeRoutePath("en", "zh-CN", ""), "/en/");
@@ -150,31 +149,6 @@ test("localeRoutePath, postLocalSlug, routeAlternates and resolveLanguageSwitchT
     ["x-default", "/categories/guide/"],
   ]);
   assert.equal(routeAlternates(["zh-CN"], "zh-CN", ["zh-CN", "en"], "categories/only-zh"), null);
-
-  // Direct entity translation exists -> navigate to translated entity
-  assert.equal(
-    resolveLanguageSwitchTarget({
-      targetLocale: "en",
-      defaultLocale: "zh-CN",
-      entityAlternates: new Map([["zh-CN", "/posts/hello"], ["en", "/en/posts/hello"]]),
-    }),
-    "/en/posts/hello/",
-  );
-  // Missing translation -> fall back to target locale homepage, never fabricate URL
-  assert.equal(
-    resolveLanguageSwitchTarget({
-      targetLocale: "ja",
-      defaultLocale: "zh-CN",
-      entityAlternates: [{ lang: "zh-CN", href: "/posts/hello/" }, { lang: "en", href: "/en/posts/hello/" }],
-      availableHomeLocales: ["ja"],
-    }),
-    "/ja/",
-  );
-  assert.equal(
-    resolveLanguageSwitchTarget({ targetLocale: "ja", defaultLocale: "zh-CN", availableHomeLocales: ["en"] }),
-    null,
-    "a missing locale homepage must not become a switch target",
-  );
 
   assert.equal(uiStrings("zh-CN").categories, "分类");
   assert.equal(uiStrings("en").categories, "Categories");

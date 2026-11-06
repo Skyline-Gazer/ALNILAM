@@ -1,5 +1,24 @@
 import {test, expect} from '@playwright/test';
 for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM']) {
+  test(`locale navigation boundaries ${new URL(origin).pathname}`, async ({page}) => {
+    const base = new URL(origin).pathname.replace(/\/$/, '');
+    await page.goto(origin + '/en', {waitUntil:'networkidle'});
+    const nav = page.locator('#navbar nav[aria-label="Main navigation"]');
+    await expect(nav.locator('[data-nav-key="posts"]')).toHaveAttribute('href', base + '/en/posts/');
+    await expect(nav.locator('[data-nav-key="posts"]')).toHaveText('Posts');
+    for (const [route, active] of [
+      ['/en', 'home'], ['/en/posts/', 'posts'], ['/xx', ''],
+      ['/xx/posts/', ''], ['/enough/posts/', ''],
+    ]) {
+      await page.evaluate((path) => {
+        history.replaceState(null, '', path);
+        dispatchEvent(new PopStateEvent('popstate'));
+      }, base + route);
+      const activeLinks = nav.locator('[data-nav-key][aria-current="page"]');
+      if (active) await expect(activeLinks).toHaveAttribute('data-nav-key', active);
+      else await expect(activeLinks).toHaveCount(0);
+    }
+  });
   for (const width of [1440,390]) {
     test(`pinned native Shirone Base ${new URL(origin).pathname} ${width}`, async ({browser}, info) => {
       const context=await browser.newContext({viewport:{width,height:1000},reducedMotion:'reduce'});

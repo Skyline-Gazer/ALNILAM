@@ -1,11 +1,10 @@
 ---
 interface Props {
 	class: string;
-	noindex?: boolean;
 }
-const { class: className, noindex } = Astro.props;
+const { class: className } = Astro.props;
 ---
-<div data-pagefind-body={noindex ? undefined : ""} class={`prose dark:prose-invert prose-base !max-w-none custom-md markdown-content ${className}`}>
+<div data-pagefind-body class={`prose dark:prose-invert prose-base !max-w-none custom-md markdown-content ${className}`}>
 	<slot />
 </div>
 

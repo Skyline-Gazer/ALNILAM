@@ -12,6 +12,7 @@ import { i18n } from "@i18n/translation";
 import Icon from "@iconify/svelte";
 import { getCategoryList } from "@utils/content-utils";
 import { pathsEqual, url } from "@utils/url-utils";
+import { siteLocales } from "../../user/user-config";
 
 interface Props {
 	/** 文章页所属分类名：非首页/归档时对该分类做弱高亮 */
@@ -44,7 +45,10 @@ const rootRelativePath =
 	normalizedBase !== "/" && pathname.startsWith(normalizedBase)
 		? pathname.slice(normalizedBase.length - 1)
 		: pathname;
-const unlocalizedPath = rootRelativePath.replace(/^\/[a-z]{2}(?:-[A-Z]{2})?(?=\/|$)/, "") || "/";
+const firstSegment = rootRelativePath.split("/")[1];
+const unlocalizedPath = siteLocales.includes(firstSegment)
+	? rootRelativePath.slice(firstSegment.length + 1) || "/"
+	: rootRelativePath;
 const hideOnTaxonomy =
 	unlocalizedPath.startsWith("/categories") || unlocalizedPath.startsWith("/tags");
 

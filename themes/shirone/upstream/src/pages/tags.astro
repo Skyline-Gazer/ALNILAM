@@ -19,7 +19,7 @@ const {
 	lang,
 	alternates,
 } = Astro.props as {
-	tags?: Array<{ name: string; count: number; url?: string }>;
+	tags?: Array<{ name: string; count: number; url: string }>;
 	lang?: string;
 	alternates?: Array<{ lang: string; href: string }>;
 };
@@ -40,7 +40,7 @@ const tagSummary = `${tags.length} ${t(I18nKey.tagsCount)} · ${totalPosts} ${t(
 			<div class="tag-index__cloud">
 				{tags.map((tag) => (
 					<Chip
-						href={tag.url ?? getTagUrl(tag.name)}
+						href={"url" in tag ? tag.url : getTagUrl(tag.name)}
 						variant="tonal"
 						class="tag-index__chip"
 						label={`View all posts with the ${tag.name} tag`}

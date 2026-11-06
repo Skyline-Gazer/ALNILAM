@@ -31,12 +31,14 @@ const {
 const defaultLocale = siteConfig.lang.replace("_", "-");
 const pageLocale = (lang || defaultLocale).replace("_", "-");
 const rawBase = import.meta.env?.BASE_URL ?? "/";
+const base = rawBase.replace(/\/+$/, "");
 const strippedPath =
-	rawBase !== "/" && Astro.url.pathname.startsWith(rawBase.replace(/\/+$/, ""))
-		? Astro.url.pathname.slice(rawBase.replace(/\/+$/, "").length) || "/"
+	base && (Astro.url.pathname === base || Astro.url.pathname.startsWith(`${base}/`))
+		? Astro.url.pathname.slice(base.length) || "/"
 		: Astro.url.pathname;
 const isLocalizedRoute =
-	pageLocale !== defaultLocale && strippedPath.startsWith(`/${pageLocale}/`);
+	pageLocale !== defaultLocale &&
+	(strippedPath === `/${pageLocale}` || strippedPath.startsWith(`/${pageLocale}/`));
 const t = (key: I18nKey) => getTranslation(pageLocale.replace("-", "_"))[key];
 const localePrefix = isLocalizedRoute ? `/${pageLocale}` : "";
 const links = resolveNavBarLinks(navBarConfig.links);
