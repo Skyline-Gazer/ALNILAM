@@ -1,4 +1,5 @@
 import type { NavBarLink } from "@/types/navBarConfig";
+import { siteLocales } from "../user/user-config";
 
 export type ResolvedNavBarLink = Omit<NavBarLink, "children"> & {
 	children?: ResolvedNavBarLink[];
@@ -67,12 +68,14 @@ export function resolvePageKey(
 	const normalizedBase = rawBase.endsWith("/") ? rawBase : `${rawBase}/`;
 	let pathname = url.pathname.replace(/\/+$/, "") || "/";
 
-	if (
-		normalizedBase !== "/" &&
-		pathname.startsWith(rawBase.replace(/\/+$/, ""))
-	) {
-		pathname = pathname.slice(rawBase.replace(/\/+$/, "").length);
-		pathname = pathname.replace(/\/+$/, "") || "/";
+	const base = normalizedBase.replace(/\/+$/, "");
+	if (base && (pathname === base || pathname.startsWith(`${base}/`))) {
+		pathname = pathname.slice(base.length) || "/";
+	}
+
+	const firstSegment = pathname.split("/")[1];
+	if (siteLocales.includes(firstSegment)) {
+		pathname = pathname.slice(firstSegment.length + 1) || "/";
 	}
 
 	if (pathname === "/") return "home";

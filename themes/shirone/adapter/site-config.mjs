@@ -48,3 +48,4 @@ export const userConfigOverrides = {
 export const userConfigSources = ['alnilam.config.yaml (validated, read-only)'];
 
 export const siteAppearance = config.theme.appearance;
+export const siteLocales = [...config.locales];

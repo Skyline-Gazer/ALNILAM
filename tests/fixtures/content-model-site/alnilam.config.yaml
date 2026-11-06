@@ -8,6 +8,7 @@ locales:
   - zh-CN
   - en
   - ja
+  - fr
 theme:
   appearance: dark
 categories:
@@ -17,6 +18,10 @@ categories:
       zh-CN: 指南
       en: Guide
       ja: ガイド
+  - id: ja-series-only
+    slug: ja-series-only
+    label:
+      ja: シリーズ限定
 tags:
   - id: alnilam
     slug: alnilam

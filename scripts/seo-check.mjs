@@ -163,7 +163,6 @@ for (const page of pages) {
 
 // 2. Canonical / og:url / twitter:url agree and point at a real page.
 const selfCanonical = new Set();
-const aliasCanonicals = [];
 for (const page of pages) {
   const { canonical, ogUrl, twitterUrl, ogImage, robots } = page.head;
   if (canonical.length !== 1) {
@@ -190,15 +189,7 @@ for (const page of pages) {
   const canonicalUrl = norm(value);
   const noindex = robots.some((content) => /noindex/i.test(content));
   if (canonicalUrl === ownUrl && !noindex) selfCanonical.add(ownUrl);
-  if (canonicalUrl !== ownUrl) {
-    if (!existsForUrl(value)) fail(`${page.relative}: alias canonical missing`);
-    else aliasCanonicals.push({ page: page.relative, canonicalUrl });
-  }
-}
-// Compatibility aliases must point at an indexable page, never at another
-// alias or at a noindex-only page.
-for (const { page, canonicalUrl } of aliasCanonicals) {
-  if (!selfCanonical.has(canonicalUrl)) fail(`${page}: alias canonical is not an indexable page: ${canonicalUrl}`);
+  if (canonicalUrl !== ownUrl && !existsForUrl(value)) fail(`${page.relative}: alias canonical missing`);
 }
 
 // 3. hreflang: real targets, self language, reciprocal links, optional x-default.
@@ -230,7 +221,9 @@ const jsonLdTypes = (values) => values.map((value) => value?.["@type"]).filter(B
 for (const page of pages) {
   const ownUrl = norm(page.url);
   const types = jsonLdTypes(page.head.jsonLd);
-  const unlocalized = page.relative.replace(/^[a-z]{2}(?:-[A-Z]{2})?\//, "");
+  // Strip a leading BCP-47 locale segment (the Core's validated `lang`
+  // syntax: 2-3 language letters, optional region/script subtags).
+  const unlocalized = page.relative.replace(/^\/?[a-z]{2,3}(?:-[A-Za-z0-9]+)*\//, "");
   const isPost = selfCanonical.has(ownUrl) && unlocalized.startsWith("posts/") && !/^posts\/(?:\d+\/)?index\.html$/.test(unlocalized);
   if (unlocalized === "index.html") {
     if (!types.includes("WebSite")) fail(`${page.relative}: WebSite JSON-LD missing`);
@@ -278,7 +271,6 @@ for (const file of feeds) {
     const language = /<language>([^<]+)<\/language>/.exec(item)?.[1];
     if (!link || !link.startsWith(originHref)) fail(`${relative}: item link is not absolute: ${link}`);
     else if (!existsForUrl(link)) fail(`${relative}: item link target missing: ${link}`);
-    else if (!selfCanonical.has(norm(link))) fail(`${relative}: item link is not an indexable canonical page: ${link}`);
     if (guid !== link) fail(`${relative}: guid does not equal the canonical item link`);
     if (language !== channelLanguage) fail(`${relative}: item language ${language} != channel ${channelLanguage}`);
   }

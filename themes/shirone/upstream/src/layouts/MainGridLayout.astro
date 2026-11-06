@@ -21,6 +21,12 @@ import { contextMenuConfig, siteConfig } from "@/config";
 import type { SidebarPage } from "@/types/sidebarConfig";
 import Layout from "./Layout.astro";
 
+// ALNILAM: register the Site tag-catalog slug resolver before any component
+// renders tag links, so sidebar/postcard/meta URLs use canonical slugs. The
+// app wires the resolver through a virtual side-effect module (see
+// astro.config.mjs alnilam-shirone-site-values).
+import "alnilam-tag-resolver";
+
 interface Props {
 	title?: string;
 	banner?: string;
@@ -87,7 +93,7 @@ const hasBanner =
 <slot slot="head" name="head"></slot>
 <header id="top-row" class="z-50 pointer-events-none relative transition-all duration-700 max-w-[var(--page-width)] px-0 md:px-4 mx-auto" class:list={[""]}>
     <div id="navbar-wrapper" class="pointer-events-auto sticky top-0 transition-all">
-        <TopAppBar></TopAppBar>
+        <TopAppBar lang={lang} alternates={alternates}></TopAppBar>
     </div>
 </header>
 

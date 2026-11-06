@@ -1932,7 +1932,7 @@
   "modified": {
     "src/user/user-config.ts": "Read-only ALNILAM Site adapter; replaces upstream generated config mount.",
     "package.json": "Consumer compatibility metadata uses ALNILAM existing locked Astro7.4.2 / Svelte integration9.1.1 / MDX8.1.1; upstream peer checks remain active. See existing #79 record; native integration verification pending.",
-    "src/layouts/Layout.astro": "Retain ALNILAM canonical and keyboard skip-link contracts in actual upstream layout. Default appearance from validated Site; omit unimplemented Atom feed link; consolidate Pagefind loader, WidgetLayout custom element, and pagination jump handler into single bundled runtime script.",
+    "src/layouts/Layout.astro": "Retain ALNILAM canonical and keyboard skip-link contracts in actual upstream layout. Default appearance from validated Site; omit unimplemented Atom feed link; consolidate Pagefind loader, WidgetLayout custom element, and pagination jump handler into single bundled runtime script. Emit layout variables once and omit disabled texture initialization to reduce per-page HTML.",
     "src/components/organisms/PostCard.astro": "Retain 640x360 layout dimensions for pass-through Site covers, with metadata dimensions overriding when available.",
     "src/components/organisms/BannerStage.astro": "Give banner placeholders intrinsic layout dimensions; disabled banner still has no Site asset request.",
     "src/utils/url-utils.ts": "Preserve existing ALNILAM language-prefixed post URLs, /categories/<category>/, /tags/<tag>/ and plural /archives/ paths.",

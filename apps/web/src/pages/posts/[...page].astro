@@ -6,20 +6,31 @@ import Pagination from "@alnilam/theme-shirone/Pagination.astro";
 import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
 import { POSTS_PAGE_SIZE } from "../../lib/pagination.mjs";
 import { comparePosts } from "../../lib/taxonomy";
-import { canonicalUrl } from "../../lib/i18n.mjs";
+import { canonicalUrl, postLang, routeAlternates } from "../../lib/i18n.mjs";
 import { loadSite } from "../../lib/site-source.mjs";
 import type { GetStaticPaths } from "astro";
 export const getStaticPaths = (async ({paginate}) => {
+  const { config } = loadSite();
   const posts = (await getCollection("posts", ({data}) => !data.draft)).sort(comparePosts);
-  return paginate(posts, {pageSize: POSTS_PAGE_SIZE});
+  const activeLocales = config.locales.filter((locale) =>
+    posts.some((post) => postLang(post, config.site.locale) === locale),
+  );
+  return paginate(posts, {pageSize: POSTS_PAGE_SIZE, props: {activeLocales}});
 }) satisfies GetStaticPaths;
-const {page} = Astro.props;
+const {page, activeLocales} = Astro.props;
 const {config} = loadSite();
 // Pagination pages are independently canonical: /posts/2/ points at itself.
 const canonical = canonicalUrl(page.url.current, config.site.url);
 const title = page.currentPage === 1 ? "文章" : `文章 · 第 ${page.currentPage} 页`;
+const alts =
+  page.currentPage === 1
+    ? routeAlternates(activeLocales, config.site.locale, config.locales, "posts")
+    : null;
+const alternates = alts
+  ? [...alts].map(([lang, path]) => ({lang, href: canonicalUrl(path, config.site.url)}))
+  : undefined;
 ---
-<MainGridLayout title={title} description="全部文章" page="archive" canonical={canonical}>
+<MainGridLayout title={title} description="全部文章" page="archive" canonical={canonical} alternates={alternates}>
   <PageHeader title="全部文章" subtitle={`共 ${page.total} 篇 · 第 ${page.currentPage}/${page.lastPage} 页`} />
   <PostPage page={page} />
   <Pagination page={page} basePath="/posts/" />

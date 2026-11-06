@@ -41,6 +41,9 @@ async function searchAndClickFirstResult(
 	await input.fill(query);
 	const results = page.locator("#search-panel").getByRole("link");
 	await expect(results.first()).toBeVisible({ timeout: 15_000 });
+	const hrefs = await results.evaluateAll((links) => links.map((link) => link.getAttribute("href") ?? ""));
+	expect(hrefs.some((href) => /\/posts\/(?:en|ja)\//.test(href))).toBe(false);
+	expect(new Set(hrefs).size).toBe(hrefs.length);
 	const href = await results.first().getAttribute("href");
 	await results.first().click();
 	await expect(page).toHaveURL(new RegExp(href!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").slice(0, 40)));
@@ -85,13 +88,11 @@ for (const [name, origin] of deployments) {
 		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
 		const page = await context.newPage();
 		// Search from the en post itself so the locale context is en.
-		await page.goto(`${origin}/posts/en/pagination-sample/`, { waitUntil: "networkidle" });
-		const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
-		await page.goto(new URL(canonical!).pathname.replace(new URL(origin).pathname.replace(/\/$/, ""), origin), { waitUntil: "networkidle" });
+		await page.goto(`${origin}/en/posts/pagination-sample/`, { waitUntil: "networkidle" });
 
 		const input = await openSearch(page, "desktop");
 		const href = await searchAndClickFirstResult(page, input, "comet-locator");
-		expect(new URL(href!, origin).pathname).toBe(new URL(canonical!).pathname);
+		expect(href).toContain(`${new URL(origin).pathname.replace(/\/$/, "")}/en/posts/pagination-sample/`);
 		await expect(page.locator("main h1")).toBeVisible();
 		await context.close();
 	});
@@ -99,14 +100,14 @@ for (const [name, origin] of deployments) {
 	test(`pagefind ja unique keyword finds the ja article ${name}`, async ({ browser }) => {
 		const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
 		const page = await context.newPage();
-		await page.goto(`${origin}/posts/ja/pagination-sample/`, { waitUntil: "networkidle" });
-		const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
-		await page.goto(new URL(canonical!).pathname.replace(new URL(origin).pathname.replace(/\/$/, ""), origin), { waitUntil: "networkidle" });
+		await page.goto(`${origin}/ja/posts/pagination-sample/`, { waitUntil: "networkidle" });
 
 		const input = await openSearch(page, "mobile");
 		// Pagefind's ja wasm segments standard words; ほしぞろ手帖-style
 		// hiragana/kanji compounds do not match, ページネーション does.
 		const href = await searchAndClickFirstResult(page, input, "ページネーション");
+		expect(href).toContain(`${new URL(origin).pathname.replace(/\/$/, "")}/ja/posts/`);
+		expect(href).not.toContain("/posts/ja/");
 		await context.close();
 	});
 
