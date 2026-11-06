@@ -19,13 +19,9 @@ export async function getStaticPaths() {
   const series = await getCollection("series");
   const seriesCategories = new Map(series.map((entry) => [entry.id, entry.data.defaultCategory]));
 
-  const hasCategorizedPost = (locale: string) =>
-    posts.some(
-      (post) =>
-        postLang(post, config.site.locale) === locale &&
-        Boolean((post.data.category?.trim() || seriesCategories.get(post.data.series?.trim())?.trim())),
-    );
-  const activeLocales = config.locales.filter(hasCategorizedPost);
+  const activeLocales = config.locales.filter((locale) =>
+    locale === config.site.locale || posts.some((post) => postLang(post, config.site.locale) === locale),
+  );
 
   return activeLocales
     .filter((locale) => locale !== config.site.locale)

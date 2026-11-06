@@ -3,8 +3,8 @@
 // the native Shirone base.
 //
 // Fixture: tests/fixtures/content-model-site — 14 zh (incl. 1 draft, 1 pinned,
-// a 3-part series) + 6 en + 4 ja posts, a config catalog plus a data/taxonomy.yaml
-// extension, and a translationKey group spanning zh/en/ja.
+// a 3-part series) + 6 en + 4 ja + 1 fr posts, a config catalog plus a
+// data/taxonomy.yaml extension, and a translationKey group spanning zh/en/ja.
 //
 // Known-recorded failures (see HANDOFF.md: artifact-check is expected to expose
 // recorded failures): the 64 KiB page-weight budget cannot hold for unpaginated
@@ -27,8 +27,8 @@ import { validateSiteRoot } from "../site-contract.mjs";
 const REPO = process.cwd();
 const FIXTURE = path.join(REPO, "tests/fixtures/content-model-site");
 
-// 13 published zh + 6 en + 4 ja = 23 published posts; page size 5 → 5 pages.
-const EXPECTED_TOTAL = 23;
+// 13 published zh + 6 en + 4 ja + 1 fr = 24 published posts; page size 5 → 5 pages.
+const EXPECTED_TOTAL = 24;
 const EXPECTED_PAGES = 5;
 
 const read = (out, rel) => fs.readFileSync(path.join(out, rel), "utf8");
@@ -63,7 +63,7 @@ before(() => {
   // One English-only category makes missing localized category alternates observable.
   const configFile = path.join(site, "alnilam.config.yaml");
   const config = fs.readFileSync(configFile, "utf8");
-  fs.writeFileSync(configFile, config.replace("  - ja\n", "  - ja\n  - fr\n").replace("tags:\n", "  - id: english-only\n    slug: english-only\n    label:\n      en: English only\ntags:\n"));
+  fs.writeFileSync(configFile, config.replace("tags:\n", "  - id: english-only\n    slug: english-only\n    label:\n      en: English only\ntags:\n"));
   const englishOnlyPost = path.join(site, "content/posts/en/release-notes.md");
   fs.writeFileSync(englishOnlyPost, fs.readFileSync(englishOnlyPost, "utf8").replace('category: "guide"', 'category: "english-only"'));
   const digest = validateSiteRoot(site).digest;
@@ -340,8 +340,67 @@ test("locale-prefixed routes (/en/*, /ja/*) render locale-filtered content, reci
   const untranslated = read(out, "posts/pagination-overview/index.html");
   assert.match(untranslated, /data-lang-target="en" data-lang-exact="false"[^>]*href="\/en\/"|href="\/en\/"[^>]*data-lang-target="en" data-lang-exact="false"/);
   assert.match(untranslated, /data-lang-target="ja" data-lang-exact="false"[^>]*href="\/ja\/"|href="\/ja\/"[^>]*data-lang-target="ja" data-lang-exact="false"/);
-  assert.equal(fs.existsSync(path.join(out, "fr/index.html")), false);
-  assert.doesNotMatch(untranslated, /data-lang-target="fr"/);
+  assert.ok(fs.existsSync(path.join(out, "fr/index.html")));
+  assert.match(untranslated, /data-lang-target="fr" data-lang-exact="false"[^>]*href="\/fr\/"|href="\/fr\/"[^>]*data-lang-target="fr" data-lang-exact="false"/);
+});
+
+test("taxonomy indexes include locales with posts but no taxonomy and link reciprocally", () => {
+  const { out } = ctx;
+  for (const kind of ["categories", "tags"]) {
+    const targets = [["zh-CN", `/${kind}/`], ["en", `/en/${kind}/`], ["ja", `/ja/${kind}/`], ["fr", `/fr/${kind}/`]];
+    for (const [locale, route] of targets) {
+      const html = read(out, `${route.slice(1)}index.html`);
+      assert.match(html, new RegExp(`<html lang="${locale}"`));
+      for (const [lang, target] of targets) {
+        assert.ok(html.includes(`hreflang="${lang}" href="https://content-model.example.com${target}"`), `${route} must link ${target}`);
+        assert.ok(fs.existsSync(path.join(out, target, "index.html")), `${target} must exist`);
+      }
+    }
+    const french = read(out, `fr/${kind}/index.html`);
+    assert.doesNotMatch(french, new RegExp(`href="/fr/${kind}/[^"/]+/"`), `empty French ${kind} index must have no detail links`);
+    assert.deepEqual(fs.readdirSync(path.join(out, "fr", kind), { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name), [], `empty French ${kind} must have no detail routes`);
+  }
+});
+
+test("category hreflang includes an explicitly categorized series post without a series default", () => {
+  const { out } = ctx;
+  const routes = [["zh-CN", "/categories/ja-series-only/"], ["ja", "/ja/categories/ja-series-only/"]];
+  for (const [, route] of routes) {
+    const html = read(out, `${route.slice(1)}index.html`);
+    for (const [lang, target] of routes) {
+      assert.ok(html.includes(`hreflang="${lang}" href="https://content-model.example.com${target}"`), `${route} must link ${target}`);
+    }
+    assert.doesNotMatch(html, /hreflang="(?:en|fr)"/);
+  }
+  assert.ok(postLinks(read(out, "ja/categories/ja-series-only/index.html")).includes("ja/series-overview-ja"));
+  assert.equal(fs.existsSync(path.join(out, "en/categories/ja-series-only/index.html")), false);
+  assert.equal(fs.existsSync(path.join(out, "fr/categories/ja-series-only/index.html")), false);
+});
+
+test("taxonomy index alternates include the default locale even without default posts", () => {
+  const site = path.join(root, "no-default-posts-site");
+  const out = path.join(root, "no-default-posts-out");
+  fs.cpSync(FIXTURE, site, { recursive: true });
+  const posts = path.join(site, "content/posts");
+  for (const entry of fs.readdirSync(posts, { withFileTypes: true })) {
+    if (entry.isFile() && entry.name.endsWith(".md")) fs.rmSync(path.join(posts, entry.name));
+  }
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", out], {
+    cwd: REPO,
+    env: { ...process.env, ALNILAM_CACHE_DIR: path.join(root, "cache"), ALNILAM_CORE_REV: "content-model-test", SOURCE_DATE_EPOCH: "1700000000" },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, "compose without default posts failed: " + result.stderr.slice(-2500));
+  for (const kind of ["categories", "tags"]) {
+    const targets = [["zh-CN", `/${kind}/`], ["en", `/en/${kind}/`], ["ja", `/ja/${kind}/`], ["fr", `/fr/${kind}/`]];
+    for (const [, route] of targets) {
+      const html = read(out, `${route.slice(1)}index.html`);
+      for (const [lang, target] of targets) {
+        assert.ok(html.includes(`hreflang="${lang}" href="https://content-model.example.com${target}"`), `${route} must link ${target} without default posts`);
+        assert.ok(fs.existsSync(path.join(out, target, "index.html")), `${target} must exist without default posts`);
+      }
+    }
+  }
 });
 
 test("artifact budgets: exactly the recorded unpaginated-listing page-weight breaches, nothing else", () => {

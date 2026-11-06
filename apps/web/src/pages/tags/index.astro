@@ -6,9 +6,7 @@ import { loadSite } from "../../lib/site-source.mjs";
 const { config } = loadSite();
 const posts = await getCollection("posts", ({ data }) => !data.draft);
 const activeLocales = config.locales.filter((locale) =>
-  posts.some(
-    (post) => postLang(post, config.site.locale) === locale && post.data.tags.length > 0,
-  ),
+  locale === config.site.locale || posts.some((post) => postLang(post, config.site.locale) === locale),
 );
 const alts = routeAlternates(activeLocales, config.site.locale, config.locales, "tags");
 const alternates = alts

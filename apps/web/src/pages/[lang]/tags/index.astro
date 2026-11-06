@@ -18,7 +18,7 @@ export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
 
   const activeLocales = config.locales.filter((locale) =>
-    posts.some((post) => postLang(post, config.site.locale) === locale && post.data.tags.length > 0),
+    locale === config.site.locale || posts.some((post) => postLang(post, config.site.locale) === locale),
   );
 
   return activeLocales

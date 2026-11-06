@@ -1,10 +1,12 @@
 ---
 title: "シリーズ概要（JA）"
-description: "シリーズタグ付きの日本語投稿（シリーズ外）。"
+description: "カテゴリを指定した日本語シリーズ投稿。"
 pubDate: 2026-03-05
-category: "guide"
+category: "ja-series-only"
 tags: ["series"]
+series: "without-default-category"
+seriesOrder: 1
 lang: "ja"
 ---
 
-シリーズカタログ外の日本語概要投稿。
+デフォルトカテゴリのないシリーズに属する日本語投稿。
