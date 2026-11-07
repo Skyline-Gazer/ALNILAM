@@ -102,6 +102,33 @@ if (fixtureReady) {
   });
 
   for (const { origin, prefix } of origins) {
+    test(`Giscus follows data-theme without a dark class ${prefix || "/"}`, async ({ page }) => {
+      const state = { calls: [] as string[], offline: false };
+      await mockGiscus(page, state);
+      await page.goto(`${origin}/posts/comment-fixture/`, { waitUntil: "networkidle" });
+      const comments = await prepareComments(page);
+      await page.evaluate(() => {
+        document.documentElement.classList.remove("dark");
+        document.documentElement.dataset.theme = "dark";
+      });
+      await comments.locator(".comments-action").click();
+      await expect(comments.locator("[data-comments-state]")).toHaveAttribute("data-comments-state", "ready");
+      const frame = await giscusFrame(page);
+      await expect(frame.locator("html")).toHaveAttribute("data-theme", "dark_dimmed");
+
+      await page.evaluate(() => {
+        document.documentElement.dataset.theme = "light";
+        window.dispatchEvent(new CustomEvent("giscus-theme-change"));
+      });
+      await expect(frame.locator("html")).toHaveAttribute("data-theme", "light");
+      await page.evaluate(() => {
+        document.documentElement.dataset.theme = "dark";
+        window.dispatchEvent(new CustomEvent("shirone:theme-change"));
+      });
+      await expect(frame.locator("html")).toHaveAttribute("data-theme", "dark_dimmed");
+      await expect(comments.locator("iframe.giscus-frame")).toHaveCount(1);
+    });
+
     for (const width of [390, 1440]) {
       test(`Giscus stable identity, privacy gate and lifecycle ${prefix || "/"} ${width}`, async ({ browser }, info) => {
         const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: "reduce", hasTouch: width === 390 });

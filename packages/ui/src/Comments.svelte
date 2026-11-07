@@ -54,7 +54,8 @@
   const discussionUrl = $derived(repo ? `https://github.com/${repo}/discussions` : undefined);
   function currentTheme(): string {
     if (typeof document !== "undefined") {
-      return document.documentElement.classList.contains("dark") ? THEME_DARK : THEME_LIGHT;
+      const root = document.documentElement;
+      return root.classList.contains("dark") || root.dataset.theme === "dark" ? THEME_DARK : THEME_LIGHT;
     }
     return theme === "dark" ? THEME_DARK : THEME_LIGHT;
   }
