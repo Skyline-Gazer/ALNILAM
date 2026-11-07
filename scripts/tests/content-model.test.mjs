@@ -172,7 +172,9 @@ test("category index and detail render catalog labels and locale-filtered member
   assert.match(guide, /m3-blog-archive__item/, "category detail must render the archive timeline");
   assert.ok(guide.includes("archive-panel"), "category detail must mount the ArchivePanel island");
   assert.ok(!guide.includes("m3-blog-postcard"), "category detail must not render postcards");
-  const guideMembers = postLinks(guide);
+  const guideMembers = [guide, ...[2, 3]
+    .map((page) => `categories/guide/${page}/index.html`)
+    .filter((rel) => fs.existsSync(path.join(out, rel))).map((rel) => read(out, rel))].flatMap(postLinks);
   assert.ok(guideMembers.includes("pinned-announcement"), "zh members are listed: " + guideMembers.join(","));
   assert.ok(guideMembers.includes("en/hello-content-model"), "en members are listed: " + guideMembers.join(","));
   assert.ok(guideMembers.includes("ja/i18n-guide"), "ja members are listed: " + guideMembers.join(","));

@@ -51,6 +51,44 @@ async function searchAndClickFirstResult(
 }
 
 for (const [name, origin] of deployments) {
+	test(`search language switcher preserves the search route ${name}`, async ({ page }) => {
+		const base = new URL(origin).pathname.replace(/\/$/, "");
+		await page.goto(`${origin}/search/`, { waitUntil: "networkidle" });
+		for (const [locale, path, label] of [
+			["en", "/en/search/", "Search articles"],
+			["ja", "/ja/search/", "記事を検索"],
+			["zh-CN", "/search/", "搜索文章"],
+		] as const) {
+			const link = page.locator(`#navbar [data-lang-switcher] a[data-lang-target="${locale}"]`);
+			await expect(link).toHaveAttribute("href", `${base}${path}`);
+			await expect(link).toHaveAttribute("data-lang-exact", "true");
+			await link.click();
+			await expect(page).toHaveURL(`${origin}${path}`);
+			await expect(page.getByRole("searchbox", { name: label })).toBeVisible();
+		}
+	});
+
+	test(`localized search routes use the current language and deployment base ${name}`, async ({ page }) => {
+		const base = new URL(origin).pathname.replace(/\/$/, "");
+		for (const [prefix, label, query, expected] of [
+			["", "搜索文章", "萤火虫索引", "/posts/pagination-segmentation-zh/"],
+			["/en", "Search articles", "comet-locator", "/en/posts/pagination-sample/"],
+			["/ja", "記事を検索", "ページネーション", "/ja/posts/"],
+		] as const) {
+			await page.goto(`${origin}${prefix}/search/`, { waitUntil: "networkidle" });
+			await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+			await page.getByRole("searchbox", { name: label }).fill(query);
+			const results = page.locator("[data-search-results]").getByRole("link");
+			await expect(results.first()).toBeVisible({ timeout: 15_000 });
+			const hrefs = await results.evaluateAll((links) => links.map((link) => link.getAttribute("href") ?? ""));
+			expect(hrefs.some((href) => href.includes(`${base}${expected}`))).toBe(true);
+			expect(hrefs.every((href) => href.startsWith(`${base}${prefix}/posts/`))).toBe(true);
+			const firstHref = await results.first().getAttribute("href");
+			await results.first().click();
+			await expect(page).toHaveURL(new RegExp(firstHref!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+		}
+	});
+
 	test(`posts pagination reaches page 2 and back ${name}`, async ({ browser }) => {
 		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
 		const page = await context.newPage();
