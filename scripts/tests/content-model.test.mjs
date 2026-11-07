@@ -267,6 +267,34 @@ test("translationKey groups render hreflang alternates plus self-canonical on ar
   assert.ok(!sitemap.includes("draft-preview"), "drafts must not enter the sitemap");
 });
 
+test("artifact budgets: only the archive listing may exceed the HTML budget", () => {
+  const { out } = ctx;
+  const result = spawnSync(process.execPath, ["scripts/artifact-check.mjs", out], {
+    cwd: REPO,
+    encoding: "utf8",
+  });
+  assert.ok(result.status === 0 || result.status === 1, "artifact-check must complete: " + result.stderr);
+
+  // An empty or partial scan must not pass.
+  const scanned = Number(/artifact-check: (\d+) pages,/.exec(result.stdout)?.[1]);
+  const composedPages = fs
+    .globSync("**/index.html", { cwd: out })
+    .filter((rel) => !rel.includes("/pagefind/")).length;
+  assert.equal(scanned, composedPages, "artifact-check must scan every composed page");
+
+  const recorded = (result.stdout + result.stderr)
+    .split("\n")
+    .filter((line) => line.startsWith("FAIL: "));
+  for (const failure of recorded) {
+    assert.match(
+      failure,
+      /^FAIL: archives\/index\.html: HTML [\d.]+ KiB exceeds 64 KiB budget$/,
+      `unexpected budget failure: ${failure}`,
+    );
+  }
+  assert.equal(result.status, recorded.length ? 1 : 0, "artifact-check status must match its budget failures");
+});
+
 test("series detail pages stay within the article-class budget (3 scripts, 6 islands)", () => {
   const detail = read(ctx.out, "series/getting-started/index.html");
   const scripts = [...detail.matchAll(/<script[^>]*src="([^"]+)"/g)].map((m) => m[1]);
