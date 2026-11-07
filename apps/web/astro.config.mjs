@@ -179,7 +179,7 @@ export default defineConfig({
             const file = path.join(bangumiCoversDir(), name);
             if (!fs.existsSync(file)) return next();
             res.setHeader("Content-Type", bangumiCoverContentType(name));
-            fs.createReadStream(file).on("error", next).pipe(res);
+            fs.createReadStream(file).on("error", () => res.destroy()).pipe(res);
           });
         },
       },
