@@ -164,6 +164,7 @@ function getShironeCacheDir() {
 
 async function resolveLocalImageCandidate(src, filePath) {
 	if (!src || /^(?:https?:|data:|\/\/)/i.test(src)) return undefined;
+	src = src.split(/[?#]/, 1)[0];
 	const siteDir = process.env.ALNILAM_SITE_DIR;
 	const candidates = [];
 	if (src.startsWith("/site-assets/") && siteDir) {
@@ -211,6 +212,9 @@ async function resolveMarkdownImageSrc(src, baseUrl, filePath) {
 		return src;
 	}
 	const candidate = await resolveLocalImageCandidate(src, filePath);
+	const suffixIndex = src.search(/[?#]/);
+	const pathname = suffixIndex < 0 ? src : src.slice(0, suffixIndex);
+	const suffix = suffixIndex < 0 ? "" : src.slice(suffixIndex);
 	const cacheDir = getShironeCacheDir();
 	if (candidate && cacheDir) {
 		const buf = await fs.readFile(candidate);
@@ -220,11 +224,11 @@ async function resolveMarkdownImageSrc(src, baseUrl, filePath) {
 		const astroAssetsDir = path.join(cacheDir, "astro-assets");
 		await fs.mkdir(astroAssetsDir, { recursive: true });
 		await fs.writeFile(path.join(astroAssetsDir, fileName), buf);
-		return `${normalizedBase}/_astro/${fileName}`;
+		return `${normalizedBase}/_astro/${fileName}${suffix}`;
 	}
 	if (process.env.ALNILAM_SITE_DIR) {
-		const clean = normalizeCleanAssetPath(src);
-		return `${normalizedBase}/site-assets/${clean}`;
+		const clean = normalizeCleanAssetPath(pathname);
+		return `${normalizedBase}/site-assets/${clean}${suffix}`;
 	}
 	return src;
 }

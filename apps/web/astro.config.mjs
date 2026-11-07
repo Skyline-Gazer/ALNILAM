@@ -10,6 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {userConfigOverrides, userConfigSources, siteAppearance, siteLocales} from '../../themes/shirone/adapter/site-config.mjs';
+import {readBangumiSnapshot, materializeBangumiCovers, bangumiCoversDir, isBangumiCoverAssetName, bangumiCoverContentType, BANGUMI_COVER_URL_PREFIX} from "./src/lib/bangumi.mjs";
 import { loadSite } from "./src/lib/site-source.mjs";
 const { root: siteRoot, config } = loadSite();
 process.env.ALNILAM_SITE_DIR ||= siteRoot;
@@ -110,6 +111,10 @@ export default defineConfig({
           if (config.bangumi.enabled) {
             injectRoute({ pattern: "/bangumi/", entrypoint: "./src/modules/bangumi.astro", prerender: true });
           }
+          if (config.llms.enabled) {
+            injectRoute({ pattern: "/llms.txt", entrypoint: "./src/modules/llms.txt.js", prerender: true });
+            if (config.llms.full) injectRoute({ pattern: "/llms-full.txt", entrypoint: "./src/modules/llms-full.txt.js", prerender: true });
+          }
           if (fs.existsSync(path.join(siteRoot, "content/series"))) {
             injectRoute({ pattern: "/series/", entrypoint: "./src/modules/series.astro", prerender: true });
             injectRoute({ pattern: "/series/[slug]/", entrypoint: "./src/modules/series-detail.astro", prerender: true });
@@ -146,6 +151,43 @@ export default defineConfig({
     }),
     // Older consumers read a single /sitemap.xml; mirror the official entries.
     sitemapCompat(),
+    // Covers are downloaded into the managed cache by the build-time provider.
+    // Copy those files into the finished output (Astro may clear/replace it
+    // during the build) and serve the same cache entries in dev.
+    ...(config.bangumi.enabled ? [{
+      name: "alnilam-bangumi-covers",
+      hooks: {
+        "astro:build:done": ({dir}) => {
+          const assetStage = process.env.ALNILAM_BANGUMI_ASSET_STAGE;
+          if (assetStage) {
+            const covers = path.join(assetStage, "bangumi-covers");
+            if (fs.existsSync(covers)) {
+              fs.cpSync(covers, path.join(fileURLToPath(dir), "bangumi-covers"), {recursive: true});
+            }
+          } else {
+            materializeBangumiCovers(fileURLToPath(dir), readBangumiSnapshot(config.bangumi));
+          }
+        },
+        "astro:server:setup": ({server}) => {
+          const prefix = BANGUMI_COVER_URL_PREFIX;
+          server.middlewares.use((req, res, next) => {
+            let pathname;
+            try {
+              pathname = new URL(req.url ?? "/", "http://localhost").pathname;
+            } catch {
+              return next();
+            }
+            if (!pathname.startsWith(prefix)) return next();
+            const name = pathname.slice(prefix.length);
+            if (!isBangumiCoverAssetName(name)) return next();
+            const file = path.join(bangumiCoversDir(), name);
+            if (!fs.existsSync(file)) return next();
+            res.setHeader("Content-Type", bangumiCoverContentType(name));
+            fs.createReadStream(file).on("error", () => res.destroy()).pipe(res);
+          });
+        },
+      },
+    }] : []),
   ],
   // compose.mjs relocates Vite's dependency cache into the managed, Core-
   // revision-keyed build cache; stale optimized deps once served broken

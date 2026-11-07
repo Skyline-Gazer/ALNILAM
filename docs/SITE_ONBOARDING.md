@@ -58,14 +58,21 @@ them in Sites. Tag pages derive from post frontmatter.
   unprefixed `/posts/<slug>/` URLs. Old `/posts/<lang>/<slug>/` URLs serve a
   noindex static page linking to the canonical article; this is not an HTTP redirect.
   All paths include the configured deployment base when hosted under a subpath.
-- `draft = true` posts are excluded from all builds.
+
+#### Post visibility
+
+`draft`, `private` and `unlisted` are build-time exclusions: the post publishes
+no HTML article and no LLM Markdown view, and does not appear in indexes,
+feeds, sitemaps or listings. Do not put secrets or confidential material in a
+Site relying on `noindex`.
+
 
 ### Images policy
 
-Covers and absolute `/site-assets/...` images are **Site-owned and served
-as-is** — ALNILAM does not re-encode, resize, or fetch them at build time. The
-only build-time asset work is resolving post-relative `![]()` references (see
-below). This keeps the build deterministic and offline:
+Post covers and absolute `/site-assets/...` images are **Site-owned and served
+as-is** — ALNILAM does not re-encode, resize, or fetch them at build time.
+For post content, build-time asset work resolves post-relative `![]()` references
+(see below). Bangumi covers follow the separate policy described under Bangumi.
 
 - An image referenced with an absolute path (`/site-assets/...`) must exist under
   your Site's `assets/` directory.
@@ -85,11 +92,12 @@ markup by always emitting explicit `width`/`height` on generated cover `<img>` t
 ### Build cache
 
 Derived build state (the verified Site snapshot, Astro's content/image store,
-Vite's dependency cache) lives in one managed cache root — `<repo>/.cache/alnilam`
-by default, overridable with `ALNILAM_CACHE_DIR`. The snapshot and Astro's
-content/image store are keyed by Core revision and Site digest; Vite's
-dependency cache is keyed by Core revision alone (optimized deps do not vary
-with Site content). Repeated builds never write into your Site.
+Vite's dependency cache and Bangumi snapshots and covers) lives in one managed
+cache root — `<repo>/.cache/alnilam` by default, overridable with
+`ALNILAM_CACHE_DIR`. The Site snapshot and Astro's content/image store are keyed
+by Core revision and Site digest; Vite's dependency cache is keyed by Core
+revision alone. Bangumi snapshots are scoped by user ID, subject type and limit.
+Keep the cache outside your Site; repeated builds never write into your Site.
 `node scripts/compose.mjs --clean-cache` removes the whole cache and the
 legacy cache directories (`apps/web/.astro`, `apps/web/node_modules/.astro`)
 left by earlier versions. Builds of the same Core revision and Site digest
@@ -98,7 +106,7 @@ finishes and stolen when its holder process is gone or after six hours.
 
 ## Optional modules (opt-in via config)
 
-Both modules are feature-flagged: **disabled modules ship nothing** — no page, no 404 stub, no client JS, no third-party requests.
+Optional modules are feature-flagged: **disabled modules ship nothing** — no page, no 404 stub, no client JS, no third-party requests.
 
 ### Comments (`[comments]`)
 
@@ -125,7 +133,69 @@ bangumi:
   limit: 10                     # 1–50
 ```
 
-Adds `/bangumi/` (nav + footer links appear automatically). Data is fetched **once at build time** from `api.bgm.tv` and embedded as static HTML — visitors make **zero** third-party data requests. Cover images hotlink `lain.bgm.tv` with `referrerpolicy="no-referrer"` (fetching covers into your output would redistribute upstream artwork). If the API is unreachable at build time the page renders an inline warning; the rest of the Site is unaffected.
+Adds `/bangumi/` (nav + footer links appear automatically). A build fetches the
+public collection from `api.bgm.tv`, saves a snapshot in the managed cache, and
+renders static HTML. No credentials are required or supported. Visitors do not
+contact Bangumi for data or images; subject links lead to Bangumi only when
+followed. Covers are downloaded at build time, only from Bangumi's HTTPS image
+hosts and without credentials or redirects, and emitted as local
+`/bangumi-covers/` assets, with the deployment base applied on subpath hosts. A
+cover retrieval failure is treated like a provider failure and leaves any prior
+snapshot in place.
+Publishing those assets redistributes upstream artwork; make sure you can do so.
+
+The configured `subjectType` selects one subject category: book (1), anime (2),
+music (3), or game (4). Bangumi's collection `type` is a different field: it
+describes the user's status (wish, collected, doing, on hold, or dropped), not
+the subject category. This module fetches at most `limit` entries for the chosen
+subject category; it is not Firefly's multi-category, paginated or dynamic view.
+
+If the provider (including a cover download) is unavailable or returns malformed
+data, the build uses the last valid snapshot for the same user ID, subject type
+and limit and indicates that it is stale. Without a matching snapshot, the page
+shows an unavailable
+message. A successful empty response is valid and replaces the prior snapshot.
+Clearing the managed cache also removes this fallback; a fresh build needs the
+provider again. Data and covers update only on a subsequent build.
+
+### LLM discovery (`llms`, llmstxt.org v2)
+
+```yaml
+llms:
+  enabled: false     # default: no LLM files, no discovery links
+  full: false        # default: no llms-full.txt aggregate
+```
+
+When `enabled`, the build emits `/llms.txt` (site-wide curated index),
+`/<locale>/llms.txt` for every non-default locale that publishes at least one
+article, and a source-backed Markdown view at each public article's canonical
+path, e.g. `/en/posts/guides/deep/index.md`, served as
+`text/markdown; charset=utf-8`. Article HTML adds
+`<link rel="alternate" type="text/markdown">` and `<link rel="describedby"
+type="text/plain">` pointing at the generated files. The views preserve source
+headings, code fences, math and Mermaid diagrams, resolve relative images and
+article links to absolute canonical URLs, and render MDX component children as
+text/link fallbacks rather than stripping them.
+Post-relative images, including images beside an `index.md` or `index.mdx`
+source, use the same generated image files as the HTML article; relative links
+to public Markdown posts also work without a file extension. Unresolvable
+relative post links, images, and raw HTML anchors retain their text instead of
+pointing to invented files.
+
+Only the public article inventory is exported: drafts, `private: true`,
+`unlisted: true`, legacy alias routes, taxonomy pages and disabled locales get
+no Markdown view and are absent from the indexes. Set `full: true` to add
+`/llms-full.txt`, one aggregated document built from the same public Markdown
+views; it is **off by default** because it can be large and its copyright,
+provider size-limit and caching policy are deployment decisions. Static Pages
+generally cannot attach `Cache-Control: no-store`, and robots rules are not an
+access-control boundary; treat all exported content as public.
+
+The root index links each generated locale index; links are absolute and
+include the configured deployment base (root or `/ALNILAM/`). This feature is
+discoverability support for the community llmstxt.org v2 proposal, not an
+official search-ranking signal, and it does not replace HTML, sitemap, robots
+or structured data.
 
 ## Building
 

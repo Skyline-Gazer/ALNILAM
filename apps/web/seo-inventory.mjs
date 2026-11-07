@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { finishMarkdown } from "./src/lib/llms.mjs";
 
 /**
  * SEO inventory over the real build output.
@@ -47,11 +48,11 @@ export function parseSeoHead(html) {
   };
 }
 
-function walkHtml(dir, visit) {
+function walkOutput(dir, visit) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const entryPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) walkHtml(entryPath, visit);
-    else if (entry.name.endsWith(".html")) visit(entryPath);
+    if (entry.isDirectory()) walkOutput(entryPath, visit);
+    else if (entry.isFile()) visit(entryPath);
   }
 }
 
@@ -66,14 +67,23 @@ export function createSeoInventory({ base = "/" } = {}) {
       "astro:build:done": ({ dir }) => {
         byPath.clear();
         const root = fileURLToPath(dir);
-        walkHtml(root, (file) => {
-          const toPath = (relative) =>
-            relative === "404.html"
-              ? `${prefix}/404.html`
-              : `${prefix}/${relative.replace(/index\.html$/, "")}`;
+        const routes = new Set();
+        const markdownFiles = [];
+        walkOutput(root, (file) => {
           const relative = path.relative(root, file).replace(/\\/g, "/");
-          byPath.set(toPath(relative), parseSeoHead(fs.readFileSync(file, "utf8")));
+          if (relative.endsWith(".md") || relative === "llms-full.txt") markdownFiles.push(file);
+          if (!relative.endsWith(".html")) return;
+          const route = `/${relative.replace(/(?:^|\/)index\.html$/, "")}`.replace(/\/$/, "") || "/";
+          routes.add(route);
+          const toPath = relative === "404.html"
+            ? `${prefix}/404.html`
+            : `${prefix}/${relative.replace(/index\.html$/, "")}`;
+          byPath.set(toPath, parseSeoHead(fs.readFileSync(file, "utf8")));
         });
+        for (const file of markdownFiles) {
+          const finished = finishMarkdown(fs.readFileSync(file, "utf8"), routes);
+          if (finished !== null) fs.writeFileSync(file, finished);
+        }
       },
     },
 
