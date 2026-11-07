@@ -57,7 +57,8 @@ discussion across localized pages; `sharing: locale` appends `::<locale>`.
 `mapping: number` requires a numeric `commentId` with translation sharing.
 The term never contains the deployment origin/base, so root and `/ALNILAM/`
 builds, locale routes and slug renames (with an explicit `commentId`) keep the
-same thread. `mapping: pathname` is documented as legacy and is not the default.
+same thread. Enabled comments require an explicit mapping; existing Sites that
+previously omitted it should choose `pathname` to preserve their threads.
 
 ## Privacy and lifecycle
 

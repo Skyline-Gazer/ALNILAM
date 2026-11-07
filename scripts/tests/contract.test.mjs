@@ -97,9 +97,9 @@ test("comments module: disabled by default, giscus fields validated when enabled
   const off = parseConfig(validYaml);
   assert.equal(off.comments.enabled, false);
   assert.equal(off.comments.provider, "giscus");
-  assert.throws(() => parseConfig(`${validYaml}\ncomments:\n  enabled: true\n`), /comments\.repo/);
+  assert.throws(() => parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  mapping: specific\n`), /comments\.repo/);
   assert.throws(
-    () => parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R\n  category: C\n`),
+    () => parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R\n  category: C\n  mapping: specific\n`),
     /comments\.categoryId/,
   );
   assert.throws(
@@ -110,7 +110,10 @@ test("comments module: disabled by default, giscus fields validated when enabled
     () => parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R\n  category: C\n  categoryId: D\n  mapping: bogus\n`),
     /mapping/,
   );
-  const on = parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R_1\n  category: Announcements\n  categoryId: DIC_1\n`);
+  const legacyYaml = `${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R_1\n  category: Announcements\n  categoryId: DIC_1\n`;
+  assert.throws(() => parseConfig(legacyYaml), /comments\.mapping is required.*pathname.*specific/);
+  assert.equal(parseConfig(`${legacyYaml}  mapping: pathname\n`).comments.mapping, "pathname");
+  const on = parseConfig(`${legacyYaml}  mapping: specific\n`);
   assert.equal(on.comments.enabled, true);
   assert.equal(on.comments.mapping, "specific");
   assert.equal(on.comments.sharing, "translation");

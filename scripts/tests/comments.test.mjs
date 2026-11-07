@@ -22,6 +22,7 @@ const enabled = {
   repoId: "R_fixture",
   category: "Announcements",
   categoryId: "DIC_fixture",
+  mapping: "specific",
 };
 const post = (id, data = {}) => ({ id, data: { title: id, ...data } });
 
@@ -52,7 +53,15 @@ test("provider and secret-boundary fields fail closed even when comments are dis
 });
 
 test("enabled provider identifiers and enum options are validated with actionable messages", () => {
-  assert.throws(() => configWith({ enabled: true }), /comments\.repo is required/);
+  const legacy = { ...enabled };
+  delete legacy.mapping;
+  for (const comments of [legacy, { ...legacy, mapping: null }]) {
+    assert.throws(
+      () => configWith(comments),
+      /comments\.mapping is required.*"pathname" to preserve existing threads.*"specific" for new threads/,
+    );
+  }
+  assert.throws(() => configWith({ enabled: true, mapping: "specific" }), /comments\.repo is required/);
   assert.throws(() => configWith({ ...enabled, repoId: "" }), /comments\.repoId is required/);
   assert.throws(() => configWith({ ...enabled, category: "" }), /comments\.category is required/);
   assert.throws(() => configWith({ ...enabled, categoryId: "" }), /comments\.categoryId is required/);

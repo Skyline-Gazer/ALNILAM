@@ -10,7 +10,7 @@ export interface CommentsConfig {
   repoId: string;
   category: string;
   categoryId: string;
-  /** `specific` + stable term is the default; `pathname` is explicit legacy. */
+  /** Required in enabled Site config; pathname preserves existing URL-based threads. */
   mapping: "specific" | "pathname" | "number";
   /** `translation` shares one thread per translationKey/commentId group. */
   sharing: "translation" | "locale";

@@ -124,7 +124,7 @@ comments:
   repoId: "R_..."               # from giscus.app
   category: "Announcements"
   categoryId: "DIC_..."
-  mapping: "specific"           # specific | pathname | number
+  mapping: "specific"           # required when enabled: specific | pathname | number
   sharing: "translation"        # translation | locale
   load: "click"                 # click | visible
   lang: "auto"                  # auto | giscus/BCP-47 locale
@@ -135,10 +135,16 @@ All fields are public identifiers. Unknown keys and secret-looking fields
 (`token`, `accessToken`, `webhookSecret`, …) fail the build; never put a GitHub
 App private key, webhook secret or personal access token in a Site.
 
+Enabled comments require an explicit `mapping`. For an existing v2 Site whose
+enabled comments omitted it, add `mapping: pathname` to retain its existing
+URL-based Discussions. Choose `mapping: specific` for new threads; changing an
+existing Site to `specific` creates different threads and does not migrate
+comment data. A missing mapping fails the build until you choose.
+
 #### Stable identity and translation policy
 
-- The default `mapping: specific` sends an explicit Giscus `data-term` instead
-  of using the browser URL. The term is derived at build time from, in order:
+- `mapping: specific` sends an explicit Giscus `data-term` instead of using the
+  browser URL. The term is derived at build time from, in order:
   frontmatter `commentId`, frontmatter `translationKey`
   (`alnilam:translation:<key>`), or the Site content id
   (`alnilam:content:<path-without-extension>`).
@@ -152,10 +158,8 @@ App private key, webhook secret or personal access token in a Site.
   to 200 characters.
 - `mapping: number` requires a numeric `commentId` and
   `sharing: translation`; otherwise the build fails with an actionable message.
-- `mapping: pathname` is an **explicit legacy opt-in**, not the default. It maps
-  by the browser URL, so `/ALNILAM/`, locale prefixes and future permalink
-  renames create different discussions. Switching a live Site from `pathname`
-  to `specific` starts new threads; there is no automatic comment-data migration.
+- `mapping: pathname` maps by the browser URL, so `/ALNILAM/`, locale prefixes
+  and future permalink renames create different discussions.
 
 #### Privacy, loading and failure behavior
 
