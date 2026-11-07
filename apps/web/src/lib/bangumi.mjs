@@ -452,8 +452,10 @@ export function materializeBangumiCovers(outputDir, collections) {
     if (!fs.existsSync(source)) continue;
     fs.mkdirSync(destination, { recursive: true });
     const target = path.join(destination, name);
-    if (!fs.existsSync(target)) fs.copyFileSync(source, target);
-    fs.chmodSync(target, 0o644);
+    if (!fs.existsSync(target)) {
+      fs.copyFileSync(source, target);
+      fs.chmodSync(target, 0o644);
+    }
     written.push(name);
   }
   return written;

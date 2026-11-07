@@ -90,6 +90,9 @@ test("successful collection maps categories and downloads local covers", async (
   const published = path.join(output, first.cover.slice(1));
   assert.deepEqual(fs.readFileSync(published), png);
   assert.equal(fs.statSync(published).mode & 0o444, 0o444);
+  fs.chmodSync(published, 0o444);
+  materializeBangumiCovers(output, result.collections);
+  assert.equal(fs.statSync(published).mode & 0o777, 0o444, "existing covers retain their permissions");
   assert.doesNotMatch(JSON.stringify(result.collections), /lain\.bgm\.tv|api\.bgm\.tv/);
 });
 
