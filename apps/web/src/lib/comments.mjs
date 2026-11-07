@@ -123,7 +123,7 @@ export function commentsCsp(config) {
     "img-src 'self' data: blob: https:",
     "media-src 'self' https:",
     "font-src 'self' data:",
-    `connect-src 'self' ${GISCUS_ORIGIN}`,
+    `connect-src 'self' ${GISCUS_ORIGIN} https://api.github.com`,
     `frame-src ${GISCUS_ORIGIN} https://www.youtube-nocookie.com https://player.bilibili.com https://www.acfun.cn`,
     "worker-src 'self' blob:",
     "object-src 'none'",

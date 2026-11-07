@@ -91,8 +91,8 @@ if (fixtureReady) {
       });
     for (const output of ["site", "nested-base"]) {
       const files = assets(path.resolve("dist", output, "_astro"));
-      expect(files.filter(({ name }) => /^Comments[.-].*\.(?:js|css)$/.test(name))).toEqual([]);
-      expect(files.filter(({ content }) => /giscus\.app|\.comments-provider/.test(content))).toEqual([]);
+      expect(files.filter(({ name }) => /^(?:Comments[.-]|(?:Twikoo|Waline)\.astro[_ .-]|waline-emoji[.-]).*\.(?:js|css)$/.test(name))).toEqual([]);
+      expect(files.filter(({ content }) => /giscus\.app|\.comments-provider|waline-emoji|twikoo\.js\.org|unpkg\.com\/@waline/.test(content))).toEqual([]);
     }
     for (const output of ["comments-root", "comments-nested"]) {
       const files = assets(path.resolve("dist", output, "_astro"));
@@ -102,6 +102,24 @@ if (fixtureReady) {
   });
 
   for (const { origin, prefix } of origins) {
+    test(`GitHub cards hydrate under the comments CSP ${prefix || "/"}`, async ({ page }) => {
+      const requests: string[] = [];
+      await page.route("https://api.github.com/repos/example/comments-fixture", async (route) => {
+        requests.push(route.request().url());
+        await route.fulfill({
+          status: 200,
+          headers: { "access-control-allow-origin": "*", "content-type": "application/json" },
+          body: JSON.stringify({ description: "CSP card fixture", forks_count: 2, language: "TypeScript", license: null, owner: null, stargazers_count: 3 }),
+        });
+      });
+      await page.goto(`${origin}/posts/comment-fixture/`, { waitUntil: "networkidle" });
+      await expect(page.locator('meta[http-equiv="Content-Security-Policy"]')).toHaveCount(1);
+      const card = page.locator('[data-github-card][data-github-repo="example/comments-fixture"]');
+      await expect(card).toHaveAttribute("data-github-state", "ready");
+      await expect(card.locator("[data-github-description]")).toHaveText("CSP card fixture");
+      expect(requests).toHaveLength(1);
+    });
+
     test(`Giscus follows data-theme without a dark class ${prefix || "/"}`, async ({ page }) => {
       const state = { calls: [] as string[], offline: false };
       await mockGiscus(page, state);

@@ -175,7 +175,7 @@ test("CSP is absent when disabled/opted out and otherwise scopes giscus plus pag
   const csp = commentsCsp(configWith(enabled));
   assert.ok(csp.includes(`script-src 'self' 'unsafe-inline' ${GISCUS_ORIGIN} 'wasm-unsafe-eval'`));
   assert.ok(csp.includes(`frame-src ${GISCUS_ORIGIN} https://www.youtube-nocookie.com https://player.bilibili.com https://www.acfun.cn`));
-  assert.ok(csp.includes(`connect-src 'self' ${GISCUS_ORIGIN}`));
+  assert.ok(csp.includes(`connect-src 'self' ${GISCUS_ORIGIN} https://api.github.com`));
   assert.ok(csp.includes("media-src 'self' https:"));
   assert.ok(!/frame-src[^;]*\*/.test(csp));
   assert.ok(!/script-src[^;]*\*/.test(csp));

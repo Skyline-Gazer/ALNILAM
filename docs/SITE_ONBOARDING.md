@@ -180,8 +180,9 @@ comment data. A missing mapping fails the build until you choose.
   plus a grounded link to the repository's GitHub Discussions.
 - When `csp: true`, comment-enabled articles emit a `Content-Security-Policy`
   meta tag. `script-src`, `connect-src` and `frame-src` allow the selected
-  Giscus origin; `script-src` also includes `'wasm-unsafe-eval'` for Pagefind
-  WASM search; `frame-src` adds the supported Markdown player origins
+  Giscus origin; `connect-src` also allows `https://api.github.com` for
+  GitHub repository cards. `script-src` includes `'wasm-unsafe-eval'` for
+  Pagefind WASM search; `frame-src` adds the supported Markdown player origins
   (YouTube nocookie, Bilibili, AcFun); and `media-src` allows `'self' https:`
   for author `<video>`/`<audio>`. Hosting-level CSP may extend this with
   `frame-ancestors`, which `meta` cannot enforce. Comments disabled = no

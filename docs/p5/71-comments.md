@@ -62,8 +62,9 @@ previously omitted it should choose `pathname` to preserve their threads.
 
 ## Privacy and lifecycle
 
-- Disabled: no comment island, script, iframe, placeholder or request. Existing
-  demo browser tests continue to assert zero giscus traffic.
+- Disabled: no comment island, client bundle, script, iframe, placeholder or
+  request. Artifact checks cover both ALNILAM and upstream provider chunks;
+  existing demo browser tests continue to assert zero Giscus traffic.
 - Enabled: a distinct third-party Giscus/GitHub Discussions disclosure is
   always rendered. `load: click` (default) makes no external request until the
   reader activates the button. `load: visible` is an explicit owner choice and
@@ -76,6 +77,7 @@ previously omitted it should choose `pathname` to preserve their threads.
   link; article/navigation stay intact.
 - `comments.csp: true` emits a document meta CSP for enabled articles. It
   allows `https://giscus.app` in `script-src`, `connect-src` and `frame-src`,
+  allows `https://api.github.com` in `connect-src` for GitHub repository cards,
   adds `'wasm-unsafe-eval'` for Pagefind WASM search, permits the supported
   Markdown player origins in `frame-src` (YouTube nocookie, Bilibili, AcFun),
   and sets `media-src 'self' https:` for author media. A second provider
@@ -93,7 +95,7 @@ previously omitted it should choose `pathname` to preserve their threads.
 | ON mock Giscus, click gate, theme/lang, no duplicate iframe | `tests/browser/comments.spec.ts` 390/1440, root and `/ALNILAM/` |
 | Provider offline/denied or timeout fallback, late iframe and retry | `tests/browser/comments.spec.ts` failure/retry cases |
 | Post-scroll CLS / article stability | `tests/browser/comments.spec.ts` layout-shift sample around mount |
-| Privacy/CSP | `scripts/tests/comments.test.mjs` CSP case |
+| Privacy/CSP and GitHub card hydration | `scripts/tests/comments.test.mjs` CSP case; `tests/browser/comments.spec.ts` GitHub card case |
 | Deterministic enabled fixture | `tests/fixtures/comments-site`; composed by `scripts/local-browser.mjs` and `scripts/ci/cnb-consumer-build.mjs` into `dist/comments-root` + `dist/comments-nested` |
 
 Live Giscus interaction still requires an owner-approved preview repository with
