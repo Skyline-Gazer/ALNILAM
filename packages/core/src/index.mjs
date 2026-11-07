@@ -142,9 +142,6 @@ function normalizeComments(value) {
   if (!COMMENT_PROVIDERS.has(provider)) {
     throw new Error('ALNILAM: comments.provider must be "giscus" (the only supported provider)');
   }
-  if (enabled && comments.mapping == null) {
-    throw new Error('ALNILAM: comments.mapping is required when comments.enabled = true; set "pathname" to preserve existing threads or "specific" for new threads');
-  }
   const mapping = comments.mapping ?? "specific";
   if (!COMMENT_MAPPINGS.has(mapping)) {
     throw new Error("ALNILAM: comments.mapping must be specific, pathname or number");
@@ -183,6 +180,9 @@ function normalizeComments(value) {
         throw new Error(`ALNILAM: comments.${field} is required when comments.enabled = true`);
       }
     }
+  }
+  if (enabled && comments.mapping == null) {
+    throw new Error('ALNILAM: comments.mapping is required when comments.enabled = true; set "pathname" to preserve existing threads or "specific" for new threads');
   }
   return Object.freeze({
     enabled,
