@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { loadBangumiCollections, materializeBangumiCovers } from "../../apps/web/src/lib/bangumi.mjs";
+import { fetchBangumiCollections, loadBangumiCollections, materializeBangumiCovers } from "../../apps/web/src/lib/bangumi.mjs";
 
 const config = { userId: "fixture-user", subjectType: "anime", limit: 10 };
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/aZkAAAAASUVORK5CYII=", "base64");
@@ -54,6 +54,39 @@ function filesUnder(dir) {
     return entry.isDirectory() ? filesUnder(file) : [file];
   });
 }
+
+test("legacy fetch preserves its mapping and request contract", async (t) => {
+  fixture(t);
+  let request;
+  globalThis.fetch = async (url, options) => {
+    request = { url: new URL(url), options };
+    return Response.json({ data: [
+      { subject: { id: 7, name: "Fixture", name_cn: "", images: { common: "common", large: "large" }, short_summary: "a".repeat(150) }, type: 3, subject_type: 2 },
+      {},
+    ] });
+  };
+  assert.deepEqual(await fetchBangumiCollections({ userId: "fixture/user", subjectType: "book", limit: 25 }), [
+    { name: "Fixture", nameCn: "Fixture", cover: "common", href: "https://bgm.tv/subject/7", summary: "a".repeat(140), comment: "", updatedAt: "" },
+    { name: "", nameCn: "", cover: "", href: "", summary: "", comment: "", updatedAt: "" },
+  ]);
+  assert.equal(request.url.pathname, "/v0/users/fixture%2Fuser/collections");
+  assert.equal(request.url.search, "?type=1&limit=25&offset=0");
+  assert.equal(request.options.headers.Accept, "application/json");
+  assert.ok(request.options.signal instanceof AbortSignal);
+  globalThis.fetch = async () => Response.json({});
+  assert.deepEqual(await fetchBangumiCollections({ userId: "fixture" }), []);
+});
+
+test("legacy fetch propagates provider and abort errors", async (t) => {
+  fixture(t);
+  globalThis.fetch = async () => new Response("unavailable", { status: 503 });
+  await assert.rejects(fetchBangumiCollections({ userId: "fixture-user" }), /Bangumi API 503 for user fixture-user/);
+  for (const name of ["AbortError", "TimeoutError"]) {
+    const error = new DOMException("request interrupted", name);
+    globalThis.fetch = async () => { throw error; };
+    await assert.rejects(fetchBangumiCollections({ userId: "fixture-user" }), (actual) => actual === error);
+  }
+});
 
 test("successful collection maps categories and downloads local covers", async (t) => {
   const root = fixture(t);
