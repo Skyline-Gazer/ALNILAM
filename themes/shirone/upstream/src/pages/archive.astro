@@ -17,11 +17,21 @@ const {
 };
 const t = lang ? (key: I18nKey) => getTranslation(lang.replace("-", "_"))[key] : i18n;
 const sortedPostsList = sortedPosts ?? (await getSortedPostsList());
+const archivePosts = sortedPostsList.map(({ slug, url, data }) => ({
+	slug,
+	url,
+	data: {
+		title: data.title,
+		tags: data.tags,
+		category: data.category,
+		published: data.published,
+	},
+}));
 const archiveSummary = `${sortedPostsList.length} ${t(I18nKey.postsCount)}`;
 ---
 
 <MainGridLayout title={t(I18nKey.archive)} description={archiveSummary} page="archive" lang={lang} alternates={alternates}>
     <PageHeader title={t(I18nKey.archive)} subtitle={archiveSummary} />
-    <ArchivePanel sortedPosts={sortedPostsList} client:visible></ArchivePanel>
+    <ArchivePanel sortedPosts={archivePosts} client:visible></ArchivePanel>
 </MainGridLayout>
 
