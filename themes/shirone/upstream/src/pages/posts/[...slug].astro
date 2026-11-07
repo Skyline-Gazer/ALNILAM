@@ -236,11 +236,13 @@ const jsonLd = {
 ---
 
 <MainGridLayout banner={entry.data.image} ogImage={ogImage} title={entry.data.title} description={effectiveDescription} bannerDate={formatDateToYYYYMMDD(entry.data.published)} lang={entry.data.lang} setOGTypeArticle={true} headings={effectiveHeadings} postCategory={entry.data.category || undefined} page="post" hasComments={postCommentEnabled} canonical={canonical} alternates={alternates}>
-    <slot name="head" slot="head" />
-    {hasMath && <link slot="head" rel="stylesheet" data-swup-optional="math" href={katexStylesheet} />}
-    {hasMath && <link slot="head" rel="stylesheet" data-swup-optional="math" href={overlayScrollbarsStylesheet} />}
-    {markdownStylesheetAssets.map(({ pack, css }) => <style is:inline slot="head" data-swup-optional={pack} set:html={css}></style>)}
-    <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>
+    <Fragment slot="head">
+        <slot name="head" />
+        {hasMath && <link rel="stylesheet" data-swup-optional="math" href={katexStylesheet} />}
+        {hasMath && <link rel="stylesheet" data-swup-optional="math" href={overlayScrollbarsStylesheet} />}
+        {markdownStylesheetAssets.map(({ pack, href }) => <link rel="stylesheet" data-swup-optional={pack} href={href} />)}
+        <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>
+    </Fragment>
     <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative mb-4">
 		<Card color="var(--card-bg)" radius="l" class="post-card z-10 px-6 md:px-9 pt-6 pb-4 relative w-full">
 			<!-- word count and reading time -->

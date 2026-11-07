@@ -297,6 +297,7 @@ const defaultSchemeStyle =
 </style>
 
 <script>
+import "virtual:ec-runtime";
 import { initLastUpdatedNotices } from "../utils/last-updated-notice";
 import {getHue, getStoredTheme, setHue, setTheme} from "../utils/setting-utils";
 import { WALLPAPER_MODE_CHANGE_EVENT, BANNER_HEIGHT, BANNER_HEIGHT_EXTEND } from "../constants/constants";
@@ -305,8 +306,11 @@ import { bindFancyboxRuntime } from "../utils/fancybox-runtime";
 import { applyStoredLayoutMode } from "../utils/layout-mode";
 import { initFabController } from "../utils/fab-controller";
 import { packMasonry, setupMasonry } from "../utils/masonry";
+import { bindMarkdownRuntime } from "../utils/markdown-runtime";
 import { resolvePageKey } from "../utils/nav-utils";
 import { url } from "../utils/url-utils";
+
+bindMarkdownRuntime();
 
 class WidgetLayout extends HTMLElement {
 	constructor() {

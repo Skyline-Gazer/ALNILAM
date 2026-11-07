@@ -130,7 +130,7 @@ export async function initMarkdownRuntime(
 
 /**
  * Installs one page-level lifecycle for server-rendered and Swup-replaced
- * Markdown. Call this from the Markdown content entry point only.
+ * Markdown from the shared layout runtime.
  */
 export function bindMarkdownRuntime(): void {
 	if (typeof document === "undefined") return;
