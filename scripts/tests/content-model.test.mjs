@@ -274,15 +274,13 @@ test("translationKey groups render hreflang alternates plus self-canonical on ar
   assert.ok(!sitemap.includes("draft-preview"), "drafts must not enter the sitemap");
 });
 
-test("artifact budgets: exactly the recorded unpaginated-listing page-weight breaches, nothing else", () => {
+test("artifact budgets: all composed pages pass", () => {
   const { out } = ctx;
   const result = spawnSync(process.execPath, ["scripts/artifact-check.mjs", out], {
     cwd: REPO,
     encoding: "utf8",
   });
-  // artifact-check exits 1 when any budget fails; anything else (2 = no pages,
-  // crash) must not be accepted as a "recorded breach" set.
-  assert.equal(result.status, 1, "artifact-check must fail exactly on budget breaches: " + result.stderr);
+  assert.equal(result.status, 0, "artifact-check must pass all budgets: " + result.stderr);
 
   // Scanned page count must equal the composed output, so an empty scan cannot pass.
   const scanned = Number(/artifact-check: (\d+) pages,/.exec(result.stdout)?.[1]);
@@ -291,27 +289,7 @@ test("artifact budgets: exactly the recorded unpaginated-listing page-weight bre
     .filter((rel) => !rel.includes("/pagefind/")).length;
   assert.equal(scanned, composedPages, "artifact-check must scan every composed page");
 
-  const failures = result.stdout + result.stderr;
-  const recorded = failures
-    .split("\n")
-    .filter((line) => line.startsWith("FAIL: "))
-    .map((line) => line.slice("FAIL: ".length));
-  for (const failure of recorded) {
-    assert.match(failure, /^(\S+): HTML [\d.]+ KiB exceeds 64 KiB budget$/, `unexpected budget failure: ${failure}`);
-  }
-  // Locale-scoped pagination for unpaginated listing routes is later-phase
-  // scope (#63/#65); until then exactly this route exceeds 64 KiB at this
-  // fixture volume. Category/tag detail routes left the breach list when they
-  // switched from PostPage grids to the lighter ArchivePanel timeline (#124).
-  // A new or removed breach must update this list explicitly.
-  const expectedBreaches = [
-    "archives/index.html",
-  ];
-  assert.deepEqual(
-    recorded.map((line) => line.split(": ")[0]).sort(),
-    [...expectedBreaches].sort(),
-    `recorded budget breaches changed: ${recorded.join(" | ")}`,
-  );
+  assert.match(result.stdout, /BUDGETS OK/);
 });
 
 test("series detail pages stay within the article-class budget (3 scripts, 6 islands)", () => {
