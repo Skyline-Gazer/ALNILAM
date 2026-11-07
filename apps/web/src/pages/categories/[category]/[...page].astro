@@ -1,0 +1,7 @@
+---
+import type { GetStaticPaths } from "astro";
+import TaxonomyPage from "../../../lib/TaxonomyPage.astro";
+import { taxonomyPaths } from "../../../lib/taxonomy-pagination";
+export const getStaticPaths = (async ({ paginate }) => taxonomyPaths(paginate, "categories", false)) satisfies GetStaticPaths;
+---
+<TaxonomyPage {...Astro.props} />

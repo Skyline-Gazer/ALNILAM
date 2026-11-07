@@ -1,0 +1,12 @@
+---
+import SearchRoute from "../../../components/SearchRoute.astro";
+import { loadSite } from "../../../lib/site-source.mjs";
+
+export function getStaticPaths() {
+  const { config } = loadSite();
+  return config.locales.filter((locale) => locale !== config.site.locale)
+    .map((locale) => ({ params: { lang: locale }, props: { locale } }));
+}
+const { locale } = Astro.props;
+---
+<SearchRoute locale={locale} />
