@@ -5,13 +5,6 @@
 // Fixture: tests/fixtures/content-model-site — 14 zh (incl. 1 draft, 1 pinned,
 // a 3-part series) + 6 en + 4 ja posts, a config catalog plus a data/taxonomy.yaml
 // extension, and a translationKey group spanning zh/en/ja.
-//
-// Known-recorded failures (see HANDOFF.md: artifact-check is expected to expose
-// recorded failures): the 64 KiB page-weight budget cannot hold for unpaginated
-// listing routes (archives, category/tag detail pages) once a Site carries a
-// realistic post volume — locale-scoped taxonomy pagination is later-phase
-// scope (#63/#65). This test asserts those breaches are *exactly* that class
-// and route set, and that every other budget class is clean.
 import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -282,7 +275,7 @@ test("artifact budgets: all composed pages pass", () => {
   });
   assert.equal(result.status, 0, "artifact-check must pass all budgets: " + result.stderr);
 
-  // Scanned page count must equal the composed output, so an empty scan cannot pass.
+  // An empty or partial scan must not pass.
   const scanned = Number(/artifact-check: (\d+) pages,/.exec(result.stdout)?.[1]);
   const composedPages = fs
     .globSync("**/index.html", { cwd: out })
