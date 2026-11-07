@@ -52,6 +52,28 @@ Legend: **Existing source** = inspected upstream code/doc exists; **Adapt** = ca
 | P6 QA / a11y / snapshots | Shirone `tests/`, `playwright.config.ts` and Lighthouse; KIRARI `apps/site/scripts/tests/` | Astro `astro check` / `--timings`, runtime accessibility features; **Playwright/axe/Lighthouse are external** | Reuse tests and extend Site root/subpath, cross-browser and privacy assertions; no framework guarantees PASS |
 | P6 license/security/provenance/release | ALNILAM and KIRARI release/CI docs, Shirone CI | Astro official features help CSP (7.1) and bundling but **no license/CI/release governance automation** | Existing project-specific mandatory work remains |
 
+### Bangumi source comparison (Issue #70)
+
+The retained ALNILAM module uses its existing Site configuration and build-time
+fetch, with a managed last-valid snapshot scoped to user ID, subject type and
+limit. Successful empty responses replace the snapshot; failures reuse it when
+available. Covers are downloaded from Bangumi HTTPS image hosts without
+credentials and emitted locally; a cover failure is treated as a provider
+failure. The visitor makes no third-party data or cover requests. It supports
+one configured subject category and a bounded first page, not a full collection
+browser.
+
+Pinned Shirone's [`animeConfig.ts`](../../themes/shirone/upstream/src/config/animeConfig.ts)
+offers local and provider snapshot sources, an explicit sync command and a
+keep-last-valid policy; ALNILAM keeps its own immutable Site and managed cache
+instead of adopting Shirone's snapshot directory or sync workflow. Pinned
+[Firefly's Bangumi page](https://github.com/CuteLeaf/Firefly/blob/cd920b035b475fe9a6cd3a88afb42cf9440bb8a9/src/pages/bangumi.astro)
+provides multiple subject-category tabs, pagination and static or dynamic
+fetching. Its `subject_type` selects book, anime, music, game or real; the
+collection's `type` is a separate status used by its filters. ALNILAM follows
+that distinction for its four supported subject categories, without importing
+Firefly's client-side browser or dynamic mode.
+
 ## 3. Mandatory corrections to current Plan/Spec
 
 1. **Framework choice:** Shirone-first means `7.3.8` initial known-good import; create a *separate* `Astro 7.4.x compatibility and official integration replacement` investigation/task. Use version pinning, not permanent freeze of older framework.

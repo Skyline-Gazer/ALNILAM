@@ -70,10 +70,10 @@ Site relying on `noindex`.
 
 ### Images policy
 
-Covers and absolute `/site-assets/...` images are **Site-owned and served
-as-is** — ALNILAM does not re-encode, resize, or fetch them at build time. The
-only build-time asset work is resolving post-relative `![]()` references (see
-below). This keeps the build deterministic and offline:
+Post covers and absolute `/site-assets/...` images are **Site-owned and served
+as-is** — ALNILAM does not re-encode, resize, or fetch them at build time.
+For post content, build-time asset work resolves post-relative `![]()` references
+(see below). Bangumi covers follow the separate policy described under Bangumi.
 
 - An image referenced with an absolute path (`/site-assets/...`) must exist under
   your Site's `assets/` directory.
@@ -93,11 +93,12 @@ markup by always emitting explicit `width`/`height` on generated cover `<img>` t
 ### Build cache
 
 Derived build state (the verified Site snapshot, Astro's content/image store,
-Vite's dependency cache) lives in one managed cache root — `<repo>/.cache/alnilam`
-by default, overridable with `ALNILAM_CACHE_DIR`. The snapshot and Astro's
-content/image store are keyed by Core revision and Site digest; Vite's
-dependency cache is keyed by Core revision alone (optimized deps do not vary
-with Site content). Repeated builds never write into your Site.
+Vite's dependency cache and Bangumi snapshots and covers) lives in one managed
+cache root — `<repo>/.cache/alnilam` by default, overridable with
+`ALNILAM_CACHE_DIR`. The Site snapshot and Astro's content/image store are keyed
+by Core revision and Site digest; Vite's dependency cache is keyed by Core
+revision alone. Bangumi snapshots are scoped by user ID, subject type and limit.
+Keep the cache outside your Site; repeated builds never write into your Site.
 `node scripts/compose.mjs --clean-cache` removes the whole cache and the
 legacy cache directories (`apps/web/.astro`, `apps/web/node_modules/.astro`)
 left by earlier versions. Builds of the same Core revision and Site digest
@@ -196,7 +197,30 @@ bangumi:
   limit: 10                     # 1–50
 ```
 
-Adds `/bangumi/` (nav + footer links appear automatically). Data is fetched **once at build time** from `api.bgm.tv` and embedded as static HTML — visitors make **zero** third-party data requests. Cover images hotlink `lain.bgm.tv` with `referrerpolicy="no-referrer"` (fetching covers into your output would redistribute upstream artwork). If the API is unreachable at build time the page renders an inline warning; the rest of the Site is unaffected.
+Adds `/bangumi/` (nav + footer links appear automatically). A build fetches the
+public collection from `api.bgm.tv`, saves a snapshot in the managed cache, and
+renders static HTML. No credentials are required or supported. Visitors do not
+contact Bangumi for data or images; subject links lead to Bangumi only when
+followed. Covers are downloaded at build time, only from Bangumi's HTTPS image
+hosts and without credentials or redirects, and emitted as local
+`/bangumi-covers/` assets, with the deployment base applied on subpath hosts. A
+cover retrieval failure is treated like a provider failure and leaves any prior
+snapshot in place.
+Publishing those assets redistributes upstream artwork; make sure you can do so.
+
+The configured `subjectType` selects one subject category: book (1), anime (2),
+music (3), or game (4). Bangumi's collection `type` is a different field: it
+describes the user's status (wish, collected, doing, on hold, or dropped), not
+the subject category. This module fetches at most `limit` entries for the chosen
+subject category; it is not Firefly's multi-category, paginated or dynamic view.
+
+If the provider (including a cover download) is unavailable or returns malformed
+data, the build uses the last valid snapshot for the same user ID, subject type
+and limit and indicates that it is stale. Without a matching snapshot, the page
+shows an unavailable
+message. A successful empty response is valid and replaces the prior snapshot.
+Clearing the managed cache also removes this fallback; a fresh build needs the
+provider again. Data and covers update only on a subsequent build.
 
 ### LLM discovery (`llms`, llmstxt.org v2)
 

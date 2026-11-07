@@ -33,10 +33,12 @@ scripts/compose.mjs    # non-mutating external Site builder
 
 The managed cache root (`<repo>/.cache/alnilam`, override `ALNILAM_CACHE_DIR`) holds
 the snapshot and Astro's build-time content/image store, keyed by Core revision and
-Site digest; Vite's dependency cache is keyed by Core revision alone. All derived
-resources are generated only in the build space (cache or staging) — never in the
-Site; removals inside the cache refuse to follow symbolic links. `--clean-cache`
-removes it.
+Site digest; Vite's dependency cache is keyed by Core revision alone. The optional
+Bangumi module also stores its last valid snapshot and downloaded covers there,
+scoped by user ID, subject type and limit; covers are emitted into the build output,
+not the Site. All derived resources are generated only in the build space (cache or
+staging) — never in the Site; removals inside the cache refuse to follow symbolic
+links. `--clean-cache` removes it.
 
 The staged output also carries `alnilam-provenance.json`: the Core revision, the Site
 ref (`ALNILAM_SITE_REF`, or the Site's own Git `HEAD` when the Site directory is its

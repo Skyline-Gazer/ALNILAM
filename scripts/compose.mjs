@@ -112,6 +112,7 @@ for (const [inner, outer, message] of [
 }
 fs.mkdirSync(cacheRoot, { recursive: true });
 const stage = fs.mkdtempSync(path.join(path.dirname(destination), ".alnilam-build-"));
+const bangumiAssetStage = stage + "-bangumi-assets";
 const backup = destination + ".alnilam-backup-" + process.pid;
 let published = false;
 let cacheLock;
@@ -183,6 +184,11 @@ try {
         ALNILAM_SITE_DIR: snapshot,
         ALNILAM_OUTPUT_DIR: stage,
         ALNILAM_VITE_CACHE: path.join(cacheRoot, "v1", revKey, "vite"),
+        // Provider snapshots and covers are scoped by Bangumi config, not by
+        // the Core revision or Site digest, so a failed fetch keeps its last
+        // valid data across unrelated rebuilds.
+        ALNILAM_BANGUMI_CACHE: path.join(cacheRoot, "bangumi"),
+        ALNILAM_BANGUMI_ASSET_STAGE: bangumiAssetStage,
         ALNILAM_ASTRO_CACHE: path.join(buildDir, "astro"),
         ALNILAM_SHIRONE_CACHE: path.join(buildDir, "shirone"),
       },
@@ -236,6 +242,7 @@ try {
   console.log("Core revision: " + provenance.core.revision);
   console.log("Provenance: alnilam-provenance.json");
 } finally {
+  if (fs.existsSync(bangumiAssetStage)) fs.rmSync(bangumiAssetStage, { recursive: true, force: true });
   if (!published && fs.existsSync(stage)) fs.rmSync(stage, { recursive: true, force: true });
   if (typeof cacheLock !== "undefined") cacheLock.release();
 }
