@@ -58,3 +58,20 @@ already-published provenance records.
 ## Theme boundary and P1 preview
 Released v0.1.3 uses Editorial. The authorized P1 vertical slice routes the main blog pages through `themes/shirone`, while retaining the Editorial package as an unchanged rollback surface and keeping Core/Site v1 untouched. This is still a **package boundary**, not a theme marketplace or plugin SDK. Runtime theme switching, authenticated comments, server adapters, CLI install/update flows and rich Firefly/Mizuki functionality are not implemented. P1 does not authorize production release.
 
+## Comments boundary
+Comments are an optional Site module, not a Core platform service. The Site owns
+`comments.enabled`, the Giscus public identifiers and the identity policy
+(`mapping`, `sharing`, `load`, `lang`, `csp`). `packages/ui/src/Comments.svelte`
+renders the disclosure/gate/fallback UI and delegates to exactly one
+`CommentProvider` implementation (`packages/ui/src/comments/giscus.ts`), which
+owns the script, iframe, theme/language updates, observers and teardown.
+`apps/web/src/lib/comments.mjs` derives the stable Discussion term from
+`commentId`, `translationKey` or the content id and emits the provider-scoped
+CSP; it never uses the deployment URL as the default identity.
+
+Disabled comments ship no island, script, iframe, placeholder DOM or third-party
+request. Enabled comments either wait for an explicit click (`load: click`,
+default) or load near the viewport (`load: visible`). Twikoo and Waline are not
+installed: they require separately operated persistence/backends and are
+post-launch evaluations rather than a second widget on the same article.
+

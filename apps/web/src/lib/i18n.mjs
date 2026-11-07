@@ -167,6 +167,17 @@ const UI_STRINGS = {
     tagDesc: (label) => `标签 ${label} 下的全部文章`,
     archives: "归档",
     home: "首页",
+    commentsRegion: "评论",
+    commentsDisclosure:
+      "评论由第三方 Giscus 提供，数据存储在公开 GitHub Discussions 中。",
+    commentsLoadNote: "点击加载后浏览器会连接 giscus.app；加载前不会向第三方发起请求。",
+    commentsVisibleNote: "评论区接近视口时会自动连接 giscus.app。",
+    commentsLoad: "加载评论",
+    commentsLoading: "正在加载评论…",
+    commentsUnavailable: "评论暂时不可用。正文和导航不受影响。",
+    commentsRetry: "重试",
+    commentsDiscussion: "在 GitHub 上打开讨论",
+    commentsRequiresJs: "评论需要启用 JavaScript。",
   },
   en: {
     recentPosts: "Recent Posts",
@@ -185,6 +196,18 @@ const UI_STRINGS = {
     tagDesc: (label) => `All posts tagged #${label}`,
     archives: "Archives",
     home: "Home",
+    commentsRegion: "Comments",
+    commentsDisclosure:
+      "Comments are provided by third-party Giscus and stored in public GitHub Discussions.",
+    commentsLoadNote:
+      "Choosing to load connects this browser to giscus.app; nothing is requested before that.",
+    commentsVisibleNote: "This browser connects to giscus.app when the comments section approaches the viewport.",
+    commentsLoad: "Load comments",
+    commentsLoading: "Loading comments…",
+    commentsUnavailable: "Comments are temporarily unavailable. The article and navigation still work.",
+    commentsRetry: "Retry",
+    commentsDiscussion: "Open the GitHub discussion",
+    commentsRequiresJs: "Comments require JavaScript.",
   },
   ja: {
     recentPosts: "最新の記事",
@@ -203,9 +226,37 @@ const UI_STRINGS = {
     tagDesc: (label) => `タグ #${label} の記事一覧`,
     archives: "アーカイブ",
     home: "ホーム",
+    commentsRegion: "コメント",
+    commentsDisclosure:
+      "コメントは第三者サービスの Giscus が提供し、公開 GitHub Discussions に保存されます。",
+    commentsLoadNote: "読み込みを選ぶまで giscus.app へ接続しません。",
+    commentsVisibleNote: "コメント欄がビューポートに近づくと giscus.app へ接続します。",
+    commentsLoad: "コメントを読み込む",
+    commentsLoading: "コメントを読み込み中…",
+    commentsUnavailable: "コメントは一時的に利用できません。本文とナビゲーションは引き続き利用できます。",
+    commentsRetry: "再試行",
+    commentsDiscussion: "GitHub のディスカッションを開く",
+    commentsRequiresJs: "コメントには JavaScript が必要です。",
   },
 };
 
 export function uiStrings(locale) {
   return UI_STRINGS[locale] || UI_STRINGS.en;
+}
+
+/** Plain-string labels safe to serialize into the Svelte comments island. */
+export function commentLabels(locale) {
+  const t = uiStrings(locale);
+  return {
+    commentsRegion: t.commentsRegion,
+    commentsDisclosure: t.commentsDisclosure,
+    commentsLoadNote: t.commentsLoadNote,
+    commentsVisibleNote: t.commentsVisibleNote,
+    commentsLoad: t.commentsLoad,
+    commentsLoading: t.commentsLoading,
+    commentsUnavailable: t.commentsUnavailable,
+    commentsRetry: t.commentsRetry,
+    commentsDiscussion: t.commentsDiscussion,
+    commentsRequiresJs: t.commentsRequiresJs,
+  };
 }

@@ -10,7 +10,16 @@ export interface CommentsConfig {
   repoId: string;
   category: string;
   categoryId: string;
-  mapping: "pathname" | "specific" | "number";
+  /** `specific` + stable term is the default; `pathname` is explicit legacy. */
+  mapping: "specific" | "pathname" | "number";
+  /** `translation` shares one thread per translationKey/commentId group. */
+  sharing: "translation" | "locale";
+  /** `click` requires the reader's explicit load; `visible` loads near the viewport. */
+  load: "click" | "visible";
+  /** `auto` follows the page locale; otherwise a BCP-47 giscus locale. */
+  lang: "auto" | string;
+  /** Emit the provider-scoped CSP meta tag on comment-enabled articles. */
+  csp: boolean;
 }
 export interface BangumiConfig {
   enabled: boolean;
