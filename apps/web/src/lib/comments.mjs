@@ -3,10 +3,10 @@
  *
  * Giscus can map a Discussion to the current URL (`pathname`), but that makes
  * the thread depend on deployment base, locale prefix and every future slug
- * rename. ALNILAM therefore defaults to `mapping: specific` with a stable,
- * build-time term derived from explicit frontmatter `commentId`, then
- * `translationKey`, then the content id. `pathname` remains available as an
- * explicit legacy opt-in.
+ * rename. With `mapping: specific`, a stable build-time term is derived from
+ * explicit frontmatter `commentId`, then `translationKey`, then the content id.
+ * Enabled Sites must choose a mapping; `pathname` preserves existing URL-based
+ * threads.
  */
 import { postLang } from "./i18n.mjs";
 
