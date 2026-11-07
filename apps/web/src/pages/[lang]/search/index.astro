@@ -1,10 +1,14 @@
 ---
+import { getCollection } from "astro:content";
 import SearchRoute from "../../../components/SearchRoute.astro";
+import { postLang } from "../../../lib/i18n.mjs";
 import { loadSite } from "../../../lib/site-source.mjs";
 
-export function getStaticPaths() {
+export async function getStaticPaths() {
   const { config } = loadSite();
-  return config.locales.filter((locale) => locale !== config.site.locale)
+  const posts = await getCollection("posts", ({ data }) => !data.draft);
+  return config.locales
+    .filter((locale) => locale !== config.site.locale && posts.some((post) => postLang(post, config.site.locale) === locale))
     .map((locale) => ({ params: { lang: locale }, props: { locale } }));
 }
 const { locale } = Astro.props;
