@@ -13,12 +13,23 @@ export function markdownView(post, posts, root, config, htmlRoutes = null) {
   const absolute = (url) => canonicalUrl(url, config.site.url, base);
   const article = absolute(postPath(post, config.site.locale) + "/");
   const postsDir = path.resolve(root, "content/posts");
-  // Astro stores filePath relative to its project root, not the Site root.
-  const sourceDir = path.dirname(path.join(postsDir, post.id));
+  // Astro stores filePath relative to its project root; id is a generated slug.
+  function sourcePath(entry) {
+    const file = String(entry.filePath || "").replace(/\\/g, "/");
+    const marker = "/content/posts/";
+    const index = ("/" + file).lastIndexOf(marker);
+    const relative = index < 0 ? entry.id : ("/" + file).slice(index + marker.length);
+    return path.resolve(postsDir, relative);
+  }
+  const sourceDir = path.dirname(sourcePath(post));
   const assetsDir = path.resolve(root, "assets");
-  const publicPosts = new Map(posts
-    .filter((entry) => !entry.data.draft && config.locales.includes(postLang(entry, config.site.locale)))
-    .map((entry) => [entry.id.replace(/\\/g, "/"), entry]));
+  const publicPosts = new Map();
+  for (const entry of posts.filter((entry) => !entry.data.draft && config.locales.includes(postLang(entry, config.site.locale)))) {
+    const source = path.relative(postsDir, sourcePath(entry)).replace(/\\/g, "/").replace(/\.mdx?$/i, "");
+    publicPosts.set(source, entry);
+    if (source.endsWith("/index")) publicPosts.set(source.slice(0, -6), entry);
+    publicPosts.set(entry.id.replace(/\\/g, "/"), entry);
+  }
   const isPublished = (entry) => !htmlRoutes || htmlRoutes.has(postPath(entry, config.site.locale));
 
   function destination(value, image = false) {
@@ -82,12 +93,13 @@ export function markdownView(post, posts, root, config, htmlRoutes = null) {
 
   // The collection body is usually already stripped, but full source is also accepted.
   const body = String(post.body || "").replace(/^\uFEFF?---[ \t]*\r?\n[\s\S]*?\r?\n(?:---|\.\.\.)[ \t]*(?:\r?\n|$)/, "");
-  const isMdx = /\.mdx$/i.test(post.filePath || "") || /^(?:import|export)\s/m.test(body) || /<[A-Z][\w.]*(?:\s|\/?>)/.test(body);
+  const isMdx = /\.mdx$/i.test(post.filePath || "");
   const parser = unified().use(remarkParse).use(remarkMath);
   if (isMdx) parser.use(remarkMdx);
   const tree = parser.parse(body);
   const edits = [];
   const replace = (start, end, value) => edits.push({ start, end, value });
+  const anchors = [];
 
   function visit(node) {
     const start = node.position?.start.offset;
@@ -138,13 +150,18 @@ export function markdownView(post, posts, root, config, htmlRoutes = null) {
     if (node.type === "html") {
       const source = body.slice(start, end);
       const clean = source.replace(/<!--[\s\S]*?-->/g, "").replace(/<\/?([A-Za-z][\w.-]*)\b([^<>]*?)\s*\/?>/g, (tag, name, raw) => {
-        if (tag.startsWith("</")) return name.toLowerCase() === "a" ? "</a>" : "";
+        if (tag.startsWith("</")) return name.toLowerCase() === "a" && anchors.pop() ? "</a>" : "";
         const attr = (key) => new RegExp(`\\b${key}\\s*=\\s*(["'])(.*?)\\1`, "i").exec(raw)?.[2] || "";
         const src = attr("src");
         const href = attr("href");
         const label = attr("alt") || attr("title");
         const url = destination(src || href, Boolean(src));
         if (src && url) return `![${label}](${url})`;
+        if (name.toLowerCase() === "a") {
+          if (/\/\s*>$/.test(tag)) return "";
+          anchors.push(Boolean(href && url));
+          return href && url ? `<a href="${url.replace(/"/g, "%22")}">` : "";
+        }
         if (href && url) return `<a href="${url.replace(/"/g, "%22")}">`;
         return label;
       });

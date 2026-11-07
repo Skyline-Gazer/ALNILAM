@@ -107,6 +107,30 @@ function compose(name, base, options) {
   fs.mkdirSync(path.dirname(nested), { recursive: true });
   fs.writeFileSync(nested, source);
   fs.writeFileSync(path.join(path.dirname(nested), "colocated.svg"), '<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"></svg>');
+  const index = path.join(site, "content/posts/en/index-fixture/index.md");
+  fs.mkdirSync(path.dirname(index), { recursive: true });
+  fs.writeFileSync(index, `---
+title: "Index source fixture"
+pubDate: 2026-03-15
+lang: en
+---
+
+Keep {these braces} in ordinary Markdown.
+
+\`\`\`js
+import { value } from "example";
+const view = <Component value={value} />;
+const comparison = value < 3;
+\`\`\`
+
+![Index diagram](./index-diagram.svg?view=full#detail)
+[Index sibling](../hello-content-model.md)
+
+Inline <a href="https://example.org/valid">valid link</a> and <a href="./missing.md">missing link</a>.
+
+<div><a href="https://example.org/block">valid block</a> and <a href="./missing.md">missing block</a></div>
+`);
+  fs.writeFileSync(path.join(path.dirname(index), "index-diagram.svg"), '<svg xmlns="http://www.w3.org/2000/svg" width="3" height="3"></svg>');
   for (let n = 1; n <= 5; n++) {
     fs.writeFileSync(path.join(site, `content/posts/en/pagination-fixture-${n}.md`),
       `---\ntitle: "Pagination fixture ${n}"\npubDate: 2026-03-15\nlang: en\n---\n\nPagination fixture\n`);
@@ -207,6 +231,21 @@ test("Markdown preserves source semantics and resolves links against each canoni
     for (const label of ["Missing tag", "Missing localized category", "Missing page"]) {
       assert.doesNotMatch(md, new RegExp(`\\[${label}\\]\\(`));
     }
+    const indexMd = read(out, "en/posts/index-fixture/index.md");
+    for (const fragment of ["Keep {these braces} in ordinary Markdown.", 'import { value } from "example";', "const view = <Component value={value} />;", "const comparison = value < 3;"]) {
+      assert.ok(indexMd.includes(fragment), `missing Markdown source fragment: ${fragment}`);
+    }
+    assert.ok(indexMd.includes('```js\nimport { value } from "example";\nconst view = <Component value={value} />;\nconst comparison = value < 3;\n```'));
+    const indexImage = indexMd.match(/!\[Index diagram\]\(([^)]+)\)/);
+    assert.ok(indexImage, "missing index post image");
+    localFile(out, indexImage[1], base);
+    assert.match(indexImage[1], /\/_astro\/index-diagram\.[a-f0-9]{8}\.svg\?view=full#detail$/);
+    assert.match(indexMd, /\[Index sibling\]\(https:\/\/content-model\.example\.com\/(?:ALNILAM\/)?en\/posts\/hello-content-model\/\)/);
+    const indexHtml = read(out, "en/posts/index-fixture/index.html");
+    assert.ok(indexHtml.includes(new URL(indexImage[1]).pathname + "?view=full#detail"), "HTML and Markdown must use the same index post image");
+    assert.ok(indexMd.includes('<a href="https://example.org/valid">valid link</a> and missing link.'));
+    assert.ok(indexMd.includes('<a href="https://example.org/block">valid block</a> and missing block'));
+    assert.doesNotMatch(indexMd, /missing (?:link|block)<\/a>/);
     assert.doesNotMatch(md, /\]\([^)]*(?:nonexistent-page|assets\/missing\.svg)/);
     const html = read(out, "en/posts/guides/deep/index.html");
     assert.match(html, /src="[^"]*\/_astro\/colocated\.[a-f0-9]{8}\.svg\?view=full#detail"/);

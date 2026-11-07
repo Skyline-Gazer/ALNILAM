@@ -152,9 +152,10 @@ type="text/plain">` pointing at the generated files. The views preserve source
 headings, code fences, math and Mermaid diagrams, resolve relative images and
 article links to absolute canonical URLs, and render MDX component children as
 text/link fallbacks rather than stripping them.
-Post-relative images use the same generated image files as the HTML article;
-relative links to public Markdown posts also work without a file extension.
-Unresolvable relative post links and images are rendered as text rather than
+Post-relative images, including images beside an `index.md` or `index.mdx`
+source, use the same generated image files as the HTML article; relative links
+to public Markdown posts also work without a file extension. Unresolvable
+relative post links, images, and raw HTML anchors retain their text instead of
 pointing to invented files.
 
 Only the public article inventory is exported: drafts, `private: true`,
