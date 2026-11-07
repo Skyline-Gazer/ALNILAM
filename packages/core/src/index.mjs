@@ -18,12 +18,14 @@ const ROOT_KEYS = new Set([
   "tags",
   "comments",
   "bangumi",
+  "llms",
 ]);
 const SITE_KEYS = new Set(["title", "description", "url", "locale"]);
 const THEME_KEYS = new Set(["appearance"]);
 const ROUTING_KEYS = new Set(["prefixDefaultLocale"]);
 const COMMENT_KEYS = new Set(["enabled", "provider", "repo", "repoId", "category", "categoryId", "mapping"]);
 const BANGUMI_KEYS = new Set(["enabled", "userId", "subjectType", "limit"]);
+const LLMS_KEYS = new Set(["enabled", "full"]);
 const BCP47 = /^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$/;
 const DEFAULT_SITE_LOCALE = "zh-CN";
 const isBcp47 = (value) => typeof value === "string" && BCP47.test(value);
@@ -201,6 +203,14 @@ export function normalizeSiteConfig(input) {
     }
   }
 
+  assertPlainObject(input.llms ?? {}, "llms");
+  rejectUnknownKeys(input.llms ?? {}, LLMS_KEYS, "llms");
+  for (const field of ["enabled", "full"]) {
+    if (input.llms?.[field] !== undefined && typeof input.llms[field] !== "boolean") {
+      throw new Error(`ALNILAM: llms.${field} must be a boolean`);
+    }
+  }
+
   return Object.freeze({
     schemaVersion,
     site: Object.freeze({
@@ -225,6 +235,7 @@ export function normalizeSiteConfig(input) {
       categoryId: typeof comments.categoryId === "string" ? comments.categoryId : "",
       mapping: comments.mapping === "specific" || comments.mapping === "number" ? comments.mapping : "pathname",
     }),
+    llms: Object.freeze({ enabled: input.llms?.enabled === true, full: input.llms?.full === true }),
     bangumi: Object.freeze({
       enabled: bangumi.enabled === true,
       userId: typeof bangumi.userId === "string" ? bangumi.userId : "",

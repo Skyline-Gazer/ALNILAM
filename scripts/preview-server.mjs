@@ -22,6 +22,8 @@ const contentTypes = {
   ".svg": "image/svg+xml",
   ".wasm": "application/wasm",
   ".xml": "application/xml; charset=utf-8",
+  ".md": "text/markdown; charset=utf-8",
+  ".txt": "text/plain; charset=utf-8",
 };
 
 const server = http.createServer((request, response) => {
