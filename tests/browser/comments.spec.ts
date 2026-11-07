@@ -14,6 +14,11 @@ const CLIENT_SCRIPT = `(() => {
   const script = document.currentScript;
   const box = document.querySelector(".giscus");
   if (!script || !box || box.querySelector("iframe.giscus-frame")) return;
+  const css = document.getElementById("giscus-css") || document.createElement("link");
+  css.id = "giscus-css";
+  css.rel = "stylesheet";
+  css.href = new URL("/default.css", script.src).href;
+  document.head.prepend(css);
   const params = new URLSearchParams({
     theme: script.dataset.theme || "",
     lang: script.dataset.lang || "",
@@ -48,6 +53,9 @@ async function mockGiscus(page: Page, state: { calls: string[]; offline: boolean
     const headers = { "access-control-allow-origin": "*" };
     if (route.request().url().includes("/client.js")) {
       return route.fulfill({ status: 200, headers: { ...headers, "content-type": "application/javascript" }, body: CLIENT_SCRIPT });
+    }
+    if (route.request().url() === "https://giscus.app/default.css") {
+      return route.fulfill({ status: 200, headers: { ...headers, "content-type": "text/css" }, body: ".giscus-frame { --giscus-test-stylesheet-loaded: loaded; }" });
     }
     if (route.request().url().includes("/widget")) {
       return route.fulfill({ status: 200, headers: { ...headers, "content-type": "text/html" }, body: WIDGET_HTML });
@@ -102,6 +110,27 @@ if (fixtureReady) {
   });
 
   for (const { origin, prefix } of origins) {
+    test(`Giscus stylesheet loads without a CSP violation ${prefix || "/"}`, async ({ page }) => {
+      const state = { calls: [] as string[], offline: false };
+      await page.addInitScript(() => {
+        const target = window as Window & { __cspViolations: { directive: string; blockedURI: string }[] };
+        target.__cspViolations = [];
+        document.addEventListener("securitypolicyviolation", (event) => {
+          target.__cspViolations.push({ directive: event.effectiveDirective, blockedURI: event.blockedURI });
+        });
+      });
+      await mockGiscus(page, state);
+      await page.goto(`${origin}/posts/comment-fixture/`, { waitUntil: "networkidle" });
+      await expect(page.locator('meta[http-equiv="Content-Security-Policy"]')).toHaveCount(1);
+      const comments = await prepareComments(page);
+      await comments.locator(".comments-action").click();
+      await expect(comments.locator("[data-comments-state]")).toHaveAttribute("data-comments-state", "ready");
+      await expect(page.locator('#giscus-css[href="https://giscus.app/default.css"]')).toHaveCount(1);
+      await expect(comments.locator("iframe.giscus-frame")).toHaveCSS("--giscus-test-stylesheet-loaded", "loaded");
+      expect(state.calls).toContain("https://giscus.app/default.css");
+      expect(await page.evaluate(() => (window as Window & { __cspViolations: { directive: string; blockedURI: string }[] }).__cspViolations)).toEqual([]);
+    });
+
     test(`GitHub cards hydrate under the comments CSP ${prefix || "/"}`, async ({ page }) => {
       const requests: string[] = [];
       await page.route("https://api.github.com/repos/example/comments-fixture", async (route) => {

@@ -119,7 +119,7 @@ export function commentsCsp(config) {
   return [
     "default-src 'self'",
     `script-src 'self' 'unsafe-inline' ${GISCUS_ORIGIN} 'wasm-unsafe-eval'`,
-    "style-src 'self' 'unsafe-inline'",
+    `style-src 'self' 'unsafe-inline' ${GISCUS_ORIGIN}`,
     "img-src 'self' data: blob: https:",
     "media-src 'self' https:",
     "font-src 'self' data:",

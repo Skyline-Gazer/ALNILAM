@@ -179,9 +179,10 @@ comment data. A missing mapping fails the build until you choose.
   and navigation remain usable and the comment area offers a non-blocking retry
   plus a grounded link to the repository's GitHub Discussions.
 - When `csp: true`, comment-enabled articles emit a `Content-Security-Policy`
-  meta tag. `script-src`, `connect-src` and `frame-src` allow the selected
-  Giscus origin; `connect-src` also allows `https://api.github.com` for
-  GitHub repository cards. `script-src` includes `'wasm-unsafe-eval'` for
+  meta tag. `script-src`, `style-src`, `connect-src` and `frame-src` allow the
+  Giscus origin; `style-src` permits the stylesheet loaded by the Giscus client,
+  and `connect-src` also allows `https://api.github.com` for GitHub repository
+  cards. `script-src` includes `'wasm-unsafe-eval'` for
   Pagefind WASM search; `frame-src` adds the supported Markdown player origins
   (YouTube nocookie, Bilibili, AcFun); and `media-src` allows `'self' https:`
   for author `<video>`/`<audio>`. Hosting-level CSP may extend this with
