@@ -25,6 +25,40 @@ async function expectTimeline(page: Page, minItems: number) {
 }
 
 for (const [name, origin] of deployments) {
+	test(`taxonomy pagination navigates to page 2 and back ${name}`, async ({ page }) => {
+		await page.goto(`${origin}/categories/release/`, { waitUntil: "networkidle" });
+		await expectTimeline(page, 1);
+		const firstPageLinks = await page.locator(".m3-blog-archive__item").evaluateAll((items) =>
+			items.map((item) => item.getAttribute("href")),
+		);
+		await page.locator('.m3-blog-pagination a[href$="/categories/release/2/"]').filter({ visible: true }).first().click();
+		await expect(page).toHaveURL(`${origin}/categories/release/2/`);
+		await expectTimeline(page, 1);
+		const secondPageLinks = await page.locator(".m3-blog-archive__item").evaluateAll((items) =>
+			items.map((item) => item.getAttribute("href")),
+		);
+		expect(secondPageLinks.every((href) => !firstPageLinks.includes(href))).toBe(true);
+		await page.locator('.m3-blog-pagination a[href$="/categories/release/"]').filter({ visible: true }).first().click();
+		await expect(page).toHaveURL(`${origin}/categories/release/`);
+		await expectTimeline(page, 1);
+	});
+
+	test(`localized taxonomy details show local posts ${name}`, async ({ page }) => {
+		const base = new URL(origin).pathname.replace(/\/$/, "");
+		for (const [route, locale] of [
+			["/en/categories/release/", "en"],
+			["/ja/tags/alnilam/", "ja"],
+		] as const) {
+			const response = await page.goto(`${origin}${route}`, { waitUntil: "networkidle" });
+			expect(response?.status()).toBe(200);
+			await expectTimeline(page, 1);
+			const hrefs = await page.locator(".m3-blog-archive__item").evaluateAll((items) =>
+				items.map((item) => item.getAttribute("href")),
+			);
+			expect(hrefs.every((href) => href?.startsWith(`${base}/${locale}/posts/`))).toBe(true);
+		}
+	});
+
 	test(`category detail renders pre-scoped timeline ${name}`, async ({ browser }) => {
 		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
 		const page = await context.newPage();

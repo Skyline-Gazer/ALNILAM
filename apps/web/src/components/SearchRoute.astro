@@ -1,0 +1,20 @@
+---
+import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
+import SearchPage from "./SearchPage.svelte";
+import { canonicalUrl, routeAlternates, uiStrings } from "../lib/i18n.mjs";
+import { loadSite } from "../lib/site-source.mjs";
+
+const { locale } = Astro.props as { locale: string };
+const { config } = loadSite();
+const alts = routeAlternates(config.locales, config.site.locale, config.locales, "search");
+const alternates = alts
+  ? [...alts].map(([lang, path]) => ({ lang, href: canonicalUrl(path, config.site.url) }))
+  : void 0;
+const title = uiStrings(locale).searchTitle;
+---
+<MainGridLayout title={title} lang={locale} alternates={alternates} noindex>
+  <section class="rounded-2xl" style="background: var(--surface-container)">
+    <h1 class="px-6 pt-6 text-2xl font-bold">{title}</h1>
+    <SearchPage locale={locale} client:load />
+  </section>
+</MainGridLayout>

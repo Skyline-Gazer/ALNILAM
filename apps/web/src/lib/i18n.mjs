@@ -167,6 +167,11 @@ const UI_STRINGS = {
     tagDesc: (label) => `标签 ${label} 下的全部文章`,
     archives: "归档",
     home: "首页",
+    searchTitle: "搜索",
+    searchLabel: "搜索文章",
+    searchSearching: "搜索中…",
+    searchEmpty: "没有找到结果。",
+    searchError: "搜索暂时不可用。",
   },
   en: {
     recentPosts: "Recent Posts",
@@ -185,6 +190,11 @@ const UI_STRINGS = {
     tagDesc: (label) => `All posts tagged #${label}`,
     archives: "Archives",
     home: "Home",
+    searchTitle: "Search",
+    searchLabel: "Search articles",
+    searchSearching: "Searching…",
+    searchEmpty: "No results found.",
+    searchError: "Search is unavailable.",
   },
   ja: {
     recentPosts: "最新の記事",
@@ -203,6 +213,11 @@ const UI_STRINGS = {
     tagDesc: (label) => `タグ #${label} の記事一覧`,
     archives: "アーカイブ",
     home: "ホーム",
+    searchTitle: "検索",
+    searchLabel: "記事を検索",
+    searchSearching: "検索中…",
+    searchEmpty: "結果が見つかりませんでした。",
+    searchError: "検索を利用できません。",
   },
 };
 
