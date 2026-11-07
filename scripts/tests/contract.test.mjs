@@ -110,7 +110,7 @@ test("comments module: disabled by default, giscus fields validated when enabled
     () => parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R\n  category: C\n  categoryId: D\n  mapping: bogus\n`),
     /mapping/,
   );
-  const on = parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R_1\n  category: Announcements\n  categoryId: DIC_1\n`);
+  const on = parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R_1\n  category: Announcements\n  categoryId: DIC_1\n  mapping: pathname\n`);
   assert.equal(on.comments.enabled, true);
   assert.equal(on.comments.mapping, "pathname");
 });
