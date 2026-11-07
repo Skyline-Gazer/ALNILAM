@@ -3,6 +3,7 @@ import svelte, {vitePreprocess} from "@astrojs/svelte";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import shirones from "../../themes/shirone/upstream/src/integration/index.ts";
+import {createExpressiveCodeIntegration} from "../../themes/shirone/adapter/expressive-code.ts";
 import {createSeoInventory} from "./seo-inventory.mjs";
 import {sitemapCompat} from "./sitemap-compat.mjs";
 import fs from "node:fs";
@@ -97,6 +98,8 @@ export default defineConfig({
         content: siteRoot + '/content',
       },
     }),
+    // Expressive Code must precede MDX and follow the theme's Markdown processor.
+    createExpressiveCodeIntegration(),
     // Svelte 5 strips type-only TS; Vite preprocessing is needed only for native Stylus.
     svelte({preprocess: [vitePreprocess()]}),
     mdx(),

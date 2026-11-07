@@ -50,6 +50,7 @@ import { SpoilerComponent } from "../plugins/rehype-component-spoiler.mjs";
 import { YouTubeComponent } from "../plugins/rehype-component-youtube.mjs";
 import { rehypeMarkdownImages } from "../plugins/rehype-markdown-images.mjs";
 import { rehypeResponsiveTables } from "../plugins/rehype-responsive-tables.mjs";
+import { rehypeSafeMarkdownLinks } from "../plugins/rehype-safe-markdown-links.mjs";
 import { parseDirectiveNode } from "../plugins/remark-directive-rehype.js";
 import { remarkEscapeNumericColons } from "../plugins/remark-escape-numeric-colons.mjs";
 import { remarkExcerpt } from "../plugins/remark-excerpt.js";
@@ -175,6 +176,7 @@ export const siteRehypePlugins = [
 		},
 	],
 	rehypeResponsiveTables,
+	rehypeSafeMarkdownLinks,
 ];
 
 /**

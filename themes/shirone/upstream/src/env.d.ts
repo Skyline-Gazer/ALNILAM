@@ -1,5 +1,6 @@
 /// <reference types="astro/client" />
 /// <reference path="../.astro/types.d.ts" />
+declare module "virtual:ec-runtime";
 
 declare module "virtual:shirone-music-sidebar" {
 	const component:

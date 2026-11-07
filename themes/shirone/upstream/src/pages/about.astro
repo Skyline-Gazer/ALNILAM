@@ -27,7 +27,9 @@ const markdownStylesheetAssets = await getMarkdownStylesheetAssets(
 );
 ---
 <MainGridLayout title={pageTitle} description={pageDescription} page="about">
-    {markdownStylesheetAssets.map(({ pack, css }) => <style is:inline slot="head" data-swup-optional={pack} set:html={css}></style>)}
+    <Fragment slot="head">
+        {markdownStylesheetAssets.map(({ pack, href }) => <link rel="stylesheet" data-swup-optional={pack} href={href} />)}
+    </Fragment>
     <div class="flex w-full rounded-[var(--shape-corner-l)] overflow-hidden relative min-h-32">
         <Card color="var(--card-bg)" radius="l" class="z-10 p-6 lg:p-8 relative w-full">
             <Markdown class="mt-2">
