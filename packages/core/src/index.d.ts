@@ -31,6 +31,7 @@ export interface SiteConfig {
   /** Validated catalog; tag pages still derive from post frontmatter in this slice. */
   tags: readonly TaxonomyEntry[];
   comments: Readonly<CommentsConfig>;
+  llms: Readonly<{ enabled: boolean; full: boolean }>;
   bangumi: Readonly<BangumiConfig>;
 }
 export declare function normalizeSiteConfig(input: unknown): Readonly<SiteConfig>;

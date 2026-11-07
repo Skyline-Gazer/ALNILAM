@@ -1960,7 +1960,7 @@
     "src/integration/vite/thumbnails/generate.ts": "Avoid creating empty public/assets/moments/thumbnails directory when moments are disabled or have no images.",
     "src/utils/markdown-processor.mjs": "Pass siteConfig.base to rehypeMarkdownImages for subpath and build-space asset resolution; remove unsafe schemes from Markdown links.",
     "src/plugins/rehype-safe-markdown-links.mjs": "Remove unsafe URL schemes from Markdown links while retaining link text.",
-    "src/plugins/rehype-markdown-images.mjs": "Resolve relative and Site-asset Markdown images into managed _astro / subpath URLs and guarantee explicit width/height dimensions.",
+    "src/plugins/rehype-markdown-images.mjs": "Resolve relative and Site-asset Markdown images into managed _astro / subpath URLs, retain query and fragment, and guarantee explicit width/height dimensions.",
     "src/utils/nav-utils.ts": "Map ALNILAM /posts, /archives, /tags, and /bangumi routes in resolvePageKey for native active-link highlighting.",
     "src/components/molecules/FloatingActionButton.astro": "Render static FAB button shell without redundant per-button client:load island hydration.",
     "src/components/organisms/TopAppBar.astro": "Gate DisplaySettings island on !siteConfig.themeColor.fixed and consolidate TopAppBar navigation runtime into Layout.",
