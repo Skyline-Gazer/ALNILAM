@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { registerHooks } from "node:module";
 import { pathToFileURL } from "node:url";
 
 const moduleUrl = pathToFileURL(path.resolve(process.cwd(), "apps/web/src/lib/llms.mjs"));
@@ -53,13 +54,16 @@ test("LLM markdown resolves public links and assets and removes unsafe destinati
   fs.writeFileSync(path.join(root, "assets/diagram.svg"), "<svg/>");
   fs.writeFileSync(path.join(root, "content/posts/en/local.svg"), "<svg/>");
   const article = post("en/hello", "Hello");
-  article.body = `---\ntitle: Hello\n---\n\n[Related](./related.md?from=hello#part)\n[Missing](./missing.md)\n[Home](/)\n[External](https://example.net/)\n![Diagram](/assets/diagram.svg)\n![Local](./local.svg)\n![Missing image](./absent.svg)\n\nInline $x + y$.\n`;
+  article.body = `---\ntitle: Hello\n---\n\n[Related](./related.md?from=hello#part)\n[Missing](./missing.md)\n[Home](/)\n[External](https://example.net/)\n![Diagram](/assets/diagram.svg)\n![Local](./local.svg)\n![Missing image](./absent.svg)\n\n<a href="./missing.md">raw missing</a>\n<a href="javascript:alert(1)">raw unsafe</a>\n\nInline $x + y$.\n`;
   const related = post("en/related", "Related");
   const posts = [article, related];
   const routes = new Set(["/", "/posts/hello", "/posts/related"]);
   const markdown = markdownView(article, posts, root, config, routes);
   assert.match(markdown, /^# Hello\n/);
   assert.doesNotMatch(markdown, /title: Hello|\.\/missing\.md|\.\/absent\.svg/);
+  assert.match(markdown, /raw missing/);
+  assert.match(markdown, /raw unsafe/);
+  assert.doesNotMatch(markdown, /<a\b|javascript:/i);
   assert.match(markdown, /\[Related\]\(https:\/\/example\.org\/blog\/posts\/related\/\?from=hello#part\)/);
   assert.match(markdown, /\[Home\]\(https:\/\/example\.org\/blog\/\)/);
   assert.match(markdown, /\[External\]\(https:\/\/example\.net\/\)/);
@@ -73,4 +77,57 @@ test("LLM markdown resolves public links and assets and removes unsafe destinati
   assert.equal(finishMarkdown(stageMarkdown({ posts, root, config }), routes), combined);
   const unpublished = markdownView(article, posts, root, config, new Set(["/"]));
   assert.doesNotMatch(unpublished, /\]\(https:\/\/example\.org\/blog\/posts\/related/);
+  const mdx = { ...post("en/component", "Component"), filePath: "content/posts/en/component.mdx", body: '<a href="./missing.md">mdx missing</a>\n\n<a href="javascript:alert(1)">mdx unsafe</a>' };
+  const mdxMarkdown = markdownView(mdx, [...posts, mdx], root, config, routes);
+  assert.match(mdxMarkdown, /mdx missing/);
+  assert.match(mdxMarkdown, /mdx unsafe/);
+  assert.doesNotMatch(mdxMarkdown, /<a\b|javascript:|\.\/missing\.md/i);
+});
+
+test("LLM build hook finalizes staged markdown against emitted routes", { skip: !featurePresent }, async (t) => {
+  const { stageMarkdown } = await import(moduleUrl);
+  const { createSeoInventory } = await import(pathToFileURL(path.resolve(process.cwd(), "apps/web/seo-inventory.mjs")));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "llms-hook-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const output = path.join(root, "dist");
+  const page = path.join(output, "posts/hello");
+  fs.mkdirSync(page, { recursive: true });
+  fs.writeFileSync(path.join(page, "index.html"), "<html></html>");
+  const article = { ...post("en/hello", "Title"), body: "Article body with [missing](./missing.md)." };
+  const markdownFile = path.join(page, "index.md");
+  const fullFile = path.join(output, "llms-full.txt");
+  fs.writeFileSync(markdownFile, stageMarkdown({ post: article, posts: [article], root, config }));
+  fs.writeFileSync(fullFile, stageMarkdown({ posts: [article], root, config }));
+  createSeoInventory({ base: "/blog" }).hooks["astro:build:done"]({ dir: pathToFileURL(output + path.sep) });
+  for (const file of [markdownFile, fullFile]) {
+    const text = fs.readFileSync(file, "utf8");
+    assert.match(text, /^# Title\n/);
+    assert.match(text, /Article body with missing\./);
+    assert.doesNotMatch(text, /\.\/missing\.md|alnilam:pending-markdown/);
+  }
+});
+
+test("LLM endpoints generate paths only when publication is enabled", { skip: !featurePresent }, async (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "llms-endpoint-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const posts = [post("en/hello", "Hello"), post("fr/bonjour", "Bonjour", { lang: "fr" })];
+  const siteUrl = `data:text/javascript,${encodeURIComponent(`export const site = ${JSON.stringify({ root, config: { ...config, llms: { ...config.llms, enabled: false } } })}; export const loadSite = () => site;`)}`;
+  const contentUrl = `data:text/javascript,${encodeURIComponent(`export const getCollection = async () => ${JSON.stringify(posts)};`)}`;
+  const hooks = registerHooks({
+    resolve(specifier, context, nextResolve) {
+      if (specifier === "astro:content") return { url: contentUrl, shortCircuit: true };
+      if (specifier.endsWith("/lib/site-source.mjs")) return { url: siteUrl, shortCircuit: true };
+      return nextResolve(specifier, context);
+    },
+  });
+  t.after(() => hooks.deregister());
+  const pageUrl = (file) => pathToFileURL(path.resolve(process.cwd(), "apps/web/src/pages", file));
+  const markdownEndpoint = await import(pageUrl("[...llms].md.js"));
+  const localeEndpoint = await import(pageUrl("[lang]/llms.txt.js"));
+  const { site } = await import(siteUrl);
+  assert.deepEqual(await markdownEndpoint.getStaticPaths(), []);
+  assert.deepEqual(await localeEndpoint.getStaticPaths(), []);
+  site.config.llms.enabled = true;
+  assert.deepEqual((await markdownEndpoint.getStaticPaths()).map(({ params }) => params.llms).sort(), ["fr/posts/bonjour/index", "posts/hello/index"]);
+  assert.deepEqual((await localeEndpoint.getStaticPaths()).map(({ params }) => params.lang), ["fr"]);
 });
