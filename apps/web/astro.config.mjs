@@ -110,6 +110,10 @@ export default defineConfig({
           if (config.bangumi.enabled) {
             injectRoute({ pattern: "/bangumi/", entrypoint: "./src/modules/bangumi.astro", prerender: true });
           }
+          if (config.llms.enabled) {
+            injectRoute({ pattern: "/llms.txt", entrypoint: "./src/modules/llms.txt.js", prerender: true });
+            if (config.llms.full) injectRoute({ pattern: "/llms-full.txt", entrypoint: "./src/modules/llms-full.txt.js", prerender: true });
+          }
           if (fs.existsSync(path.join(siteRoot, "content/series"))) {
             injectRoute({ pattern: "/series/", entrypoint: "./src/modules/series.astro", prerender: true });
             injectRoute({ pattern: "/series/[slug]/", entrypoint: "./src/modules/series-detail.astro", prerender: true });
