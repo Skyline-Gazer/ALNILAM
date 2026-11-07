@@ -22,6 +22,7 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 - Runtime TOML Site config parsing (`smol-toml` dependency), `alnilam.config.toml` support, and the in-repo `sites/legacy-demo` path (the v1 fixture moved to `tests/fixtures/site-v1-legacy`).
 
 ### Fixed
+- Archive pages serialize only the post fields needed for display and filtering, reducing HTML size while retaining archive interactions.
 - Markdown links retain their text while unsafe URL schemes are removed.
 - Markdown feature styles load as page-scoped assets, reducing HTML size for articles with code blocks and diagrams while retaining navigation cleanup.
 - Series detail pages retain separate Layout and Markdown runtime scripts; Expressive Code's generated client behavior is shared with those runtimes to keep article script counts within budget.
