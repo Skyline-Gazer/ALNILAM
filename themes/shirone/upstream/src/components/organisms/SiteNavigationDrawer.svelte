@@ -11,7 +11,7 @@ import { getTranslation } from "@i18n/translation";
 import { resolveNavBarLinks, resolvePageKey } from "@utils/nav-utils";
 import { url } from "@utils/url-utils";
 import { onMount, tick } from "svelte";
-import { siteConfig } from "@/config";
+import { siteConfig } from "@/config/siteConfig";
 import { navBarConfig } from "@/config/navBarConfig";
 import { siteLocales } from "../../user/user-config";
 

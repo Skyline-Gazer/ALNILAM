@@ -12,7 +12,8 @@ import {
 	WALLPAPER_MODE_KEY,
 } from "@constants/constants.ts";
 import { applyCurrentScheme } from "@utils/theme-utils";
-import { expressiveCodeConfig, siteConfig } from "@/config";
+import { expressiveCodeConfig } from "@/config/expressiveCodeConfig";
+import { siteConfig } from "@/config/siteConfig";
 import type { LIGHT_DARK_MODE, WallpaperMode } from "@/types/config";
 import type { TexturePreset } from "@/types/textureConfig";
 

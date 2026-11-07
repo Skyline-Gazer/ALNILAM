@@ -71,9 +71,11 @@ owns the script, iframe, theme/language updates, observers and teardown.
 `commentId`, `translationKey` or the content id and emits the provider-scoped
 CSP; it never uses the deployment URL as the default identity.
 
-Disabled comments ship no island, script, iframe, placeholder DOM or third-party
-request. Enabled comments either wait for an explicit click (`load: click`,
-default) or load near the viewport (`load: visible`). Twikoo and Waline are not
+Disabled comments ship no island, component JavaScript or CSS, script, iframe,
+placeholder DOM or third-party request. The build-time comments entry imports
+the island only when the Site enables comments. Enabled comments either wait
+for an explicit click (`load: click`, default) or load near the viewport
+(`load: visible`). Twikoo and Waline are not
 installed: they require separately operated persistence/backends and are
 post-launch evaluations rather than a second widget on the same article.
 

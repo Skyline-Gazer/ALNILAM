@@ -1,4 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
+import fs from "node:fs";
+import path from "node:path";
 import { CLS_BUDGET, calculateCLS, observeLayoutShifts } from "../../scripts/ci/cnb-metrics.mjs";
 
 const fixtureReady = process.env.COMMENTS_FIXTURE === "1";
@@ -78,6 +80,27 @@ async function prepareComments(page: Page) {
 }
 
 if (fixtureReady) {
+  test("comments assets are emitted only for enabled sites", () => {
+    const assets = (directory: string): { name: string; content: string }[] =>
+      fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+        const file = path.join(directory, entry.name);
+        if (entry.isDirectory()) return assets(file);
+        return /\.(?:js|css)$/.test(entry.name)
+          ? [{ name: entry.name, content: fs.readFileSync(file, "utf8") }]
+          : [];
+      });
+    for (const output of ["site", "nested-base"]) {
+      const files = assets(path.resolve("dist", output, "_astro"));
+      expect(files.filter(({ name }) => /^Comments[.-].*\.(?:js|css)$/.test(name))).toEqual([]);
+      expect(files.filter(({ content }) => /giscus\.app|\.comments-provider/.test(content))).toEqual([]);
+    }
+    for (const output of ["comments-root", "comments-nested"]) {
+      const files = assets(path.resolve("dist", output, "_astro"));
+      expect(files.some(({ name, content }) => name.endsWith(".js") && content.includes("giscus.app"))).toBe(true);
+      expect(files.some(({ name, content }) => name.endsWith(".css") && content.includes(".comments-provider"))).toBe(true);
+    }
+  });
+
   for (const { origin, prefix } of origins) {
     for (const width of [390, 1440]) {
       test(`Giscus stable identity, privacy gate and lifecycle ${prefix || "/"} ${width}`, async ({ browser }, info) => {

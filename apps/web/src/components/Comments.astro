@@ -1,0 +1,6 @@
+---
+import Comments from "@alnilam/ui/Comments.svelte";
+import type { ComponentProps } from "svelte";
+type Props = ComponentProps<typeof Comments>;
+---
+<Comments client:visible {...Astro.props} />

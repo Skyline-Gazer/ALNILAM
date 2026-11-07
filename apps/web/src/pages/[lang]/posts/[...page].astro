@@ -2,7 +2,7 @@
 import { getCollection } from "astro:content";
 import NativeArticle from "@alnilam/theme-shirone/Article.astro";
 import Card from "@alnilam/theme-shirone/Card.svelte";
-import Comments from "@alnilam/ui/Comments.svelte";
+import Comments from "virtual:alnilam-comments";
 import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
 import PostPage from "@alnilam/theme-shirone/PostPage.astro";
 import Pagination from "@alnilam/theme-shirone/Pagination.astro";
@@ -63,7 +63,7 @@ const commentText = commentLabels(locale);
   {config.comments.enabled && comment && (
     <section slot="comments" id="comments" class="mb-4" style="min-height:340px" aria-label={commentText.commentsRegion}>
       <Card color="var(--card-bg)" radius="l" class="p-6">
-        <Comments client:visible repo={config.comments.repo} repoId={config.comments.repoId}
+        <Comments repo={config.comments.repo} repoId={config.comments.repoId}
           category={config.comments.category} categoryId={config.comments.categoryId}
           mapping={config.comments.mapping} term={comment.term} load={config.comments.load}
           theme={config.theme.appearance} lang={commentLang(config, locale)} labels={commentText} />
