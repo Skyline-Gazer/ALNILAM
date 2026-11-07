@@ -78,6 +78,7 @@ configuration including `locales`, taxonomy and module blocks.
 - The Site is hashed before and after building; **any mutation aborts the build**.
 - Output is staged, then atomically swapped; `alnilam-provenance.json` binds the Core revision + Site SHA-256 digest.
 - Non-default-locale posts: put them in `content/posts/<lang>/` with frontmatter `lang` + `translationKey` → served at `/<lang>/posts/<slug>/` with automatic hreflang alternates for real translations. Old `/posts/<lang>/<slug>/` URLs provide a noindex static navigation fallback to the canonical article.
+- Optional `llms.enabled` publishes locale-aware LLM discovery and source-backed Markdown views; `llms.full` separately opts into aggregation. Both default off; see [Site onboarding](docs/SITE_ONBOARDING.md) for privacy and hosting details.
 - Full contract, slug rules, image policy, and private-Site CI strategy: [docs/SITE_ONBOARDING.md](docs/SITE_ONBOARDING.md).
 
 ## Search

@@ -12,6 +12,7 @@ import { canonicalUrl, localeRoutePath, postLang, postLocalSlug, postPath, route
 import { comparePosts } from "../../../lib/taxonomy";
 import type { GetStaticPaths } from "astro";
 import { POSTS_PAGE_SIZE } from "../../../lib/pagination.mjs";
+import { llmsIndexPath, markdownPath, absolute } from "../../../lib/llms.mjs";
 
 export const getStaticPaths = (async ({ paginate }) => {
   const allPosts = (await getCollection("posts", ({ data }) => !data.draft)).sort(comparePosts);
@@ -48,6 +49,8 @@ const t = uiStrings(locale);
 {post ? <NativeArticle entry={post} discovery={{related: [], random: []}} series={null} canonical={canonical} alternates={alternates}>
   <Fragment slot="head">
     <meta property="article:published_time" content={post.data.pubDate.toISOString()} />
+    {config.llms.enabled && config.locales.includes(locale) && <link rel="alternate" type="text/markdown" href={absolute(markdownPath(post, config), config)} />}
+    {config.llms.enabled && config.locales.includes(locale) && <link rel="describedby" type="text/plain" href={absolute(llmsIndexPath(locale, config), config)} />}
     {post.data.updatedDate && <meta property="article:modified_time" content={post.data.updatedDate.toISOString()} />}
     {post.data.category && <meta property="article:section" content={post.data.category} />}
     {post.data.tags.map(tag => <meta property="article:tag" content={tag} />)}
