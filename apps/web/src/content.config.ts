@@ -35,6 +35,8 @@ const posts = defineCollection({
     seriesOrder: z.number().int().optional(),
     pinned: z.boolean().default(false),
     draft: z.boolean().default(false),
+    private: z.boolean().default(false),
+    unlisted: z.boolean().default(false),
     // i18n (schema v1 additive): `lang` is BCP-47, defaults to the site locale.
     // `translationKey` groups translations of the same article; when present on
     // any post, hreflang alternates are rendered for the whole group.
@@ -42,6 +44,7 @@ const posts = defineCollection({
     translationKey: z.string().min(1).optional(),
   }).transform((data) => ({
     ...data,
+    draft: data.draft || data.private || data.unlisted,
     published: data.pubDate,
     updated: data.updatedDate,
     image: resolveCover(data.cover, base),

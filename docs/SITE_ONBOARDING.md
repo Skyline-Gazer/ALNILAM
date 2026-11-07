@@ -58,7 +58,14 @@ them in Sites. Tag pages derive from post frontmatter.
   unprefixed `/posts/<slug>/` URLs. Old `/posts/<lang>/<slug>/` URLs serve a
   noindex static page linking to the canonical article; this is not an HTTP redirect.
   All paths include the configured deployment base when hosted under a subpath.
-- `draft = true` posts are excluded from all builds.
+
+#### Post visibility
+
+`draft`, `private` and `unlisted` are build-time exclusions: the post publishes
+no HTML article and no LLM Markdown view, and does not appear in indexes,
+feeds, sitemaps or listings. Do not put secrets or confidential material in a
+Site relying on `noindex`.
+
 
 ### Images policy
 
@@ -99,7 +106,7 @@ finishes and stolen when its holder process is gone or after six hours.
 
 ## Optional modules (opt-in via config)
 
-Both modules are feature-flagged: **disabled modules ship nothing** — no page, no 404 stub, no client JS, no third-party requests.
+Optional modules are feature-flagged: **disabled modules ship nothing** — no page, no 404 stub, no client JS, no third-party requests.
 
 ### Comments (`[comments]`)
 
@@ -150,6 +157,45 @@ shows an unavailable
 message. A successful empty response is valid and replaces the prior snapshot.
 Clearing the managed cache also removes this fallback; a fresh build needs the
 provider again. Data and covers update only on a subsequent build.
+
+### LLM discovery (`llms`, llmstxt.org v2)
+
+```yaml
+llms:
+  enabled: false     # default: no LLM files, no discovery links
+  full: false        # default: no llms-full.txt aggregate
+```
+
+When `enabled`, the build emits `/llms.txt` (site-wide curated index),
+`/<locale>/llms.txt` for every non-default locale that publishes at least one
+article, and a source-backed Markdown view at each public article's canonical
+path, e.g. `/en/posts/guides/deep/index.md`, served as
+`text/markdown; charset=utf-8`. Article HTML adds
+`<link rel="alternate" type="text/markdown">` and `<link rel="describedby"
+type="text/plain">` pointing at the generated files. The views preserve source
+headings, code fences, math and Mermaid diagrams, resolve relative images and
+article links to absolute canonical URLs, and render MDX component children as
+text/link fallbacks rather than stripping them.
+Post-relative images, including images beside an `index.md` or `index.mdx`
+source, use the same generated image files as the HTML article; relative links
+to public Markdown posts also work without a file extension. Unresolvable
+relative post links, images, and raw HTML anchors retain their text instead of
+pointing to invented files.
+
+Only the public article inventory is exported: drafts, `private: true`,
+`unlisted: true`, legacy alias routes, taxonomy pages and disabled locales get
+no Markdown view and are absent from the indexes. Set `full: true` to add
+`/llms-full.txt`, one aggregated document built from the same public Markdown
+views; it is **off by default** because it can be large and its copyright,
+provider size-limit and caching policy are deployment decisions. Static Pages
+generally cannot attach `Cache-Control: no-store`, and robots rules are not an
+access-control boundary; treat all exported content as public.
+
+The root index links each generated locale index; links are absolute and
+include the configured deployment base (root or `/ALNILAM/`). This feature is
+discoverability support for the community llmstxt.org v2 proposal, not an
+official search-ranking signal, and it does not replace HTML, sitemap, robots
+or structured data.
 
 ## Building
 

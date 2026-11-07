@@ -3,6 +3,10 @@
 // covered by `scripts/seo-check.mjs` over a real composed output.
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import {
   canonicalUrl,
   feedPath,
@@ -22,7 +26,7 @@ import {
   ogLocale,
   websiteJsonLd,
 } from "../../apps/web/src/lib/seo.mjs";
-import { parseSeoHead } from "../../apps/web/seo-inventory.mjs";
+import { createSeoInventory, parseSeoHead } from "../../apps/web/seo-inventory.mjs";
 
 const post = (id, lang, translationKey, extra = {}) => ({
   id,
@@ -128,6 +132,46 @@ test("the sitemap inventory reads the same head facts the pages publish", () => 
   assert.deepEqual(head.alternates, [{ lang: "en", href: "https://example.com/en/posts/a/" }]);
   assert.equal(head.noindex, true);
   assert.equal(head.lastmod, "2026-02-01T00:00:00.000Z");
+});
+
+test("the sitemap inventory is rebuilt from emitted HTML and its published head", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "seo-inventory-test-"));
+  try {
+    const writePage = (file, html) => {
+      const target = path.join(root, file);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, html);
+    };
+    const origin = "https://example.com/base";
+    writePage("custom page/index.html", `<link rel="canonical" href="${origin}/custom%20page/">` +
+      `<link rel="alternate" hreflang="en" href="${origin}/en/custom/">` +
+      '<meta property="article:modified_time" content="2026-02-01T00:00:00.000Z">');
+    writePage("hidden/index.html", `<link rel="canonical" href="${origin}/hidden/">` +
+      '<meta name="robots" content="noindex, follow">');
+    writePage("redirect/index.html", `<link rel="canonical" href="${origin}/custom%20page/">`);
+    writePage("404.html", '<meta name="robots" content="noindex">');
+    const inventory = createSeoInventory({ base: "/base/" });
+    const buildDone = inventory.hooks["astro:build:done"];
+    const dir = pathToFileURL(root + path.sep);
+    const custom = `${origin}/custom%20page/`;
+    assert.equal(inventory.filter(custom), false);
+    await buildDone({ dir });
+    assert.equal(inventory.filter(custom), true);
+    assert.equal(inventory.filter(`${origin}/hidden/`), false);
+    assert.equal(inventory.filter(`${origin}/redirect/`), false);
+    assert.equal(inventory.filter(`${origin}/missing/`), false);
+    assert.equal(inventory.filter(`${origin}/404.html`), false);
+    assert.deepEqual(inventory.serialize({ url: custom }), {
+      url: custom,
+      lastmod: "2026-02-01T00:00:00.000Z",
+      links: [{ lang: "en", url: `${origin}/en/custom/` }],
+    });
+    fs.rmSync(path.join(root, "custom page"), { recursive: true });
+    await buildDone({ dir });
+    assert.equal(inventory.filter(custom), false, "removed HTML must leave the inventory on the next build");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("localeRoutePath, postLocalSlug and routeAlternates follow ROUTE-01..06", () => {
