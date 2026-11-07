@@ -1,0 +1,65 @@
+---
+import type { Page } from "astro";
+import type { CollectionEntry } from "astro:content";
+import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
+import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
+import ArchivePanel from "@alnilam/theme-shirone/ArchivePanel.svelte";
+import Pagination from "@alnilam/theme-shirone/Pagination.astro";
+import { canonicalUrl, localeRoutePath, postPath, routeAlternates, uiStrings, withBase } from "./i18n.mjs";
+import { loadSite } from "./site-source.mjs";
+import { breadcrumbListJsonLd, collectionPageJsonLd } from "./seo.mjs";
+
+interface Props {
+  page: Page<CollectionEntry<"posts">>;
+  kind: "categories" | "tags";
+  locale: string;
+  slug: string;
+  label: string;
+  labels: Record<string, string>;
+  activeLocales: string[];
+}
+const { page, kind, locale, slug, label, labels, activeLocales } = Astro.props;
+const { config } = loadSite();
+const t = uiStrings(locale);
+const isCategory = kind === "categories";
+const display = isCategory ? label : `#${label}`;
+const segment = `${kind}/${encodeURIComponent(slug)}`;
+const basePath = localeRoutePath(locale, config.site.locale, segment);
+const indexPath = localeRoutePath(locale, config.site.locale, kind);
+const canonical = canonicalUrl(page.url.current, config.site.url);
+const alts = page.currentPage === 1 ? routeAlternates(activeLocales, config.site.locale, config.locales, segment) : null;
+const alternates = alts ? [...alts].map(([lang, path]) => ({ lang, href: canonicalUrl(path, config.site.url) })) : void 0;
+const description = isCategory ? t.categoryDesc(label) : t.tagDesc(label);
+const title = page.currentPage === 1 ? display : `${display} · ${page.currentPage}`;
+const mappedPosts = page.data.map((post) => ({
+  slug: post.id,
+  url: withBase(postPath(post, config.site.locale) + "/"),
+  data: { title: post.data.title, tags: post.data.tags, category: post.data.category || null, published: post.data.pubDate },
+}));
+const collectionJsonLd = collectionPageJsonLd({
+  name: title, description, url: canonical, inLanguage: locale,
+  items: page.data.map((post) => canonicalUrl(postPath(post, config.site.locale) + "/", config.site.url)),
+});
+const breadcrumbJsonLd = breadcrumbListJsonLd([
+  { name: t.home, url: canonicalUrl(localeRoutePath(locale, config.site.locale, ""), config.site.url) },
+  { name: isCategory ? t.categories : t.tags, url: canonicalUrl(indexPath, config.site.url) },
+  { name: display, url: canonical },
+]);
+---
+<MainGridLayout {title} {description} page={kind} lang={locale} {canonical} {alternates}>
+  <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(collectionJsonLd)} />
+  <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
+  <a href={withBase(indexPath)} class="text-[var(--primary)]">{isCategory ? t.allCategories : t.allTags}</a>
+  <PageHeader title={display} subtitle={t.postsCount(page.total)} />
+  <ArchivePanel
+    client:visible
+    sortedPosts={mappedPosts}
+    initialCategory={isCategory ? slug : void 0}
+    initialTag={isCategory ? void 0 : slug}
+    preScoped
+    breadcrumb={{ href: withBase(indexPath), label: isCategory ? t.categories : t.tags, value: display }}
+    categoryLabels={isCategory ? labels : void 0}
+    tagLabels={isCategory ? void 0 : labels}
+  />
+  <Pagination {page} {basePath} lang={locale} />
+</MainGridLayout>
