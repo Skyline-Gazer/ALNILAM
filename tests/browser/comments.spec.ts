@@ -419,10 +419,6 @@ if (fixtureReady) {
     expect(await messageListenerCount(page)).toBe(afterInstall);
     expect(await page.locator("script[src*='giscus.app/client.js']").count()).toBe(1);
   });
-} else {
-  test("comments fixture build unavailable", () => {
-    test.skip(true, "Run scripts/local-browser.mjs to create and serve the comments fixtures");
-  });
 }
 
 
