@@ -65,7 +65,7 @@ Comments are an optional Site module, not a Core platform service. The Site owns
 `comments.enabled`, the Giscus public identifiers and the identity policy
 (`mapping`, `sharing`, `load`, `lang`, `csp`). `packages/ui/src/Comments.svelte`
 renders the disclosure/gate/fallback UI and delegates to exactly one
-`CommentProvider` implementation (`packages/ui/src/comments/giscus.ts`), which
+`GiscusProvider` implementation (`packages/ui/src/comments/giscus.ts`), which
 owns the script, iframe, theme/language updates, observers and teardown.
 `apps/web/src/lib/comments.mjs` derives the stable Discussion term from
 `commentId`, `translationKey` or the content id and emits the provider-scoped

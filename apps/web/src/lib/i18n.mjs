@@ -178,6 +178,10 @@ const UI_STRINGS = {
     commentsRetry: "重试",
     commentsDiscussion: "在 GitHub 上打开讨论",
     commentsRequiresJs: "评论需要启用 JavaScript。",
+    commentsScriptError: "评论脚本加载失败。正文和导航不受影响。",
+    commentsIframeTimeout: "评论框加载超时。正文和导航不受影响。",
+    commentsServiceError: "评论服务暂时不可用。正文和导航不受影响。",
+    commentsAuthError: "评论登录状态失效。可重试或打开 GitHub 讨论。",
     searchTitle: "搜索",
     searchLabel: "搜索文章",
     searchSearching: "搜索中…",
@@ -213,6 +217,10 @@ const UI_STRINGS = {
     commentsRetry: "Retry",
     commentsDiscussion: "Open the GitHub discussion",
     commentsRequiresJs: "Comments require JavaScript.",
+    commentsScriptError: "The comments script failed to load. The article and navigation still work.",
+    commentsIframeTimeout: "The comments frame timed out. The article and navigation still work.",
+    commentsServiceError: "The comments service is temporarily unavailable. The article and navigation still work.",
+    commentsAuthError: "The comments login state expired. Retry or open the GitHub discussion.",
     searchTitle: "Search",
     searchLabel: "Search articles",
     searchSearching: "Searching…",
@@ -247,6 +255,10 @@ const UI_STRINGS = {
     commentsRetry: "再試行",
     commentsDiscussion: "GitHub のディスカッションを開く",
     commentsRequiresJs: "コメントには JavaScript が必要です。",
+    commentsScriptError: "コメント用スクリプトの読み込みに失敗しました。本文とナビゲーションは利用できます。",
+    commentsIframeTimeout: "コメント枠の読み込みがタイムアウトしました。本文とナビゲーションは利用できます。",
+    commentsServiceError: "コメントサービスを一時的に利用できません。本文とナビゲーションは利用できます。",
+    commentsAuthError: "コメントのログイン状態が無効です。再試行するか GitHub のディスカッションを開いてください。",
     searchTitle: "検索",
     searchLabel: "記事を検索",
     searchSearching: "検索中…",
@@ -259,19 +271,3 @@ export function uiStrings(locale) {
   return UI_STRINGS[locale] || UI_STRINGS.en;
 }
 
-/** Plain-string labels safe to serialize into the Svelte comments island. */
-export function commentLabels(locale) {
-  const t = uiStrings(locale);
-  return {
-    commentsRegion: t.commentsRegion,
-    commentsDisclosure: t.commentsDisclosure,
-    commentsLoadNote: t.commentsLoadNote,
-    commentsVisibleNote: t.commentsVisibleNote,
-    commentsLoad: t.commentsLoad,
-    commentsLoading: t.commentsLoading,
-    commentsUnavailable: t.commentsUnavailable,
-    commentsRetry: t.commentsRetry,
-    commentsDiscussion: t.commentsDiscussion,
-    commentsRequiresJs: t.commentsRequiresJs,
-  };
-}

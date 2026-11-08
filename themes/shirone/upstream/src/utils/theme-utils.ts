@@ -6,7 +6,7 @@ import {
 	type McStyle,
 	resolveScheme,
 } from "@utils/mc-utils";
-import { getDefaultSpec, getDefaultStyle, siteConfig } from "@/config/siteConfig";
+import { getDefaultSpec, getDefaultStyle, siteConfig } from "@/config";
 
 const STYLE_KEY = "mc-style";
 const SPEC_KEY = "mc-spec";

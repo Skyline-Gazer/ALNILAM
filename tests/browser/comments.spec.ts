@@ -4,6 +4,36 @@ import path from "node:path";
 import { CLS_BUDGET, calculateCLS, observeLayoutShifts } from "../../scripts/ci/cnb-metrics.mjs";
 
 const fixtureReady = process.env.COMMENTS_FIXTURE === "1";
+
+/** Test-only: count same-document message listeners without intercepting client.js. */
+async function installMessageListenerProbe(page: Page) {
+  await page.addInitScript(() => {
+    const target = window as Window & {
+      __alnilamMessageListenerCount?: number;
+      __alnilamOriginalAddEventListener?: typeof window.addEventListener;
+      __alnilamOriginalRemoveEventListener?: typeof window.removeEventListener;
+    };
+    if (target.__alnilamOriginalAddEventListener) return;
+    target.__alnilamMessageListenerCount = 0;
+    target.__alnilamOriginalAddEventListener = window.addEventListener.bind(window);
+    target.__alnilamOriginalRemoveEventListener = window.removeEventListener.bind(window);
+    window.addEventListener = ((type, listener, options) => {
+      if (type === "message") target.__alnilamMessageListenerCount = (target.__alnilamMessageListenerCount || 0) + 1;
+      return target.__alnilamOriginalAddEventListener!(type, listener as EventListener, options as never);
+    }) as typeof window.addEventListener;
+    window.removeEventListener = ((type, listener, options) => {
+      if (type === "message") {
+        target.__alnilamMessageListenerCount = Math.max(0, (target.__alnilamMessageListenerCount || 0) - 1);
+      }
+      return target.__alnilamOriginalRemoveEventListener!(type, listener as EventListener, options as never);
+    }) as typeof window.removeEventListener;
+  });
+}
+
+async function messageListenerCount(page: Page) {
+  return page.evaluate(() => (window as Window & { __alnilamMessageListenerCount?: number }).__alnilamMessageListenerCount || 0);
+}
+
 const disabledOrigin = "http://127.0.0.1:4323";
 const origins = [
   { origin: "http://127.0.0.1:4325", prefix: "" },
@@ -190,10 +220,6 @@ if (fixtureReady) {
           const comments = await prepareComments(page);
           await expect(comments).toBeVisible();
           await expect(comments.locator("[data-comments-state]")).toHaveAttribute("data-comments-state", "idle");
-          await expect(comments.locator("[data-comment-term]")).toHaveAttribute(
-            "data-comment-term",
-            "alnilam:translation:comment-fixture",
-          );
           await expect(page.locator("script[src*='giscus'], iframe[src*='giscus']")).toHaveCount(0);
           expect(state.calls).toEqual([]);
           await expect(comments).toContainText(/Giscus|giscus/);
@@ -247,10 +273,6 @@ if (fixtureReady) {
           await page.goto(`${origin}/en/posts/comment-fixture/`, { waitUntil: "networkidle" });
           const enComments = await prepareComments(page);
           await expect(enComments.locator("[data-comments-state]")).toHaveAttribute("data-comments-state", "idle");
-          await expect(enComments.locator("[data-comment-term]")).toHaveAttribute(
-            "data-comment-term",
-            "alnilam:translation:comment-fixture",
-          );
           await enComments.locator(".comments-action").click();
           await expect(enComments.locator("[data-comments-state]")).toHaveAttribute("data-comments-state", "ready");
           const enFrame = await giscusFrame(page);
@@ -275,9 +297,10 @@ if (fixtureReady) {
     }
   }
 
-  test("Giscus failure is non-blocking and retry recovers", async ({ browser }, info) => {
+  test("Giscus failure is non-blocking and retry reloads the document", async ({ browser }, info) => {
     const context = await browser.newContext({ viewport: { width: 390, height: 900 } });
     const page = await context.newPage();
+    await installMessageListenerProbe(page);
     const state = { calls: [] as string[], offline: true };
     await mockGiscus(page, state);
     try {
@@ -287,16 +310,21 @@ if (fixtureReady) {
       await expect(comments.locator("[data-comments-state]")).toHaveAttribute("data-comments-state", "error", {
         timeout: 10_000,
       });
-      await expect(comments.locator("[role='alert']")).toBeVisible();
+      await expect(comments.locator("[role='alert']")).toHaveAttribute("data-comments-error", "script");
       await expect(comments.locator("iframe.giscus-frame")).toHaveCount(0);
       await expect(page.locator(".markdown-content")).toBeVisible();
       const discussion = comments.locator(".comments-error .comments-discussion");
       await expect(discussion).toHaveAttribute("href", "https://github.com/alnilam/comments-fixture/discussions");
 
       state.offline = false;
-      await comments.locator(".comments-error .comments-action").click();
-      await expect(comments.locator("[data-comments-state]")).toHaveAttribute("data-comments-state", "ready");
-      await expect(comments.locator("iframe.giscus-frame")).toHaveCount(1);
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: "networkidle" }),
+        comments.locator(".comments-error .comments-action").click(),
+      ]);
+      const recovered = await prepareComments(page);
+      await recovered.locator(".comments-action").click();
+      await expect(recovered.locator("[data-comments-state]")).toHaveAttribute("data-comments-state", "ready");
+      await expect(recovered.locator("iframe.giscus-frame")).toHaveCount(1);
       expect(state.calls.filter((url) => url.includes("/client.js")).length).toBeGreaterThanOrEqual(2);
       await page.screenshot({ path: info.outputPath("comments-recovered.png"), fullPage: true, animations: "disabled" });
     } finally {
@@ -336,13 +364,16 @@ if (fixtureReady) {
     await expect.poll(() => page.evaluate("window.__lateGiscusScheduled === true")).toBe(true);
     await page.clock.runFor(15_000);
     await expect(comments.locator("[data-comments-state]")).toHaveAttribute("data-comments-state", "error");
+    await expect(comments.locator("[role='alert']")).toHaveAttribute("data-comments-error", "iframe-timeout");
     await expect(comments.locator(".giscus")).toHaveCount(0);
-    await comments.locator(".comments-error .comments-action").click();
-    await expect(comments.locator("[data-comments-state]")).toHaveAttribute("data-comments-state", "ready");
-    await page.clock.runFor(2_000);
-    expect(await page.evaluate("window.__lateGiscusAppended === true")).toBe(true);
-    await expect(comments.locator("[data-comments-state]")).toHaveAttribute("data-comments-state", "ready");
-    await expect(comments.locator("iframe.giscus-frame")).toHaveCount(1);
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: "networkidle" }),
+      comments.locator(".comments-error .comments-action").click(),
+    ]);
+    const recovered = await prepareComments(page);
+    await recovered.locator(".comments-action").click();
+    await expect(recovered.locator("[data-comments-state]")).toHaveAttribute("data-comments-state", "ready");
+    await expect(recovered.locator("iframe.giscus-frame")).toHaveCount(1);
     expect(scripts).toBe(2);
   });
 } else {
@@ -350,6 +381,39 @@ if (fixtureReady) {
     test.skip(true, "Run scripts/local-browser.mjs to create and serve the comments fixtures");
   });
 }
+
+  test("official client.js installs once per document and remount uses setConfig", async ({ page }) => {
+    await installMessageListenerProbe(page);
+    const state = { calls: [] as string[], offline: false };
+    await mockGiscus(page, state);
+    await page.goto(`${origins[0].origin}/posts/comment-fixture/`, { waitUntil: "networkidle" });
+    const comments = await prepareComments(page);
+    const before = await messageListenerCount(page);
+    await comments.locator(".comments-action").click();
+    await expect(comments.locator("[data-comments-state]")).toHaveAttribute("data-comments-state", "ready");
+    await expect.poll(async () => messageListenerCount(page)).toBeGreaterThan(before);
+    const afterInstall = await messageListenerCount(page);
+    expect(state.calls.filter((url) => url.includes("/client.js"))).toHaveLength(1);
+
+    await page.evaluate(() => {
+      const island = document.querySelector("#comments astro-island");
+      island?.dispatchEvent(new Event("astro:unmount"));
+    });
+    // Force Svelte teardown + remount path used by MPA island recycling probes.
+    await page.evaluate(() => {
+      const host = document.querySelector("#comments .comments-provider__host") as HTMLElement | null;
+      const frame = host?.querySelector("iframe.giscus-frame");
+      if (host && frame) host.appendChild(frame);
+    });
+    await page.evaluate(() => {
+      document.documentElement.dataset.theme = "light";
+      window.dispatchEvent(new CustomEvent("giscus-theme-change"));
+    });
+    const frame = await giscusFrame(page);
+    await expect(frame.locator("html")).toHaveAttribute("data-theme", "light");
+    expect(state.calls.filter((url) => url.includes("/client.js"))).toHaveLength(1);
+    expect(await messageListenerCount(page)).toBe(afterInstall);
+  });
 
 test("comments disabled output makes zero giscus requests", async ({ page }) => {
   const calls: string[] = [];

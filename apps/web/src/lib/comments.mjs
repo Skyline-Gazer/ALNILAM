@@ -1,13 +1,4 @@
-/**
- * Stable comment identity, provider-locale mapping and CSP policy.
- *
- * Giscus can map a Discussion to the current URL (`pathname`), but that makes
- * the thread depend on deployment base, locale prefix and every future slug
- * rename. With `mapping: specific`, a stable build-time term is derived from
- * explicit frontmatter `commentId`, then `translationKey`, then the content id.
- * Enabled Sites must choose a mapping; `pathname` preserves existing URL-based
- * threads.
- */
+/** Stable comment identity + CSP. Mapping/term rules: docs/SITE_ONBOARDING.md §Comments. */
 import { postLang } from "./i18n.mjs";
 
 export const GISCUS_ORIGIN = "https://giscus.app";
@@ -53,22 +44,13 @@ function contentId(post) {
     .replace(CONTENT_EXTENSION, "");
 }
 
-/**
- * Build the stable Giscus term for one post.
- *
- * - explicit `commentId` is used verbatim (then locale-partitioned when needed);
- * - `translationKey` shares one term across all translated pages by default;
- * - otherwise the Site content id is used (stable across site URL/base).
- *
- * Returns `null` when comments are disabled and throws actionable errors for
- * configurations that cannot produce a valid term.
- */
+/** Resolve Giscus mapping/term for one post; null when comments are disabled. */
 export function resolveCommentIdentity(post, config) {
   const comments = config.comments;
   if (!comments.enabled) return null;
   const lang = postLang(post, config.site.locale);
   if (comments.mapping === "pathname") {
-    return { mapping: "pathname", term: undefined, lang, source: "pathname", sharedAcrossLocales: false };
+    return { mapping: "pathname", term: null, lang, source: "pathname", sharedAcrossLocales: false };
   }
   const explicit = typeof post.data?.commentId === "string" ? post.data.commentId.trim() : "";
   const translationKey = typeof post.data?.translationKey === "string" ? post.data.translationKey.trim() : "";
@@ -106,14 +88,7 @@ export function resolveCommentIdentity(post, config) {
   };
 }
 
-/**
- * Document CSP for comment-enabled articles, emitted only when `comments.csp`
- * is true. It also permits the page's search and supported Markdown media.
- *
- * `meta` CSP cannot enforce `frame-ancestors`; hosting-level headers may add it.
- * `'unsafe-inline'` is required by the existing Astro/Shirone inline theme
- * bootstrap and JSON-LD; `'wasm-unsafe-eval'` permits Pagefind's WebAssembly.
- */
+/** Article CSP when comments.csp is on. wasm-unsafe-eval is required by Pagefind. */
 export function commentsCsp(config) {
   if (!config.comments.enabled || !config.comments.csp) return null;
   return [

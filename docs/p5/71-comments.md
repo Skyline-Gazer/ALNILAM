@@ -69,7 +69,7 @@ previously omitted it should choose `pathname` to preserve their threads.
   always rendered. `load: click` (default) makes no external request until the
   reader activates the button. `load: visible` is an explicit owner choice and
   still represents third-party traffic.
-- Exactly one `CommentProvider` (`GiscusProvider`) owns the script, iframe,
+- Exactly one `GiscusProvider` owns the script, iframe,
   mutation observer, timeout and theme/language forwarding. Failure, retry and
   teardown remove the whole mount node, keeping a late iframe out of the page.
 - A blocked script or a missing iframe after 15 seconds produces a non-blocking

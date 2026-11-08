@@ -43,7 +43,7 @@ import {
 	getDefaultStyle,
 	resolveDisplaySettings,
 	siteConfig,
-} from "@/config/siteConfig";
+} from "@/config";
 import type { WallpaperMode } from "@/types/config";
 import type { PostListMode } from "@/types/postListConfig";
 import type { TexturePreset } from "@/types/textureConfig";

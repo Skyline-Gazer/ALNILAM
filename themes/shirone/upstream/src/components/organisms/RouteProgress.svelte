@@ -8,7 +8,7 @@
  */
 import ProgressIndicator from "@components/atoms/feedback/ProgressIndicator.svelte";
 import { onMount } from "svelte";
-import { siteConfig } from "@/config/siteConfig";
+import { siteConfig } from "@/config";
 
 let visible = $state(false);
 const style = siteConfig.progressIndicator.style;

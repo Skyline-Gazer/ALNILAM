@@ -8,7 +8,7 @@ import {
   giscusLang,
   resolveCommentIdentity,
 } from "../../apps/web/src/lib/comments.mjs";
-import { commentLabels } from "../../apps/web/src/lib/i18n.mjs";
+import { uiStrings } from "../../apps/web/src/lib/i18n.mjs";
 
 const base = {
   schemaVersion: 2,
@@ -185,23 +185,27 @@ test("CSP is absent when disabled/opted out and otherwise scopes giscus plus pag
 });
 
 test("comment labels are plain strings in every shipped locale", () => {
+  const keys = [
+    "commentsAuthError",
+    "commentsDisclosure",
+    "commentsDiscussion",
+    "commentsIframeTimeout",
+    "commentsLoad",
+    "commentsLoadNote",
+    "commentsLoading",
+    "commentsRegion",
+    "commentsRequiresJs",
+    "commentsRetry",
+    "commentsScriptError",
+    "commentsServiceError",
+    "commentsUnavailable",
+    "commentsVisibleNote",
+  ];
   for (const locale of ["zh-CN", "en", "ja", "fr"]) {
-    const labels = commentLabels(locale);
-    assert.deepEqual(Object.keys(labels).sort(), [
-      "commentsDisclosure",
-      "commentsDiscussion",
-      "commentsLoad",
-      "commentsLoadNote",
-      "commentsLoading",
-      "commentsRegion",
-      "commentsRequiresJs",
-      "commentsRetry",
-      "commentsUnavailable",
-      "commentsVisibleNote",
-    ]);
-    for (const [key, value] of Object.entries(labels)) {
-      assert.equal(typeof value, "string", `${locale}.${key}`);
-      assert.ok(value.length > 0, `${locale}.${key}`);
+    const labels = uiStrings(locale);
+    for (const key of keys) {
+      assert.equal(typeof labels[key], "string", `${locale}.${key}`);
+      assert.ok(labels[key].length > 0, `${locale}.${key}`);
     }
   }
 });

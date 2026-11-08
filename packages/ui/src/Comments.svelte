@@ -1,11 +1,9 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { GiscusProvider, type CommentProvider } from "./comments/giscus";
+  import { GiscusProvider, type GiscusFailure } from "./comments/giscus";
 
-  // Giscus comments island. The external script is created only after the
-  // reader opens the click gate (default) or the section approaches the
-  // viewport (`load: visible`). The provider owns one script/iframe and every
-  // listener/observer is removed on retry or component teardown.
+  // Enabled comments island. Official client.js is installed once per document;
+  // theme/lang/term updates use setConfig. Disabled Sites never import this file.
   interface CommentsLabels {
     commentsRegion: string;
     commentsDisclosure: string;
@@ -17,6 +15,10 @@
     commentsRetry: string;
     commentsDiscussion: string;
     commentsRequiresJs: string;
+    commentsScriptError?: string;
+    commentsIframeTimeout?: string;
+    commentsServiceError?: string;
+    commentsAuthError?: string;
   }
   interface Props {
     repo: string;
@@ -47,41 +49,56 @@
   const THEME_DARK = "dark_dimmed";
   type Status = "idle" | "loading" | "ready" | "error";
   let status = $state<Status>("idle");
-  let provider = $state<CommentProvider | null>(null);
-  let host = $state<HTMLDivElement | undefined>();
-  let observer: IntersectionObserver | undefined;
+  let failure = $state<GiscusFailure | null>(null);
+  let provider = $state<GiscusProvider | null>(null);
+  let host = $state<HTMLDivElement | null>();
+  let root = $state<HTMLDivElement | null>();
+  let observer: IntersectionObserver | null;
 
-  const discussionUrl = $derived(repo ? `https://github.com/${repo}/discussions` : undefined);
-  function currentTheme(): string {
+  const discussionUrl = $derived(repo ? `https://github.com/${repo}/discussions` : null);
+
+  function selectedTheme(): string {
     if (typeof document !== "undefined") {
-      const root = document.documentElement;
-      return root.classList.contains("dark") || root.dataset.theme === "dark" ? THEME_DARK : THEME_LIGHT;
+      const docRoot = document.documentElement;
+      return docRoot.classList.contains("dark") || docRoot.dataset.theme === "dark"
+        ? THEME_DARK
+        : THEME_LIGHT;
     }
     return theme === "dark" ? THEME_DARK : THEME_LIGHT;
+  }
+
+  function failureMessage(reason: GiscusFailure | null): string {
+    switch (reason) {
+      case "script":
+        return labels.commentsScriptError ?? labels.commentsUnavailable;
+      case "iframe-timeout":
+        return labels.commentsIframeTimeout ?? labels.commentsUnavailable;
+      case "service":
+        return labels.commentsServiceError ?? labels.commentsUnavailable;
+      case "auth":
+        return labels.commentsAuthError ?? labels.commentsUnavailable;
+      default:
+        return labels.commentsUnavailable;
+    }
   }
 
   function start(): void {
     if (!host || provider) return;
     status = "loading";
+    failure = null;
     const instance = new GiscusProvider({
       container: host,
-      config: {
-        repo,
-        repoId,
-        category,
-        categoryId,
-        mapping,
-        term,
-        themeLight: THEME_LIGHT,
-        themeDark: THEME_DARK,
-      },
-      theme: currentTheme(),
+      config: { repo, repoId, category, categoryId, mapping, term },
+      theme: selectedTheme(),
       lang,
       onReady: () => {
         status = "ready";
+        failure = null;
       },
-      onError: () => {
+      onError: (reason) => {
+        failure = reason;
         status = "error";
+        provider = null;
       },
     });
     provider = instance;
@@ -90,19 +107,18 @@
     } catch {
       instance.dispose();
       provider = null;
+      failure = "script";
       status = "error";
     }
   }
 
   function retry(): void {
-    provider?.dispose();
-    provider = null;
-    status = "idle";
-    start();
+    // Official client.js cannot be safely re-executed after a successful install.
+    window.location.reload();
   }
 
   $effect(() => {
-    if (load !== "visible" || provider || !host) return;
+    if (load !== "visible" || provider || !root) return;
     if (!("IntersectionObserver" in window)) {
       start();
       return;
@@ -111,21 +127,21 @@
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
           observer?.disconnect();
-          observer = undefined;
+          observer = null;
           start();
         }
       },
       { rootMargin: "200px" },
     );
-    observer.observe(host);
+    observer.observe(root);
     return () => {
       observer?.disconnect();
-      observer = undefined;
+      observer = null;
     };
   });
 
   $effect(() => {
-    const syncTheme = () => provider?.updateTheme(currentTheme());
+    const syncTheme = () => provider?.updateTheme(selectedTheme());
     window.addEventListener("giscus-theme-change", syncTheme);
     window.addEventListener("shirone:theme-change", syncTheme);
     return () => {
@@ -138,6 +154,10 @@
     provider?.updateLang(lang);
   });
 
+  $effect(() => {
+    provider?.updateIdentity({ repo, repoId, category, categoryId, mapping, term });
+  });
+
   onDestroy(() => {
     observer?.disconnect();
     provider?.dispose();
@@ -146,10 +166,10 @@
 </script>
 
 <div
+  bind:this={root}
   class="comments-provider"
   data-comments-state={status}
   data-comments-load={load}
-  data-comment-term={term}
   role="group"
   aria-label={labels.commentsRegion}
 >
@@ -175,8 +195,8 @@
   {/if}
 
   {#if status === "error"}
-    <div class="comments-error" role="alert">
-      <p>{labels.commentsUnavailable}</p>
+    <div class="comments-error" role="alert" data-comments-error={failure}>
+      <p>{failureMessage(failure)}</p>
       <div class="comments-error__actions">
         <button class="comments-action" type="button" onclick={retry}>{labels.commentsRetry}</button>
         {#if discussionUrl}
@@ -191,7 +211,7 @@
   <div
     bind:this={host}
     class="comments-provider__host"
-    hidden={load === "click" && status === "idle"}
+    class:comments-provider__host--idle={load === "click" && status === "idle"}
     aria-busy={status === "loading"}
   ></div>
 
@@ -255,6 +275,18 @@
   }
   .comments-provider__host {
     min-height: 240px;
+  }
+  /* Keep a layout box so Astro client:visible can hydrate; visually hide until click. */
+  .comments-provider__host--idle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
   .comments-provider__host :global(iframe.giscus-frame) {
     width: 100%;
