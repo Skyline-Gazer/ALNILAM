@@ -33,8 +33,9 @@ theme:
 ```
 
 Unknown top-level or nested keys fail the build, and so do malformed YAML, duplicate
-keys, unresolved YAML tags and non-plain YAML values. The `comments` and `bangumi`
-module blocks are documented below.
+keys, unresolved YAML tags and non-plain YAML values. The `comments`, `bangumi` and
+`llms` module blocks are documented below. Omit keys your target Core does not yet
+know — an older Core fails closed on unknown fields even when the current Core accepts them.
 
 **Reserved fields:** `routing`, `categories` and `tags` are accepted and validated for
 forward compatibility, but this Core revision has no consumer for them — do not rely on
@@ -202,6 +203,12 @@ or structured data.
 ```bash
 # From a checkout of ALNILAM (Core):
 node scripts/compose.mjs --site /absolute/path/to/yoursite --out /absolute/path/to/output
+
+# Root host vs project-page / subpath base (same Site, separate outputs):
+ALNILAM_SITE_URL=https://example.com/ \
+  node scripts/compose.mjs --site /absolute/path/to/yoursite --out /absolute/path/to/out-root
+ALNILAM_SITE_URL=https://example.com/ALNILAM/ \
+  node scripts/compose.mjs --site /absolute/path/to/yoursite --out /absolute/path/to/out-nested
 ```
 
 The output directory must not overlap the Site directory. The build:
@@ -222,6 +229,20 @@ Site ref and Site digest in your deployment configuration and fail closed if the
 2. Run `compose` against the **same unchanged Site directory**.
 3. Verify `alnilam-provenance.json` in the new output: the Site digest must match the previous build's.
 4. Swap the served output directory; rollback = rebuild with the previous Core revision.
+
+Automated acceptance (CI and local):
+
+```bash
+node scripts/upgrade-check.mjs --old <historical-core-sha> [--site /absolute/path/to/yoursite]
+```
+
+The script builds the Site with the current Core, then with `--old` in an isolated
+worktree. The Site digest must be identical before, after the upgrade build, and after
+the rollback build. Default `--site` is a throwaway copy of `sites/demo`. Expected
+fail-closed outcomes for a Site the old Core cannot yet consume (missing TOML on
+pre-YAML Core, unsupported `schemaVersion`, or unknown config fields such as a module
+block added later) still count as a passed Site non-mutation check; unexpected build
+failures fail the run. Output bytes may differ when Core rendering changed.
 
 The Site's Git ref is never touched by any of these steps.
 

@@ -1,10 +1,10 @@
 # ALNILAM roadmap (Issue-driven)
 
-## Current workflow decision — 2026-11-03
+## Current workflow decision — 2026-11-03 (historical tip; see HANDOFF)
 
 CNB is the development authority. Follow [AGENTS.md](../AGENTS.md) and the Owner's 2026-11-02 override: use ordinary Issue-linked PRs or already-authorized non-force dev integration, proportionate functional checks and material CodeBuddy feedback. Honor actually configured required checks; do not invent PASS or add Gatekeeper/extra-reviewer prerequisites. Main, mirror writes, tags/releases, production and ADS upstream remain separately authorized. Historical cutover decisions remain in [the cutover record](cnb/CUTOVER-READINESS.md).
 
-The work tracker is [GitHub Project #17](https://github.com/orgs/Skyline-Gazer/projects/17/), read live before each phase decision. Current correction (2026-11-03): P1 #37/#48/#50 and P3 #57–#60 are reopened for actual native Shirone implementation/acceptance; historical Owner signoff and CI remain historical records. P2 #51/#52/#54/#56 retain their Core implementation, while #53 native derived-state lifecycle and #55 real external-Site CI remain Open. P2 #38, P3 #39 and #61 are In Progress. Native code is WIP in CNB PR #47, not merged into dev; full taxonomy consumption belongs to P4 #62. Exact refs, actual failed CI, evidence, authorization and next steps are maintained in [HANDOFF](HANDOFF.md); older planning/status text is not current completion evidence.
+The work tracker is [GitHub Project #17](https://github.com/orgs/Skyline-Gazer/projects/17/), read live before each phase decision. The 2026-11-03 correction text that reopened P1/P3 Issues and described CNB PR #47 as unmerged is **historical** and must not be read as live completion state. Exact refs, open Issues, CI evidence and next steps live in [HANDOFF](HANDOFF.md); older planning/status text is not current completion evidence.
 
 ## Historical v0.1.x phase sketch
 

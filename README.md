@@ -92,7 +92,7 @@ Local search is powered by [Pagefind](https://pagefind.app/) (MIT). The index is
 3. Compare `alnilam-provenance.json`'s `site.digest` with the previous build — must match.
 4. Swap the served directory. Rollback = rebuild with the previous Core revision.
 
-CI runs this acceptance on every PR (two revisions, one unchanged external Site, byte-identical provenance).
+Automated acceptance: `node scripts/upgrade-check.mjs --old <historical-core-sha> [--site /absolute/path]`. CI runs this on every PR (two Core revisions, one unchanged external Site). Site digest identity is the hard contract; output bytes may differ when Core rendering changed. See [Site onboarding](docs/SITE_ONBOARDING.md).
 
 ## Development and governance
 

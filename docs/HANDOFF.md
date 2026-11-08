@@ -1,9 +1,31 @@
 # ALNILAM — Current Agent Handoff
 
-## Live-state update — 2026-11-05 (current, supersedes 2026-11-04 below)
+## Live-state update — 2026-11-08 (current, supersedes 2026-11-05 below)
+
+Everything from "## Live-state update — 2026-11-05" downward is retained historical
+evidence. This section is the authoritative handoff tip for #76 onboarding RC work.
+
+### Git / remotes (verified live 2026-11-08)
+
+| Ref | Value |
+| --- | --- |
+| CNB `dev` | `145999e3b014041c7102e0a0dcc2ef191d83e85d` (tree `ce57903119b6783713a53d3ffdf088344c27a42d`) — tip merge of PR #83 |
+| GitHub `dev` | `39ca829f97a60247f4c6a14e619dd847a5e895eb` — **same tree** as CNB `dev`; Vercel Production tracks this tip → do not mirror/push without Owner authorization |
+| CNB `main` | release-only; Owner-authorized changes only |
+| ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` — unchanged |
+| GitHub Issue #34 | **CLOSED** (superseded); not an open authorization for deployed-host acceptance |
+
+### #76 onboarding / RC (this branch)
+
+- Branch `feat/76-onboarding-rc` from CNB `origin/dev`.
+- Independent temp schema-v2 Site composed at root and `/ALNILAM/`; Site digest unchanged; provenance binds Core `145999e3…` + Site digest `7613644a…`.
+- `node scripts/upgrade-check.mjs --old 046f251d0092adee8d7d7e091df6bce82dd3ac16 --site <temp>` exit 0; Site digest stable; output digests differ (expected rendering drift).
+- Draft RC: `docs/RC-2026-11-08-P6-ONBOARDING.md`. No release, tag, `main`, or production action.
+
+## Live-state update — 2026-11-05 (superseded by 2026-11-08 above)
 
 Everything from "## Historical snapshot — 2026-11-04" downward is historical
-(2026-11-03/04). This section is the authoritative handoff state.
+(2026-11-03/04). This 2026-11-05 section is retained evidence, not the tip.
 
 ### Git / remotes (verified live 2026-11-05)
 
