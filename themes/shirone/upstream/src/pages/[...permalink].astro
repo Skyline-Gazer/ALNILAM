@@ -12,7 +12,6 @@ import PostMetadata from "@components/molecules/PostMeta.astro";
 import SeriesCard from "@components/molecules/SeriesCard.astro";
 import ArticleDiscovery from "@components/organisms/ArticleDiscovery.astro";
 import ArticleShare from "@components/organisms/ArticleShare.svelte";
-import CommentSection from "@components/organisms/comment/CommentSection.astro";
 import EncryptedContent from "@components/organisms/EncryptedContent.astro";
 import UmamiStats from "@components/organisms/UmamiStats.astro";
 import I18nKey from "@i18n/i18nKey";
@@ -353,16 +352,7 @@ const jsonLd = {
 		</Card>
     </div>
 
-    <CommentSection
-        context={{
-            key: `post:${entry.id}`,
-            path: canonicalPostUrl,
-            title: entry.data.title,
-            language: entry.data.lang || siteConfig.lang,
-        }}
-        postCommentEnabled={entry.data.comment}
-        class="onload-animation"
-    />
+    {/* ALNILAM keeps upstream commentConfig disabled; Core comments mount via apps/web when enabled. */}
 
     {lastUpdatedNotice && (
         <LastUpdatedNotice
