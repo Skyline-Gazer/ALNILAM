@@ -87,3 +87,48 @@ Observed fail-closed edge (documented, not a Site mutation failure): a Site that
 ## Non-actions
 
 No release tag, no `main` edit, no ADS pin change, no production deploy, no GitHub mirror.
+
+## Addendum — P6 final convergence (same date)
+
+Status: **draft only**. No tag, no `main` merge, no production publish.
+Issues: [#74](https://github.com/Skyline-Gazer/ALNILAM/issues/74), [#73](https://github.com/Skyline-Gazer/ALNILAM/issues/73), [#42](https://github.com/Skyline-Gazer/ALNILAM/issues/42).
+
+### Live pins at measurement
+
+| Item | Value |
+| --- | --- |
+| CNB `dev` | `a7e3dd4b872357e2bedc06a14475fbdd00a5a4fc` (tree `026ec8229e241cd12f4b02032e64d0e2cd1c5d85`) |
+| GitHub `dev` | `39ca829f97a60247f4c6a14e619dd847a5e895eb` (tree `ce57903119b6783713a53d3ffdf088344c27a42d`) |
+| Sync gap | 34 commits on CNB not on GitHub; mirror blocked while Vercel `productionBranch=dev` |
+| CNB/GitHub `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` unchanged |
+| ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` unchanged |
+| Demo Site digest | `f5c541f25b7af7d14c24e7eeca8cde73b82bfce9a0ca40c27033f87cc899b18c` |
+
+### #74 lab (Core tip above)
+
+- CLS: `pnpm cls:local` 23/23; max session CLS `0.00250` ≪ `0.1`
+- Pre-fix (uncompressed preview): mobile LCP medians 5997–6935 ms; desktop 5983–6881 ms; compression waste ≈ 556–650 KiB; dominant LCP `a.top-app-bar__lang-item` (~92% Render Delay)
+- Fixes landed on candidate: preview gzip; Fancybox CSS `?url` runtime inject; `@axe-core/playwright@4.10.1` + `tests/browser/a11y.spec.ts` + `alnilam-a11y-browser-candidate`
+- Post-fix mobile (gzip): all 6 URL medians ≤ 3400 ms; compression waste `0`
+- Post-fix desktop (gzip): all 6 URL medians ≤ 3371 ms; compression waste `0`; receipts `BASELINE_RECORDED` + `EXPECTED_RED_VERIFIED`
+- Screen reader: **manual / NOT RUN**; Field CrUX: **NOT VERIFIED**
+
+### #73 multi-host
+
+- Preview compose/artifact/seo + CLS suite green on tip
+- Vercel Production (`prj_2eRtFJHWRJPlM90z2CPT5kJA1XNg` / `xxxx`): `productionBranch=dev`, latest Production SHA `39ca829f…` (**lags CNB tip**)
+- GitHub Pages: not current; no workflow dispatch
+- Keep Open/In Progress until Owner publish refreshes hosts
+
+### Vercel / mirror (read-only)
+
+| Fact | Evidence |
+| --- | --- |
+| Production Branch | `dev` (API readback; unchanged this round) |
+| Deploy hooks | `[]` |
+| Owner recommendation | Switch Production Branch → `main` before GitHub `dev` mirror |
+| Mutated this round | no |
+
+### Release acceptance request
+
+**NO** while #73 deployed-host remains open.

@@ -60,6 +60,8 @@ no vendor code is copied into this repository. Summary at v0.1.0 (see
 | pagefind | MIT | local search indexer + lazy runtime |
 | yaml | MIT | Site config parsing |
 | typescript | Apache-2.0 | type checking |
+| @axe-core/playwright | MPL-2.0 | Playwright axe WCAG runner (dev/test only) |
+| axe-core (transitive via @axe-core/playwright) | MPL-2.0 | accessibility engine used by a11y.spec.ts |
 
 The composed static output embeds: the Svelte island runtime (client JS),
 Pagefind's lazy-loaded index and UI assets under `/pagefind/`, and theme CSS.

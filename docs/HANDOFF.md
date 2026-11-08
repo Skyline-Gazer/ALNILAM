@@ -1,26 +1,33 @@
 # ALNILAM — Current Agent Handoff
 
-## Live-state update — 2026-11-08 (current, supersedes 2026-11-05 below)
+## Live-state update — 2026-11-08 (current, supersedes earlier 2026-11-08/#76 section below)
 
-Everything from "## Live-state update — 2026-11-05" downward is retained historical
-evidence. This section is the authoritative handoff tip for #76 onboarding RC work.
+Everything from the previous "## Live-state update — 2026-11-08" (#76 onboarding RC)
+downward is retained historical evidence. This section is the authoritative tip for
+P6 final convergence (#74/#73/#42).
 
 ### Git / remotes (verified live 2026-11-08)
 
 | Ref | Value |
 | --- | --- |
-| CNB `dev` | `145999e3b014041c7102e0a0dcc2ef191d83e85d` (tree `ce57903119b6783713a53d3ffdf088344c27a42d`) — tip merge of PR #83 |
-| GitHub `dev` | `39ca829f97a60247f4c6a14e619dd847a5e895eb` — **same tree** as CNB `dev`; Vercel Production tracks this tip → do not mirror/push without Owner authorization |
-| CNB `main` | release-only; Owner-authorized changes only |
+| CNB `dev` | `a7e3dd4b872357e2bedc06a14475fbdd00a5a4fc` (tree `026ec8229e241cd12f4b02032e64d0e2cd1c5d85`) — tip after PR #84 |
+| GitHub `dev` | `39ca829f97a60247f4c6a14e619dd847a5e895eb` (tree `ce57903119b6783713a53d3ffdf088344c27a42d`) — **lags CNB by 34 commits**; Vercel Production tracks this tip → do not mirror/push without Owner authorization |
+| CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — release-only; Owner-authorized changes only |
 | ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` — unchanged |
 | GitHub Issue #34 | **CLOSED** (superseded); not an open authorization for deployed-host acceptance |
 
-### #76 onboarding / RC (this branch)
+### #74 perf/a11y (this round)
 
-- Branch `feat/76-onboarding-rc` from CNB `origin/dev`; CNB PR [#84](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/84).
-- Independent temp schema-v2 Site composed at root and `/ALNILAM/`; Site digest unchanged; provenance binds Core `145999e3…` + Site digest `7613644a…`.
-- `node scripts/upgrade-check.mjs --old 046f251d0092adee8d7d7e091df6bce82dd3ac16 --site <temp>` exit 0; Site digest stable; output digests differ (expected rendering drift).
-- Draft RC: `docs/RC-2026-11-08-P6-ONBOARDING.md`. No release, tag, `main`, or production action.
+- Branch `feat/74-perf-a11y-14f6` from CNB `origin/dev`.
+- Preview gzip harness + Fancybox CSS `?url` defer; axe candidate suite/CI wiring.
+- Lab evidence under `artifacts/p6-74/`; field CrUX **NOT VERIFIED**; SR **NOT RUN**.
+- #73 remains Open/In Progress: deployed hosts lag CNB tip.
+
+### Prior tip — #76 onboarding RC (historical)
+
+- Merged via CNB PR [#84](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/84) onto the tip above.
+- Draft RC retained at `docs/RC-2026-11-08-P6-ONBOARDING.md` (pins below that file's original section are historical).
+- Issue #76 Project status: Done.
 
 ## Live-state update — 2026-11-05 (superseded by 2026-11-08 above)
 
