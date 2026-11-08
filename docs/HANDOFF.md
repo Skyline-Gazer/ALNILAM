@@ -20,7 +20,7 @@ P6 final convergence (#74/#73/#42).
 
 - [CNB PR #88](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/88), source `b9d455823eed897b63f3d3409c24569a5b0d075f`, remained open at this snapshot; check the live PR before treating it as merged.
 - Preview gzip harness + Fancybox CSS `?url` defer; axe candidate suite/CI wiring. Candidate CI and [trusted-consumer](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-9qr-1k6t67ldl#001) succeeded for that candidate.
-- Lab evidence under `artifacts/p6-74/` was measured on uncommitted candidate changes based on `a7e3dd4…`, not the current PR head; remeasure the head before closing #74. Field CrUX **NOT VERIFIED**; SR **NOT RUN**.
+- Current candidate LCP remeasurement: mobile receipt `b9d4558…`, desktop receipt `fa6e227…` (documentation-only delta), all 12 three-run medians below 4000 ms. Reports are local under `artifacts/p6-74/current/`; the earlier summary identified its uncommitted candidate's base `a7e3dd4…`. Field CrUX **NOT VERIFIED**; SR **NOT RUN**.
 - #73 remains Open/In Progress: deployed hosts lag CNB tip.
 
 ### Prior tip — #76 onboarding RC (historical)

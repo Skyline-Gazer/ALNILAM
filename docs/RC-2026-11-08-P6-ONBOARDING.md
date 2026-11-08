@@ -109,21 +109,20 @@ Issues: [#74](https://github.com/Skyline-Gazer/ALNILAM/issues/74), [#73](https:/
 - CLS: `pnpm cls:local` 23/23; max session CLS `0.00250` ≪ `0.1`
 - Pre-fix (uncompressed preview): mobile LCP medians 5997–6935 ms; desktop 5983–6881 ms; compression waste ≈ 556–650 KiB; dominant LCP `a.top-app-bar__lang-item` (~92% Render Delay)
 - Fixes landed on candidate: preview gzip; Fancybox CSS `?url` runtime inject; `@axe-core/playwright@4.10.1` + `tests/browser/a11y.spec.ts` + `alnilam-a11y-browser-candidate`
-- Post-fix mobile (gzip): all 6 URL medians ≤ 3400 ms; compression waste `0`
-- Post-fix desktop (gzip): all 6 URL medians ≤ 3371 ms; compression waste `0`; receipts `BASELINE_RECORDED` + `EXPECTED_RED_VERIFIED`
-- These measurements were taken on an uncommitted candidate based on `a7e3dd4…`; the summary's `testedSha` identifies the base, not the later PR head. Revalidate the current head before closing #74.
+- Current candidate remeasurement: all 12 three-run LCP medians below 4000 ms; normal and expected CLS regression receipts passed for mobile and desktop.
+- The earlier post-fix measurements were taken on an uncommitted candidate based on `a7e3dd4…`; their summary's `testedSha` identifies the base, not the later PR head.
 - Screen reader: **manual / NOT RUN**; Field CrUX: **NOT VERIFIED**
 
-| URL (root / nested) | Mobile pre → post (ms) | Desktop pre → post (ms) |
+| URL (root / nested) | Mobile pre → latest (ms) | Desktop pre → latest (ms) |
 | --- | ---: | ---: |
-| `/` | 5997 → 2738 | 5983 → 2789 |
-| `/posts/` | 6299 → 2807 | 6085 → 2824 |
-| `/posts/hello-alnilam/` | 6935 → 3377 | 6824 → 3371 |
-| `/ALNILAM/` | 6182 → 3175 | 6048 → 2805 |
-| `/ALNILAM/posts/` | 6082 → 2675 | 6031 → 2782 |
-| `/ALNILAM/posts/hello-alnilam/` | 6893 → 3400 | 6881 → 3358 |
+| `/` | 5997 → 2823 | 5983 → 2750 |
+| `/posts/` | 6299 → 3172 | 6085 → 2808 |
+| `/posts/hello-alnilam/` | 6935 → 3338 | 6824 → 3384 |
+| `/ALNILAM/` | 6182 → 2764 | 6048 → 2789 |
+| `/ALNILAM/posts/` | 6082 → 2798 | 6031 → 2739 |
+| `/ALNILAM/posts/hello-alnilam/` | 6893 → 3367 | 6881 → 3361 |
 
-Each value is the median of three lab runs. These historical candidate measurements do not establish the performance of a later head.
+Each value is the median of three lab runs. Latest mobile receipt identifies `b9d455823eed897b63f3d3409c24569a5b0d075f`; desktop receipt identifies `fa6e2274887ffe0216185e8f686d8cc3c2557e8f`, which differs only in documentation. Both builds used product code from `b9d4558…`. Raw reports and summaries are retained locally under `artifacts/p6-74/current/`; field CrUX remains unverified.
 
 ### #73 multi-host
 
