@@ -378,12 +378,6 @@ if (fixtureReady) {
     await expect(recovered.locator("iframe.giscus-frame")).toHaveCount(1);
     expect(scripts).toBe(2);
   });
-} else {
-  test("comments fixture build unavailable", () => {
-    test.skip(true, "Run scripts/local-browser.mjs to create and serve the comments fixtures");
-  });
-}
-
   test("official client.js installs once per document and remount uses setConfig", async ({ page }) => {
     await installMessageListenerProbe(page);
     const state = { calls: [] as string[], offline: false };
@@ -425,6 +419,12 @@ if (fixtureReady) {
     expect(await messageListenerCount(page)).toBe(afterInstall);
     expect(await page.locator("script[src*='giscus.app/client.js']").count()).toBe(1);
   });
+} else {
+  test("comments fixture build unavailable", () => {
+    test.skip(true, "Run scripts/local-browser.mjs to create and serve the comments fixtures");
+  });
+}
+
 
 test("comments disabled output makes zero giscus requests", async ({ page }) => {
   const calls: string[] = [];
