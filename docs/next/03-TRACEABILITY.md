@@ -6,6 +6,8 @@ Traceability rule: requirement → selected source/implementation → atomic Iss
 
 ## Proposed work-item traceability (all 39 active candidate atomic Issues)
 
+The table preserves the original planning snapshot; its status column is historical and must not be used as current Issue or implementation status. Consult the live Issue and its PR/CI evidence for current status.
+
 | Phase | Candidate Issue | Spec requirement IDs | Planning status |
 | --- | --- | --- | --- |
 | P0 | #43 | PRD-01, NFR-02 | Pending Spec freeze |
@@ -46,7 +48,7 @@ Traceability rule: requirement → selected source/implementation → atomic Iss
 | P6 | #74 | NFR-05, NFR-06 | Pending Spec freeze |
 | P6 | #75 | NFR-03, NFR-04 | Pending Spec freeze |
 | P6 | #76 | PRD-01, NFR-02, NFR-07, NFR-08, NFR-09 | Pending Spec freeze |
-| P6 | **#81** | **NFR-08; current-doc/spec/ADR/README/Site/manual CI governance** | Pending Spec freeze |
+| P6 | [#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81) | [NFR-08](01-SPEC.md); current-doc/spec/ADR/README/Site/manual CI governance | Historical planning status: pending Spec freeze. Existing evidence: [governance](06-REUSE-DOC-GOVERNANCE.md#d-document-governance--single-source-of-truth-owners-and-timing), [link test and negative fixture](../../scripts/tests/docs_test.py), [PR CI workflow](../../.github/workflows/ci.yml). These do not establish #81 acceptance or a CI run result. |
 
 ## Future Backlog — not counted as an active Phase task
 
