@@ -127,7 +127,7 @@ test("content id is the fallback stable identity and pathname stays an explicit 
 
   const legacy = resolveCommentIdentity(post("posts/hello.md"), configWith({ ...enabled, mapping: "pathname" }));
   assert.equal(legacy.mapping, "pathname");
-  assert.equal(legacy.term, undefined);
+  assert.equal(legacy.term, null);
   assert.equal(legacy.source, "pathname");
 });
 
