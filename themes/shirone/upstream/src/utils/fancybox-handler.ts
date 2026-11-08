@@ -8,10 +8,10 @@ import {
 	type FancyboxConfig,
 	getDefaultFancyboxConfig,
 } from "./fancybox-config";
-// Keep the custom rules in the same eagerly tracked stylesheet graph as the
-// handler. A dynamic CSS import can make Astro emit a prefetch URL for a
-// below-inlining chunk that is not published, causing a first-open 404.
-import "../styles/fancybox-custom.css";
+// Emit stylesheets as Vite assets (?url) so Astro does not hoist them onto
+// every page's render-blocking <link> set. Inject at first Fancybox load.
+import fancyboxCustomCss from "../styles/fancybox-custom.css?url";
+import fancyboxVendorCss from "@fancyapps/ui/dist/fancybox/fancybox.css?url";
 
 // Fancybox 模块类型
 // biome-ignore lint/suspicious/noExplicitAny: Fancybox 模块动态加载，无精确类型
@@ -26,6 +26,8 @@ export class FancyboxHandler {
 	private boundSelectors: string[] = [];
 	private initialized = false;
 	private initPromise: Promise<void> | null = null;
+	private stylesLoaded = false;
+	private stylesPromise: Promise<void> | null = null;
 
 	/**
 	 * 初始化 Fancybox
@@ -37,7 +39,10 @@ export class FancyboxHandler {
 			return;
 		}
 
-		this.initPromise ??= this.doInit();
+		this.initPromise ??= this.doInit().catch((error) => {
+			this.initPromise = null;
+			throw error;
+		});
 		await this.initPromise;
 	}
 
@@ -128,9 +133,39 @@ export class FancyboxHandler {
 	 * 按需加载 Fancybox 模块和样式
 	 */
 	private async loadFancybox(): Promise<void> {
+		await this.ensureStylesheets();
+		// Lazy-load only when a lightbox target exists; static import would ship
+		// the vendor module on every page via Layout's script graph.
 		const mod = await import("@fancyapps/ui");
 		this.Fancybox = mod.Fancybox;
-		await import("@fancyapps/ui/dist/fancybox/fancybox.css");
+	}
+
+	private ensureStylesheets(): Promise<void> {
+		if (this.stylesLoaded || typeof document === "undefined") return Promise.resolve();
+		this.stylesPromise ??= (async () => {
+			for (const href of [fancyboxVendorCss, fancyboxCustomCss]) {
+				const existing = [...document.head.querySelectorAll<HTMLLinkElement>("link[data-fancybox-style]")]
+					.find((link) => link.getAttribute("href") === href);
+				if (existing) continue;
+				const { promise, resolve, reject } = Promise.withResolvers<void>();
+				const link = document.createElement("link");
+				link.rel = "stylesheet";
+				link.href = href;
+				link.dataset.fancyboxStyle = "";
+				link.onload = () => resolve();
+				link.onerror = () => {
+					link.remove();
+					reject(new Error(`Fancybox stylesheet failed: ${href}`));
+				};
+				document.head.append(link);
+				await promise;
+			}
+			this.stylesLoaded = true;
+		})().catch((error) => {
+			this.stylesPromise = null;
+			throw error;
+		});
+		return this.stylesPromise;
 	}
 
 	/**
