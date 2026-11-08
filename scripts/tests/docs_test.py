@@ -26,6 +26,7 @@ def broken_links(root, files):
 class DocsTests(unittest.TestCase):
     def test_tracked_markdown_links(self):
         files = subprocess.check_output(['git', 'ls-files', '*.md'], cwd=ROOT, text=True).splitlines()
+        self.assertTrue(files, 'No tracked Markdown files found')
         self.assertEqual(broken_links(ROOT, files), [])
 
     def test_missing_link_is_rejected_and_anchor_is_allowed(self):
