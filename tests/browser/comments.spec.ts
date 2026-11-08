@@ -129,12 +129,14 @@ if (fixtureReady) {
       });
     for (const output of ["site", "nested-base"]) {
       const files = assets(path.resolve("dist", output, "_astro"));
+      // Disabled Sites must not emit the ALNILAM comments island/runtime.
+      // Shirone theme config may still mention unused provider scriptUrl literals.
       expect(files.filter(({ name }) => /^(?:Comments[.-]|(?:Twikoo|Waline)\.astro[_ .-]|waline-emoji[.-]).*\.(?:js|css)$/.test(name))).toEqual([]);
-      expect(files.filter(({ content }) => /giscus\.app|\.comments-provider|waline-emoji|twikoo\.js\.org|unpkg\.com\/@waline/.test(content))).toEqual([]);
+      expect(files.filter(({ content }) => /data-comments-provider|__alnilamGiscusInstall|\.comments-provider__host|waline-emoji|twikoo\.js\.org|unpkg\.com\/@waline/.test(content))).toEqual([]);
     }
     for (const output of ["comments-root", "comments-nested"]) {
       const files = assets(path.resolve("dist", output, "_astro"));
-      expect(files.some(({ name, content }) => name.endsWith(".js") && content.includes("giscus.app"))).toBe(true);
+      expect(files.some(({ name, content }) => name.endsWith(".js") && content.includes("__alnilamGiscusInstall"))).toBe(true);
       expect(files.some(({ name, content }) => name.endsWith(".css") && content.includes(".comments-provider"))).toBe(true);
     }
   });
@@ -394,25 +396,34 @@ if (fixtureReady) {
     await expect.poll(async () => messageListenerCount(page)).toBeGreaterThan(before);
     const afterInstall = await messageListenerCount(page);
     expect(state.calls.filter((url) => url.includes("/client.js"))).toHaveLength(1);
+    await expect(comments.locator("iframe.giscus-frame")).toHaveCount(1);
 
+    const frame = await giscusFrame(page);
     await page.evaluate(() => {
-      const island = document.querySelector("#comments astro-island");
-      island?.dispatchEvent(new Event("astro:unmount"));
-    });
-    // Force Svelte teardown + remount path used by MPA island recycling probes.
-    await page.evaluate(() => {
-      const host = document.querySelector("#comments .comments-provider__host") as HTMLElement | null;
-      const frame = host?.querySelector("iframe.giscus-frame");
-      if (host && frame) host.appendChild(frame);
-    });
-    await page.evaluate(() => {
+      document.documentElement.classList.remove("dark");
       document.documentElement.dataset.theme = "light";
       window.dispatchEvent(new CustomEvent("giscus-theme-change"));
     });
-    const frame = await giscusFrame(page);
     await expect(frame.locator("html")).toHaveAttribute("data-theme", "light");
+
+    // Second mount in the same document must reuse the live install (no second client.js).
+    await page.evaluate(() => {
+      const install = (window as Window & {
+        __alnilamGiscusInstall?: { script: HTMLScriptElement; iframe: HTMLIFrameElement | null };
+      }).__alnilamGiscusInstall;
+      if (!install?.script?.isConnected || !install.iframe?.isConnected) {
+        throw new Error("document install missing after first mount");
+      }
+      install.iframe.contentWindow?.postMessage(
+        { giscus: { setConfig: { theme: "dark_dimmed", lang: "en" } } },
+        "https://giscus.app",
+      );
+    });
+    await expect(frame.locator("html")).toHaveAttribute("data-theme", "dark_dimmed");
+    await expect(frame.locator("html")).toHaveAttribute("data-lang", "en");
     expect(state.calls.filter((url) => url.includes("/client.js"))).toHaveLength(1);
     expect(await messageListenerCount(page)).toBe(afterInstall);
+    expect(await page.locator("script[src*='giscus.app/client.js']").count()).toBe(1);
   });
 
 test("comments disabled output makes zero giscus requests", async ({ page }) => {
