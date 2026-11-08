@@ -61,6 +61,7 @@ Observed fail-closed edge (documented, not a Site mutation failure): a Site that
 ### Targeted test
 
 `node --test --test-isolation=none --test-name-pattern='upgrade-check classifies' scripts/tests/contract.test.mjs` → pass.
+
 ## Doc / code fixes in this candidate
 
 - `docs/SITE_ONBOARDING.md`: root/`ALNILAM_SITE_URL` subpath compose examples; `upgrade-check` acceptance; omit unknown keys for older Core; mention `llms` with other modules

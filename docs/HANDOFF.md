@@ -17,7 +17,7 @@ evidence. This section is the authoritative handoff tip for #76 onboarding RC wo
 
 ### #76 onboarding / RC (this branch)
 
-- Branch `feat/76-onboarding-rc` from CNB `origin/dev`.
+- Branch `feat/76-onboarding-rc` from CNB `origin/dev`; CNB PR [#84](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/84).
 - Independent temp schema-v2 Site composed at root and `/ALNILAM/`; Site digest unchanged; provenance binds Core `145999e3…` + Site digest `7613644a…`.
 - `node scripts/upgrade-check.mjs --old 046f251d0092adee8d7d7e091df6bce82dd3ac16 --site <temp>` exit 0; Site digest stable; output digests differ (expected rendering drift).
 - Draft RC: `docs/RC-2026-11-08-P6-ONBOARDING.md`. No release, tag, `main`, or production action.
