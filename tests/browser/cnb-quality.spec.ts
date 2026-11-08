@@ -122,7 +122,7 @@ for (const origin of origins)
 test("optional integrations remain absent on disabled product pages", async ({ page }) => {
   const related: string[] = [];
   page.on("request", (request) => {
-    if (/giscus|googletagmanager|google-analytics|googlesyndication|doubleclick/i.test(request.url()))
+    if (/giscus|bgm\.tv|api\.bgm\.tv|googletagmanager|google-analytics|googlesyndication|doubleclick|twikoo|waline\.js\.org|cdn\.jsdelivr\.net\/npm\/(?:twikoo|@waline)/i.test(request.url()))
       related.push(request.url());
   });
   await page.goto(`${origins[0]}/`, { waitUntil: "domcontentloaded" });
@@ -130,7 +130,9 @@ test("optional integrations remain absent on disabled product pages", async ({ p
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await page.waitForTimeout(650);
   expect(related).toEqual([]);
-  expect(await page.locator('script[src*="giscus"],script[src*="google"]').count()).toBe(0);
+  expect(await page.locator('script[src*="giscus"],script[src*="google"],script[src*="twikoo"],script[src*="waline"]').count()).toBe(0);
+  expect(await page.locator('a[href*="/bangumi"]').count()).toBe(0);
+  expect(await page.locator('#comments, [data-comment-section], .giscus').count()).toBe(0);
 });
 
 test("deterministic consent, ads, GA4, comments and adblock fixtures", async ({ page }, info) => {
