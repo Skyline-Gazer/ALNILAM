@@ -46,6 +46,20 @@ $:
               "$CNB_PULL_REQUEST_TARGET_SHA" "$CNB_PULL_REQUEST_MERGE_SHA"
             cat ".tmp/cnb-review-${CNB_BUILD_ID}/review.json"
 
+    - name: alnilam-docs-links-candidate
+      breakIfModify: true
+      retry: 0
+      runner:
+        tags: cnb:arch:amd64
+        cpus: 2
+      docker:
+        image: node:24-bookworm@sha256:e2007d1f4e652444f88d9bb196256d2d035269015e3d27a0d47c1d0cb5192a98
+      git:
+        submodules: false
+      stages:
+        - name: Check relative links and negative fixture
+          script: python3 -m unittest discover -s scripts/tests -p 'docs_test.py'
+
     - name: alnilam-comments-browser-candidate
       breakIfModify: true
       retry: 0
