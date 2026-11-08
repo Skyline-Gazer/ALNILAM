@@ -11,7 +11,8 @@ import { validateSiteRoot } from "../site-contract.mjs";
 
 const repo = process.cwd();
 const fixture = path.join(process.env.CNB_TRUSTED_TEST_ROOT || repo, "tests/fixtures/content-model-site");
-const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-72-close-"));
+const scratch = process.env.HOME && fs.existsSync(process.env.HOME) ? process.env.HOME : os.tmpdir();
+const root = fs.mkdtempSync(path.join(scratch, "alnilam-72-close-"));
 const builds = {};
 
 const png = Buffer.from(
