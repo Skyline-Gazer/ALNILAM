@@ -591,9 +591,13 @@ test("upgrade-check classifies rollback outcomes", async () => {
   // `throw new Error(...)` prints with the `Error: ` prefix; accept both forms
   // while the line stays anchored.
   const schema = "Error: ALNILAM: unsupported schemaVersion 2 (supported: 1). Upgrade Core to build this Site.";
+  // A YAML v2 Core that predates a later optional module rejects unknown keys.
+  const unknown = 'Error: ALNILAM: unknown config field "llms"';
   assert.equal(isExpectedContractRejection(toml), true);
   assert.equal(isExpectedContractRejection(schema), true);
   assert.equal(isExpectedContractRejection(schema.replace(/^Error: /, "")), true);
+  assert.equal(isExpectedContractRejection(unknown), true);
+  assert.equal(isExpectedContractRejection(unknown.replace(/^Error: /, "")), true);
   // Indented stack frames, pnpm wrappers and unrelated failures do not qualify.
   assert.equal(isExpectedContractRejection("  at fail (" + toml + ")"), false);
   assert.equal(isExpectedContractRejection("ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL: " + schema), false);
@@ -602,6 +606,7 @@ test("upgrade-check classifies rollback outcomes", async () => {
   assert.equal(classifyRollback({ status: 0, output: "" }), "ok");
   assert.equal(classifyRollback({ status: 1, output: toml }), "expected-contract-failure");
   assert.equal(classifyRollback({ status: 1, output: schema }), "expected-contract-failure");
+  assert.equal(classifyRollback({ status: 1, output: unknown }), "expected-contract-failure");
   assert.equal(classifyRollback({ status: 1, output: "ELIFECYCLE Command failed with exit code 1." }), "unexpected");
   assert.equal(classifyRollback({ status: 2, output: toml }), "unexpected");
 });

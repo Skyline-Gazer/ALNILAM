@@ -56,6 +56,7 @@ already-published provenance records.
 - A normal Core upgrade changes only Core's selected commit. Site's content, config, assets and Git ref remain unchanged.
 - Rollback selects the previous Core commit and rebuilds against the same Site commit.
 - When a Site content schema changes, require explicit migration PR and a test against the old Site fixture.
+- Local/CI acceptance is `scripts/upgrade-check.mjs --old <sha> [--site <path>]`: same Site digest across current and old Core builds; expected fail-closed rejections (retired TOML requirement, unsupported `schemaVersion`, unknown config fields) still pass the non-mutation check.
 
 ## Theme boundary and P1 preview
 Released v0.1.3 uses Editorial. The authorized P1 vertical slice routes the main blog pages through `themes/shirone`, while retaining the Editorial package as an unchanged rollback surface and keeping Core/Site v1 untouched. This is still a **package boundary**, not a theme marketplace or plugin SDK. Runtime theme switching, authenticated comments, server adapters, CLI install/update flows and rich Firefly/Mizuki functionality are not implemented. P1 does not authorize production release.
