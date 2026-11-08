@@ -2,11 +2,12 @@
 import { getCollection, type CollectionEntry } from "astro:content";
 import NativeArticle from "@alnilam/theme-shirone/Article.astro";
 import Card from "@alnilam/theme-shirone/Card.svelte";
-import Comments from "@alnilam/ui/Comments.svelte";
+import Comments from "virtual:alnilam-comments";
 import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
 import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
 import { loadSite } from "../../lib/site-source.mjs";
-import { canonicalUrl, postLang, postLocalSlug, postPath, translationAlternates, withBase } from "../../lib/i18n.mjs";
+import { canonicalUrl, postLang, postLocalSlug, postPath, translationAlternates, uiStrings, withBase } from "../../lib/i18n.mjs";
+import { commentLang, commentsCsp, resolveCommentIdentity } from "../../lib/comments.mjs";
 import { POSTS_PAGE_SIZE } from "../../lib/pagination.mjs";
 
 import { llmsIndexPath, markdownPath, absolute } from "../../lib/llms.mjs";
@@ -48,6 +49,9 @@ export async function getStaticPaths() {
 const { post, allPosts, isLegacy } = Astro.props as { post: CollectionEntry<"posts">; allPosts: CollectionEntry<"posts">[]; isLegacy: boolean };
 const { config } = loadSite();
 const lang = postLang(post, config.site.locale);
+const t = uiStrings(lang);
+const comment = !isLegacy && config.comments.enabled ? resolveCommentIdentity(post, config) : null;
+const csp = !isLegacy ? commentsCsp(config) : null;
 const targetPath = postPath(post, config.site.locale) + "/";
 const canonical = canonicalUrl(targetPath, config.site.url);
 const altMap = translationAlternates(post, allPosts, config.site.locale, config.locales);
@@ -71,13 +75,15 @@ const alternates = altMap
     {post.data.updatedDate && <meta property="article:modified_time" content={post.data.updatedDate.toISOString()} />}
     {post.data.category && <meta property="article:section" content={post.data.category} />}
     {post.data.tags.map(tag => <meta property="article:tag" content={tag} />)}
+    {csp && <meta http-equiv="Content-Security-Policy" content={csp} />}
   </Fragment>
-  {config.comments.enabled && (
-    <section slot="comments" id="comments" class="mb-4" style="min-height:340px" aria-label="评论">
+  {config.comments.enabled && comment && (
+    <section slot="comments" id="comments" class="mb-4" style="min-height:340px" aria-label={t.commentsRegion}>
       <Card color="var(--card-bg)" radius="l" class="p-6">
-      <Comments client:visible repo={config.comments.repo} repoId={config.comments.repoId}
+      <Comments repo={config.comments.repo} repoId={config.comments.repoId}
         category={config.comments.category} categoryId={config.comments.categoryId}
-        mapping={config.comments.mapping} theme={config.theme.appearance} lang={config.site.locale} />
+        mapping={config.comments.mapping} term={comment.term} load={config.comments.load}
+        theme={config.theme.appearance} lang={commentLang(config, lang)} labels={t} />
       </Card>
     </section>
   )}

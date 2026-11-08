@@ -42,6 +42,9 @@ const posts = defineCollection({
     // any post, hreflang alternates are rendered for the whole group.
     lang: z.string().regex(/^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$/, "must be a BCP-47 tag").optional(),
     translationKey: z.string().min(1).optional(),
+    // Stable Giscus term override. Use this when a source file or public slug
+    // may move but the discussion thread must stay the same.
+    commentId: z.string().min(1).max(200).regex(/^\S+$/, "must not contain whitespace").optional(),
   }).transform((data) => ({
     ...data,
     draft: data.draft || data.private || data.unlisted,

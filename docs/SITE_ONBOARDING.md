@@ -46,7 +46,8 @@ them in Sites. Tag pages derive from post frontmatter.
 - Place posts under `content/posts/*.md` (or `.mdx`). Frontmatter schema:
   `title` (required), `description`, `pubDate` (required date), `updatedDate`,
   `cover` (path), `tags`, `draft`, `lang` (optional BCP-47),
-  `translationKey` (optional, groups translations for hreflang).
+  `translationKey` (optional, groups translations for hreflang),
+  `commentId` (optional, explicit stable Giscus thread term; no whitespace).
 - **The slug is the file path** under `content/posts` (without extension). A post at
   `content/posts/2026/hello.md` is served at `/posts/2026/hello/`. Renaming or moving a
   file changes its public URL — treat paths as stable identifiers.
@@ -111,18 +112,87 @@ Optional modules are feature-flagged: **disabled modules ship nothing** — no p
 
 ### Comments (`[comments]`)
 
+Comments are **off by default** and intentionally support one provider for the
+first launch: Giscus over public GitHub Discussions. Twikoo/Waline are not
+configured here; they require separately operated backends and are post-launch
+evaluations, not alternate values for this block.
+
 ```yaml
 comments:
   enabled: true
-  provider: "giscus"            # only provider
+  provider: "giscus"            # only provider in this release
   repo: "you/your-repo"         # public GitHub repo hosting Discussions
   repoId: "R_..."               # from giscus.app
   category: "Announcements"
   categoryId: "DIC_..."
-  # mapping: "pathname"         # optional: pathname | specific | number
+  mapping: "specific"           # required when enabled: specific | pathname | number
+  sharing: "translation"        # translation | locale
+  load: "click"                 # click | visible
+  lang: "auto"                  # auto | giscus/BCP-47 locale
+  csp: true                     # emit the provider-scoped CSP meta tag
 ```
 
-Renders on post pages as a lazy `client:visible` island; the giscus script loads only after the section scrolls into view. Requires GitHub Discussions on the repo. Theme (dark/light) and language follow your Site config.
+All fields are public identifiers. Unknown keys and secret-looking fields
+(`token`, `accessToken`, `webhookSecret`, …) fail the build; never put a GitHub
+App private key, webhook secret or personal access token in a Site.
+
+Enabled comments require an explicit `mapping`. For an existing v2 Site whose
+enabled comments omitted it, add `mapping: pathname` to retain its existing
+URL-based Discussions. Choose `mapping: specific` for new threads; changing an
+existing Site to `specific` creates different threads and does not migrate
+comment data. A missing mapping fails the build until you choose.
+
+#### Stable identity and translation policy
+
+- `mapping: specific` sends an explicit Giscus `data-term` instead of using the
+  browser URL. The term is derived at build time from, in order:
+  frontmatter `commentId`, frontmatter `translationKey`
+  (`alnilam:translation:<key>`), or the Site content id
+  (`alnilam:content:<path-without-extension>`).
+- `sharing: translation` (default) makes every translated page that shares a
+  `translationKey`/`commentId` use one Discussion. `sharing: locale` appends
+  `::<page-locale>` so each translation has a separate thread. This is the
+  explicit per-translation sharing/partition policy; it does not guess from the
+  URL prefix.
+- Use `commentId` when a file or public slug may be renamed but its Discussion
+  must stay the same. A `commentId` must not contain whitespace and is limited
+  to 200 characters.
+- `mapping: number` requires a numeric `commentId` and
+  `sharing: translation`; otherwise the build fails with an actionable message.
+- `mapping: pathname` maps by the browser URL, so `/ALNILAM/`, locale prefixes
+  and future permalink renames create different discussions.
+
+#### Privacy, loading and failure behavior
+
+- With `comments.enabled: false` the output contains no comment component, no
+  giscus script/iframe, no placeholder and no client island — zero comment JS
+  and zero comment network requests.
+- With comments enabled, the page shows a distinct third-party disclosure. The
+  default `load: click` renders a button and makes **no** third-party request
+  until the reader activates it. `load: visible` loads the provider when the
+  section nears the viewport; that is still an enabled-provider request, so do
+  not claim zero third-party traffic for it.
+- The mounted container reserves height so late iframe creation does not move
+  the article above it. One provider instance owns the script, iframe, theme
+  listener and observer; failure, retry and unmount remove the mount node, so
+  a late iframe cannot appear in the failed comment area.
+- If the script is blocked or no iframe appears within 15 seconds, the article
+  and navigation remain usable and the comment area offers a non-blocking retry
+  plus a grounded link to the repository's GitHub Discussions.
+- When `csp: true`, comment-enabled articles emit a `Content-Security-Policy`
+  meta tag. `script-src`, `style-src`, `connect-src` and `frame-src` allow the
+  Giscus origin; `style-src` permits the stylesheet loaded by the Giscus client,
+  and `connect-src` also allows `https://api.github.com` for GitHub repository
+  cards. `script-src` includes `'wasm-unsafe-eval'` for
+  Pagefind WASM search; `frame-src` adds the supported Markdown player origins
+  (YouTube nocookie, Bilibili, AcFun); and `media-src` allows `'self' https:`
+  for author `<video>`/`<audio>`. Hosting-level CSP may extend this with
+  `frame-ancestors`, which `meta` cannot enforce. Comments disabled = no
+  giscus CSP allowance.
+
+Requires GitHub Discussions on the public repo and a Giscus configuration from
+<https://giscus.app>. Theme updates follow the Site's dark/light switch; the
+language follows the article locale unless `comments.lang` overrides it.
 
 ### Bangumi (`[bangumi]`)
 

@@ -8,6 +8,23 @@ const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
 const preview = path.join(trustedRoot, "scripts/preview-server.mjs");
 const previewCommand = (journal: string, root: string, port: number, base: string) =>
   [process.execPath, preview, "--journal", journal, "--root", root, "--port", String(port), "--base", base].map(quote).join(" ");
+const commentsRoot = path.join(candidateRoot, "dist/comments-root");
+const commentsNested = path.join(candidateRoot, "dist/comments-nested");
+const hasCommentsFixture = process.env.COMMENTS_FIXTURE === "1";
+const commentsServers = hasCommentsFixture ? [
+  {
+    command: previewCommand(path.join(candidateRoot, "artifacts/cnb-browser/comments-root-server.json"), commentsRoot, 4325, "/"),
+    url: "http://127.0.0.1:4325/",
+    reuseExistingServer: false,
+    timeout: 30_000,
+  },
+  {
+    command: previewCommand(path.join(candidateRoot, "artifacts/cnb-browser/comments-nested-server.json"), commentsNested, 4326, "/ALNILAM/"),
+    url: "http://127.0.0.1:4326/ALNILAM/",
+    reuseExistingServer: false,
+    timeout: 30_000,
+  },
+] : [];
 
 export default defineConfig({
   testDir: "./tests/browser",
@@ -35,5 +52,6 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 30_000,
     },
+    ...commentsServers,
   ],
 });

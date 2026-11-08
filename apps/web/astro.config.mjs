@@ -197,6 +197,16 @@ export default defineConfig({
     // consumers must never import ALNILAM's Node-only YAML/filesystem loader.
     plugins: [
       {
+        name: 'alnilam-comments-entry',
+        resolveId: (id) => id === 'virtual:alnilam-comments' ? '\0alnilam-comments' : undefined,
+        load(id) {
+          if (id !== '\0alnilam-comments') return;
+          return config.comments.enabled
+            ? `export { default } from ${JSON.stringify(fileURLToPath(new URL('./src/components/Comments.astro', import.meta.url)))};`
+            : 'export default null;';
+        },
+      },
+      {
         name: 'alnilam-shirone-site-values',
         enforce: 'pre',
         load(id) {
