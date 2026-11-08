@@ -62,6 +62,11 @@ test('preview gzips compressible bodies when Accept-Encoding includes gzip', asy
     assert.equal(plain.status, 200);
     assert.equal(plain.headers['content-encoding'], undefined);
     assert.equal(plain.body.toString('utf8'), body);
+
+    const refused = await request(origin, {'Accept-Encoding': 'gzip;q=0, identity'});
+    assert.equal(refused.headers['content-encoding'], undefined);
+    assert.equal(refused.headers.vary, 'Accept-Encoding');
+    assert.equal(refused.body.toString('utf8'), body);
   } finally {
     child.kill('SIGTERM');
     await new Promise(resolve => child.once('exit', resolve));

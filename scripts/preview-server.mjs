@@ -52,9 +52,15 @@ const server = http.createServer((request, response) => {
   response.setHeader("Content-Type", contentTypes[ext] ?? "application/octet-stream");
   const accept = String(request.headers["accept-encoding"] ?? "");
   const stream = fs.createReadStream(file);
-  if (compressible.has(ext) && /(?:^|,|\s)gzip(?:$|,|;|\s)/i.test(accept)) {
+  if (compressible.has(ext)) response.setHeader("Vary", "Accept-Encoding");
+  const gzip = accept.split(",").some((entry) => {
+    const [encoding, ...params] = entry.trim().split(";");
+    if (encoding.trim().toLowerCase() !== "gzip") return false;
+    const quality = params.map((param) => param.trim()).find((param) => /^q\s*=/i.test(param));
+    return quality === undefined || Number(quality.slice(quality.indexOf("=") + 1)) > 0;
+  });
+  if (compressible.has(ext) && gzip) {
     response.setHeader("Content-Encoding", "gzip");
-    response.setHeader("Vary", "Accept-Encoding");
     stream.pipe(zlib.createGzip()).pipe(response);
     return;
   }

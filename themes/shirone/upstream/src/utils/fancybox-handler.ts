@@ -27,6 +27,7 @@ export class FancyboxHandler {
 	private initialized = false;
 	private initPromise: Promise<void> | null = null;
 	private stylesLoaded = false;
+	private stylesPromise: Promise<void> | null = null;
 
 	/**
 	 * 初始化 Fancybox
@@ -38,7 +39,10 @@ export class FancyboxHandler {
 			return;
 		}
 
-		this.initPromise ??= this.doInit();
+		this.initPromise ??= this.doInit().catch((error) => {
+			this.initPromise = null;
+			throw error;
+		});
 		await this.initPromise;
 	}
 
@@ -137,31 +141,31 @@ export class FancyboxHandler {
 	}
 
 	private ensureStylesheets(): Promise<void> {
-		if (this.stylesLoaded || typeof document === "undefined") {
-			this.stylesLoaded = true;
-			return Promise.resolve();
-		}
-		const hrefs = [fancyboxVendorCss, fancyboxCustomCss];
-		return Promise.all(
-			hrefs.map((href) => {
-				const existing = document.head.querySelector(
-					`link[rel="stylesheet"][data-fancybox-style][href="${href}"]`,
-				);
-				if (existing) return Promise.resolve();
+		if (this.stylesLoaded || typeof document === "undefined") return Promise.resolve();
+		this.stylesPromise ??= (async () => {
+			for (const href of [fancyboxVendorCss, fancyboxCustomCss]) {
+				const existing = [...document.head.querySelectorAll<HTMLLinkElement>("link[data-fancybox-style]")]
+					.find((link) => link.getAttribute("href") === href);
+				if (existing) continue;
 				const { promise, resolve, reject } = Promise.withResolvers<void>();
 				const link = document.createElement("link");
 				link.rel = "stylesheet";
 				link.href = href;
 				link.dataset.fancyboxStyle = "";
 				link.onload = () => resolve();
-				link.onerror = () =>
+				link.onerror = () => {
+					link.remove();
 					reject(new Error(`Fancybox stylesheet failed: ${href}`));
+				};
 				document.head.append(link);
-				return promise;
-			}),
-		).then(() => {
+				await promise;
+			}
 			this.stylesLoaded = true;
+		})().catch((error) => {
+			this.stylesPromise = null;
+			throw error;
 		});
+		return this.stylesPromise;
 	}
 
 	/**

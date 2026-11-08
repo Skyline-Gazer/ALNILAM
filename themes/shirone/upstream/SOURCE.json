@@ -238,7 +238,7 @@
     },
     {
       "path": "src/utils/fancybox-handler.ts",
-      "sha256": "602ebc121d853812f92be51ea23a4c6c8b87bf4b3ccb8a91c089894bf92f2a02"
+      "sha256": "631723e7d39bda5715991d091799e37b3baebce9d7f18365254665d199463658"
     },
     {
       "path": "src/utils/post-decryption.ts",

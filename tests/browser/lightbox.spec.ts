@@ -21,6 +21,26 @@ const deployments = [
 	["nested", NESTED],
 ] as const;
 
+test("lightbox retries after a stylesheet request fails", async ({ page }) => {
+	let failed = false;
+	await page.route(/fancybox[^/]*\.css(?:\?.*)?$/, async (route) => {
+		if (!failed) {
+			failed = true;
+			await route.abort();
+		} else {
+			await route.continue();
+		}
+	});
+	await page.goto(ROOT + ARTICLE);
+	await expect.poll(() => failed).toBe(true);
+	await page.evaluate(() => document.dispatchEvent(new Event("swup:content:replace")));
+	await waitForLightboxReady(page);
+	const image = page.locator(".custom-md img").first();
+	await image.scrollIntoViewIfNeeded();
+	await image.click();
+	await expect(page.locator(".fancybox__slide.is-selected img:not(.is-clone)")).toBeVisible();
+});
+
 async function waitForLightboxReady(page: Page) {
 	await expect
 		.poll(() => page.evaluate(() => document.documentElement.dataset.fancyboxReady))
