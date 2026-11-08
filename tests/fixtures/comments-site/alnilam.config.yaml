@@ -1,0 +1,21 @@
+schemaVersion: 2
+site:
+  title: Comments Fixture
+  description: Deterministic Giscus provider fixture for Issue #71.
+  url: https://comments.example.com
+  locale: zh-CN
+locales:
+  - zh-CN
+  - en
+theme:
+  appearance: dark
+comments:
+  enabled: true
+  provider: giscus
+  repo: alnilam/comments-fixture
+  repoId: R_fixture
+  category: Announcements
+  categoryId: DIC_fixture
+  mapping: specific
+  sharing: translation
+  load: click
