@@ -61,6 +61,8 @@ package retains its own license. Vendored Shirone source is described above.
 | svelte | MIT | island runtime (search, status) |
 | tailwindcss, @tailwindcss/vite | MIT | styling engine |
 | pagefind | MIT | local search indexer + lazy runtime |
+| @fancyapps/ui | Fancyapps UI license; agreement required | Fancybox image lightbox; redistribution rights **NOT VERIFIED** |
+| khroma | MIT (package `license` file) | transitive color utility |
 | yaml | MIT | Site config parsing |
 | typescript | Apache-2.0 | type checking |
 | @axe-core/playwright | MPL-2.0 | Playwright axe WCAG runner (dev/test only) |
@@ -76,6 +78,7 @@ for the rights to their own content and assets.
 | Risk | Disposition and evidence |
 |---|---|
 | Asset rights | **NOT VERIFIED for final acceptance.** The P0 audit excludes upstream media without separate rights evidence ([P0 acceptance](docs/p0/P0-ACCEPTANCE.md)). The raster fixture `sites/demo/assets/lighthouse.png` entered in commit `a5f2bae108458f21578060063343483652dc2c7e`; that commit does not establish its authorship or redistribution grant. Confirm its provenance or replace it before claiming an authorized asset inventory. External Site assets and build-time provider content require their own rights review. |
+| Fancyapps UI | **NOT VERIFIED for release.** `@fancyapps/ui@6.1.15` is imported by `themes/shirone/upstream/src/utils/fancybox-handler.ts`. Its package `LICENSE.md` states that use requires agreeing to the Fancyapps UI License Agreement; the repository has no recorded grant or agreement. Verify use and redistribution rights, or replace the dependency, before claiming license acceptance. |
 | Dependency and source licenses | **PARTIAL.** Shirone's pinned source ledger and license are retained, but the selected dependency list above is not a transitive license inventory or a final source-license scan. The historical [CNB evidence](docs/cnb/CNB-REVIEW.md) says SourceSCA was not configured for those runs; those older results do not establish current-head acceptance. |
 | Credentials | **NOT VERIFIED for final acceptance.** The workflow documents read-only Site credentials and disables persisted checkout credentials ([site-ci.yml](.github/workflows/site-ci.yml)); marker-boundary tests exist in `scripts/tests/secrets-boundary.test.mjs`. These controls and tests do not prove that the current tree, history, artifacts or logs contain no secrets. A scoped secret review and remediation of any finding remain necessary. |
 | Supply chain and build | **PARTIAL.** The lockfile pins resolved dependencies, and historical CNB evidence describes earlier vulnerability and license checks. Current-head dependency risk review and disposition, plus source-bound PR and remote CI evidence, remain outstanding. |
