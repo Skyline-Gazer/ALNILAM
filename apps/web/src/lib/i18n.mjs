@@ -178,6 +178,11 @@ const UI_STRINGS = {
     commentsRetry: "重试",
     commentsDiscussion: "在 GitHub 上打开讨论",
     commentsRequiresJs: "评论需要启用 JavaScript。",
+    searchTitle: "搜索",
+    searchLabel: "搜索文章",
+    searchSearching: "搜索中…",
+    searchEmpty: "没有找到结果。",
+    searchError: "搜索暂时不可用。",
   },
   en: {
     recentPosts: "Recent Posts",
@@ -208,6 +213,11 @@ const UI_STRINGS = {
     commentsRetry: "Retry",
     commentsDiscussion: "Open the GitHub discussion",
     commentsRequiresJs: "Comments require JavaScript.",
+    searchTitle: "Search",
+    searchLabel: "Search articles",
+    searchSearching: "Searching…",
+    searchEmpty: "No results found.",
+    searchError: "Search is unavailable.",
   },
   ja: {
     recentPosts: "最新の記事",
@@ -237,6 +247,11 @@ const UI_STRINGS = {
     commentsRetry: "再試行",
     commentsDiscussion: "GitHub のディスカッションを開く",
     commentsRequiresJs: "コメントには JavaScript が必要です。",
+    searchTitle: "検索",
+    searchLabel: "記事を検索",
+    searchSearching: "検索中…",
+    searchEmpty: "結果が見つかりませんでした。",
+    searchError: "検索を利用できません。",
   },
 };
 
