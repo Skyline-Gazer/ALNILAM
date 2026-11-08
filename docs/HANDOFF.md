@@ -10,17 +10,17 @@ P6 final convergence (#74/#73/#42).
 
 | Ref | Value |
 | --- | --- |
-| CNB `dev` | `a7e3dd4b872357e2bedc06a14475fbdd00a5a4fc` (tree `026ec8229e241cd12f4b02032e64d0e2cd1c5d85`) — tip after PR #84 |
-| GitHub `dev` | `39ca829f97a60247f4c6a14e619dd847a5e895eb` (tree `ce57903119b6783713a53d3ffdf088344c27a42d`) — **lags CNB by 34 commits**; Vercel Production tracks this tip → do not mirror/push without Owner authorization |
+| CNB `dev` | `e07a714c74ffd9f9b4f842fb771000bbaf624282` (tree `6323cc2d9d51b732efba979d6adf8f4cc8241484`) — trusted fixture bootstrap fix |
+| GitHub `dev` | `39ca829f97a60247f4c6a14e619dd847a5e895eb` (tree `ce57903119b6783713a53d3ffdf088344c27a42d`) — **lags CNB by 35 commits**; Vercel Production tracks this tip → do not mirror/push without Owner authorization |
 | CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — release-only; Owner-authorized changes only |
 | ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` — unchanged |
 | GitHub Issue #34 | **CLOSED** (superseded); not an open authorization for deployed-host acceptance |
 
 ### #74 perf/a11y (this round)
 
-- Branch `feat/74-perf-a11y-14f6` from CNB `origin/dev`.
-- Preview gzip harness + Fancybox CSS `?url` defer; axe candidate suite/CI wiring.
-- Lab evidence under `artifacts/p6-74/`; field CrUX **NOT VERIFIED**; SR **NOT RUN**.
+- [CNB PR #88](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/88), source `b9d455823eed897b63f3d3409c24569a5b0d075f`, remained open at this snapshot; check the live PR before treating it as merged.
+- Preview gzip harness + Fancybox CSS `?url` defer; axe candidate suite/CI wiring. Candidate CI and [trusted-consumer](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-9qr-1k6t67ldl#001) succeeded for that candidate.
+- Lab evidence under `artifacts/p6-74/` was measured on uncommitted candidate changes based on `a7e3dd4…`, not the current PR head; remeasure the head before closing #74. Field CrUX **NOT VERIFIED**; SR **NOT RUN**.
 - #73 remains Open/In Progress: deployed hosts lag CNB tip.
 
 ### Prior tip — #76 onboarding RC (historical)

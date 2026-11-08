@@ -104,19 +104,31 @@ Issues: [#74](https://github.com/Skyline-Gazer/ALNILAM/issues/74), [#73](https:/
 | ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` unchanged |
 | Demo Site digest | `f5c541f25b7af7d14c24e7eeca8cde73b82bfce9a0ca40c27033f87cc899b18c` |
 
-### #74 lab (Core tip above)
+### #74 lab (candidate changes based on the Core tip above)
 
 - CLS: `pnpm cls:local` 23/23; max session CLS `0.00250` ≪ `0.1`
 - Pre-fix (uncompressed preview): mobile LCP medians 5997–6935 ms; desktop 5983–6881 ms; compression waste ≈ 556–650 KiB; dominant LCP `a.top-app-bar__lang-item` (~92% Render Delay)
 - Fixes landed on candidate: preview gzip; Fancybox CSS `?url` runtime inject; `@axe-core/playwright@4.10.1` + `tests/browser/a11y.spec.ts` + `alnilam-a11y-browser-candidate`
 - Post-fix mobile (gzip): all 6 URL medians ≤ 3400 ms; compression waste `0`
 - Post-fix desktop (gzip): all 6 URL medians ≤ 3371 ms; compression waste `0`; receipts `BASELINE_RECORDED` + `EXPECTED_RED_VERIFIED`
+- These measurements were taken on an uncommitted candidate based on `a7e3dd4…`; the summary's `testedSha` identifies the base, not the later PR head. Revalidate the current head before closing #74.
 - Screen reader: **manual / NOT RUN**; Field CrUX: **NOT VERIFIED**
+
+| URL (root / nested) | Mobile pre → post (ms) | Desktop pre → post (ms) |
+| --- | ---: | ---: |
+| `/` | 5997 → 2738 | 5983 → 2789 |
+| `/posts/` | 6299 → 2807 | 6085 → 2824 |
+| `/posts/hello-alnilam/` | 6935 → 3377 | 6824 → 3371 |
+| `/ALNILAM/` | 6182 → 3175 | 6048 → 2805 |
+| `/ALNILAM/posts/` | 6082 → 2675 | 6031 → 2782 |
+| `/ALNILAM/posts/hello-alnilam/` | 6893 → 3400 | 6881 → 3358 |
+
+Each value is the median of three lab runs. These historical candidate measurements do not establish the performance of a later head.
 
 ### #73 multi-host
 
 - Preview compose/artifact/seo + CLS suite green on tip
-- Vercel Production (`prj_2eRtFJHWRJPlM90z2CPT5kJA1XNg` / `xxxx`): `productionBranch=dev`, latest Production SHA `39ca829f…` (**lags CNB tip**)
+- Vercel Production (`prj_2eRtFJHWRJPlM90z2CPT5kJA1XNg`): `productionBranch=dev`, latest Production SHA `39ca829f…` (**lags CNB tip**)
 - GitHub Pages: not current; no workflow dispatch
 - Keep Open/In Progress until Owner publish refreshes hosts
 
@@ -128,6 +140,11 @@ Issues: [#74](https://github.com/Skyline-Gazer/ALNILAM/issues/74), [#73](https:/
 | Deploy hooks | `[]` |
 | Owner recommendation | Switch Production Branch → `main` before GitHub `dev` mirror |
 | Mutated this round | no |
+
+Read-only recheck: CNB `dev` was `e07a714c74ffd9f9b4f842fb771000bbaf624282` (tree `6323cc2d9d51b732efba979d6adf8f4cc8241484`), 35 commits ahead of GitHub `dev`. The project API still reported GitHub `Skyline-Gazer/ALNILAM`, production branch `dev`, and no deploy hooks; the latest GitHub Production deployment still recorded `39ca829f97a60247f4c6a14e619dd847a5e895eb`. The live Vercel root responded, but its revision is not current CNB acceptance evidence. GitHub Pages reports a built site sourced from `main`; its deployed revision was not verified in this recheck.
+The pending mirror range includes CNB PRs #78 (comments), #85 (disabled-module checks), #84 (onboarding RC), and trusted-fixture commit `e07a714`. The count and range must be refreshed after any further CNB integration.
+
+Owner recommendation: switch Vercel Production Branch to `main`, confirm subsequent non-main deployments are Preview and Production SHA stays unchanged, then authorize the GitHub `dev` mirror. Roll back by restoring Production Branch to `dev`; no switch or mirror is authorized by this record.
 
 ### Release acceptance request
 
