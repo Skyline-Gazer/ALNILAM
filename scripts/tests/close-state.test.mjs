@@ -79,6 +79,11 @@ function compose(name, options, { seedBangumi = false } = {}) {
   const out = path.join(root, `out-${name}`);
   const cache = path.join(root, `cache-${name}`);
   fs.cpSync(fixture, site, { recursive: true });
+  fs.chmodSync(site, 0o755);
+  for (const rel of fs.readdirSync(site, { recursive: true })) {
+    const target = path.join(site, rel);
+    fs.chmodSync(target, fs.statSync(target).isDirectory() ? 0o755 : 0o644);
+  }
   const configPath = path.join(site, "alnilam.config.yaml");
   fs.writeFileSync(configPath, `${fs.readFileSync(configPath, "utf8").trimEnd()}\n${options}`);
   if (seedBangumi) {
