@@ -11,7 +11,7 @@ Date: 2026-11-08. Issue: [#76](https://github.com/Skyline-Gazer/ALNILAM/issues/7
 | Tree | `ce57903119b6783713a53d3ffdf088344c27a42d` |
 | GitHub `dev` | `39ca829f97a60247f4c6a14e619dd847a5e895eb` (same tree) |
 | ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` |
-| Candidate branch | `feat/76-onboarding-rc` |
+| Candidate branch | `feat/76-onboarding-rc` — CNB PR [#84](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/84) |
 | Old Core (upgrade-check) | `046f251d0092adee8d7d7e091df6bce82dd3ac16` (ancestor of CNB `dev`; historical HANDOFF SHA) |
 | Temp Site digest | `7613644ae43a99b464aef4c9690b059ca2c75ded9eac336a37e03fda114d1227` |
 | Temp Site ref | `unversioned` (directory Site, not a Git root) |
@@ -71,7 +71,7 @@ Observed fail-closed edge (documented, not a Site mutation failure): a Site that
 
 ## CI
 
-- Candidate CNB PR CI URL: **pending** after push/PR create (not yet run on this branch tip)
+- Candidate CNB PR: https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/84 (CI on tip pending at draft time)
 - Existing GitHub `verify` workflow still runs `upgrade-check` against `vars.ALNILAM_OLD_CORE_SHA` / `v0.1.0` / bootstrap fallback
 - Trusted CNB gate remains target-owned; this PR does not claim candidate browser coverage
 
