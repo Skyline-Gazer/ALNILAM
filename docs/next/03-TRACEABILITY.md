@@ -40,7 +40,7 @@ Traceability rule: requirement → selected source/implementation → atomic Iss
 | P5 | #68 | MOD-03, MOD-04 | Pending product scope decision |
 | P5 | #69 | MOD-03, MOD-04 | Pending product scope decision |
 | P5 | #70 | MOD-02, MOD-04 | Pending product scope decision |
-| P5 | #71 | MOD-02, MOD-04 | Pending product scope decision |
+| P5 | #71 | MOD-02, MOD-04 | [Implemented in worktree; PR/CI evidence pending](../p5/71-comments.md) |
 | P6 | #72 | MOD-01, NFR-04 | Pending Spec freeze |
 | P6 | #73 | BLOG-04, BLOG-06, BLOG-07, NFR-05; ROUTE/TAX/SEARCH/SEO/LLM E2E | Pending Spec freeze |
 | P6 | #74 | NFR-05, NFR-06 | Pending Spec freeze |

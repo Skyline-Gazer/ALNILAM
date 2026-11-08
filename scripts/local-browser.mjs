@@ -20,18 +20,31 @@ function run(command, commandArgs, extra = {}) {
   if (result.error) throw result.error;
   if (result.status !== 0) throw Error(`${path.basename(command)} failed (${result.signal || result.status})`);
 }
-const site = fs.mkdtempSync(path.join(os.tmpdir(), 'alnilam-local-site-'));
+const sites = [];
 try {
-  fs.cpSync('sites/demo', site, {recursive: true});
-  for (const [name, url] of [['site', 'https://example.com/'], ['nested-base', 'https://example.com/ALNILAM/']]) {
-    const out = `dist/${name}`;
-    run(process.execPath, ['scripts/compose.mjs', '--site', site, '--out', out], {ALNILAM_SITE_URL: url, ALNILAM_REPO_ROOT: root, ALNILAM_TOOLCHAIN_ROOT: root});
-    run(process.execPath, ['scripts/artifact-check.mjs', out]);
-    run(process.execPath, ['scripts/seo-check.mjs', out]);
+  for (const fixture of [
+    {
+      source: 'sites/demo',
+      outputs: [['site', 'https://example.com/'], ['nested-base', 'https://example.com/ALNILAM/']],
+    },
+    {
+      source: 'tests/fixtures/comments-site',
+      outputs: [['comments-root', 'https://comments.example.com/'], ['comments-nested', 'https://comments.example.com/ALNILAM/']],
+    },
+  ]) {
+    const site = fs.mkdtempSync(path.join(os.tmpdir(), 'alnilam-local-site-'));
+    sites.push(site);
+    fs.cpSync(fixture.source, site, {recursive: true});
+    for (const [name, url] of fixture.outputs) {
+      const out = `dist/${name}`;
+      run(process.execPath, ['scripts/compose.mjs', '--site', site, '--out', out], {ALNILAM_SITE_URL: url, ALNILAM_REPO_ROOT: root, ALNILAM_TOOLCHAIN_ROOT: root});
+      run(process.execPath, ['scripts/artifact-check.mjs', out]);
+      run(process.execPath, ['scripts/seo-check.mjs', out]);
+    }
   }
   if (mode === 'all' || mode === 'browser' || mode === 'cls') {
     const specs = mode === 'cls' ? ['tests/browser/cnb-quality.spec.ts', 'tests/browser/navigation-lifecycle.spec.ts', 'tests/browser/first-paint-order.spec.ts'] : [];
-    run(process.execPath, ['node_modules/@playwright/test/cli.js', 'test', ...specs, ...args]);
+    run(process.execPath, ['node_modules/@playwright/test/cli.js', 'test', ...specs, ...args], {COMMENTS_FIXTURE: '1'});
   }
   if (mode === 'all' || mode === 'lighthouse') {
     for (const formFactor of ['mobile', 'desktop']) {
@@ -42,5 +55,5 @@ try {
   console.error(error.message);
   process.exitCode = 1;
 } finally {
-  fs.rmSync(site, {recursive: true, force: true});
+  for (const site of sites) fs.rmSync(site, {recursive: true, force: true});
 }
