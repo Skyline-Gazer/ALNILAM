@@ -6,10 +6,6 @@
 	overlay: auto;
 }
 
-.pswp__bg {
-	background: #000;
-}
-
 .pswp__top-bar {
 	background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent);
 }

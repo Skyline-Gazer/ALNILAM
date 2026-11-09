@@ -365,19 +365,9 @@ for (const [name, origin] of deployments) {
 			await proto.scrollIntoViewIfNeeded();
 			await proto.click();
 			const protoState = await assertSlideLoaded(page, responses);
-			const protoSrc = protoState.currentSrc || protoState.src || "";
-			expect(protoSrc.includes("cdn.example.com/ok/512/288.png") || protoSrc.startsWith("blob:")).toBe(
-				true,
-			);
-			// Author URL must resolve to HTTPS — either request or active slide attribute.
-			const slideAttr = await page
-				.locator('.pswp__item[aria-hidden="false"] .pswp__img:not(.pswp__img--placeholder)')
-				.first()
-				.getAttribute("src");
+			expect(protoState.naturalWidth).toBeGreaterThan(0);
 			expect(
-				seen.some((u) => u.startsWith("https://cdn.example.com/ok/512/288.png")) ||
-					(slideAttr ?? "").startsWith("https://cdn.example.com/ok/512/288.png") ||
-					protoSrc.includes("cdn.example.com/ok/512/288.png"),
+				seen.some((u) => u.startsWith("https://cdn.example.com/ok/512/288.png")),
 			).toBe(true);
 			await closeWithEscape(page, page.locator(".pswp"));
 			await context.close();
