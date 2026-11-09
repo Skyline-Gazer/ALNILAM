@@ -139,7 +139,8 @@ async function assertSlideLoaded(
 }
 
 async function openSlide(page: Page, index: number, responses: Map<string, number>) {
-	const image = page.locator(".custom-md img").nth(index);
+	// PhotoSwipe does not open SVG covers; skip them so both vendors hit a raster slide.
+	const image = page.locator('.custom-md img:not([src$=".svg"])').nth(index);
 	await image.scrollIntoViewIfNeeded();
 	await image.click();
 	const vendor = await detectVendor(page);
