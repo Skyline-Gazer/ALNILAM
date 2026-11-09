@@ -10,9 +10,9 @@ lightbox cutover.
 
 | Ref | Value |
 | --- | --- |
-| CNB `dev` | `6845565e6c928e4ec6657a9500ac3a6d1b4e795c` (tree `bc61661bdb8be30366c97e6c356bfb71f7138e93`) — docs #89/#90 plus dual-compat lightbox tests #93 |
-| PhotoSwipe PR | [#92](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/92) head `db120215929bf67e20f46d54714a5cd54ad75cd3`, rebased onto #93; CI pending at this write |
-| Dual-compat tests | [#93](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/93) merged `6845565…`; trusted-consumer [success](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-tkm-1k6v836ae#001) |
+| CNB `dev` | `ba0da9d0e6326ead98332b6d3a11735088a93b3b` — #93 dual-compat + #94 raster-open (`openSlide` skips `.svg`) |
+| PhotoSwipe PR | [#92](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/92) head `2a903ff7247e552ad252e0f44a17cf31c507855f`, rebased onto #94. Prior trusted failure was SVG-cover click ([log](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-ov1-1k6vaqdkq#001)); re-verify pending after push. |
+| Raster-open | [#94](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/94) merged `ba0da9d…`; trusted-consumer [success](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-qj9-1k6vc4jds#001) |
 | CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — untouched |
 | ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` — unchanged |
 | GitHub `dev` / Vercel Production | lag CNB; do not mirror/push without Owner authorization |
@@ -34,8 +34,7 @@ lightbox cutover.
   `fancybox__` / `f-panzoom` / `@fancyapps` vendor markers. Remaining "Fancybox*"
   symbols are intentional compatibility façade names + `data-fancybox` grouping attrs.
 - #91 (docs governance) remains open/parallel — not a PhotoSwipe gate.
-- Outstanding: #73 deployed-host acceptance; #91 CodeBuddy git/`docs-links-candidate`
-  fixes; CNB trusted CI on PR #92; `main`/mirror/ADS pin untouched.
+- Outstanding: trusted CI on rebased #92, then merge. #73 deployed-host; #91 docs-links `git` fix. `main`/mirror/ADS pin untouched.
 
 ## Live-state update — 2026-11-08 (superseded by 2026-11-09 above)
 
