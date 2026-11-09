@@ -11,7 +11,7 @@ lightbox cutover.
 | Ref | Value |
 | --- | --- |
 | CNB `dev` | `ba0da9d0e6326ead98332b6d3a11735088a93b3b` — #93 dual-compat + #94 raster-open (`openSlide` skips `.svg`) |
-| PhotoSwipe PR | [#92](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/92) head `2a903ff7247e552ad252e0f44a17cf31c507855f`, rebased onto #94. Prior trusted failure was SVG-cover click ([log](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-ov1-1k6vaqdkq#001)); re-verify pending after push. |
+| PhotoSwipe PR | [#92](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/92) head `f60bdda6cc36b5dee6b0a91a95f73b718232b8ee`, rebased onto #94. Review fixes: skip unmarked wrapping links, `looksLikePageHref`, inlined `LIGHTBOX_DEFAULTS`, response-map/caption/signed asserts. Trusted CI pending ([log](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-oa1-1k6vfmo12#001)). |
 | Raster-open | [#94](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/94) merged `ba0da9d…`; trusted-consumer [success](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-qj9-1k6vc4jds#001) |
 | CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — untouched |
 | ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` — unchanged |
@@ -24,6 +24,8 @@ lightbox cutover.
   public API (filenames unchanged for Shirone fork stability).
 - URL policy: HTTPS + site paths only; protocol-relative `//` → `https:`; same-origin
   http preview assets treated as site paths; signed query preserved; no image proxy.
+  Ordinary text links that wrap images navigate (no lightbox hijack); page-like hrefs
+  are never treated as originals.
 - Dimension probe with 8s timeout + original-link degrade; generation-token abort for
   Swup races; delegated document click/keydown; PhotoSwipe caption via `textContent`.
 - Local proof: `pnpm check` 0 errors; `pnpm browser:local -- tests/browser/lightbox.spec.ts`
@@ -34,7 +36,7 @@ lightbox cutover.
   `fancybox__` / `f-panzoom` / `@fancyapps` vendor markers. Remaining "Fancybox*"
   symbols are intentional compatibility façade names + `data-fancybox` grouping attrs.
 - #91 (docs governance) remains open/parallel — not a PhotoSwipe gate.
-- Outstanding: trusted CI on rebased #92, then merge. #73 deployed-host; #91 docs-links `git` fix. `main`/mirror/ADS pin untouched.
+- Outstanding: trusted CI on #92 `f60bdda`, then merge. #73 deployed-host; #91 docs-links `git` fix. `main`/mirror/ADS pin untouched.
 
 ## Live-state update — 2026-11-08 (superseded by 2026-11-09 above)
 
