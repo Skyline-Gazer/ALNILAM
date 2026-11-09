@@ -293,7 +293,7 @@ for (const [name, origin] of deployments) {
 			const scrollAtOpen = await page.evaluate(() => window.scrollY);
 			await closeLightbox(page, container, scrollAtOpen);
 
-			const container2 = await openSlide(page, 0, responses);
+			const container2 = await openSlide(page, 1, responses);
 			await closeLightbox(page, container2, await page.evaluate(() => window.scrollY));
 			await context.close();
 		});
