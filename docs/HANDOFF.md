@@ -1,5 +1,42 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-09 (current, supersedes 2026-11-08 below)
+
+Everything from "## Live-state update — 2026-11-08" downward is retained
+historical evidence. This section is the authoritative tip for the PhotoSwipe
+lightbox cutover.
+
+### Git / remotes (verified live 2026-11-09)
+
+| Ref | Value |
+| --- | --- |
+| CNB `dev` (pre-PhotoSwipe PR) | `8661eed8b9e919e00edab9a7aa1d36a6cac95c35` (tree `14c0989e11a140be87864dda3d402365e9aaec4e`) — after merge of docs PRs #89 then #90 |
+| Branch | `feat/photoswipe-lightbox` (PhotoSwipe PR; not yet merged at this write) |
+| CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — untouched |
+| ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` — unchanged |
+| GitHub `dev` / Vercel Production | lag CNB; do not mirror/push without Owner authorization |
+
+### PhotoSwipe lightbox cutover (this round)
+
+- Replaced `@fancyapps/ui@6.1.15` with MIT `photoswipe@5.4.4` behind the retained
+  `FancyboxHandler` / `initFancybox` / `openFancyboxGallery` / `dataset.fancyboxReady`
+  public API (filenames unchanged for Shirone fork stability).
+- URL policy: HTTPS + site paths only; protocol-relative `//` → `https:`; same-origin
+  http preview assets treated as site paths; signed query preserved; no image proxy.
+- Dimension probe with 8s timeout + original-link degrade; generation-token abort for
+  Swup races; delegated document click/keydown; PhotoSwipe caption via `textContent`.
+- Local proof: `pnpm check` 0 errors; `pnpm browser:local -- tests/browser/lightbox.spec.ts`
+  **39/39** (root+nested × 1440/390 HTTPS fixture matrix, a11y trap, degrade, Swup).
+- Purge: `@fancyapps/ui` absent from lockfile/`node_modules`; built `_astro` has no
+  `fancybox__` / `f-panzoom` / `@fancyapps` vendor markers. Remaining "Fancybox*"
+  symbols are intentional compatibility façade names + `data-fancybox` grouping attrs.
+- Docs PRs #89/#90 merged to `dev` before branching. #91 (docs governance) remains
+  open/parallel — not a PhotoSwipe gate.
+- Outstanding: #73 deployed-host acceptance; #91 CodeBuddy git/`docs-links-candidate`
+  fixes; CNB trusted CI on this PR; `main`/mirror/ADS pin untouched.
+
+## Live-state update — 2026-11-08 (superseded by 2026-11-09 above)
+
 ## Live-state update — 2026-11-08 (current, supersedes earlier 2026-11-08/#76 section below)
 
 Everything from the previous "## Live-state update — 2026-11-08" (#76 onboarding RC)

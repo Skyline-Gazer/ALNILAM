@@ -1,54 +1,20 @@
 /**
- * Fancybox 配置模块
- * 提供图片灯箱的选择器和默认选项
+ * Lightbox selector/config module.
+ * Public filenames stay Fancybox* for Shirone fork stability; runtime is PhotoSwipe.
  */
 
-import type { FancyboxOptions } from "@fancyapps/ui";
+export type FancyboxConfig = {
+	bgOpacity: number;
+	showHideAnimationType: "fade" | "zoom" | "none";
+	padding: { top: number; bottom: number; left: number; right: number };
+};
 
-// Fancybox 配置类型
-export type FancyboxConfig = Partial<FancyboxOptions>;
-
-// 默认 Fancybox 配置
 export const getDefaultFancyboxConfig = (): FancyboxConfig => ({
-	Carousel: {
-		infinite: true,
-		Lazyload: { preload: 3 },
-		Thumbs: { showOnStart: true },
-		Toolbar: {
-			display: {
-				left: ["counter"],
-				middle: [
-					"zoomIn",
-					"zoomOut",
-					"toggle1to1",
-					"rotateCCW",
-					"rotateCW",
-					"flipX",
-					"flipY",
-					"reset",
-				],
-				right: ["autoplay", "fullscreen", "thumbs", "close"],
-			},
-		},
-		Zoomable: {
-			Panzoom: { maxScale: 3, minScale: 1 },
-		},
-	},
-	dragToClose: true,
-	keyboard: {
-		Escape: "close",
-		Delete: "close",
-		Backspace: "close",
-		PageUp: "next",
-		PageDown: "prev",
-		ArrowUp: "next",
-		ArrowDown: "prev",
-		ArrowRight: "next",
-		ArrowLeft: "prev",
-	},
+	bgOpacity: 0.88,
+	showHideAnimationType: "fade",
+	padding: { top: 20, bottom: 40, left: 20, right: 20 },
 });
 
-// Fancybox 选择器
 export const FANCYBOX_SELECTORS = {
 	// 文章正文图片和封面图（排除画廊内图片，避免被整篇轮播组重复捕获）
 	articleImages: ".custom-md img:not(.image-grid img), #post-cover img",
