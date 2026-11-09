@@ -10,17 +10,18 @@ P6 final convergence (#74/#73/#42).
 
 | Ref | Value |
 | --- | --- |
-| CNB `dev` | `e07a714c74ffd9f9b4f842fb771000bbaf624282` (tree `6323cc2d9d51b732efba979d6adf8f4cc8241484`) — trusted fixture bootstrap fix |
-| GitHub `dev` | `39ca829f97a60247f4c6a14e619dd847a5e895eb` (tree `ce57903119b6783713a53d3ffdf088344c27a42d`) — **lags CNB by 35 commits**; Vercel Production tracks this tip → do not mirror/push without Owner authorization |
+| CNB `dev` | `e9fa901d1fddbca6ab6aa0fb845b8954199bc451` (tree `f3894a47edec8cbad16421b336524c94db92c5b6`) — PR #88 merge, [dev push CI success](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-76c-1k6tnckt5) |
+| GitHub `dev` | `39ca829f97a60247f4c6a14e619dd847a5e895eb` (tree `ce57903119b6783713a53d3ffdf088344c27a42d`) — **lags CNB by 43 commits** at this snapshot; Vercel Production tracks this tip → do not mirror/push without Owner authorization |
 | CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — release-only; Owner-authorized changes only |
 | ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` — unchanged |
 | GitHub Issue #34 | **CLOSED** (superseded); not an open authorization for deployed-host acceptance |
 
 ### #74 perf/a11y (this round)
 
-- [CNB PR #88](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/88), source `b9d455823eed897b63f3d3409c24569a5b0d075f`, remained open at this snapshot; check the live PR before treating it as merged.
-- Preview gzip harness + Fancybox CSS `?url` defer; axe candidate suite/CI wiring. Candidate CI and [trusted-consumer](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-9qr-1k6t67ldl#001) succeeded for that candidate.
+- [CNB PR #88](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/88) merged source `02cb8fdbc491501b79584156d68239302dec94ad` into `e9fa901d1fddbca6ab6aa0fb845b8954199bc451`.
+- Preview gzip harness + Fancybox CSS `?url` defer; axe candidate suite/CI wiring. The current candidate [trusted-consumer](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-i0k-1k6tchb3h#001), a11y and comments CI succeeded.
 - Current candidate LCP remeasurement: mobile receipt `b9d4558…`, desktop receipt `fa6e227…` (documentation-only delta), all 12 three-run medians below 4000 ms. Reports are local under `artifacts/p6-74/current/`; the earlier summary identified its uncommitted candidate's base `a7e3dd4…`. Field CrUX **NOT VERIFIED**; SR **NOT RUN**.
+- #74 stays Open/In Progress: screen-reader testing and full original cross-phase matrix are not yet evidenced. Do not interpret lab metrics as full acceptance.
 - #73 remains Open/In Progress: deployed hosts lag CNB tip.
 
 ### Prior tip — #76 onboarding RC (historical)

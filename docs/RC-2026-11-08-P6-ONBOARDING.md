@@ -108,10 +108,11 @@ Issues: [#74](https://github.com/Skyline-Gazer/ALNILAM/issues/74), [#73](https:/
 
 - CLS: `pnpm cls:local` 23/23; max session CLS `0.00250` ≪ `0.1`
 - Pre-fix (uncompressed preview): mobile LCP medians 5997–6935 ms; desktop 5983–6881 ms; compression waste ≈ 556–650 KiB; dominant LCP `a.top-app-bar__lang-item` (~92% Render Delay)
-- Fixes landed on candidate: preview gzip; Fancybox CSS `?url` runtime inject; `@axe-core/playwright@4.10.1` + `tests/browser/a11y.spec.ts` + `alnilam-a11y-browser-candidate`
-- Current candidate remeasurement: all 12 three-run LCP medians below 4000 ms; normal and expected CLS regression receipts passed for mobile and desktop.
+- Fixes merged in [CNB PR #88](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/88): preview gzip; Fancybox CSS `?url` runtime inject; `@axe-core/playwright@4.10.1` + `tests/browser/a11y.spec.ts` + candidate CI.
+- Candidate remeasurement: all 12 three-run LCP medians below 4000 ms; normal and expected CLS regression receipts passed for mobile and desktop.
 - The earlier post-fix measurements were taken on an uncommitted candidate based on `a7e3dd4…`; their summary's `testedSha` identifies the base, not the later PR head.
 - Screen reader: **manual / NOT RUN**; Field CrUX: **NOT VERIFIED**
+- Merge `e9fa901d1fddbca6ab6aa0fb845b8954199bc451`, tree `f3894a47edec8cbad16421b336524c94db92c5b6`; [trusted CI](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-i0k-1k6tchb3h#001), [a11y candidate](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-svg-1k6tchb3g#003), and [dev push](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-76c-1k6tnckt5) succeeded. #74 remains open pending screen-reader and full original matrix evidence.
 
 | URL (root / nested) | Mobile pre → latest (ms) | Desktop pre → latest (ms) |
 | --- | ---: | ---: |
@@ -147,4 +148,4 @@ Owner recommendation: switch Vercel Production Branch to `main`, confirm subsequ
 
 ### Release acceptance request
 
-**NO** while #73 deployed-host remains open.
+**NO** while #73 deployed-host and #74 remaining acceptance remain open.
