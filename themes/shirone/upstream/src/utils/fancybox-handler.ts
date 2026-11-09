@@ -6,13 +6,16 @@
 import PhotoSwipeLightbox from "photoswipe/lightbox";
 import type PhotoSwipe from "photoswipe";
 import type { DataSource, SlideData } from "photoswipe";
-import {
-	FANCYBOX_SELECTORS,
-	getDefaultFancyboxConfig,
-} from "./fancybox-config";
+import { FANCYBOX_SELECTORS } from "./fancybox-config";
 import pswpCss from "photoswipe/style.css?url";
 import skinCss from "../styles/fancybox-custom.css?url";
 
+
+const LIGHTBOX_DEFAULTS = {
+	bgOpacity: 0.88,
+	showHideAnimationType: "fade" as const,
+	padding: { top: 20, bottom: 40, left: 20, right: 20 },
+};
 type GalleryItem = { src: string; caption?: string };
 
 type ResolvedSlide = {
@@ -82,17 +85,7 @@ function isSafeImageUrl(raw: string): boolean {
 }
 
 function applySiteBase(raw: string): string {
-	if (!isSitePath(raw)) return raw;
 	const base = import.meta.env?.BASE_URL ?? "/";
-	if (!raw) return base;
-	if (
-		raw.startsWith("http://") ||
-		raw.startsWith("https://") ||
-		raw.startsWith("data:") ||
-		raw.startsWith("//")
-	) {
-		return raw;
-	}
 	const normalizedBase = base.endsWith("/") ? base : `${base}/`;
 	const normalizedPath = raw.startsWith("/") ? raw : `/${raw}`;
 	if (
@@ -138,6 +131,15 @@ function isPluginManagedLocalHref(link: HTMLAnchorElement): boolean {
 		return false;
 	const href = link.getAttribute("href") ?? "";
 	return isSitePath(href);
+}
+
+function looksLikePageHref(href: string): boolean {
+	if (!href) return true;
+	if (href.startsWith("#")) return true;
+	if (href.startsWith("../") || href.startsWith("./")) return true;
+	if (href.endsWith("/")) return true;
+	if (href.includes("/posts/")) return true;
+	return /\.(?:html?|md|pdf|zip|json)(?:[?#]|$)/i.test(href);
 }
 
 function captionFromElement(el: HTMLElement, img: HTMLImageElement | null): string {
@@ -205,33 +207,22 @@ function resolveSlideFromTrigger(el: HTMLElement): ResolvedSlide | null {
 
 	if (!original) {
 		const anchor =
-			el instanceof HTMLAnchorElement
-				? el
-				: el.closest("a");
+			el instanceof HTMLAnchorElement ? el : el.closest("a");
 		if (anchor instanceof HTMLAnchorElement) {
 			const href = anchor.getAttribute("href") ?? "";
-			if (href) {
-				const looksLikePage =
-					href.startsWith("../") ||
-					href.startsWith("./") ||
-					href.endsWith("/") ||
-					href.includes("/posts") ||
-					href.startsWith("#");
-				if (
-					isSafeImageUrl(href) &&
-					!looksLikePage &&
-					(href.startsWith("https:") ||
-						href.startsWith("//") ||
-						(display &&
-							href !== display &&
-							href !== img?.getAttribute("src")))
-				) {
-					original = href;
-				} else if (isPluginManagedLocalHref(anchor) && display) {
-					original = display;
-				} else if (isSafeImageUrl(href) && !looksLikePage) {
-					original = href;
-				}
+			if (isPluginManagedLocalHref(anchor) && display) {
+				original = display;
+			} else if (
+				href &&
+				isSafeImageUrl(href) &&
+				!looksLikePageHref(href) &&
+				(href.startsWith("https:") ||
+					href.startsWith("//") ||
+					(Boolean(display) &&
+						href !== display &&
+						href !== img?.getAttribute("src")))
+			) {
+				original = href;
 			}
 		}
 	}
@@ -385,7 +376,18 @@ export class FancyboxHandler {
 		if (!(target instanceof Element)) return null;
 
 		const articleImg = target.closest(FANCYBOX_SELECTORS.articleImages);
-		if (articleImg instanceof HTMLImageElement) return articleImg;
+		if (articleImg instanceof HTMLImageElement) {
+			const wrappingLink = articleImg.closest("a");
+			if (wrappingLink instanceof HTMLAnchorElement) {
+				const marked =
+					wrappingLink.hasAttribute("data-fancybox") ||
+					wrappingLink.hasAttribute("data-pswp-src") ||
+					wrappingLink.classList.contains("image-grid__link") ||
+					Boolean(wrappingLink.closest(".image-grid"));
+				if (!marked) return null;
+			}
+			return articleImg;
+		}
 
 		const gridControl = target.closest(FANCYBOX_SELECTORS.imageGrids);
 		if (gridControl instanceof HTMLElement) return gridControl;
@@ -559,13 +561,12 @@ export class FancyboxHandler {
 
 		this.closeOpenInstance();
 
-		const config = getDefaultFancyboxConfig();
 		const lightbox = new PhotoSwipeLightbox({
 			dataSource: dataSource as DataSource,
 			index,
-			bgOpacity: config.bgOpacity,
-			showHideAnimationType: config.showHideAnimationType,
-			padding: config.padding,
+			bgOpacity: LIGHTBOX_DEFAULTS.bgOpacity,
+			showHideAnimationType: LIGHTBOX_DEFAULTS.showHideAnimationType,
+			padding: LIGHTBOX_DEFAULTS.padding,
 			pswpModule: () => import("photoswipe"),
 		});
 		this.lightbox = lightbox;

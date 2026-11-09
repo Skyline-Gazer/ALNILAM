@@ -91,6 +91,10 @@ async function fulfillPng(route: Route, width: number, height: number, status = 
 
 async function installFixtureRoutes(page: Page) {
 	const onceHits = new Map<string, number>();
+	const responses = new Map<string, number>();
+	page.on("response", (res) => {
+		responses.set(res.url(), res.status());
+	});
 
 	await page.route("https://lightbox-fixtures.local/**", async (route) => {
 		const req = route.request();
@@ -149,6 +153,8 @@ async function installFixtureRoutes(page: Page) {
 		if (ok) return fulfillPng(route, Number(ok[1]), Number(ok[2]));
 		await route.fulfill({ status: 404, body: "cdn miss" });
 	});
+
+	return responses;
 }
 
 async function waitForLightboxReady(page: Page) {
@@ -159,7 +165,7 @@ async function waitForLightboxReady(page: Page) {
 
 async function assertSlideLoaded(
 	page: Page,
-	responses: Map<string, number> = new Map(),
+	responses: Map<string, number>,
 	vendor: Vendor = "photoswipe",
 ) {
 	const img = page.locator(slideImgSel(vendor)).first();
@@ -198,7 +204,6 @@ async function assertSlideLoaded(
 			}
 			const url = last.currentSrc;
 			if (url.startsWith("blob:") || url.startsWith("data:")) return false;
-			if (responses.size === 0) return true;
 			return responses.get(url) === 200;
 		}, { timeout: 12_000 })
 		.toBe(true);
@@ -206,15 +211,15 @@ async function assertSlideLoaded(
 	expect(state.naturalWidth).toBeGreaterThan(0);
 	expect(state.rect).toBeGreaterThan(0);
 	expect(state.currentSrc).toBeTruthy();
+	expect(responses.get(state.currentSrc!)).toBe(200);
 	if (vendor === "fancybox") {
 		expect(state.wrapperRect).toBeGreaterThan(0);
 		expect(state.viewportTransform).not.toContain("scale(0)");
-		expect(responses.get(state.currentSrc!)).toBe(200);
 	}
 	return state;
 }
 
-async function openSlide(page: Page, index: number, responses: Map<string, number> = new Map()) {
+async function openSlide(page: Page, index: number, responses: Map<string, number>) {
 	// PhotoSwipe does not open SVG covers; skip them so both vendors hit a raster slide.
 	const image = page.locator('.custom-md img:not([src$=".svg"])').nth(index);
 	await image.scrollIntoViewIfNeeded();
@@ -251,7 +256,7 @@ async function closeLightbox(page: Page, container: Locator, scrollBefore: numbe
 
 test("lightbox retries after a stylesheet request fails", async ({ page }) => {
 	let failed = false;
-	await installFixtureRoutes(page);
+	const responses = await installFixtureRoutes(page);
 	await page.route(/photoswipe[^/]*\.css(?:\?.*)?$|fancybox-custom[^/]*\.css(?:\?.*)?$/i, async (route) => {
 		if (!failed) {
 			failed = true;
@@ -279,15 +284,15 @@ for (const [name, origin] of deployments) {
 				reducedMotion: "reduce",
 			});
 			const page = await context.newPage();
-			await installFixtureRoutes(page);
+			const responses = await installFixtureRoutes(page);
 			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
-			const container = await openSlide(page, 0);
+			const container = await openSlide(page, 0, responses);
 			const scrollAtOpen = await page.evaluate(() => window.scrollY);
 			await closeLightbox(page, container, scrollAtOpen);
 
-			const container2 = await openSlide(page, 1);
+			const container2 = await openSlide(page, 1, responses);
 			await closeLightbox(page, container2, await page.evaluate(() => window.scrollY));
 			await context.close();
 		});
@@ -304,7 +309,7 @@ for (const [name, origin] of deployments) {
 					requested.push(req.url());
 				}
 			});
-			await installFixtureRoutes(page);
+			const responses = await installFixtureRoutes(page);
 			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
@@ -312,7 +317,7 @@ for (const [name, origin] of deployments) {
 			await external.scrollIntoViewIfNeeded();
 			await external.click();
 			await expect(page.locator(".pswp")).toBeVisible();
-			const state = await assertSlideLoaded(page);
+			const state = await assertSlideLoaded(page, responses);
 			expect(state.currentSrc || state.src).toContain(
 				"https://lightbox-fixtures.local/ok/640/360.png",
 			);
@@ -334,14 +339,14 @@ for (const [name, origin] of deployments) {
 				const u = req.url();
 				if (u.includes("signed/") || u.includes("cdn.example.com")) seen.push(u);
 			});
-			await installFixtureRoutes(page);
+			const responses = await installFixtureRoutes(page);
 			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			const signed = page.locator('.custom-md img[src*="signed/"]');
 			await signed.scrollIntoViewIfNeeded();
 			await signed.click();
-			const signedState = await assertSlideLoaded(page);
+			const signedState = await assertSlideLoaded(page, responses);
 			const signedSrc = signedState.currentSrc || signedState.src || "";
 			expect(signedSrc).toContain("https://lightbox-fixtures.local/signed/800/450.png");
 			expect(signedSrc).toContain("sig=abc123");
@@ -352,14 +357,14 @@ for (const [name, origin] of deployments) {
 						u.includes("/signed/800/450.png") &&
 						u.includes("sig=abc123") &&
 						u.includes("exp=9999999999"),
-				) || signedSrc.includes("sig=abc123"),
+				),
 			).toBe(true);
 			await closeWithEscape(page, page.locator(".pswp"));
 
 			const proto = page.locator('.custom-md img[src*="cdn.example.com"]');
 			await proto.scrollIntoViewIfNeeded();
 			await proto.click();
-			const protoState = await assertSlideLoaded(page);
+			const protoState = await assertSlideLoaded(page, responses);
 			const protoSrc = protoState.currentSrc || protoState.src || "";
 			expect(protoSrc.includes("cdn.example.com/ok/512/288.png") || protoSrc.startsWith("blob:")).toBe(
 				true,
@@ -389,14 +394,14 @@ for (const [name, origin] of deployments) {
 				const u = req.url();
 				if (u.includes("/full/") || u.includes("/thumb/")) slideReqs.push(u);
 			});
-			await installFixtureRoutes(page);
+			const responses = await installFixtureRoutes(page);
 			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			const thumbLink = page.locator('a[href*="/full/1280/720.png"]');
 			await thumbLink.scrollIntoViewIfNeeded();
 			await thumbLink.click();
-			await assertSlideLoaded(page);
+			await assertSlideLoaded(page, responses);
 			expect(slideReqs.some((u) => u.includes("/full/1280/720.png"))).toBe(true);
 			// After open, lightbox src must be full, not thumb.
 			const src = await page
@@ -415,7 +420,7 @@ for (const [name, origin] of deployments) {
 				reducedMotion: "reduce",
 			});
 			const page = await context.newPage();
-			await installFixtureRoutes(page);
+			const responses = await installFixtureRoutes(page);
 			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
@@ -424,7 +429,7 @@ for (const [name, origin] of deployments) {
 			await trigger.click();
 			const container = page.locator(".pswp");
 			await expect(container).toBeVisible();
-			await assertSlideLoaded(page);
+			await assertSlideLoaded(page, responses);
 
 			const role = await container.evaluate((el) => ({
 				ariaModal: el.getAttribute("aria-modal"),
@@ -436,7 +441,7 @@ for (const [name, origin] of deployments) {
 			const before = await page.locator(".pswp__counter").textContent();
 			await page.keyboard.press("ArrowRight");
 			await expect.poll(async () => page.locator(".pswp__counter").textContent()).not.toBe(before);
-			await assertSlideLoaded(page);
+			await assertSlideLoaded(page, responses);
 
 			await page.locator('.pswp__button--close, .pswp [title="Close"]').first().focus();
 			let trapped = 0;
@@ -460,7 +465,8 @@ for (const [name, origin] of deployments) {
 				const html = await caption.evaluate((el) => el.innerHTML);
 				expect(html).not.toMatch(/<script/i);
 				const text = (await caption.textContent()) ?? "";
-				expect(text.length >= 0).toBe(true);
+				expect(text.trim().length).toBeGreaterThan(0);
+				expect(text).toMatch(/Lighthouse|fixture|Orion|External|Signed|Protocol|Thumb|Missing|Grid/i);
 			}
 
 			await closeLightbox(page, container, await page.evaluate(() => window.scrollY));
@@ -473,7 +479,7 @@ for (const [name, origin] of deployments) {
 				reducedMotion: "reduce",
 			});
 			const page = await context.newPage();
-			await installFixtureRoutes(page);
+			const responses = await installFixtureRoutes(page);
 			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
@@ -498,7 +504,7 @@ for (const [name, origin] of deployments) {
 			const page = await context.newPage();
 			const errors: string[] = [];
 			page.on("pageerror", (err) => errors.push(String(err)));
-			await installFixtureRoutes(page);
+			const responses = await installFixtureRoutes(page);
 			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
@@ -534,7 +540,7 @@ for (const [name, origin] of deployments) {
 				reducedMotion: "reduce",
 			});
 			const page = await context.newPage();
-			await installFixtureRoutes(page);
+			const responses = await installFixtureRoutes(page);
 			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
@@ -555,7 +561,7 @@ for (const [name, origin] of deployments) {
 				reducedMotion: "reduce",
 			});
 			const page = await context.newPage();
-			await installFixtureRoutes(page);
+			const responses = await installFixtureRoutes(page);
 			await page.goto(`${origin}/posts/`, { waitUntil: "networkidle" });
 			await page
 				.locator('a.m3-blog-postcard__title[href$="/en/posts/pagination-sample/"]')
@@ -575,7 +581,7 @@ for (const [name, origin] of deployments) {
 			await image.click({ force: true });
 			const container = page.locator(".pswp");
 			await expect(container).toBeVisible({ timeout: 10_000 });
-			await assertSlideLoaded(page);
+			await assertSlideLoaded(page, responses);
 			await closeLightbox(page, container, await page.evaluate(() => window.scrollY));
 
 			await page.goBack();
@@ -594,7 +600,7 @@ for (const theme of ["dark", "light"] as Theme[]) {
 			reducedMotion: "reduce",
 		});
 		const page = await context.newPage();
-		await installFixtureRoutes(page);
+		const responses = await installFixtureRoutes(page);
 		await page.goto(`${ROOT}${ARTICLE}`, { waitUntil: "networkidle" });
 		await waitForLightboxReady(page);
 
@@ -612,7 +618,7 @@ for (const theme of ["dark", "light"] as Theme[]) {
 			await expect(page.locator("html")).toHaveAttribute("data-theme", "github-light");
 		}
 
-		const container = await openSlide(page, 0);
+		const container = await openSlide(page, 0, responses);
 		await closeWithEscape(page, container);
 		await context.close();
 	});

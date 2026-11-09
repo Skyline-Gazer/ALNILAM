@@ -1,19 +1,7 @@
 /**
- * Lightbox selector/config module.
+ * Lightbox selector module.
  * Public filenames stay Fancybox* for Shirone fork stability; runtime is PhotoSwipe.
  */
-
-export type FancyboxConfig = {
-	bgOpacity: number;
-	showHideAnimationType: "fade" | "zoom" | "none";
-	padding: { top: number; bottom: number; left: number; right: number };
-};
-
-export const getDefaultFancyboxConfig = (): FancyboxConfig => ({
-	bgOpacity: 0.88,
-	showHideAnimationType: "fade",
-	padding: { top: 20, bottom: 40, left: 20, right: 20 },
-});
 
 export const FANCYBOX_SELECTORS = {
 	// 文章正文图片和封面图（排除画廊内图片，避免被整篇轮播组重复捕获）

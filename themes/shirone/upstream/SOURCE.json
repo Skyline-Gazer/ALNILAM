@@ -198,7 +198,7 @@
     },
     {
       "path": "src/utils/fancybox-config.ts",
-      "sha256": "575b588872e94600a8ab2d1f939a7691e532869b08e3095a837af4f411f9937b"
+      "sha256": "1d006948ccb38084b4271b8aa8ab2976d24d7af1cd806801f3e74d18860e2850"
     },
     {
       "path": "src/utils/banner-animation.ts",
@@ -238,7 +238,7 @@
     },
     {
       "path": "src/utils/fancybox-handler.ts",
-      "sha256": "3b990d56f9a48bfdcc74ce365ba3829ffd1795bf1c24d449ccaec0b99cde7f41"
+      "sha256": "254e07c2b4a2310491f3a6972dc05827a9137d4d2a140fb10304ed1d60fd6cf6"
     },
     {
       "path": "src/utils/post-decryption.ts",
@@ -1974,13 +1974,13 @@
     "src/styles/markdown/generic.styl": "Ensure unbroken prose URLs wrap and wide code/table blocks scroll horizontally within .custom-md.",
     "src/components/atoms/blog/PostCard.astro": "Allow long unbroken card titles to wrap within .m3-blog-postcard__title.",
     "src/styles/transition.css": "Disable onload-animation initial translateY/opacity under prefers-reduced-motion and motion-reduced.",
-    "src/utils/fancybox-handler.ts": "ALNILAM: replace @fancyapps/ui with MIT photoswipe@5.4.4 behind FancyboxHandler public API; delegated document click/keydown; HTTPS/site-path URL policy; generation-token abort; dimension probe with 8s timeout and original-link degrade; PhotoSwipe caption UI via textContent; lazy ?url CSS injection (#75 license cutover; supersedes #123 Fancybox empty-frame stack).",
+    "src/utils/fancybox-handler.ts": "ALNILAM: replace @fancyapps/ui with MIT photoswipe@5.4.4 behind FancyboxHandler public API; delegated document click/keydown; skip unmarked wrapping links; HTTPS/site-path URL policy with looksLikePageHref; simplified applySiteBase; generation-token abort; dimension probe with 8s timeout and original-link degrade; PhotoSwipe caption UI via textContent; lazy ?url CSS injection; LIGHTBOX_DEFAULTS inlined (#75 license cutover; supersedes #123 Fancybox empty-frame stack).",
     "src/styles/fancybox-custom.css": "ALNILAM: rewrite Fancybox/Panzoom skin to PhotoSwipe .pswp toolbar/counter/caption skin; drop #123 .is-fullsize patch; prefers-reduced-motion disables non-essential transitions; backdrop opacity owned by PhotoSwipe bgOpacity option.",
     "src/components/organisms/ArchivePanel.svelte": "ALNILAM addition: SSR initial filter props (initialCategory/initialTag/initialUncategorized/initialGroupBy), explicit-params-only onMount override so detail routes without query keep their SSR filter, preScoped flag so host pages that pre-filter members (alias/series fallback) skip panel-side re-filtering, optional breadcrumb override, and categoryLabels/tagLabels display maps so localized names never participate in filter matching (#124).",
     "src/utils/markdown-assets.ts": "Resolve each Markdown feature stylesheet to an externally emitted, base-aware URL instead of inlining CSS.",
     "src/pages/[...permalink].astro": "Emit Markdown feature stylesheets as Swup-optional links; omit upstream CommentSection mount so disabled Sites emit no Twikoo/Waline/Giscus provider chunks.",
     "src/pages/about.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
     "src/pages/series/[slug]/index.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
-    "src/utils/fancybox-config.ts": "ALNILAM: drop @fancyapps/ui FancyboxOptions import; keep FANCYBOX_SELECTORS and getDefaultFancyboxConfig as PhotoSwipe-oriented local config (bgOpacity 0.88)."
+    "src/utils/fancybox-config.ts": "ALNILAM: drop @fancyapps/ui FancyboxOptions import; keep FANCYBOX_SELECTORS only; PhotoSwipe defaults live in fancybox-handler LIGHTBOX_DEFAULTS."
   }
 }
