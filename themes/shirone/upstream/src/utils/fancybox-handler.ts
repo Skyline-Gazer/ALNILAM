@@ -310,6 +310,9 @@ export class FancyboxHandler {
 	private styleLinks: HTMLLinkElement[] = [];
 	private stylesLoaded = false;
 	private stylesPromise: Promise<void> | null = null;
+	private pswpCtor: (new (options?: ConstructorParameters<typeof PhotoSwipe>[0]) => PhotoSwipe) | null =
+		null;
+	private pswpCtorPromise: Promise<void> | null = null;
 	private probeCache = new Map<string, Promise<Dim | null>>();
 	private lastTrigger: HTMLElement | null = null;
 	private readonly onClick = (event: MouseEvent) => this.handleActivate(event);
@@ -329,7 +332,7 @@ export class FancyboxHandler {
 
 	private async doInit(): Promise<void> {
 		const gen = this.generation;
-		await this.ensureStylesheets();
+		await Promise.all([this.ensureStylesheets(), this.ensurePswpCtor()]);
 		if (gen !== this.generation) return;
 		if (this.bound) return;
 		this.syncPluginManagedGridLinks();
@@ -441,7 +444,16 @@ export class FancyboxHandler {
 				...document.querySelectorAll<HTMLElement>(
 					FANCYBOX_SELECTORS.articleImages,
 				),
-			];
+			].filter((el) => {
+				const wrappingLink = el.closest("a");
+				if (!(wrappingLink instanceof HTMLAnchorElement)) return true;
+				const marked =
+					wrappingLink.hasAttribute("data-fancybox") ||
+					wrappingLink.hasAttribute("data-pswp-src") ||
+					wrappingLink.classList.contains("image-grid__link") ||
+					Boolean(wrappingLink.closest(".image-grid"));
+				return marked;
+			});
 			const items = nodes
 				.map((el) => resolveSlideFromTrigger(el))
 				.filter((s): s is ResolvedSlide => s !== null);
@@ -473,19 +485,20 @@ export class FancyboxHandler {
 		return { items: single ? [single] : [], index: 0 };
 	}
 
-	private async openFromTrigger(trigger: HTMLElement): Promise<void> {
+	private openFromTrigger(trigger: HTMLElement): void {
 		const gen = this.generation;
 		const { items, index } = this.collectGroup(trigger);
 		if (!items.length) return;
-		await this.openDataSource(items.map(toSlideData), index, gen);
+		void this.openDataSource(items.map(toSlideData), index, gen);
 	}
+
 
 	async showGallery(
 		items: GalleryItem[],
 		startIndex = 0,
 	): Promise<void> {
 		const gen = this.generation;
-		await this.ensureStylesheets();
+		await Promise.all([this.ensureStylesheets(), this.ensurePswpCtor()]);
 		if (gen !== this.generation) return;
 
 		const requested = items[startIndex];
@@ -547,14 +560,33 @@ export class FancyboxHandler {
 		return this.stylesPromise;
 	}
 
+	private async ensurePswpCtor(): Promise<void> {
+		if (this.pswpCtor) return;
+		this.pswpCtorPromise ??= (async () => {
+			const mod = await import("photoswipe");
+			this.pswpCtor = (mod.default ?? mod) as typeof PhotoSwipe;
+		})().catch((error) => {
+			this.pswpCtorPromise = null;
+			throw error;
+		});
+		await this.pswpCtorPromise;
+	}
+
+	private canOpenSynchronously(): boolean {
+		return Boolean(this.stylesLoaded && this.pswpCtor);
+	}
+
 	private async openDataSource(
 		dataSource: SlideExtras[],
 		index: number,
 		gen: number,
 	): Promise<void> {
 		if (!dataSource.length) return;
-		await this.ensureStylesheets();
+		if (!this.canOpenSynchronously()) {
+			await Promise.all([this.ensureStylesheets(), this.ensurePswpCtor()]);
+		}
 		if (gen !== this.generation) return;
+		if (!this.pswpCtor) return;
 
 		this.closeOpenInstance();
 
@@ -564,7 +596,7 @@ export class FancyboxHandler {
 			bgOpacity: LIGHTBOX_DEFAULTS.bgOpacity,
 			showHideAnimationType: LIGHTBOX_DEFAULTS.showHideAnimationType,
 			padding: LIGHTBOX_DEFAULTS.padding,
-			pswpModule: () => import("photoswipe"),
+			pswpModule: this.pswpCtor,
 		});
 		this.lightbox = lightbox;
 
