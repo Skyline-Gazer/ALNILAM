@@ -120,9 +120,6 @@ importers:
       '@expressive-code/plugin-line-numbers':
         specifier: 0.44.2
         version: 0.44.2
-      '@fancyapps/ui':
-        specifier: 6.1.15
-        version: 6.1.15
       '@iconify-json/fa7-brands':
         specifier: 1.2.4
         version: 1.2.4
@@ -183,6 +180,9 @@ importers:
       pagefind:
         specifier: 1.5.2
         version: 1.5.2
+      photoswipe:
+        specifier: 5.4.4
+        version: 5.4.4
       qrcode:
         specifier: 1.5.4
         version: 1.5.4
@@ -699,9 +699,6 @@ packages:
 
   '@expressive-code/plugin-text-markers@0.44.3':
     resolution: {integrity: sha512-4Ae2xRSDV5kdWPsi40xWbOtoihbzM0zLVjQKkDAnD5KzFXl+6/kd+VhuWOlTRVaJ5cqGk++vCbAaf0MR1XbZlw==}
-
-  '@fancyapps/ui@6.1.15':
-    resolution: {integrity: sha512-J1w/ZLhkXzMSHZ7Bg1iX7GFA/YkH/Ka+r2HIX4pchwu6PNalfyzzgxghhP92CWlbH4ssV8qYPJ/KQcdRW5TVVw==}
 
   '@formatjs/ecma402-abstract@2.3.6':
     resolution: {integrity: sha512-HJnTFeRM2kVFVr5gr5kH1XP6K0JcJtE7Lzvtr3FS/so5f1kpsqqqxy5JF+FRaO6H2qmcMfAUIox7AJteieRtVw==}
@@ -3461,6 +3458,10 @@ packages:
   pend@1.2.0:
     resolution: {integrity: sha512-F3asv42UuXchdzt+xXqfW1OGlVBe+mxa2mqI0pg5yAHZPvFmY3Y6drSf/GQ1A86WgWEN9Kzh/WrgKa6iGcHXLg==}
 
+  photoswipe@5.4.4:
+    resolution: {integrity: sha512-WNFHoKrkZNnvFFhbHL93WDkW3ifwVOXSW3w1UuZZelSmgXpIGiZSNlZJq37rR8YejqME2rHs9EhH9ZvlvFH2NA==}
+    engines: {node: '>= 0.12.0'}
+
   piccolore@0.1.3:
     resolution: {integrity: sha512-o8bTeDWjE086iwKrROaDf31K0qC/BENdm15/uH9usSC/uZjJOKb2YGiVHfLY4GhwsERiPI1jmwI2XrA7ACOxVw==}
 
@@ -5024,8 +5025,6 @@ snapshots:
   '@expressive-code/plugin-text-markers@0.44.3':
     dependencies:
       '@expressive-code/core': 0.44.3
-
-  '@fancyapps/ui@6.1.15': {}
 
   '@formatjs/ecma402-abstract@2.3.6':
     dependencies:
@@ -8301,6 +8300,8 @@ snapshots:
   path-to-regexp@0.1.13: {}
 
   pend@1.2.0: {}
+
+  photoswipe@5.4.4: {}
 
   piccolore@0.1.3: {}
 

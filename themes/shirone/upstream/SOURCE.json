@@ -198,7 +198,7 @@
     },
     {
       "path": "src/utils/fancybox-config.ts",
-      "sha256": "b18c17e05213b0633dda9b2f6b9fd193226e73d8189d3974a11bf56c1c988d04"
+      "sha256": "1d006948ccb38084b4271b8aa8ab2976d24d7af1cd806801f3e74d18860e2850"
     },
     {
       "path": "src/utils/banner-animation.ts",
@@ -238,7 +238,7 @@
     },
     {
       "path": "src/utils/fancybox-handler.ts",
-      "sha256": "631723e7d39bda5715991d091799e37b3baebce9d7f18365254665d199463658"
+      "sha256": "2e2d22d58da8d498c89b769cea7dd06849207830b913609c06861e0bfcb7207a"
     },
     {
       "path": "src/utils/post-decryption.ts",
@@ -654,7 +654,7 @@
     },
     {
       "path": "src/styles/fancybox-custom.css",
-      "sha256": "174dbab68821b7604c17c3fbd5ef2be7efad873ffa1a54d48df7291aad0d017d"
+      "sha256": "de87f3f584cb8e283c85432c928169186c6f9e12768f9dda335fac9ad849c7f7"
     },
     {
       "path": "src/styles/scrollbar.css",
@@ -1974,12 +1974,13 @@
     "src/styles/markdown/generic.styl": "Ensure unbroken prose URLs wrap and wide code/table blocks scroll horizontally within .custom-md.",
     "src/components/atoms/blog/PostCard.astro": "Allow long unbroken card titles to wrap within .m3-blog-postcard__title.",
     "src/styles/transition.css": "Disable onload-animation initial translateY/opacity under prefers-reduced-motion and motion-reduced.",
-    "src/utils/fancybox-handler.ts": "ALNILAM addition: syncArticleImageSrcTargets() mirrors syncImageGridLinkTargets() for bare article <img> triggers, syncing currentSrc to data-src on every init/doInit and Swup remount so the lightbox resolves the rendered asset address (#123); load Fancybox CSS via ?url assets at first open so Astro does not hoist fancybox stylesheets onto every page (#74).",
-    "src/styles/fancybox-custom.css": "ALNILAM addition: restore the missing .f-panzoom__wrapper.is-fullsize width/height that vendor v6.1.15 CSS omits; without it the Panzoom wrapper collapses to 0x0 inside the slide flex column and the lightbox renders an empty frame at scale(0) (#123).",
+    "src/utils/fancybox-handler.ts": "ALNILAM: replace @fancyapps/ui with MIT photoswipe@5.4.4 behind FancyboxHandler public API; prefetch CSS+PhotoSwipe ctor at init for sync open; skip unmarked wrapping links; HTTPS/site-path URL policy with looksLikeImageHref; parallel neighbor probes; generation-token abort; dimension probe with 8s timeout and original-link degrade; PhotoSwipe caption via textContent; lazy ?url CSS injection; LIGHTBOX_DEFAULTS inlined (#75 license cutover; supersedes #123).",
+    "src/styles/fancybox-custom.css": "ALNILAM: rewrite Fancybox/Panzoom skin to PhotoSwipe .pswp toolbar/counter/caption skin; drop #123 .is-fullsize patch; leave .pswp__bg opacity to PhotoSwipe bgOpacity; prefers-reduced-motion disables non-essential transitions.",
     "src/components/organisms/ArchivePanel.svelte": "ALNILAM addition: SSR initial filter props (initialCategory/initialTag/initialUncategorized/initialGroupBy), explicit-params-only onMount override so detail routes without query keep their SSR filter, preScoped flag so host pages that pre-filter members (alias/series fallback) skip panel-side re-filtering, optional breadcrumb override, and categoryLabels/tagLabels display maps so localized names never participate in filter matching (#124).",
     "src/utils/markdown-assets.ts": "Resolve each Markdown feature stylesheet to an externally emitted, base-aware URL instead of inlining CSS.",
     "src/pages/[...permalink].astro": "Emit Markdown feature stylesheets as Swup-optional links; omit upstream CommentSection mount so disabled Sites emit no Twikoo/Waline/Giscus provider chunks.",
     "src/pages/about.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
-    "src/pages/series/[slug]/index.astro": "Emit Markdown feature stylesheets as Swup-optional links."
+    "src/pages/series/[slug]/index.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
+    "src/utils/fancybox-config.ts": "ALNILAM: drop @fancyapps/ui FancyboxOptions import; keep FANCYBOX_SELECTORS only; PhotoSwipe defaults live in fancybox-handler LIGHTBOX_DEFAULTS."
   }
 }

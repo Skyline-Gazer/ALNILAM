@@ -17,6 +17,11 @@ Core can be upgraded independently. Site owns the post and its assets.
 
 ![Lighthouse lightbox fixture](/site-assets/lighthouse.png)
 
+![Second lighthouse body image](/site-assets/lighthouse.png)
+
+Ordinary text link that contains an image must navigate, not open the lightbox:
+[Read more about the lighthouse ![inline](/site-assets/lighthouse.png)](../).
+
 ## Core / Site composition
 
 1. Keep your content under `content/posts/`.
