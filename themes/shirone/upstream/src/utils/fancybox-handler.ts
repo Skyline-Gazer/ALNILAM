@@ -211,17 +211,25 @@ function resolveSlideFromTrigger(el: HTMLElement): ResolvedSlide | null {
 		if (anchor instanceof HTMLAnchorElement) {
 			const href = anchor.getAttribute("href") ?? "";
 			if (href) {
+				const looksLikePage =
+					href.startsWith("../") ||
+					href.startsWith("./") ||
+					href.endsWith("/") ||
+					href.includes("/posts") ||
+					href.startsWith("#");
 				if (
-					href.startsWith("https:") ||
-					href.startsWith("//") ||
-					(display &&
-						href !== display &&
-						href !== img?.getAttribute("src"))
+					isSafeImageUrl(href) &&
+					!looksLikePage &&
+					(href.startsWith("https:") ||
+						href.startsWith("//") ||
+						(display &&
+							href !== display &&
+							href !== img?.getAttribute("src")))
 				) {
 					original = href;
 				} else if (isPluginManagedLocalHref(anchor) && display) {
 					original = display;
-				} else if (isSafeImageUrl(href)) {
+				} else if (isSafeImageUrl(href) && !looksLikePage) {
 					original = href;
 				}
 			}
@@ -315,7 +323,6 @@ export class FancyboxHandler {
 	private stylesLoaded = false;
 	private stylesPromise: Promise<void> | null = null;
 	private probeCache = new Map<string, Promise<Dim | null>>();
-	private displayUrlCache = new WeakMap<HTMLElement, string>();
 	private lastTrigger: HTMLElement | null = null;
 	private readonly onClick = (event: MouseEvent) => this.handleActivate(event);
 	private readonly onKeyDown = (event: KeyboardEvent) => {
@@ -746,7 +753,6 @@ export class FancyboxHandler {
 		this.styleLinks = [];
 		this.stylesLoaded = false;
 		this.stylesPromise = null;
-		this.displayUrlCache = new WeakMap();
 		this.lastTrigger = null;
 	}
 
