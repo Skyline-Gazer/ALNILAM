@@ -461,13 +461,13 @@ for (const [name, origin] of deployments) {
 			expect(underlyingFocused).toBe(false);
 
 			const caption = page.locator(".pswp__custom-caption");
-			if (await caption.count()) {
-				const html = await caption.evaluate((el) => el.innerHTML);
-				expect(html).not.toMatch(/<script/i);
-				const text = (await caption.textContent()) ?? "";
-				expect(text.trim().length).toBeGreaterThan(0);
-				expect(text).toMatch(/Lighthouse|fixture|Orion|External|Signed|Protocol|Thumb|Missing|Grid/i);
-			}
+			await expect(caption).toHaveCount(1);
+			await expect(caption).toBeVisible();
+			const html = await caption.evaluate((el) => el.innerHTML);
+			expect(html).not.toMatch(/<script/i);
+			const text = (await caption.textContent()) ?? "";
+			expect(text.trim().length).toBeGreaterThan(0);
+			expect(text).toMatch(/Lighthouse|fixture|Orion|External|Signed|Protocol|Thumb|Missing|Grid/i);
 
 			await closeLightbox(page, container, await page.evaluate(() => window.scrollY));
 			await context.close();

@@ -142,6 +142,14 @@ function looksLikePageHref(href: string): boolean {
 	return /\.(?:html?|md|pdf|zip|json)(?:[?#]|$)/i.test(href);
 }
 
+function looksLikeImageHref(href: string): boolean {
+	if (!href || looksLikePageHref(href)) return false;
+	if (/\.(?:avif|bmp|gif|jpe?g|png|svg|webp|heic|heif)(?:[?#]|$)/i.test(href))
+		return true;
+	// HTTPS / protocol-relative beds often omit extensions (signed URLs).
+	return href.startsWith("https:") || href.startsWith("//");
+}
+
 function captionFromElement(el: HTMLElement, img: HTMLImageElement | null): string {
 	const dataCaption =
 		el.getAttribute("data-caption") ??
@@ -210,12 +218,10 @@ function resolveSlideFromTrigger(el: HTMLElement): ResolvedSlide | null {
 			el instanceof HTMLAnchorElement ? el : el.closest("a");
 		if (anchor instanceof HTMLAnchorElement) {
 			const href = anchor.getAttribute("href") ?? "";
-			if (isPluginManagedLocalHref(anchor) && display) {
-				original = display;
-			} else if (
+			if (
 				href &&
 				isSafeImageUrl(href) &&
-				!looksLikePageHref(href) &&
+				looksLikeImageHref(href) &&
 				(href.startsWith("https:") ||
 					href.startsWith("//") ||
 					(Boolean(display) &&
@@ -223,22 +229,16 @@ function resolveSlideFromTrigger(el: HTMLElement): ResolvedSlide | null {
 						href !== img?.getAttribute("src")))
 			) {
 				original = href;
+			} else if (isPluginManagedLocalHref(anchor) && display) {
+				original = display;
 			}
 		}
 	}
 
 	if (!original && img) {
 		const dataSrc = img.getAttribute("data-src") ?? "";
-		if (dataSrc) {
-			if (
-				dataSrc === display ||
-				dataSrc === attrSrc ||
-				dataSrc === img.currentSrc
-			) {
-				original = display || dataSrc;
-			} else if (isSafeImageUrl(dataSrc)) {
-				original = dataSrc;
-			}
+		if (dataSrc && isSafeImageUrl(dataSrc) && dataSrc !== display && dataSrc !== attrSrc) {
+			original = dataSrc;
 		}
 	}
 
@@ -254,14 +254,11 @@ function resolveSlideFromTrigger(el: HTMLElement): ResolvedSlide | null {
 	const src = canonicalizeSrc(original);
 	if (!src) return null;
 
-	const msrcCandidate = liveSrc && liveSrc !== src ? liveSrc : null;
-	const msrc = msrcCandidate ? (canonicalizeSrc(msrcCandidate) ?? null) : null;
 	const dims = img ? dimensionsFromImg(img, src) : null;
 	const caption = captionFromElement(el, img);
 
 	return {
 		src,
-		...(msrc ? { msrc } : {}),
 		...(dims ? { width: dims.width, height: dims.height } : {}),
 		...(img?.alt ? { alt: img.alt } : {}),
 		...(caption ? { caption } : {}),
@@ -632,10 +629,7 @@ export class FancyboxHandler {
 		const order = [curr, curr + 1, curr - 1].filter(
 			(i) => i >= 0 && i < pswp.getNumItems(),
 		);
-		for (const i of order) {
-			if (gen !== this.generation) return;
-			await this.probeSlide(pswp, i, gen);
-		}
+		await Promise.all(order.map((i) => this.probeSlide(pswp, i, gen)));
 	}
 
 	private async probeSlide(
