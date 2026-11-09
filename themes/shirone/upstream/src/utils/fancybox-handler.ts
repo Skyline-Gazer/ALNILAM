@@ -150,6 +150,44 @@ function looksLikeImageHref(href: string): boolean {
 	return href.startsWith("https:") || href.startsWith("//");
 }
 
+function isMarkedLightboxAnchor(anchor: HTMLAnchorElement): boolean {
+	return (
+		anchor.hasAttribute("data-fancybox") ||
+		anchor.hasAttribute("data-pswp-src") ||
+		anchor.classList.contains("image-grid__link") ||
+		Boolean(anchor.closest(".image-grid"))
+	);
+}
+
+function isImageOnlyAnchor(anchor: HTMLAnchorElement): boolean {
+	const img = anchor.querySelector("img");
+	if (!img) return false;
+	return ![...anchor.childNodes].some((n) => {
+		if (n.nodeType === Node.TEXT_NODE) return Boolean(n.textContent?.trim());
+		if (n.nodeType === Node.ELEMENT_NODE) {
+			const el = n as Element;
+			if (el === img || el.contains(img)) return false;
+			return true;
+		}
+		return false;
+	});
+}
+
+function isAuthorImageOriginalLink(anchor: HTMLAnchorElement): boolean {
+	if (!isImageOnlyAnchor(anchor)) return false;
+	const href = anchor.getAttribute("href") ?? "";
+	return isSafeImageUrl(href) && looksLikeImageHref(href);
+}
+
+function isLightboxEligibleArticleImage(el: HTMLElement): boolean {
+	const wrappingLink = el.closest("a");
+	if (!(wrappingLink instanceof HTMLAnchorElement)) return true;
+	return (
+		isMarkedLightboxAnchor(wrappingLink) ||
+		isAuthorImageOriginalLink(wrappingLink)
+	);
+}
+
 function captionFromElement(el: HTMLElement, img: HTMLImageElement | null): string {
 	const dataCaption =
 		el.getAttribute("data-caption") ??
@@ -377,15 +415,7 @@ export class FancyboxHandler {
 
 		const articleImg = target.closest(FANCYBOX_SELECTORS.articleImages);
 		if (articleImg instanceof HTMLImageElement) {
-			const wrappingLink = articleImg.closest("a");
-			if (wrappingLink instanceof HTMLAnchorElement) {
-				const marked =
-					wrappingLink.hasAttribute("data-fancybox") ||
-					wrappingLink.hasAttribute("data-pswp-src") ||
-					wrappingLink.classList.contains("image-grid__link") ||
-					Boolean(wrappingLink.closest(".image-grid"));
-				if (!marked) return null;
-			}
+			if (!isLightboxEligibleArticleImage(articleImg)) return null;
 			return articleImg;
 		}
 
@@ -397,25 +427,14 @@ export class FancyboxHandler {
 
 		const anchor = target.closest("a");
 		if (anchor instanceof HTMLAnchorElement) {
-			const marked =
-				anchor.hasAttribute("data-fancybox") ||
-				anchor.hasAttribute("data-pswp-src") ||
-				anchor.classList.contains("image-grid__link") ||
-				Boolean(anchor.closest(".image-grid"));
-			if (!marked) return null;
-			const img = anchor.querySelector("img");
-			if (!img) return null;
-			const meaningful = [...anchor.childNodes].filter((n) => {
-				if (n.nodeType === Node.TEXT_NODE)
-					return Boolean(n.textContent?.trim());
-				if (n.nodeType === Node.ELEMENT_NODE) {
-					const el = n as Element;
-					if (el === img || el.contains(img)) return false;
-					return true;
-				}
-				return false;
-			});
-			if (meaningful.length === 0) return anchor;
+			if (
+				!isMarkedLightboxAnchor(anchor) &&
+				!isAuthorImageOriginalLink(anchor)
+			) {
+				return null;
+			}
+			if (!anchor.querySelector("img")) return null;
+			return anchor;
 		}
 		return null;
 	}
@@ -444,16 +463,7 @@ export class FancyboxHandler {
 				...document.querySelectorAll<HTMLElement>(
 					FANCYBOX_SELECTORS.articleImages,
 				),
-			].filter((el) => {
-				const wrappingLink = el.closest("a");
-				if (!(wrappingLink instanceof HTMLAnchorElement)) return true;
-				const marked =
-					wrappingLink.hasAttribute("data-fancybox") ||
-					wrappingLink.hasAttribute("data-pswp-src") ||
-					wrappingLink.classList.contains("image-grid__link") ||
-					Boolean(wrappingLink.closest(".image-grid"));
-				return marked;
-			});
+			].filter((el) => isLightboxEligibleArticleImage(el));
 			const items = nodes
 				.map((el) => resolveSlideFromTrigger(el))
 				.filter((s): s is ResolvedSlide => s !== null);
