@@ -10,8 +10,9 @@ lightbox cutover.
 
 | Ref | Value |
 | --- | --- |
-| CNB `dev` (pre-PhotoSwipe PR) | `8661eed8b9e919e00edab9a7aa1d36a6cac95c35` (tree `14c0989e11a140be87864dda3d402365e9aaec4e`) — after merge of docs PRs #89 then #90 |
-| Branch | `feat/photoswipe-lightbox` (PhotoSwipe PR; not yet merged at this write) |
+| CNB `dev` | `6845565e6c928e4ec6657a9500ac3a6d1b4e795c` (tree `bc61661bdb8be30366c97e6c356bfb71f7138e93`) — docs #89/#90 plus dual-compat lightbox tests #93 |
+| PhotoSwipe PR | [#92](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/92) head `db120215929bf67e20f46d54714a5cd54ad75cd3`, rebased onto #93; CI pending at this write |
+| Dual-compat tests | [#93](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/93) merged `6845565…`; trusted-consumer [success](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-tkm-1k6v836ae#001) |
 | CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — untouched |
 | ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` — unchanged |
 | GitHub `dev` / Vercel Production | lag CNB; do not mirror/push without Owner authorization |
@@ -26,14 +27,15 @@ lightbox cutover.
 - Dimension probe with 8s timeout + original-link degrade; generation-token abort for
   Swup races; delegated document click/keydown; PhotoSwipe caption via `textContent`.
 - Local proof: `pnpm check` 0 errors; `pnpm browser:local -- tests/browser/lightbox.spec.ts`
-  **39/39** (root+nested × 1440/390 HTTPS fixture matrix, a11y trap, degrade, Swup).
+  **37 passed, 2 flaky-then-green** on the rebased head (nested 1440 local slide and dark
+  theme failed once on SVG-cover click timing, then passed on retry). Trusted-gate tests
+  on `dev` are dual Fancybox/PhotoSwipe via #93.
 - Purge: `@fancyapps/ui` absent from lockfile/`node_modules`; built `_astro` has no
   `fancybox__` / `f-panzoom` / `@fancyapps` vendor markers. Remaining "Fancybox*"
   symbols are intentional compatibility façade names + `data-fancybox` grouping attrs.
-- Docs PRs #89/#90 merged to `dev` before branching. #91 (docs governance) remains
-  open/parallel — not a PhotoSwipe gate.
+- #91 (docs governance) remains open/parallel — not a PhotoSwipe gate.
 - Outstanding: #73 deployed-host acceptance; #91 CodeBuddy git/`docs-links-candidate`
-  fixes; CNB trusted CI on this PR; `main`/mirror/ADS pin untouched.
+  fixes; CNB trusted CI on PR #92; `main`/mirror/ADS pin untouched.
 
 ## Live-state update — 2026-11-08 (superseded by 2026-11-09 above)
 
