@@ -9,6 +9,7 @@ import zlib from "node:zlib";
 const ROOT = "http://127.0.0.1:4323";
 const NESTED = "http://127.0.0.1:4324/ALNILAM";
 const ARTICLE = "/posts/hello-alnilam/";
+const FIXTURES = "/posts/lightbox-fixtures/";
 
 type Theme = "dark" | "light";
 
@@ -292,7 +293,7 @@ for (const [name, origin] of deployments) {
 			const scrollAtOpen = await page.evaluate(() => window.scrollY);
 			await closeLightbox(page, container, scrollAtOpen);
 
-			const container2 = await openSlide(page, 1, responses);
+			const container2 = await openSlide(page, 0, responses);
 			await closeLightbox(page, container2, await page.evaluate(() => window.scrollY));
 			await context.close();
 		});
@@ -310,7 +311,7 @@ for (const [name, origin] of deployments) {
 				}
 			});
 			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
+			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			const external = page.locator('.custom-md img[src*="lightbox-fixtures.local/ok/640/360"]');
@@ -340,7 +341,7 @@ for (const [name, origin] of deployments) {
 				if (u.includes("signed/") || u.includes("cdn.example.com")) seen.push(u);
 			});
 			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
+			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			const signed = page.locator('.custom-md img[src*="signed/"]');
@@ -385,7 +386,7 @@ for (const [name, origin] of deployments) {
 				if (u.includes("/full/") || u.includes("/thumb/")) slideReqs.push(u);
 			});
 			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
+			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			const thumbLink = page.locator('a[href*="/full/1280/720.png"]');
@@ -411,7 +412,7 @@ for (const [name, origin] of deployments) {
 			});
 			const page = await context.newPage();
 			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
+			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			const trigger = page.locator(".custom-md img").nth(1);
@@ -495,7 +496,7 @@ for (const [name, origin] of deployments) {
 			const errors: string[] = [];
 			page.on("pageerror", (err) => errors.push(String(err)));
 			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
+			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			// Inject a marked failing trigger into the article group.
@@ -531,7 +532,7 @@ for (const [name, origin] of deployments) {
 			});
 			const page = await context.newPage();
 			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
+			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			const slowImg = page.locator('.custom-md img[src*="ok/321/187"]');
