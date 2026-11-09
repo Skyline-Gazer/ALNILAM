@@ -238,7 +238,7 @@
     },
     {
       "path": "src/utils/fancybox-handler.ts",
-      "sha256": "2e2d22d58da8d498c89b769cea7dd06849207830b913609c06861e0bfcb7207a"
+      "sha256": "4cbdb625d08ffe2a13d3f96110758d06e82fd1d8ff5c218ca52897f24a49394c"
     },
     {
       "path": "src/utils/post-decryption.ts",
@@ -1974,7 +1974,7 @@
     "src/styles/markdown/generic.styl": "Ensure unbroken prose URLs wrap and wide code/table blocks scroll horizontally within .custom-md.",
     "src/components/atoms/blog/PostCard.astro": "Allow long unbroken card titles to wrap within .m3-blog-postcard__title.",
     "src/styles/transition.css": "Disable onload-animation initial translateY/opacity under prefers-reduced-motion and motion-reduced.",
-    "src/utils/fancybox-handler.ts": "ALNILAM: replace @fancyapps/ui with MIT photoswipe@5.4.4 behind FancyboxHandler public API; prefetch CSS+PhotoSwipe ctor at init for sync open; skip unmarked wrapping links; HTTPS/site-path URL policy with looksLikeImageHref; parallel neighbor probes; generation-token abort; dimension probe with 8s timeout and original-link degrade; PhotoSwipe caption via textContent; lazy ?url CSS injection; LIGHTBOX_DEFAULTS inlined (#75 license cutover; supersedes #123).",
+    "src/utils/fancybox-handler.ts": "ALNILAM: replace @fancyapps/ui with MIT photoswipe@5.4.4 behind FancyboxHandler public API; prefetch CSS+PhotoSwipe ctor at init for sync open; treat Markdown image-only original links (thumb→full) as lightbox triggers while leaving text links alone; HTTPS/site-path URL policy; parallel neighbor probes; generation-token abort; dimension probe with 8s timeout and original-link degrade; PhotoSwipe caption via textContent; LIGHTBOX_DEFAULTS inlined (#75).",
     "src/styles/fancybox-custom.css": "ALNILAM: rewrite Fancybox/Panzoom skin to PhotoSwipe .pswp toolbar/counter/caption skin; drop #123 .is-fullsize patch; leave .pswp__bg opacity to PhotoSwipe bgOpacity; prefers-reduced-motion disables non-essential transitions.",
     "src/components/organisms/ArchivePanel.svelte": "ALNILAM addition: SSR initial filter props (initialCategory/initialTag/initialUncategorized/initialGroupBy), explicit-params-only onMount override so detail routes without query keep their SSR filter, preScoped flag so host pages that pre-filter members (alias/series fallback) skip panel-side re-filtering, optional breadcrumb override, and categoryLabels/tagLabels display maps so localized names never participate in filter matching (#124).",
     "src/utils/markdown-assets.ts": "Resolve each Markdown feature stylesheet to an externally emitted, base-aware URL instead of inlining CSS.",
