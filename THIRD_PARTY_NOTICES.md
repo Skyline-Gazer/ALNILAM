@@ -1,16 +1,15 @@
 # Third-party code and asset notices
 
-**Initial bootstrap:** No implementation code or bundled third-party imagery from KIRARI, Fuwari, Mizuki, Firefly, or SHBlog Next has been directly copied into ALNILAM. The demo SVG is newly authored for this repository.
+The initial bootstrap identified KIRARI, Fuwari, Mizuki, Firefly and SHBlog
+Next as design or engineering references; see [CREDITS.md](CREDITS.md). That
+historical statement is not an audit of all later source changes or assets.
 
 ## Shirone frontend adoption (P1 #48)
 
-**2026-11-03 correction in progress:** the initial local adaptation is insufficient
-as the actual Shirone Base. Native text source at the pinned SHA is being integrated
-under `themes/shirone/upstream/`; original MIT text is retained in its `LICENSE`, and
-per-file source hashes plus consumer modifications are in `SOURCE.json`. No upstream
-content, binary assets/fonts, content-sync scripts or workflows are imported.
-Original layout, sidebar, navigation, card, HCT and offline-icon code now drive the
-working homepage candidate; full route/runtime/CI validation is still pending.
+Native Shirone text source is retained under `themes/shirone/upstream/`; its
+MIT license is retained there, and `SOURCE.json` records upstream file hashes
+and consumer modifications. The import excludes upstream asset and content
+directories and upstream scripts and workflows.
 
 
 Source: [LyraVoid/Shirone](https://github.com/LyraVoid/Shirone) at commit `55a84b2322bdfb634a59ca6383bb242e5ce646bf`. MIT license text: [LICENSES/Shirone-MIT.txt](LICENSES/Shirone-MIT.txt).
@@ -22,7 +21,11 @@ The initial vertical slice adapts visual structure from:
 - `src/layouts/Layout.astro` and `src/utils/theme-utils.ts`: M3E surface/role vocabulary and light/dark scheme semantics, implemented here as static CSS tokens without the upstream HCT runtime.
 - `src/styles/variables.styl`: token names only; colors and layout are locally defined for ALNILAM.
 
-No Shirone fonts, images, character artwork, demo media, music, or other binary assets were copied. That initial slice did not import the upstream Astro integration, HCT engine or icon runtime. The current correction integrates the original frontend integration, HCT and offline icons; bundled router integrations remain disabled, and system fonts are selected. ALNILAM owns `themes/shirone/src/*` modifications and retains Apache-2.0 licensing for its original code.
+The import excludes Shirone's upstream asset and content directories. The initial
+slice did not import the upstream Astro integration, HCT engine or icon runtime;
+the current integration includes frontend integration, HCT and offline icons.
+ALNILAM's original code remains Apache-2.0; copied and adapted Shirone code
+retains its MIT license.
 
 Native icon runtime dependencies retain their package notices. Attribution for the
 bundled offline icon data: Font Awesome 7 Free Solid/Brands by Dave Gandy / Fonticons
@@ -44,13 +47,13 @@ For any future code migration:
 Upstream license summaries (not substitutes for their actual license texts):
 - KIRARI, Firefly, SHBlog Next, Fuwari: MIT.
 - Mizuki: Apache-2.0 with separate original MIT/third-party notices.
-- ADS is pinned by Git Submodule; its guidance is read in place and no policy code is copied into this repository.
+- ADS is pinned as a Git submodule. Earlier history included copied ADS production-boundary code and fixtures from [ADS commit `2af17d9e1d816844c49835ae91b784405765ad46`](https://github.com/Skyline-Gazer/ADS/tree/2af17d9e1d816844c49835ae91b784405765ad46); the historical mapping is in ALNILAM commit `8e6ce58402fdf4feda888fe8f4fe13687338e504`. The retained MIT text is [LICENSES/ADS-MIT.txt](LICENSES/ADS-MIT.txt). This history is not evidence of a complete current-file provenance audit.
 
 ## Runtime and build dependencies (npm)
 
-All dependencies are consumed as unmodified npm packages under their own licenses;
-no vendor code is copied into this repository. Summary at v0.1.0 (see
-`pnpm-lock.yaml` for exact resolved versions):
+The following is a selected dependency summary, not a complete license inventory.
+Dependencies and transitive versions are resolved in `pnpm-lock.yaml`; each
+package retains its own license. Vendored Shirone source is described above.
 
 | Package | License | Role |
 |---|---|---|
@@ -58,13 +61,26 @@ no vendor code is copied into this repository. Summary at v0.1.0 (see
 | svelte | MIT | island runtime (search, status) |
 | tailwindcss, @tailwindcss/vite | MIT | styling engine |
 | pagefind | MIT | local search indexer + lazy runtime |
+| @fancyapps/ui | Fancyapps UI license; agreement required | Fancybox image lightbox; redistribution rights **NOT VERIFIED** |
+| khroma | MIT (package `license` file) | transitive color utility |
 | yaml | MIT | Site config parsing |
 | typescript | Apache-2.0 | type checking |
 | @axe-core/playwright | MPL-2.0 | Playwright axe WCAG runner (dev/test only) |
 | axe-core (transitive via @axe-core/playwright) | MPL-2.0 | accessibility engine used by a11y.spec.ts |
 
-The composed static output embeds: the Svelte island runtime (client JS),
-Pagefind's lazy-loaded index and UI assets under `/pagefind/`, and theme CSS.
-Static HTML pages themselves carry no third-party content beyond the above.
+The composed output can contain third-party material including Svelte runtime,
+Pagefind assets, theme code and selected icon data. The contents depend on the
+Site and enabled features; this list is not exhaustive. Site owners are responsible
+for the rights to their own content and assets.
+
+## Outstanding release evidence (#75)
+
+| Risk | Disposition and evidence |
+|---|---|
+| Asset rights | **NOT VERIFIED for final acceptance.** The P0 audit excludes upstream media without separate rights evidence ([P0 acceptance](docs/p0/P0-ACCEPTANCE.md)). The raster fixture `sites/demo/assets/lighthouse.png` entered in commit `a5f2bae108458f21578060063343483652dc2c7e`; that commit does not establish its authorship or redistribution grant. Confirm its provenance or replace it before claiming an authorized asset inventory. External Site assets and build-time provider content require their own rights review. |
+| Fancyapps UI | **NOT VERIFIED for release.** `@fancyapps/ui@6.1.15` is imported by `themes/shirone/upstream/src/utils/fancybox-handler.ts`. Its package `LICENSE.md` states that use requires agreeing to the Fancyapps UI License Agreement; the repository has no recorded grant or agreement. Verify use and redistribution rights, or replace the dependency, before claiming license acceptance. |
+| Dependency and source licenses | **PARTIAL.** Shirone's pinned source ledger and license are retained, but the selected dependency list above is not a transitive license inventory or a final source-license scan. The historical [CNB evidence](docs/cnb/CNB-REVIEW.md) says SourceSCA was not configured for those runs; those older results do not establish current-head acceptance. |
+| Credentials | **NOT VERIFIED for final acceptance.** The workflow documents read-only Site credentials and disables persisted checkout credentials ([site-ci.yml](.github/workflows/site-ci.yml)); marker-boundary tests exist in `scripts/tests/secrets-boundary.test.mjs`. These controls and tests do not prove that the current tree, history, artifacts or logs contain no secrets. A scoped secret review and remediation of any finding remain necessary. |
+| Supply chain and build | **PARTIAL.** The lockfile pins resolved dependencies, and historical CNB evidence describes earlier vulnerability and license checks. Current-head dependency risk review and disposition, plus source-bound PR and remote CI evidence, remain outstanding. |
 
 
