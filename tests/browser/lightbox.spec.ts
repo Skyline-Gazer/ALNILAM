@@ -233,7 +233,7 @@ for (const [name, origin] of deployments) {
 				expect(total).toBeGreaterThanOrEqual(3);
 				await page.keyboard.press("ArrowRight");
 				await expect(counter).toHaveText(
-					new RegExp(`^\s*${index + 1}\s*/\s*${total}\s*$`),
+					new RegExp(`^\\s*${index + 1}\\s*/\\s*${total}\\s*$`),
 					{ timeout: 10_000 },
 				);
 				await assertSlideLoaded(page, responses, opened.vendor);
