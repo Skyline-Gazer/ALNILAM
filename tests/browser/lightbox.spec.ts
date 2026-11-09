@@ -28,13 +28,7 @@ const deployments = [
 async function detectVendor(page: Page): Promise<Vendor> {
 	if (await page.locator(".pswp").count()) return "photoswipe";
 	if (await page.locator(".fancybox__container").count()) return "fancybox";
-	// Before open: prefer whichever stylesheet/runtime marker is present.
-	const kind = await page.evaluate(() => {
-		if (document.querySelector('link[href*="photoswipe"]')) return "photoswipe";
-		if (document.querySelector('link[href*="fancybox"]')) return "fancybox";
-		return "fancybox";
-	});
-	return kind as Vendor;
+	throw new Error("no lightbox container rendered after open");
 }
 
 function containerSel(vendor: Vendor): string {
@@ -163,7 +157,7 @@ async function closeWithEscape(page: Page, container: Locator) {
 			await expect(container).toHaveCount(0, { timeout: 2_000 });
 			return;
 		} catch {
-			/* transition swallow */
+			/* Fancybox swallows the first Escape during its open transition. */
 		}
 	}
 	await expect(container).toHaveCount(0, { timeout: 10_000 });
@@ -193,6 +187,7 @@ for (const [name, origin] of deployments) {
 
 			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
+			// Cover + body images. Fancybox demo is exactly 2; PhotoSwipe matrix may add more.
 			await expect.poll(async () => page.locator(".custom-md img").count()).toBeGreaterThanOrEqual(2);
 
 			const first = await openSlide(page, 0, responses);
@@ -228,12 +223,19 @@ for (const [name, origin] of deployments) {
 					await assertSlideLoaded(page, responses, opened.vendor);
 				}
 			} else {
-				// PhotoSwipe article group may include more fixture images.
-				// Require a multi-slide counter and an observable next-slide change.
-				await expect(counter).toHaveText(/\d+\s*\/\s*[2-9]\d*/);
-				const before = (await counter.textContent()) ?? "";
+				// PhotoSwipe fixture matrix may add images. Require total >= 3 and
+				// the visible counter index to increase by exactly one.
+				const before = ((await counter.textContent()) ?? "").replace(/\s/g, "");
+				const match = before.match(/^(\d+)\/(\d+)$/);
+				expect(match, `counter was ${before}`).toBeTruthy();
+				const index = Number(match![1]);
+				const total = Number(match![2]);
+				expect(total).toBeGreaterThanOrEqual(3);
 				await page.keyboard.press("ArrowRight");
-				await expect(counter).not.toHaveText(before, { timeout: 10_000 });
+				await expect(counter).toHaveText(
+					new RegExp(`^\s*${index + 1}\s*/\s*${total}\s*$`),
+					{ timeout: 10_000 },
+				);
 				await assertSlideLoaded(page, responses, opened.vendor);
 			}
 
