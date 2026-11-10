@@ -188,6 +188,17 @@ export default defineConfig({
         },
       },
     }] : []),
+    // Site-declared ads.txt (Issue #90) is emitted verbatim at the output
+    // root when non-empty. The apex-domain requirement is documented in the
+    // issue; subpath deployments cannot satisfy it.
+    ...(config.ads.adsense.adsTxt ? [{
+      name: "alnilam-ads-txt",
+      hooks: {
+        "astro:build:done": ({dir}) => {
+          fs.writeFileSync(path.join(fileURLToPath(dir), "ads.txt"), config.ads.adsense.adsTxt);
+        },
+      },
+    }] : []),
   ],
   // compose.mjs relocates Vite's dependency cache into the managed, Core-
   // revision-keyed build cache; stale optimized deps once served broken

@@ -39,6 +39,10 @@ try {
       source: 'tests/fixtures/ga4-site',
       outputs: [['ga4-root', 'https://ga4.example.com/'], ['ga4-nested', 'https://ga4.example.com/ALNILAM/']],
     },
+    {
+      source: 'tests/fixtures/ads-site',
+      outputs: [['ads-root', 'https://ads.example.com/'], ['ads-nested', 'https://ads.example.com/ALNILAM/']],
+    },
   ]) {
     const site = fs.mkdtempSync(path.join(os.tmpdir(), 'alnilam-local-site-'));
     sites.push(site);
@@ -52,7 +56,7 @@ try {
   }
   if (mode === 'all' || mode === 'browser' || mode === 'cls') {
     const specs = mode === 'cls' ? ['tests/browser/cnb-quality.spec.ts', 'tests/browser/navigation-lifecycle.spec.ts', 'tests/browser/first-paint-order.spec.ts'] : [];
-    run(process.execPath, ['node_modules/@playwright/test/cli.js', 'test', ...specs, ...args], {COMMENTS_FIXTURE: '1', CONSENT_FIXTURE: '1', GA4_FIXTURE: '1'});
+    run(process.execPath, ['node_modules/@playwright/test/cli.js', 'test', ...specs, ...args], {COMMENTS_FIXTURE: '1', CONSENT_FIXTURE: '1', GA4_FIXTURE: '1', ADS_FIXTURE: '1'});
   }
   if (mode === 'all' || mode === 'lighthouse') {
     for (const formFactor of ['mobile', 'desktop']) {
