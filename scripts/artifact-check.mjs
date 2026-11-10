@@ -52,7 +52,7 @@ function checkPage(file) {
   // Owner-opted integrations (#92 consent, #91 GA4, later #90/#93 ads)
   // each ship exactly one mount element and one loader script, and only
   // when enabled. They are bounded separately from the core runtime.
-  const optionalMounts = (html.match(/id="alnilam-(?:consent-gate|ga4)"/g) || []).length;
+  const optionalMounts = (html.match(/id="alnilam-(?:consent-gate|ga4|adsense)"/g) || []).length;
   if (scripts.length > maxScripts + optionalMounts) {
     failures.push(`${rel}: expected at most ${maxScripts + optionalMounts} runtime script(s) (core ${maxScripts} + ${optionalMounts} optional integration), found ${scripts.length}`);
   }

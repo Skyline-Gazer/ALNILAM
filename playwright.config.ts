@@ -59,6 +59,23 @@ const ga4Servers = hasGa4Fixture ? [
     timeout: 30_000,
   },
 ] : [];
+const adsRoot = path.join(candidateRoot, "dist/ads-root");
+const adsNested = path.join(candidateRoot, "dist/ads-nested");
+const hasAdsFixture = process.env.ADS_FIXTURE === "1";
+const adsServers = hasAdsFixture ? [
+  {
+    command: previewCommand(path.join(candidateRoot, "artifacts/cnb-browser/ads-root-server.json"), adsRoot, 4331, "/"),
+    url: "http://127.0.0.1:4331/",
+    reuseExistingServer: false,
+    timeout: 30_000,
+  },
+  {
+    command: previewCommand(path.join(candidateRoot, "artifacts/cnb-browser/ads-nested-server.json"), adsNested, 4332, "/ALNILAM/"),
+    url: "http://127.0.0.1:4332/ALNILAM/",
+    reuseExistingServer: false,
+    timeout: 30_000,
+  },
+] : [];
 
 export default defineConfig({
   testDir: "./tests/browser",
@@ -89,5 +106,6 @@ export default defineConfig({
     ...commentsServers,
     ...consentServers,
     ...ga4Servers,
+    ...adsServers,
   ],
 });
