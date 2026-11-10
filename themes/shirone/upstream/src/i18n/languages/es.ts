@@ -183,6 +183,15 @@ export const es: Translation = {
 	[Key.commentsLoadFailed]: "Error al cargar comentarios",
 	[Key.commentsRequiresJavaScript]:
 		"Los comentarios requieren JavaScript para mostrarse",
+	[Key.consentTitle]: "Preferencias de privacidad",
+	[Key.consentDescription]:
+		"Este sitio puede cargar servicios de terceros opcionales. Elige qué se puede cargar; no se solicita nada hasta que lo permitas.",
+	[Key.consentAnalytics]: "Analítica (Google Analytics)",
+	[Key.consentAds]: "Publicidad (Google AdSense)",
+	[Key.consentAllow]: "Permitir",
+	[Key.consentDeny]: "Denegar",
+	[Key.consentNote]:
+		"Puedes cambiarlo en cualquier momento con window.alnilamConsent.open(); las elecciones se guardan solo en este navegador.",
 
 	[Key.untitled]: "Sin título",
 	[Key.uncategorized]: "Sin categoría",

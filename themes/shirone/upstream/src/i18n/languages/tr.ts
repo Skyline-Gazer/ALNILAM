@@ -183,6 +183,15 @@ export const tr: Translation = {
 	[Key.commentsLoadFailed]: "Yorumlar yüklenemedi",
 	[Key.commentsRequiresJavaScript]:
 		"Yorumların gösterilmesi için JavaScript etkinleştirilmelidir",
+	[Key.consentTitle]: "Gizlilik tercihleri",
+	[Key.consentDescription]:
+		"Bu site isteğe bağlı üçüncü taraf hizmetleri yükleyebilir. Nelerin yükleneceğini seçin — izin vermeden önce hiçbir şey istenmez.",
+	[Key.consentAnalytics]: "Analitik (Google Analytics)",
+	[Key.consentAds]: "Reklamlar (Google AdSense)",
+	[Key.consentAllow]: "İzin ver",
+	[Key.consentDeny]: "Reddet",
+	[Key.consentNote]:
+		"Bunu window.alnilamConsent.open() ile istediğiniz zaman değiştirebilirsiniz; tercihler yalnızca bu tarayıcıda saklanır.",
 
 	[Key.untitled]: "Başlıksız",
 	[Key.uncategorized]: "Katagorisiz",

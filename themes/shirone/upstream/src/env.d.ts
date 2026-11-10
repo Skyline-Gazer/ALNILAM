@@ -1,6 +1,20 @@
 /// <reference types="astro/client" />
 /// <reference path="../.astro/types.d.ts" />
 declare module "virtual:ec-runtime";
+declare module "virtual:alnilam-privacy" {
+	export interface PrivacyConfig {
+		consent: { mode: "off" | "basic" };
+		analytics: { googleAnalytics: { enabled: boolean; measurementId: string } };
+		ads: {
+			adsense: {
+				enabled: boolean;
+				clientId: string;
+				recovery: { mode: "off" | "google" | "custom" };
+			};
+		};
+	}
+	export const privacyConfig: PrivacyConfig;
+}
 
 declare module "virtual:shirone-music-sidebar" {
 	const component:

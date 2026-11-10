@@ -4,6 +4,7 @@ import { Font } from "astro:assets";
 import Snackbar from "@components/atoms/overlay/Snackbar.svelte";
 import ConfigCarrier from "@components/system/ConfigCarrier.astro";
 import UmamiRuntime from "@components/system/UmamiRuntime.astro";
+import ConsentGate from "@components/system/ConsentGate.astro";
 import { resolveAsset } from "@utils/asset-utils";
 import { createDefaultSchemeStyle } from "@utils/theme-utils";
 import { pathsEqual, toAbsoluteUrl, url } from "@utils/url-utils";
@@ -16,6 +17,7 @@ import {
 	siteConfig,
 	umamiConfig,
 } from "@/config";
+import { privacyConfig } from "virtual:alnilam-privacy";
 import type { SidebarPage } from "@/types/sidebarConfig";
 import {
 	AUTO_MODE,
@@ -243,6 +245,8 @@ const defaultSchemeStyle =
 		<a class="skip-link" href="#swup-container">跳至正文</a>
 		<ConfigCarrier></ConfigCarrier>
 		{umamiOptions && <UmamiRuntime />}
+
+		<ConsentGate privacy={privacyConfig} />
 		{textureEnabled && (
 			<div
 				id="m3e-texture-canvas"

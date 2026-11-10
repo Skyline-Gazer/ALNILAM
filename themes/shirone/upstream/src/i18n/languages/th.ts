@@ -172,6 +172,15 @@ export const th: Translation = {
 	[Key.commentsLoadFailed]: "โหลดความคิดเห็นไม่สำเร็จ",
 	[Key.commentsRequiresJavaScript]:
 		"ความคิดเห็นจำเป็นต้องเปิดใช้งาน JavaScript เพื่อแสดงผล",
+	[Key.consentTitle]: "ตัวเลือกความเป็นส่วนตัว",
+	[Key.consentDescription]:
+		"เว็บไซต์นี้สามารถโหลดบริการของบุคคลที่สามที่ไม่บังคับได้ โปรดเลือกสิ่งที่อนุญาตให้โหลด — จะไม่มีการร้องขอใด ๆ ก่อนที่คุณจะอนุญาต",
+	[Key.consentAnalytics]: "การวิเคราะห์ (Google Analytics)",
+	[Key.consentAds]: "โฆษณา (Google AdSense)",
+	[Key.consentAllow]: "อนุญาต",
+	[Key.consentDeny]: "ปฏิเสธ",
+	[Key.consentNote]:
+		"คุณสามารถเปลี่ยนได้ทุกเมื่อผ่าน window.alnilamConsent.open(); การเลือกจะถูกเก็บไว้ในเบราว์เซอร์นี้เท่านั้น",
 
 	[Key.untitled]: "ไม่ได้ตั้งชื่อ",
 	[Key.uncategorized]: "ไม่ได้จัดหมวดหมู่",

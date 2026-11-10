@@ -180,6 +180,15 @@ export const ko: Translation = {
 	[Key.commentsLoadFailed]: "댓글을 불러오지 못했습니다",
 	[Key.commentsRequiresJavaScript]:
 		"댓글을 표시하려면 JavaScript를 활성화해야 합니다",
+	[Key.consentTitle]: "개인정보 선택",
+	[Key.consentDescription]:
+		"이 사이트는 선택적 서드파티 서비스를 로드할 수 있습니다. 로드할 항목을 선택하세요. 허용하기 전까지는 아무것도 요청하지 않습니다.",
+	[Key.consentAnalytics]: "분석 (Google Analytics)",
+	[Key.consentAds]: "광고 (Google AdSense)",
+	[Key.consentAllow]: "허용",
+	[Key.consentDeny]: "거부",
+	[Key.consentNote]:
+		"window.alnilamConsent.open()으로 언제든 변경할 수 있으며, 선택은 이 브라우저에만 저장됩니다.",
 
 	[Key.untitled]: "제목 없음",
 	[Key.uncategorized]: "분류되지 않음",

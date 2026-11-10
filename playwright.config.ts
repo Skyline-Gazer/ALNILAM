@@ -25,6 +25,23 @@ const commentsServers = hasCommentsFixture ? [
     timeout: 30_000,
   },
 ] : [];
+const consentRoot = path.join(candidateRoot, "dist/consent-root");
+const consentNested = path.join(candidateRoot, "dist/consent-nested");
+const hasConsentFixture = process.env.CONSENT_FIXTURE === "1";
+const consentServers = hasConsentFixture ? [
+  {
+    command: previewCommand(path.join(candidateRoot, "artifacts/cnb-browser/consent-root-server.json"), consentRoot, 4327, "/"),
+    url: "http://127.0.0.1:4327/",
+    reuseExistingServer: false,
+    timeout: 30_000,
+  },
+  {
+    command: previewCommand(path.join(candidateRoot, "artifacts/cnb-browser/consent-nested-server.json"), consentNested, 4328, "/ALNILAM/"),
+    url: "http://127.0.0.1:4328/ALNILAM/",
+    reuseExistingServer: false,
+    timeout: 30_000,
+  },
+] : [];
 
 export default defineConfig({
   testDir: "./tests/browser",
@@ -53,5 +70,6 @@ export default defineConfig({
       timeout: 30_000,
     },
     ...commentsServers,
+    ...consentServers,
   ],
 });

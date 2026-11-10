@@ -185,6 +185,15 @@ export const id: Translation = {
 	[Key.commentsLoadFailed]: "Gagal memuat komentar",
 	[Key.commentsRequiresJavaScript]:
 		"Komentar memerlukan JavaScript untuk ditampilkan",
+	[Key.consentTitle]: "Pilihan privasi",
+	[Key.consentDescription]:
+		"Situs ini dapat memuat layanan pihak ketiga opsional. Pilih apa yang boleh dimuat — tidak ada yang diminta sebelum Anda mengizinkan.",
+	[Key.consentAnalytics]: "Analitik (Google Analytics)",
+	[Key.consentAds]: "Iklan (Google AdSense)",
+	[Key.consentAllow]: "Izinkan",
+	[Key.consentDeny]: "Tolak",
+	[Key.consentNote]:
+		"Anda dapat mengubahnya kapan saja lewat window.alnilamConsent.open(); pilihan hanya disimpan di peramban ini.",
 
 	[Key.untitled]: "Tanpa Judul",
 	[Key.uncategorized]: "Tanpa Kategori",

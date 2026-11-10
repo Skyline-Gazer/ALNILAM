@@ -1,0 +1,23 @@
+schemaVersion: 2
+site:
+  title: Consent Fixture
+  description: Deterministic consent gate fixture for Issue #92.
+  url: https://consent.example.com
+  locale: zh-CN
+locales:
+  - zh-CN
+  - en
+theme:
+  appearance: dark
+consent:
+  mode: basic
+analytics:
+  googleAnalytics:
+    enabled: true
+    measurementId: G-CONSENTTEST1
+ads:
+  adsense:
+    enabled: true
+    clientId: ca-pub-0000000000000000
+    mode: auto
+    adsTxt: google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0
