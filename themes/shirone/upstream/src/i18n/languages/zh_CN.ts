@@ -173,6 +173,15 @@ export const zh_CN: Translation = {
 	[Key.commentsLoading]: "正在加载评论...",
 	[Key.commentsLoadFailed]: "评论加载失败",
 	[Key.commentsRequiresJavaScript]: "评论区需要启用 JavaScript 才能显示",
+	[Key.consentTitle]: "隐私偏好",
+	[Key.consentDescription]:
+		"本站可选地加载第三方服务。请选择允许加载的内容；在你允许之前不会发起任何第三方请求。",
+	[Key.consentAnalytics]: "数据分析（Google Analytics）",
+	[Key.consentAds]: "广告（Google AdSense）",
+	[Key.consentAllow]: "允许",
+	[Key.consentDeny]: "拒绝",
+	[Key.consentNote]:
+		"你可以随时通过 window.alnilamConsent.open() 修改；选择仅保存在本浏览器中。",
 
 	[Key.untitled]: "无标题",
 	[Key.uncategorized]: "未分类",

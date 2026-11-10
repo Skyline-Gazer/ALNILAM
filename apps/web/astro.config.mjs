@@ -207,6 +207,32 @@ export default defineConfig({
         },
       },
       {
+        // Public, validated Core privacy subset for browser consumers. Only
+        // booleans and public IDs cross this boundary — never raw YAML.
+        name: 'alnilam-privacy-entry',
+        resolveId: (id) => id === 'virtual:alnilam-privacy' ? '\0alnilam-privacy' : undefined,
+        load(id) {
+          if (id !== '\0alnilam-privacy') return;
+          const privacy = {
+            consent: { mode: config.consent.mode },
+            analytics: {
+              googleAnalytics: {
+                enabled: config.analytics.googleAnalytics.enabled,
+                measurementId: config.analytics.googleAnalytics.measurementId,
+              },
+            },
+            ads: {
+              adsense: {
+                enabled: config.ads.adsense.enabled,
+                clientId: config.ads.adsense.clientId,
+                recovery: { mode: config.ads.adsense.recovery.mode },
+              },
+            },
+          };
+          return `export const privacyConfig = ${JSON.stringify(privacy)};`;
+        },
+      },
+      {
         name: 'alnilam-shirone-site-values',
         enforce: 'pre',
         load(id) {

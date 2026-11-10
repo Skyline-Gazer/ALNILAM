@@ -173,6 +173,15 @@ export const zh_TW: Translation = {
 	[Key.commentsLoading]: "正在載入評論...",
 	[Key.commentsLoadFailed]: "評論載入失敗",
 	[Key.commentsRequiresJavaScript]: "評論區需要啟用 JavaScript 才能顯示",
+	[Key.consentTitle]: "隱私偏好",
+	[Key.consentDescription]:
+		"本站可選擇性載入第三方服務。請選擇允許載入的內容；在你允許之前不會發起任何第三方請求。",
+	[Key.consentAnalytics]: "數據分析（Google Analytics）",
+	[Key.consentAds]: "廣告（Google AdSense）",
+	[Key.consentAllow]: "允許",
+	[Key.consentDeny]: "拒絕",
+	[Key.consentNote]:
+		"你可以隨時透過 window.alnilamConsent.open() 修改；選擇僅保存在本瀏覽器中。",
 
 	[Key.untitled]: "無標題",
 	[Key.uncategorized]: "未分類",

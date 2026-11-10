@@ -31,6 +31,10 @@ try {
       source: 'tests/fixtures/comments-site',
       outputs: [['comments-root', 'https://comments.example.com/'], ['comments-nested', 'https://comments.example.com/ALNILAM/']],
     },
+    {
+      source: 'tests/fixtures/consent-site',
+      outputs: [['consent-root', 'https://consent.example.com/'], ['consent-nested', 'https://consent.example.com/ALNILAM/']],
+    },
   ]) {
     const site = fs.mkdtempSync(path.join(os.tmpdir(), 'alnilam-local-site-'));
     sites.push(site);
@@ -44,7 +48,7 @@ try {
   }
   if (mode === 'all' || mode === 'browser' || mode === 'cls') {
     const specs = mode === 'cls' ? ['tests/browser/cnb-quality.spec.ts', 'tests/browser/navigation-lifecycle.spec.ts', 'tests/browser/first-paint-order.spec.ts'] : [];
-    run(process.execPath, ['node_modules/@playwright/test/cli.js', 'test', ...specs, ...args], {COMMENTS_FIXTURE: '1'});
+    run(process.execPath, ['node_modules/@playwright/test/cli.js', 'test', ...specs, ...args], {COMMENTS_FIXTURE: '1', CONSENT_FIXTURE: '1'});
   }
   if (mode === 'all' || mode === 'lighthouse') {
     for (const formFactor of ['mobile', 'desktop']) {

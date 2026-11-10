@@ -19,6 +19,9 @@ const ROOT_KEYS = new Set([
   "comments",
   "bangumi",
   "llms",
+  "consent",
+  "analytics",
+  "ads",
 ]);
 const SITE_KEYS = new Set(["title", "description", "url", "locale"]);
 const THEME_KEYS = new Set(["appearance"]);
@@ -45,6 +48,19 @@ const COMMENT_LOADS = new Set(["click", "visible"]);
 const COMMENT_REPO = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})\/[A-Za-z0-9._-]{1,100}$/;
 const BANGUMI_KEYS = new Set(["enabled", "userId", "subjectType", "limit"]);
 const LLMS_KEYS = new Set(["enabled", "full"]);
+const CONSENT_KEYS = new Set(["mode"]);
+const CONSENT_MODES = new Set(["off", "basic"]);
+const ANALYTICS_KEYS = new Set(["googleAnalytics"]);
+const GA_KEYS = new Set(["enabled", "measurementId"]);
+// Public measurement IDs only; no API secrets belong in this contract.
+const GA_MEASUREMENT_ID = /^G-[A-Z0-9]+$/;
+const ADS_KEYS = new Set(["adsense"]);
+const ADSENSE_KEYS = new Set(["enabled", "clientId", "mode", "adsTxt", "recovery"]);
+const ADSENSE_MODES = new Set(["auto"]);
+const RECOVERY_KEYS = new Set(["mode", "googleTag", "dismissDays"]);
+const RECOVERY_MODES = new Set(["off", "google", "custom"]);
+// Public client IDs only; ad-manager secrets never belong in Site config.
+const ADSENSE_CLIENT_ID = /^ca-pub-\d+$/;
 const BCP47 = /^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$/;
 const DEFAULT_SITE_LOCALE = "zh-CN";
 const isBcp47 = (value) => typeof value === "string" && BCP47.test(value);
@@ -199,6 +215,91 @@ function normalizeComments(value) {
   });
 }
 
+function normalizeConsent(value) {
+  assertPlainObject(value ?? {}, "consent");
+  rejectUnknownKeys(value ?? {}, CONSENT_KEYS, "consent");
+  const mode = value?.mode ?? "off";
+  if (!CONSENT_MODES.has(mode)) {
+    throw new Error('ALNILAM: consent.mode must be "off" or "basic"');
+  }
+  return Object.freeze({ mode });
+}
+
+function normalizeAnalytics(value) {
+  assertPlainObject(value ?? {}, "analytics");
+  rejectUnknownKeys(value ?? {}, ANALYTICS_KEYS, "analytics");
+  const ga = value?.googleAnalytics ?? {};
+  assertPlainObject(ga, "analytics.googleAnalytics");
+  rejectUnknownKeys(ga, GA_KEYS, "analytics.googleAnalytics");
+  if (ga.enabled !== undefined && typeof ga.enabled !== "boolean") {
+    throw new Error("ALNILAM: analytics.googleAnalytics.enabled must be a boolean");
+  }
+  const measurementId = typeof ga.measurementId === "string" ? ga.measurementId.trim() : "";
+  if (measurementId && !GA_MEASUREMENT_ID.test(measurementId)) {
+    throw new Error('ALNILAM: analytics.googleAnalytics.measurementId must match /^G-[A-Z0-9]+$/');
+  }
+  const enabled = ga.enabled === true;
+  if (enabled && !measurementId) {
+    throw new Error("ALNILAM: analytics.googleAnalytics.measurementId is required when enabled = true");
+  }
+  return Object.freeze({
+    googleAnalytics: Object.freeze({ enabled, measurementId }),
+  });
+}
+
+function normalizeAds(value) {
+  assertPlainObject(value ?? {}, "ads");
+  rejectUnknownKeys(value ?? {}, ADS_KEYS, "ads");
+  const adsense = value?.adsense ?? {};
+  assertPlainObject(adsense, "ads.adsense");
+  rejectUnknownKeys(adsense, ADSENSE_KEYS, "ads.adsense");
+  if (adsense.enabled !== undefined && typeof adsense.enabled !== "boolean") {
+    throw new Error("ALNILAM: ads.adsense.enabled must be a boolean");
+  }
+  const clientId = typeof adsense.clientId === "string" ? adsense.clientId.trim() : "";
+  if (clientId && !ADSENSE_CLIENT_ID.test(clientId)) {
+    throw new Error('ALNILAM: ads.adsense.clientId must match /^ca-pub-\\d+$/');
+  }
+  const mode = adsense.mode ?? "auto";
+  if (!ADSENSE_MODES.has(mode)) {
+    throw new Error('ALNILAM: ads.adsense.mode must be "auto" (manual slots are not supported in this slice)');
+  }
+  if (adsense.adsTxt !== undefined && typeof adsense.adsTxt !== "string") {
+    throw new Error("ALNILAM: ads.adsense.adsTxt must be a string");
+  }
+  const enabled = adsense.enabled === true;
+  if (enabled && !clientId) {
+    throw new Error('ALNILAM: ads.adsense.clientId is required when enabled = true (format "ca-pub-1234567890")');
+  }
+  const recovery = adsense.recovery ?? {};
+  assertPlainObject(recovery, "ads.adsense.recovery");
+  rejectUnknownKeys(recovery, RECOVERY_KEYS, "ads.adsense.recovery");
+  const recoveryMode = recovery.mode ?? "off";
+  if (!RECOVERY_MODES.has(recoveryMode)) {
+    throw new Error('ALNILAM: ads.adsense.recovery.mode must be "off", "google" or "custom"');
+  }
+  const googleTag = typeof recovery.googleTag === "string" ? recovery.googleTag.trim() : "";
+  if (recoveryMode === "google" && !googleTag) {
+    throw new Error("ALNILAM: ads.adsense.recovery.googleTag is required when recovery.mode = \"google\"");
+  }
+  if (googleTag && recoveryMode !== "google") {
+    throw new Error('ALNILAM: ads.adsense.recovery.googleTag is only valid when recovery.mode = "google"');
+  }
+  const dismissDays = recovery.dismissDays ?? 7;
+  if (!Number.isInteger(dismissDays) || dismissDays < 1 || dismissDays > 365) {
+    throw new Error("ALNILAM: ads.adsense.recovery.dismissDays must be an integer between 1 and 365");
+  }
+  return Object.freeze({
+    adsense: Object.freeze({
+      enabled,
+      clientId,
+      mode,
+      adsTxt: adsense.adsTxt ?? "",
+      recovery: Object.freeze({ mode: recoveryMode, googleTag, dismissDays }),
+    }),
+  });
+}
+
 export function normalizeSiteConfig(input) {
   assertPlainObject(input, "config");
   const schemaVersion = input.schemaVersion;
@@ -297,6 +398,9 @@ export function normalizeSiteConfig(input) {
     categories,
     tags,
     comments: normalizeComments(input.comments),
+    consent: normalizeConsent(input.consent),
+    analytics: normalizeAnalytics(input.analytics),
+    ads: normalizeAds(input.ads),
     llms: Object.freeze({ enabled: input.llms?.enabled === true, full: input.llms?.full === true }),
     bangumi: Object.freeze({
       enabled: bangumi.enabled === true,

@@ -183,6 +183,15 @@ export const vi: Translation = {
 	[Key.commentsLoading]: "Đang tải bình luận...",
 	[Key.commentsLoadFailed]: "Không thể tải bình luận",
 	[Key.commentsRequiresJavaScript]: "Bình luận yêu cầu JavaScript để hiển thị",
+	[Key.consentTitle]: "Lựa chọn quyền riêng tư",
+	[Key.consentDescription]:
+		"Trang này có thể tải các dịch vụ bên thứ ba không bắt buộc. Hãy chọn những gì được tải — không có yêu cầu nào trước khi bạn cho phép.",
+	[Key.consentAnalytics]: "Phân tích (Google Analytics)",
+	[Key.consentAds]: "Quảng cáo (Google AdSense)",
+	[Key.consentAllow]: "Cho phép",
+	[Key.consentDeny]: "Từ chối",
+	[Key.consentNote]:
+		"Bạn có thể thay đổi bất cứ lúc nào qua window.alnilamConsent.open(); lựa chọn chỉ được lưu trong trình duyệt này.",
 
 	[Key.untitled]: "Không tiêu đề",
 	[Key.uncategorized]: "Chưa phân loại",

@@ -180,6 +180,15 @@ export const ja: Translation = {
 	[Key.commentsLoadFailed]: "コメントの読み込みに失敗しました",
 	[Key.commentsRequiresJavaScript]:
 		"コメントを表示するには JavaScript を有効にしてください",
+	[Key.consentTitle]: "プライバシーの選択",
+	[Key.consentDescription]:
+		"本サイトは任意のサードパーティサービスを読み込めます。許可する内容を選択してください。許可するまで何も要求されません。",
+	[Key.consentAnalytics]: "アナリティクス（Google Analytics）",
+	[Key.consentAds]: "広告（Google AdSense）",
+	[Key.consentAllow]: "許可",
+	[Key.consentDeny]: "拒否",
+	[Key.consentNote]:
+		"window.alnilamConsent.open() でいつでも変更できます。選択はこのブラウザーにのみ保存されます。",
 
 	[Key.untitled]: "タイトルなし",
 	[Key.uncategorized]: "カテゴリなし",

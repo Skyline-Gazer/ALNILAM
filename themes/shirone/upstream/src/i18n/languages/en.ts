@@ -182,6 +182,15 @@ export const en: Translation = {
 	[Key.commentsLoadFailed]: "Failed to load comments.",
 	[Key.commentsRequiresJavaScript]:
 		"Comments require JavaScript to be displayed.",
+	[Key.consentTitle]: "Privacy choices",
+	[Key.consentDescription]:
+		"This site can optionally load third-party services. Choose what may be loaded — nothing is requested before you allow it.",
+	[Key.consentAnalytics]: "Analytics (Google Analytics)",
+	[Key.consentAds]: "Advertising (Google AdSense)",
+	[Key.consentAllow]: "Allow",
+	[Key.consentDeny]: "Deny",
+	[Key.consentNote]:
+		"You can change this any time via window.alnilamConsent.open(); choices are stored in this browser only.",
 
 	[Key.untitled]: "Untitled",
 	[Key.uncategorized]: "Uncategorized",

@@ -172,6 +172,13 @@ enum I18nKey {
 	commentsLoading = "commentsLoading",
 	commentsLoadFailed = "commentsLoadFailed",
 	commentsRequiresJavaScript = "commentsRequiresJavaScript",
+	consentTitle = "consentTitle",
+	consentDescription = "consentDescription",
+	consentAnalytics = "consentAnalytics",
+	consentAds = "consentAds",
+	consentAllow = "consentAllow",
+	consentDeny = "consentDeny",
+	consentNote = "consentNote",
 
 	untitled = "untitled",
 	uncategorized = "uncategorized",
