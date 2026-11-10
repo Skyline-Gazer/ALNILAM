@@ -5,6 +5,7 @@ import Snackbar from "@components/atoms/overlay/Snackbar.svelte";
 import ConfigCarrier from "@components/system/ConfigCarrier.astro";
 import UmamiRuntime from "@components/system/UmamiRuntime.astro";
 import ConsentGate from "@components/system/ConsentGate.astro";
+import AnalyticsRuntime from "@components/system/AnalyticsRuntime.astro";
 import { resolveAsset } from "@utils/asset-utils";
 import { createDefaultSchemeStyle } from "@utils/theme-utils";
 import { pathsEqual, toAbsoluteUrl, url } from "@utils/url-utils";
@@ -247,6 +248,7 @@ const defaultSchemeStyle =
 		{umamiOptions && <UmamiRuntime />}
 
 		<ConsentGate privacy={privacyConfig} />
+		{privacyConfig.analytics.googleAnalytics.enabled && <AnalyticsRuntime privacy={privacyConfig} />}
 		{textureEnabled && (
 			<div
 				id="m3e-texture-canvas"

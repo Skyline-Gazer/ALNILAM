@@ -73,6 +73,12 @@ for (const [name, origin] of deployments) {
     expect(await page.evaluate((key) => window.localStorage.getItem(key), STORAGE_KEY)).toBe(
       JSON.stringify({ analytics: true, ads: false }),
     );
+    const requestsAtGrant = thirdParty.length;
+    expect(
+      await page.evaluate(
+        () => document.querySelectorAll("script[data-ga4-loader]").length,
+      ),
+    ).toBe(1);
 
     // Choices persist across a reload; the banner stays hidden.
     await page.reload({ waitUntil: "networkidle" });
@@ -80,14 +86,28 @@ for (const [name, origin] of deployments) {
     expect(await page.evaluate((key) => window.localStorage.getItem(key), STORAGE_KEY)).toBe(
       JSON.stringify({ analytics: true, ads: false }),
     );
+    expect(
+      await page.evaluate(
+        () => document.querySelectorAll("script[data-ga4-loader]").length,
+      ),
+    ).toBe(1);
 
     // Reopen (withdrawal entry point) resets decisions and re-shows the banner.
+    const requestsAtRevoke = thirdParty.length;
     await page.evaluate(() => window.dispatchEvent(new Event("alnilam-consent:open")));
     await expect(gate).toBeVisible();
     expect(await page.evaluate((key) => window.localStorage.getItem(key), STORAGE_KEY)).toBe(
       JSON.stringify({ analytics: null, ads: null }),
     );
-    await expect(thirdParty).toEqual([]);
+    // Revocation removes the loader flags and nothing new is requested.
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => document.querySelectorAll("script[data-ga4-loader]").length,
+        ),
+      )
+      .toBe(0);
+    expect(thirdParty.length).toBe(requestsAtRevoke);
   });
 
   test(`denied-only choice blocks and banner hides ${name}`, async ({ page }) => {
