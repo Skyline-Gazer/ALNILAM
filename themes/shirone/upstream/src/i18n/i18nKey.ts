@@ -179,6 +179,10 @@ enum I18nKey {
 	consentAllow = "consentAllow",
 	consentDeny = "consentDeny",
 	consentNote = "consentNote",
+	dkrecoveryTitle = "dkrecoveryTitle",
+	dkrecoveryDescription = "dkrecoveryDescription",
+	dkrecoveryContinue = "dkrecoveryContinue",
+	dkrecoveryAllowHint = "dkrecoveryAllowHint",
 
 	untitled = "untitled",
 	uncategorized = "uncategorized",

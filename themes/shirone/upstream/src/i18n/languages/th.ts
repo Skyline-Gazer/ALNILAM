@@ -181,6 +181,12 @@ export const th: Translation = {
 	[Key.consentDeny]: "ปฏิเสธ",
 	[Key.consentNote]:
 		"คุณสามารถเปลี่ยนได้ทุกเมื่อผ่าน window.alnilamConsent.open(); การเลือกจะถูกเก็บไว้ในเบราว์เซอร์นี้เท่านั้น",
+	[Key.dkrecoveryTitle]: "โฆษณาช่วยให้เว็บไซต์นี้ใช้ได้ฟรี",
+	[Key.dkrecoveryDescription]:
+		"ดูเหมือนว่าตัวบล็อกโฆษณากำลังป้องกันไม่ให้โหลดโฆษณา โฆษณาเป็นค่าโฮสติ้งและค่าเนื้อหาใหม่",
+	[Key.dkrecoveryContinue]: "อ่านต่อ",
+	[Key.dkrecoveryAllowHint]:
+		"คุณสามารถอนุญาตเว็บไซต์นี้ในการตั้งค่าตัวบล็อกโฆษณา — ไม่มีการล็อกเนื้อหาทั้งสองกรณี",
 
 	[Key.untitled]: "ไม่ได้ตั้งชื่อ",
 	[Key.uncategorized]: "ไม่ได้จัดหมวดหมู่",

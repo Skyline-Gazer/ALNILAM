@@ -192,6 +192,12 @@ export const vi: Translation = {
 	[Key.consentDeny]: "Từ chối",
 	[Key.consentNote]:
 		"Bạn có thể thay đổi bất cứ lúc nào qua window.alnilamConsent.open(); lựa chọn chỉ được lưu trong trình duyệt này.",
+	[Key.dkrecoveryTitle]: "Quảng cáo giúp duy trì trang này",
+	[Key.dkrecoveryDescription]:
+		"Có vẻ trình chặn quảng cáo đang ngăn tải quảng cáo. Quảng cáo chi trả cho lưu trữ và nội dung mới.",
+	[Key.dkrecoveryContinue]: "Đọc tiếp",
+	[Key.dkrecoveryAllowHint]:
+		"Bạn có thể cho phép trang này trong cài đặt trình chặn quảng cáo — nội dung không bao giờ bị khóa.",
 
 	[Key.untitled]: "Không tiêu đề",
 	[Key.uncategorized]: "Chưa phân loại",

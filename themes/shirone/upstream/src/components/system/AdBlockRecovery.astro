@@ -1,0 +1,106 @@
+---
+// Ad-blocking recovery mount (GH Issue #93). Custom DKMA banner is mounted
+// only for `recovery.mode: custom` with AdSense enabled; `mode: google`
+// injects the official tag; everything else renders nothing.
+import { i18n } from "@i18n/translation";
+import I18nKey from "@i18n/i18nKey";
+import type { PrivacyConfig } from "virtual:alnilam-privacy";
+
+interface Props {
+	privacy: PrivacyConfig;
+}
+
+const { privacy } = Astro.props;
+const adsense = privacy.ads.adsense;
+
+const active =
+	adsense.enabled && (adsense.recovery.mode === "custom" || adsense.recovery.mode === "google");
+
+if (!active || import.meta.env.DEV) {
+	return null;
+}
+
+const consentGated = privacy.consent.mode === "basic";
+
+const labelAttributes = {
+	"data-label-title": i18n(I18nKey.dkrecoveryTitle),
+	"data-label-description": i18n(I18nKey.dkrecoveryDescription),
+	"data-label-continue": i18n(I18nKey.dkrecoveryContinue),
+	"data-label-allow-hint": i18n(I18nKey.dkrecoveryAllowHint),
+};
+---
+
+{adsense.recovery.mode === "custom" && (
+	<div
+		id="alnilam-dkma"
+		class="fixed inset-x-0 bottom-0 z-[80]"
+		hidden
+		data-dismiss-days={String(adsense.recovery.dismissDays)}
+		data-consent-gated={String(consentGated)}
+		{...labelAttributes}
+	></div>
+)}
+
+{adsense.recovery.mode === "google" && (
+	<div
+		id="alnilam-dkma-google"
+		hidden
+		data-tag-url={adsense.recovery.googleTag}
+		data-consent-gated={String(consentGated)}
+	></div>
+)}
+
+<script>
+	import { initAdblockRecovery, initGoogleRecovery } from "@utils/adblock-recovery";
+
+	const dkma = document.getElementById("alnilam-dkma");
+	if (dkma) {
+		initAdblockRecovery(
+			dkma,
+			Number(dkma.dataset.dismissDays ?? "7"),
+			dkma.dataset.consentGated === "true",
+		);
+	}
+	const google = document.getElementById("alnilam-dkma-google");
+	if (google?.dataset.tagUrl) {
+		initGoogleRecovery(google.dataset.tagUrl, google.dataset.consentGated === "true");
+	}
+	</script>
+
+	<style>
+	#alnilam-dkma {
+		padding: 0.75rem 1rem;
+	}
+	#alnilam-dkma[hidden] {
+		display: none;
+	}
+	.alnilam-dkma-panel {
+		max-width: 48rem;
+		margin: 0 auto;
+		display: grid;
+		gap: 0.5rem;
+	}
+	.alnilam-dkma-title {
+		font-weight: 700;
+		margin: 0;
+	}
+	.alnilam-dkma-desc,
+	.alnilam-dkma-hint {
+		font-size: 0.85rem;
+		color: var(--on-surface-variant);
+		margin: 0;
+	}
+	.alnilam-dkma-continue {
+		justify-self: start;
+		border: 1px solid var(--outline);
+		border-radius: 9999px;
+		background: transparent;
+		color: var(--on-surface);
+		padding: 0.25rem 1.25rem;
+		cursor: pointer;
+	}
+	.alnilam-dkma-continue:hover {
+		background: var(--primary);
+		color: var(--surface);
+	}
+</style>

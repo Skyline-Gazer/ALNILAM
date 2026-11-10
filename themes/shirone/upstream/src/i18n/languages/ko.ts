@@ -189,6 +189,12 @@ export const ko: Translation = {
 	[Key.consentDeny]: "거부",
 	[Key.consentNote]:
 		"window.alnilamConsent.open()으로 언제든 변경할 수 있으며, 선택은 이 브라우저에만 저장됩니다.",
+	[Key.dkrecoveryTitle]: "광고가 이 사이트를 유지합니다",
+	[Key.dkrecoveryDescription]:
+		"광고 차단기가 광고 로드를 막고 있는 것 같습니다. 광고는 호스팅과 새 글 운영 비용입니다.",
+	[Key.dkrecoveryContinue]: "계속 읽기",
+	[Key.dkrecoveryAllowHint]:
+		"광고 차단기 설정에서 이 사이트를 허용할 수 있습니다. 어느 쪽이든 콘텐츠는 잠기지 않습니다.",
 
 	[Key.untitled]: "제목 없음",
 	[Key.uncategorized]: "분류되지 않음",

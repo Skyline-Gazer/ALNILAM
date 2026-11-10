@@ -182,6 +182,12 @@ export const zh_TW: Translation = {
 	[Key.consentDeny]: "拒絕",
 	[Key.consentNote]:
 		"你可以隨時透過 window.alnilamConsent.open() 修改；選擇僅保存在本瀏覽器中。",
+	[Key.dkrecoveryTitle]: "廣告支撐著本站的免費閱讀",
+	[Key.dkrecoveryDescription]:
+		"偵測到廣告攔截器阻止了廣告載入。廣告用於支付主機與內容創作成本。",
+	[Key.dkrecoveryContinue]: "繼續閱讀",
+	[Key.dkrecoveryAllowHint]:
+		"你可以在廣告攔截器設定中將本站加入白名單；無論如何內容都不會被鎖定。",
 
 	[Key.untitled]: "無標題",
 	[Key.uncategorized]: "未分類",

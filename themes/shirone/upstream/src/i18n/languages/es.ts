@@ -192,6 +192,12 @@ export const es: Translation = {
 	[Key.consentDeny]: "Denegar",
 	[Key.consentNote]:
 		"Puedes cambiarlo en cualquier momento con window.alnilamConsent.open(); las elecciones se guardan solo en este navegador.",
+	[Key.dkrecoveryTitle]: "Los anuncios mantienen este sitio gratuito",
+	[Key.dkrecoveryDescription]:
+		"Parece que un bloqueador de anuncios impide cargarlos. Los anuncios financian el alojamiento y el nuevo contenido.",
+	[Key.dkrecoveryContinue]: "Seguir leyendo",
+	[Key.dkrecoveryAllowHint]:
+		"Puedes permitir este sitio en la configuración de tu bloqueador; en ningún caso el contenido queda bloqueado.",
 
 	[Key.untitled]: "Sin título",
 	[Key.uncategorized]: "Sin categoría",

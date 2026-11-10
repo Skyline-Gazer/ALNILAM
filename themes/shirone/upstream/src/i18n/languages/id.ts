@@ -194,6 +194,12 @@ export const id: Translation = {
 	[Key.consentDeny]: "Tolak",
 	[Key.consentNote]:
 		"Anda dapat mengubahnya kapan saja lewat window.alnilamConsent.open(); pilihan hanya disimpan di peramban ini.",
+	[Key.dkrecoveryTitle]: "Iklan menjaga situs ini tetap gratis",
+	[Key.dkrecoveryDescription]:
+		"Sepertinya pemblokir iklan mencegah iklan dimuat. Iklan membiayai hosting dan konten baru.",
+	[Key.dkrecoveryContinue]: "Lanjut membaca",
+	[Key.dkrecoveryAllowHint]:
+		"Kamu dapat mengizinkan situs ini di pengaturan pemblokir iklan — konten tidak pernah dikunci.",
 
 	[Key.untitled]: "Tanpa Judul",
 	[Key.uncategorized]: "Tanpa Kategori",
