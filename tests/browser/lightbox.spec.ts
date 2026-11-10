@@ -487,6 +487,138 @@ for (const [name, origin] of deployments) {
 			await context.close();
 		});
 
+		test(`one-time signed original GETs exactly once ${name} ${width}`, async ({ browser }) => {
+			const context = await browser.newContext({
+				viewport: { width, height: 1000 },
+				reducedMotion: "reduce",
+			});
+			const page = await context.newPage();
+			const onceReqs: string[] = [];
+			const thumbReqs: string[] = [];
+			page.on("request", (req) => {
+				const u = req.url();
+				if (u.includes("/once-signed/1600/900.png")) onceReqs.push(u);
+				if (u.includes("/thumb/320/180.png")) thumbReqs.push(u);
+			});
+			const responses = await installFixtureRoutes(page);
+			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
+			await waitForLightboxReady(page);
+
+			const thumbLink = page.locator('a[href*="/once-signed/"]');
+			await thumbLink.scrollIntoViewIfNeeded();
+			const thumbsAtLoad = thumbReqs.length;
+			await thumbLink.click();
+			await expect(page.locator(".pswp")).toBeVisible();
+			const state = await assertSlideLoaded(page, responses);
+			expect(state.naturalWidth).toBe(1600);
+			const src = state.currentSrc || state.src || "";
+			expect(src).toContain("/once-signed/1600/900.png");
+			expect(src).not.toContain("/thumb/");
+			expect(onceReqs).toHaveLength(1);
+			expect(responses.get(onceReqs[0]!)).toBe(200);
+			expect(thumbReqs).toHaveLength(thumbsAtLoad);
+			await closeWithEscape(page, page.locator(".pswp"));
+			await context.close();
+		});
+
+		test(`bare image keyboard reachability ${name} ${width}`, async ({ browser }) => {
+			const context = await browser.newContext({
+				viewport: { width, height: 1000 },
+				reducedMotion: "reduce",
+			});
+			const page = await context.newPage();
+			const responses = await installFixtureRoutes(page);
+			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
+			await waitForLightboxReady(page);
+
+			const bareInfo = await page.evaluate(() => {
+				const isRaster = (img: HTMLImageElement) => {
+					const src = img.currentSrc || img.src;
+					return /\.(png|jpe?g|webp|gif|avif)(\?|$)/i.test(src);
+				};
+				const imgs = Array.from(
+					document.querySelectorAll<HTMLImageElement>(".custom-md img"),
+				);
+				const bare = imgs.filter(
+					(img) =>
+						!(img.closest("a") instanceof HTMLAnchorElement) && isRaster(img),
+				);
+				return {
+					count: bare.length,
+					first: imgs.indexOf(bare[0]!),
+					second: imgs.indexOf(bare[1]!),
+				};
+			});
+			expect(bareInfo.count).toBeGreaterThan(1);
+
+			const first = page.locator(".custom-md img").nth(bareInfo.first);
+			await first.scrollIntoViewIfNeeded();
+			expect(await first.evaluate((el) => el.tabIndex)).toBe(0);
+			const wrapped = await page.evaluate(() => {
+				const img = document.querySelector<HTMLImageElement>(".custom-md a img");
+				return img ? img.getAttribute("tabindex") : "no-wrapped-image";
+			});
+			expect(wrapped).toBeNull();
+
+			let reached = false;
+			for (let i = 0; i < 200 && !reached; i += 1) {
+				await page.keyboard.press("Tab");
+				reached = await first.evaluate((el) => document.activeElement === el);
+			}
+			expect(reached).toBe(true);
+			await page.keyboard.press("Enter");
+			const container = page.locator(".pswp");
+			await expect(container).toBeVisible();
+			await assertSlideLoaded(page, responses);
+			await closeWithEscape(page, container);
+			await expect
+				.poll(() => first.evaluate((el) => document.activeElement === el))
+				.toBe(true);
+
+			const second = page.locator(".custom-md img").nth(bareInfo.second);
+			await second.scrollIntoViewIfNeeded();
+			await second.focus();
+			await page.keyboard.press("Space");
+			await expect(page.locator(".pswp")).toBeVisible();
+			await assertSlideLoaded(page, responses);
+			await closeWithEscape(page, page.locator(".pswp"));
+			await context.close();
+		});
+
+		test(`slide real display and screenshot ${name} ${width}`, async ({ browser }) => {
+			const context = await browser.newContext({
+				viewport: { width, height: 1000 },
+				reducedMotion: "reduce",
+			});
+			const page = await context.newPage();
+			const responses = await installFixtureRoutes(page);
+			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
+			await waitForLightboxReady(page);
+
+			const container = await openSlide(page, 0, responses);
+			const img = page.locator(slideImgSel("photoswipe")).first();
+			const box = await img.boundingBox();
+			expect(box).not.toBeNull();
+			expect(box!.width).toBeGreaterThan(0);
+			expect(box!.height).toBeGreaterThan(0);
+			const inViewport = await img.evaluate((el) => {
+				const r = el.getBoundingClientRect();
+				return (
+					r.left < window.innerWidth &&
+					r.right > 0 &&
+					r.top < window.innerHeight &&
+					r.bottom > 0
+				);
+			});
+			expect(inViewport).toBe(true);
+			await page.screenshot({
+				path: `artifacts/pswp-regression/${name}-${width}-slide.png`,
+				fullPage: false,
+			});
+			await closeLightbox(page, container, await page.evaluate(() => window.scrollY));
+			await context.close();
+		});
+
 		test(`error/timeout degrade without hang ${name} ${width}`, async ({ browser }) => {
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
