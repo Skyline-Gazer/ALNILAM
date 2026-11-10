@@ -62,12 +62,12 @@ test("recovery modes are mutually exclusive by schema and google requires its ta
   const recovery = (value) =>
     withPrivacy({ ads: { adsense: { enabled: true, clientId: "ca-pub-1234567890123456", recovery: value } } })
       .ads.adsense.recovery;
-  assert.equal(recovery({ mode: "google", googleTag: "ca-pub-1234567890123456" }).mode, "google");
+  assert.equal(recovery({ mode: "google", googleTag: "https://fundingchoicesmessages.google.com/a/agg?id=XYZ" }).mode, "google");
   assert.equal(recovery({ mode: "custom" }).mode, "custom");
   assert.throws(() => recovery({ mode: "google" }), /googleTag is required/);
   assert.throws(() => recovery({ mode: "banana" }), /recovery\.mode/);
   assert.throws(() => recovery({ mode: "custom", dismissDays: 0 }), /dismissDays/);
   assert.throws(() => recovery({ mode: "custom", dismissDays: 366 }), /dismissDays/);
-  assert.throws(() => recovery({ mode: "custom", googleTag: "ca-pub-1" }), /googleTag is only valid/);
+  assert.throws(() => recovery({ mode: "custom", googleTag: "https://fundingchoicesmessages.google.com/a/agg" }), /googleTag is only valid/);
   assert.equal(recovery({ mode: "custom", dismissDays: 30 }).dismissDays, 30);
 });
