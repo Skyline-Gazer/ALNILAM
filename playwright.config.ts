@@ -42,6 +42,23 @@ const consentServers = hasConsentFixture ? [
     timeout: 30_000,
   },
 ] : [];
+const ga4Root = path.join(candidateRoot, "dist/ga4-root");
+const ga4Nested = path.join(candidateRoot, "dist/ga4-nested");
+const hasGa4Fixture = process.env.GA4_FIXTURE === "1";
+const ga4Servers = hasGa4Fixture ? [
+  {
+    command: previewCommand(path.join(candidateRoot, "artifacts/cnb-browser/ga4-root-server.json"), ga4Root, 4329, "/"),
+    url: "http://127.0.0.1:4329/",
+    reuseExistingServer: false,
+    timeout: 30_000,
+  },
+  {
+    command: previewCommand(path.join(candidateRoot, "artifacts/cnb-browser/ga4-nested-server.json"), ga4Nested, 4330, "/ALNILAM/"),
+    url: "http://127.0.0.1:4330/ALNILAM/",
+    reuseExistingServer: false,
+    timeout: 30_000,
+  },
+] : [];
 
 export default defineConfig({
   testDir: "./tests/browser",
@@ -71,5 +88,6 @@ export default defineConfig({
     },
     ...commentsServers,
     ...consentServers,
+    ...ga4Servers,
   ],
 });
