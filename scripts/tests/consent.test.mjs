@@ -68,7 +68,7 @@ test("recovery modes are mutually exclusive by schema and google requires its ta
   assert.throws(() => recovery({ mode: "banana" }), /recovery\.mode/);
   assert.throws(() => recovery({ mode: "custom", dismissDays: 0 }), /dismissDays/);
   assert.throws(() => recovery({ mode: "custom", dismissDays: 366 }), /dismissDays/);
-  assert.throws(() => recovery({ mode: "custom", googleTag: "ca-pub-1" }), /googleTag is only valid/);
+  assert.throws(() => recovery({ mode: "custom", googleTag: "https://fundingchoicesmessages.google.com/a/agg" }), /googleTag is only valid/);
   assert.equal(recovery({ mode: "custom", dismissDays: 30 }).dismissDays, 30);
 });
 
