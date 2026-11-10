@@ -41,8 +41,8 @@ async function expectDkmaVisible(page: Page) {
 		)
 		.toBe(true);
 }
-
 test("ads-site with simulated blocker shows the banner once per window", async ({ page }) => {
+	test.skip(process.env.ADS_FIXTURE !== "1", "requires the ads fixture servers");
 	simulateAdblocker(page);
 	await page.goto(`${ADS_ROOT}${ARTICLE}`, { waitUntil: "load" });
 	await expectDkmaVisible(page);
@@ -69,12 +69,14 @@ test("ads-site with simulated blocker shows the banner once per window", async (
 });
 
 test("ads-site without a blocker shows nothing", async ({ page }) => {
+	test.skip(process.env.ADS_FIXTURE !== "1", "requires the ads fixture servers");
 	await page.goto(`${ADS_ROOT}${ARTICLE}`, { waitUntil: "load" });
 	await page.waitForTimeout(3_000);
 	expect(await page.evaluate(() => document.getElementById("alnilam-dkma")?.hidden ?? true)).toBe(true);
 });
 
 test("dismissed window expiry re-allows the banner", async ({ page }) => {
+	test.skip(process.env.ADS_FIXTURE !== "1", "requires the ads fixture servers");
 	simulateAdblocker(page);
 	await page.goto(`${ADS_ROOT}${ARTICLE}`, { waitUntil: "load" });
 	await expectDkmaVisible(page);
@@ -89,6 +91,7 @@ test("dismissed window expiry re-allows the banner", async ({ page }) => {
 });
 
 test("ads denied on the consent fixture never probes or shows", async ({ page }) => {
+	test.skip(process.env.CONSENT_FIXTURE !== "1", "requires the consent fixture servers");
 	simulateAdblocker(page);
 	await page.goto(`${CONSENT_ROOT}/posts/consent-fixture/`, { waitUntil: "networkidle" });
 	const gate = page.locator("#alnilam-consent-gate");
