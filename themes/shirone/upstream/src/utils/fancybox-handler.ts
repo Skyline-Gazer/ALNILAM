@@ -352,6 +352,7 @@ export class FancyboxHandler {
 		null;
 	private pswpCtorPromise: Promise<void> | null = null;
 	private probeCache = new Map<string, Promise<Dim | null>>();
+	private contentImages = new Map<string, Promise<Dim | null>>();
 	private lastTrigger: HTMLElement | null = null;
 	private readonly onClick = (event: MouseEvent) => this.handleActivate(event);
 	private readonly onKeyDown = (event: KeyboardEvent) => {
@@ -374,6 +375,7 @@ export class FancyboxHandler {
 		if (gen !== this.generation) return;
 		if (this.bound) return;
 		this.syncPluginManagedGridLinks();
+		this.makeBareImagesFocusable();
 		this.bindDelegates();
 		this.initialized = true;
 		document.documentElement.dataset.fancyboxReady = "true";
@@ -395,6 +397,16 @@ export class FancyboxHandler {
 			const img = link.querySelector("img");
 			const target = img?.currentSrc || img?.src;
 			if (target) link.href = target;
+		}
+	}
+
+	private makeBareImagesFocusable(): void {
+		for (const el of document.querySelectorAll<HTMLImageElement>(
+			FANCYBOX_SELECTORS.articleImages,
+		)) {
+			if (el.closest("a") instanceof HTMLAnchorElement) continue;
+			if (el.getAttribute("tabindex") === "0") continue;
+			el.setAttribute("tabindex", "0");
 		}
 	}
 
@@ -649,6 +661,14 @@ export class FancyboxHandler {
 			this.restoreFocus();
 		});
 
+		lightbox.on("contentLoadImage", ({ content }) => {
+			const src = content.data?.src;
+			if (typeof src !== "string" || this.contentImages.has(src)) return;
+			const el =
+				content.element instanceof HTMLImageElement ? content.element : null;
+			this.contentImages.set(src, this.awaitContentImage(el));
+		});
+
 		lightbox.init();
 		const opened = lightbox.loadAndOpen(index, dataSource as DataSource);
 		if (!opened) {
@@ -687,7 +707,8 @@ export class FancyboxHandler {
 		if (!data.pendingSize && data.width && data.height && data.width > 1)
 			return;
 
-		const dim = await this.probeDimensions(src, gen);
+		const dim = await (this.contentImages.get(src) ??
+			this.probeDimensions(src, gen));
 		if (gen !== this.generation) return;
 
 		if (dim) {
@@ -748,6 +769,37 @@ export class FancyboxHandler {
 		return promise;
 	}
 
+	private awaitContentImage(el: HTMLImageElement | null): Promise<Dim | null> {
+		if (!el) return Promise.resolve(null);
+		if (el.complete && el.naturalWidth > 0) {
+			return Promise.resolve({
+				width: el.naturalWidth,
+				height: el.naturalHeight,
+			});
+		}
+
+		const { promise, resolve } = Promise.withResolvers<Dim | null>();
+		let settled = false;
+		const finish = (value: Dim | null) => {
+			if (settled) return;
+			settled = true;
+			window.clearTimeout(timer);
+			el.removeEventListener("load", onLoad);
+			el.removeEventListener("error", onError);
+			resolve(value);
+		};
+		const onLoad = () => {
+			if (el.naturalWidth > 0 && el.naturalHeight > 0) {
+				finish({ width: el.naturalWidth, height: el.naturalHeight });
+			} else finish(null);
+		};
+		const onError = () => finish(null);
+		const timer = window.setTimeout(() => finish(null), PROBE_TIMEOUT_MS);
+		el.addEventListener("load", onLoad, { once: true });
+		el.addEventListener("error", onError, { once: true });
+		return promise;
+	}
+
 	private closeOpenInstance(): void {
 		try {
 			this.openPswp?.close();
@@ -761,6 +813,7 @@ export class FancyboxHandler {
 		}
 		this.openPswp = null;
 		this.lightbox = null;
+		this.contentImages.clear();
 	}
 
 	private restoreFocus(): void {
@@ -779,6 +832,7 @@ export class FancyboxHandler {
 		this.closeOpenInstance();
 		this.unbindDelegates();
 		this.probeCache.clear();
+		this.contentImages.clear();
 		this.initPromise = null;
 		this.initialized = false;
 		delete document.documentElement.dataset.fancyboxReady;
@@ -786,6 +840,8 @@ export class FancyboxHandler {
 
 	destroy(): void {
 		this.cleanup();
+
+		this.contentImages.clear();
 		for (const link of this.styleLinks) link.remove();
 		this.styleLinks = [];
 		this.stylesLoaded = false;
