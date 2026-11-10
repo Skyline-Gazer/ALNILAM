@@ -7,6 +7,7 @@ import UmamiRuntime from "@components/system/UmamiRuntime.astro";
 import ConsentGate from "@components/system/ConsentGate.astro";
 import AnalyticsRuntime from "@components/system/AnalyticsRuntime.astro";
 import AdsRuntime from "@components/system/AdsRuntime.astro";
+import AdBlockRecovery from "@components/system/AdBlockRecovery.astro";
 import { resolveAsset } from "@utils/asset-utils";
 import { createDefaultSchemeStyle } from "@utils/theme-utils";
 import { pathsEqual, toAbsoluteUrl, url } from "@utils/url-utils";
@@ -251,6 +252,7 @@ const defaultSchemeStyle =
 		<ConsentGate privacy={privacyConfig} />
 		{privacyConfig.analytics.googleAnalytics.enabled && <AnalyticsRuntime privacy={privacyConfig} />}
 		{privacyConfig.ads.adsense.enabled && <AdsRuntime privacy={privacyConfig} />}
+		{privacyConfig.ads.adsense.enabled && <AdBlockRecovery privacy={privacyConfig} />}
 		{textureEnabled && (
 			<div
 				id="m3e-texture-canvas"

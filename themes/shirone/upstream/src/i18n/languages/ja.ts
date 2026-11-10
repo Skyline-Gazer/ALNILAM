@@ -189,6 +189,12 @@ export const ja: Translation = {
 	[Key.consentDeny]: "拒否",
 	[Key.consentNote]:
 		"window.alnilamConsent.open() でいつでも変更できます。選択はこのブラウザーにのみ保存されます。",
+	[Key.dkrecoveryTitle]: "広告がこのサイトを支えています",
+	[Key.dkrecoveryDescription]:
+		"広告ブロッカーによって広告が読み込まれていないようです。広告はホスティングと新しい記事の運営費用です。",
+	[Key.dkrecoveryContinue]: "このまま読む",
+	[Key.dkrecoveryAllowHint]:
+		"広告ブロッカーの設定でこのサイトを許可できます。どちらの場合でもコンテンツはブロックされません。",
 
 	[Key.untitled]: "タイトルなし",
 	[Key.uncategorized]: "カテゴリなし",

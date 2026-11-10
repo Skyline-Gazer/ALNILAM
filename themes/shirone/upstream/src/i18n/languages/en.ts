@@ -191,6 +191,12 @@ export const en: Translation = {
 	[Key.consentDeny]: "Deny",
 	[Key.consentNote]:
 		"You can change this any time via window.alnilamConsent.open(); choices are stored in this browser only.",
+	[Key.dkrecoveryTitle]: "Ads keep this site free",
+	[Key.dkrecoveryDescription]:
+		"It looks like an ad blocker is preventing ads from loading. Ads pay for hosting and new content.",
+	[Key.dkrecoveryContinue]: "Continue reading",
+	[Key.dkrecoveryAllowHint]:
+		"You can allowlist this site in your ad blocker settings — no content is locked either way.",
 
 	[Key.untitled]: "Untitled",
 	[Key.uncategorized]: "Uncategorized",

@@ -182,6 +182,12 @@ export const zh_CN: Translation = {
 	[Key.consentDeny]: "拒绝",
 	[Key.consentNote]:
 		"你可以随时通过 window.alnilamConsent.open() 修改；选择仅保存在本浏览器中。",
+	[Key.dkrecoveryTitle]: "广告支撑着本站的免费阅读",
+	[Key.dkrecoveryDescription]:
+		"检测到广告拦截器阻止了广告加载。广告用于支付主机和内容创作成本。",
+	[Key.dkrecoveryContinue]: "继续阅读",
+	[Key.dkrecoveryAllowHint]:
+		"你可以在广告拦截器设置中将本站加入白名单；无论如何内容都不会被锁定。",
 
 	[Key.untitled]: "无标题",
 	[Key.uncategorized]: "未分类",

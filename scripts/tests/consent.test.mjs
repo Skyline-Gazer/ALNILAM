@@ -71,3 +71,16 @@ test("recovery modes are mutually exclusive by schema and google requires its ta
   assert.throws(() => recovery({ mode: "custom", googleTag: "https://fundingchoicesmessages.google.com/a/agg" }), /googleTag is only valid/);
   assert.equal(recovery({ mode: "custom", dismissDays: 30 }).dismissDays, 30);
 });
+
+test("google recovery tag must be the official https Google script URL", () => {
+  const recovery = (value) =>
+    withPrivacy({ ads: { adsense: { enabled: true, clientId: "ca-pub-1234567890123456", recovery: value } } })
+      .ads.adsense.recovery;
+  assert.equal(
+    recovery({ mode: "google", googleTag: "https://fundingchoicesmessages.google.com/a/agg?id=XYZ" }).googleTag,
+    "https://fundingchoicesmessages.google.com/a/agg?id=XYZ",
+  );
+  assert.throws(() => recovery({ mode: "google", googleTag: "http://fundingchoicesmessages.google.com/a/agg" }), /official https script URL/);
+  assert.throws(() => recovery({ mode: "google", googleTag: "https://evil.example.com/tag.js" }), /official https script URL/);
+  assert.throws(() => recovery({ mode: "google", googleTag: "not a url" }), /official https script URL/);
+});

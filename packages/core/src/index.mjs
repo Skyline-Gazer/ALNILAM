@@ -285,6 +285,18 @@ function normalizeAds(value) {
   if (googleTag && recoveryMode !== "google") {
     throw new Error('ALNILAM: ads.adsense.recovery.googleTag is only valid when recovery.mode = "google"');
   }
+  if (googleTag) {
+    let parsed;
+    try {
+      parsed = new URL(googleTag);
+    } catch {
+      parsed = null;
+    }
+    if (!parsed || parsed.protocol !== "https:" ||
+        !(parsed.hostname === "google.com" || parsed.hostname.endsWith(".google.com") || parsed.hostname.endsWith(".googlesyndication.com"))) {
+      throw new Error("ALNILAM: ads.adsense.recovery.googleTag must be the official https script URL from Google (fundingchoicesmessages.google.com or googlesyndication.com)");
+    }
+  }
   const dismissDays = recovery.dismissDays ?? 7;
   if (!Number.isInteger(dismissDays) || dismissDays < 1 || dismissDays > 365) {
     throw new Error("ALNILAM: ads.adsense.recovery.dismissDays must be an integer between 1 and 365");
