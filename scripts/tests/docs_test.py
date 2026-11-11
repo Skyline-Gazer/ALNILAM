@@ -25,7 +25,12 @@ def broken_links(root, files):
 
 class DocsTests(unittest.TestCase):
     def test_tracked_markdown_links(self):
-        files = subprocess.check_output(['git', 'ls-files', '*.md'], cwd=ROOT, text=True).splitlines()
+        try:
+            files = subprocess.check_output(['git', 'ls-files', '*.md'], cwd=ROOT, text=True).splitlines()
+        except FileNotFoundError as error:
+            self.fail(f'git binary unavailable for docs link inventory: {error}')
+        except subprocess.CalledProcessError as error:
+            self.fail(f'git ls-files failed for docs link inventory: {error}')
         self.assertTrue(files, 'No tracked Markdown files found')
         self.assertEqual(broken_links(ROOT, files), [])
 

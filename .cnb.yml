@@ -58,7 +58,11 @@ $:
         submodules: false
       stages:
         - name: Check relative links and negative fixture
-          script: python3 -m unittest discover -s scripts/tests -p 'docs_test.py'
+          script: |
+            set -eu
+            command -v git >/dev/null
+            test -d .git -o -f .git
+            python3 -m unittest discover -s scripts/tests -p 'docs_test.py'
 
     - name: alnilam-comments-browser-candidate
       breakIfModify: true
