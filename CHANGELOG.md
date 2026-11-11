@@ -22,6 +22,7 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 - Runtime TOML Site config parsing (`smol-toml` dependency), `alnilam.config.toml` support, and the in-repo `sites/legacy-demo` path (the v1 fixture moved to `tests/fixtures/site-v1-legacy`).
 
 ### Fixed
+- **Mobile navigation drawer (Issue #35):** while the modal drawer is open, the header and page content are `inert`, so assistive technology and scripts cannot reach the obscured page; the state is cleared on Escape, outside press, desktop resize and unmount.
 - **Mobile navigation drawer (Issue #35):** `aria-expanded` now flips only once the panel is visible and focus has moved inside, so a Tab in the opening frame cannot reach the page behind the modal.
 - **Search and display-settings panels (Issue #35):** closed float panels leave the accessibility tree and tab order (`visibility: hidden`), and their toggles expose `aria-expanded`/`aria-controls`, including after Escape or an outside click.
 - **Header and drawer accessible names (Issue #35):** menu, display-settings, search and theme-switch labels now follow the page language (`zh-CN`/`en`/`ja` and every shipped dictionary) instead of hardcoded English, including after client-side language switches.

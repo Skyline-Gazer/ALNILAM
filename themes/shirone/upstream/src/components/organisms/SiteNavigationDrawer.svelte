@@ -173,22 +173,40 @@ onMount(() => {
 		// "the panel is ready", and a Tab in that frame used to escape the modal.
 		syncButtonAria(true);
 	};
+	// aria-modal alone does not stop assistive technology or scripts from
+	// reaching the page behind the dialog; mark every sibling outside the drawer.
+	const setBackgroundInert = (inert: boolean) => {
+		for (const child of Array.from(document.body.children)) {
+			if (!(child instanceof HTMLElement)) continue;
+			if (["SCRIPT", "STYLE", "LINK"].includes(child.tagName)) continue;
+			if (drawerEl && child.contains(drawerEl)) continue;
+			if (inert) child.setAttribute("inert", "");
+			else child.removeAttribute("inert");
+		}
+	};
 	// Replay taps recorded before this island subscribed, then own the state again.
 	const root = document.documentElement;
 	syncButtonAria(open);
 	if (Number(root.dataset.siteDrawerPending ?? 0) % 2 === 1) {
 		open = true;
+		setBackgroundInert(true);
 		tick().then(() => focusFirstItem());
 	}
 	delete root.dataset.siteDrawerPending;
 	const onToggle = () => {
 		delete document.documentElement.dataset.siteDrawerPending;
 		open = !open;
-		if (open) tick().then(() => focusFirstItem());
-		else syncButtonAria(false);
+		if (open) {
+			setBackgroundInert(true);
+			tick().then(() => focusFirstItem());
+		} else {
+			setBackgroundInert(false);
+			syncButtonAria(false);
+		}
 	};
 	const closeDrawer = (restoreFocus = true) => {
 		open = false;
+		setBackgroundInert(false);
 		syncButtonAria(false);
 		if (restoreFocus) document.getElementById("nav-drawer-switch")?.focus();
 	};
@@ -245,6 +263,7 @@ onMount(() => {
 	const onDesktopChange = (e: MediaQueryListEvent) => {
 		if (e.matches && open) {
 			open = false;
+			setBackgroundInert(false);
 			syncButtonAria(false);
 		}
 	};
@@ -258,6 +277,7 @@ onMount(() => {
 	desktopMedia.addEventListener("change", onDesktopChange);
 	return () => {
 		document.removeEventListener("site-drawer:toggle", onToggle);
+		setBackgroundInert(false);
 		document.removeEventListener("site-drawer:close", onClose);
 		document.removeEventListener("swup:content:replace", syncFromRoute);
 		document.removeEventListener("pointerdown", onPointerDown, true);
