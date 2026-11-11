@@ -22,14 +22,14 @@ const ARTICLE = "/posts/ga4-fixture/";
 
 const GATE_SEL = "#alnilam-consent-gate";
 
-function isPageViewEntry(entry: unknown): entry is ["event", "page_view", { page_location?: string }] {
-	return Array.isArray(entry) && entry[0] === "event" && entry[1] === "page_view";
-}
-
-function pageViewEntries(page: Page) {
-	return page.evaluate(() =>
-		(window.dataLayer ?? []).filter(isPageViewEntry),
+async function pageViewEntries(page: Page) {
+	const entries = await page.evaluate(() =>
+		(window.dataLayer ?? []).filter(
+			(entry) =>
+				Array.isArray(entry) && entry[0] === "event" && entry[1] === "page_view",
+		),
 	);
+	return entries as ["event", "page_view", { page_location?: string }][];
 }
 
 function countPageViews(page: Page): Promise<number> {
