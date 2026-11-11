@@ -6,40 +6,79 @@ Everything from "## Live-state update — 2026-11-09" downward is retained
 historical evidence. This section is the authoritative tip for vNext RC
 product acceptance / P6 convergence work.
 
-### Git / remotes (verified live 2026-11-11)
+### Git / remotes (verified live 2026-11-11, re-read 2026-11-11T02:0x UTC)
 
 | Ref | Value |
 | --- | --- |
-| CNB `dev` | `2b7d18f980f83ff591f013fb760e5b0342b1f872` — handoff baseline confirmed; no unknown tip drift |
+| CNB `dev` | `2b7d18f980f83ff591f013fb760e5b0342b1f872` — handoff baseline; **still the live tip**, no merges landed this round |
 | GitHub `dev` | lags CNB (handoff snapshot `39ca829…`); **do not mirror/push** |
-| Vercel Production | project `xxxx` / `prj_2eRtFJHWRJPlM90z2CPT5kJA1XNg` read-only: `link.productionBranch = "dev"` against GitHub `Skyline-Gazer/ALNILAM` |
+| Vercel Production | project name is literally `xxxx` (not a placeholder; `vercel projects list --json` returns `{"name":"xxxx","id":"prj_2eRtFJHWRJPlM90z2CPT5kJA1XNg"}`, and `GET /v9/projects/prj_2eRtFJHWRJPlM90z2CPT5kJA1XNg` returns `link.repo=ALNILAM`, `link.org=Skyline-Gazer`, `link.productionBranch="dev"`; read-only, 2026-11-11) |
 | CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — untouched |
 | ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` — unchanged |
 
-### Product acceptance this round
+### Blocking defect: target-owned skip budget deadlocks every PR
 
-- **#124 / categories**: ArchivePanel `preScoped` still present; taxonomy unit 2/2, content-model 9/9, `archive-taxonomy` browser **14/14** (root + `/ALNILAM/`).
-- **UI matrix (LOCAL_BROWSER_PASS)**: native-shirone + navigation + pagefind + visual-baseline **36/36**; a11y + lightbox **72/72**.
-- **Tip dual-path compose**: artifact budgets + SEO CONTRACT OK both bases; provenance Core `2b7d18f…`, demo Site digest `23d159e4…`.
-- **Independent Core/Site**: external Test-Site `6c0246f…` digest `74fa5cd5…` immutable; `upgrade-check.mjs --old 7abc75b…` Site unchanged (Core outputs differ as expected).
-- **#74 lab**: tip mobile+desktop Lighthouse receipts `BASELINE_RECORDED` / negative `EXPECTED_RED_VERIFIED`; six-URL LCP medians ≤ 3303 ms, CLS ≤ ~0.0016 (desktop 0.0). `FIELD_NOT_VERIFIED`; `SCREEN_READER_NOT_RUN`.
-- **#40 P4**: closed after tip revalidation; Project #17 → Done. Deployed-host remains #73.
-- **#81 / CNB PR #91**: head `87660db` hardens docs-links git preconditions + CNB-vs-GitHub authority wording; candidates green; trusted-consumer pending before merge.
-- **GA4 fixture fix / CNB PR #105**: `pageViewEntries` no longer closes over a Node helper inside `page.evaluate`; local GA4 suite 8/8.
+`scripts/ci/cnb-trusted-gate.mjs` copies `tests/browser` from the **target**
+checkout (`prepareTrustedTests`), so candidate test edits never reach the trusted
+run. Target `dev` carries 5 skipped tests, while
+`scripts/ci/cnb-browser-audit.mjs` allows at most 1:
+
+- 4 × `adblock-recovery.spec.ts` (`test.skip` added by `a094a95` when
+  `ADS_FIXTURE`/`CONSENT_FIXTURE` are unset)
+- 1 × `cnb-negative.spec.ts` (intentional)
+
+Observed on CNB PR #105 trusted-consumer
+[`cnb-pss-1k745dd7l`#001](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-pss-1k745dd7l#001):
+163 passed, 5 skipped, `REPORT_INVALID: Playwright report contains 5 skipped test(s)`.
+PR #91 (same diagnostic on its own trusted run)
+and PR #104 ([`cnb-r4o-1k7456n34`#001](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-r4o-1k7456n34#001))
+fail identically; all three have green candidates.
+
+Minimal fix (CNB PR #105, head `e239835`): register the fixture cases inside
+`if (process.env.ADS_FIXTURE === "1")` / `if (process.env.CONSENT_FIXTURE === "1")`
+instead of `test.skip`, matching the existing adsense/GA4 pattern. Verified
+LOCAL on 2026-11-11: with fixtures 19/19 (`analytics-ga4` 8, `adblock-recovery` 5,
+`consent` 6), without fixtures 1 pass + 1 skip. Landing it needs dev to receive
+that test-only commit outside the trusted gate (Owner decision, see below).
+
+### Product acceptance this round (verification classes in parentheses)
+
+| Claim | Evidence | Class |
+| --- | --- | --- |
+| categories/ArchivePanel `preScoped` retained | taxonomy unit 2/2, content-model 9/9, `archive-taxonomy` 14/14 | LOCAL |
+| core `/` + `/ALNILAM/` regression | `shirone` / `native-shirone-base` / `pagefind` / `visual-baseline` 36/36; a11y + lightbox 72/72 | LOCAL |
+| dual-path compose + budgets | `compose.mjs` + `artifact-check.mjs` + `seo-check.mjs` OK for root and nested base | LOCAL |
+| independent Core/Site | Test-Site `6c0246f…` digest `74fa5cd5…` immutable; `upgrade-check.mjs --old 7abc75b…` Site unchanged | LOCAL |
+| optional modules with fixtures | `analytics-ga4` + `adblock-recovery` + `consent` 19/19 after #105 fix | LOCAL |
+| #74 lab perf/a11y | tip mobile+desktop Lighthouse receipts `BASELINE_RECORDED`, negative `EXPECTED_RED_VERIFIED`, LCP medians ≤ 3303 ms | LAB |
+| trusted gate | 163 passed / 5 skipped / `REPORT_INVALID` on #91, #104, #105 | TRUSTED (FAIL) |
+| deployed host / Field CrUX / screen reader | not executed | NOT_VERIFIED / NOT_RUN |
 
 ### Owner blockers (do not self-clear)
 
-- Mirror sync / production deploy while Vercel Production tracks GitHub `dev`.
-- Deployed-host E2E (#73).
-- Screen-reader manual (#74) and Field CrUX/RUM.
-- Owner subjective visual sign-off on #35; Gallery/Moments/Music remain backlog (#67–#69).
+- **Trusted-gate deadlock**: dev's target-owned browser suite has 5 skips; the
+  fix is staged on CNB PR #105 but cannot pass that same gate. Needs one Owner
+  decision: authorize a single non-force test-only integration to `dev`, or
+  authorize the audit budget change. Nothing else can merge until then.
+- Mirror sync / production deploy while Vercel Production tracks GitHub `dev`
+  (`productionBranch="dev"`, verified above).
+- Deployed-host E2E (#73); screen-reader manual and Field CrUX/RUM (#74);
+  Owner subjective visual sign-off (#35); #94 pilot exit criteria.
+
+### Open PRs (none merged)
+
+| PR | Head | Scope | Candidates | Trusted |
+| --- | --- | --- | --- | --- |
+| [#91](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/91) | `87660db` | #81 docs-links | green (`cnb-s90-1k743o3hd#002`) | FAIL (skip budget) |
+| [#104](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/104) | `9882540` | this HANDOFF tip | green (`cnb-3vh-1k7456n33#002`) | FAIL (skip budget) |
+| [#105](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/105) | `e239835` | GA4 `page.evaluate` + adblock skip-budget fix | green (`cnb-ujf-1k745dd7k#002`) | FAIL (skip budget; target-owned) |
 
 ### Next task
 
-1. Merge CNB PR #91 only after trusted-consumer success + residual review check; then merge docs PR #104.
-2. Keep #42 open while #73/#74/#81/#94 have unmet exit conditions.
-3. Do not develop #67/#68/#69/#88/#89/#83 ahead of Owner RC review.
-
+1. Resolve the trusted-gate deadlock (Owner decision), then merge #105 → #91 → #104.
+2. Re-run trusted on each PR after the target fix lands; do not bypass a real failure.
+3. Keep #42 open while #73/#74/#81/#94 have unmet exit conditions.
+4. Do not develop #67/#68/#69/#88/#89/#83 ahead of Owner RC review.
 
 ## Live-state update — 2026-11-09 (current, supersedes 2026-11-08 below)
 
