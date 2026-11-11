@@ -1,5 +1,45 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-11 (current, supersedes 2026-11-09 below)
+
+Everything from "## Live-state update — 2026-11-09" downward is retained
+historical evidence. This section is the authoritative tip for vNext RC
+product acceptance / P6 convergence work.
+
+### Git / remotes (verified live 2026-11-11)
+
+| Ref | Value |
+| --- | --- |
+| CNB `dev` | `2b7d18f980f83ff591f013fb760e5b0342b1f872` — handoff baseline confirmed; no unknown tip drift |
+| GitHub `dev` | lags CNB (handoff snapshot `39ca829…`); **do not mirror/push** |
+| Vercel Production | project `xxxx` / `prj_2eRtFJHWRJPlM90z2CPT5kJA1XNg` read-only: `link.productionBranch = "dev"` against GitHub `Skyline-Gazer/ALNILAM` |
+| CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — untouched |
+| ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` — unchanged |
+
+### Product acceptance this round
+
+- **#124 / categories**: ArchivePanel `preScoped` still present; taxonomy unit 2/2, content-model 9/9, `archive-taxonomy` browser **14/14** (root + `/ALNILAM/`).
+- **UI matrix (LOCAL_BROWSER_PASS)**: native-shirone + navigation + pagefind + visual-baseline **36/36**; a11y + lightbox **72/72**.
+- **Tip dual-path compose**: artifact budgets + SEO CONTRACT OK both bases; provenance Core `2b7d18f…`, demo Site digest `23d159e4…`.
+- **Independent Core/Site**: external Test-Site `6c0246f…` digest `74fa5cd5…` immutable; `upgrade-check.mjs --old 7abc75b…` Site unchanged (Core outputs differ as expected).
+- **#74 lab**: tip mobile Lighthouse receipt `BASELINE_RECORDED` / negative `EXPECTED_RED_VERIFIED`; six-URL LCP medians ≤ 3301 ms, CLS ≤ ~0.0016. Desktop remount in flight. `FIELD_NOT_VERIFIED`; `SCREEN_READER_NOT_RUN`.
+- **#40 P4**: closed after tip revalidation; Project #17 → Done. Deployed-host remains #73.
+- **#81 / CNB PR #91**: head `87660db` hardens docs-links git preconditions + CNB-vs-GitHub authority wording; candidates green; trusted-consumer pending before merge.
+
+### Owner blockers (do not self-clear)
+
+- Mirror sync / production deploy while Vercel Production tracks GitHub `dev`.
+- Deployed-host E2E (#73).
+- Screen-reader manual (#74) and Field CrUX/RUM.
+- Owner subjective visual sign-off on #35; Gallery/Moments/Music remain backlog (#67–#69).
+
+### Next task
+
+1. Finish tip desktop Lighthouse; merge CNB PR #91 only after trusted-consumer success + residual review check.
+2. Keep #42 open while #73/#74/#81/#94 have unmet exit conditions.
+3. Do not develop #67/#68/#69/#88/#89/#83 ahead of Owner RC review.
+
+
 ## Live-state update — 2026-11-09 (current, supersedes 2026-11-08 below)
 
 Everything from "## Live-state update — 2026-11-08" downward is retained
