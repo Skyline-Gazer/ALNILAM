@@ -168,20 +168,24 @@ onMount(() => {
 			return;
 		}
 		target.focus();
+		// Announce the open state only once the panel is visible and focus is inside:
+		// consumers (including the shared browser contracts) treat aria-expanded as
+		// "the panel is ready", and a Tab in that frame used to escape the modal.
+		syncButtonAria(true);
 	};
 	// Replay taps recorded before this island subscribed, then own the state again.
 	const root = document.documentElement;
+	syncButtonAria(open);
 	if (Number(root.dataset.siteDrawerPending ?? 0) % 2 === 1) {
 		open = true;
 		tick().then(() => focusFirstItem());
 	}
 	delete root.dataset.siteDrawerPending;
-	syncButtonAria(open);
 	const onToggle = () => {
 		delete document.documentElement.dataset.siteDrawerPending;
 		open = !open;
-		syncButtonAria(open);
 		if (open) tick().then(() => focusFirstItem());
+		else syncButtonAria(false);
 	};
 	const closeDrawer = (restoreFocus = true) => {
 		open = false;
@@ -203,7 +207,13 @@ onMount(() => {
 		}
 		if (e.key !== "Tab") return;
 		const items = focusableItems();
-		if (!items.length) return;
+		if (!items.length) {
+			// The open frame can precede the panel's computed visibility; keep focus
+			// in the modal instead of letting Tab reach the page behind it.
+			e.preventDefault();
+			tick().then(() => focusFirstItem());
+			return;
+		}
 		const first = items[0];
 		const last = items[items.length - 1];
 		const active = document.activeElement;
