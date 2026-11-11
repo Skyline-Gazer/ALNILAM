@@ -247,6 +247,7 @@ let drawerEl: HTMLElement | undefined = $state();
 	<div class="site-drawer__scrim" aria-hidden="true" onclick={() => document.dispatchEvent(new CustomEvent("site-drawer:close"))}></div>
 	<aside
 		bind:this={drawerEl}
+		id="site-drawer-panel"
 		class="site-drawer__panel"
 		role="dialog"
 		aria-modal="true"

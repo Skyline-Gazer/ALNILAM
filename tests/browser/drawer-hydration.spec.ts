@@ -40,6 +40,9 @@ test(`drawer opens when the switch is tapped before hydration ${label}`, async (
 		await page.goto(`${origin}${ROUTE}`, { waitUntil: "domcontentloaded" });
 		const toggle = page.locator("#nav-drawer-switch");
 		await expect(toggle).toBeVisible();
+		// Server-rendered disclosure semantics exist before hydration.
+		await expect(toggle).toHaveAttribute("aria-expanded", "false");
+		await expect(toggle).toHaveAttribute("aria-controls", "site-drawer-panel");
 		// No hydration wait on purpose: this click must be replayed once the island mounts.
 		await toggle.click();
 		await expect(toggle).toHaveAttribute("aria-expanded", "true", { timeout: 8_000 });
