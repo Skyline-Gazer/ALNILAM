@@ -51,11 +51,14 @@ Verified LOCAL before landing: with fixtures 19/19 (`analytics-ga4` 8,
 | categories/ArchivePanel `preScoped` retained | taxonomy unit 2/2, content-model 9/9, `archive-taxonomy` 14/14 | LOCAL |
 | core `/` + `/ALNILAM/` regression | `shirone` / `native-shirone-base` / `pagefind` / `visual-baseline` 36/36; a11y + lightbox 72/72 | LOCAL |
 | dual-path compose + budgets | `compose.mjs` + `artifact-check.mjs` + `seo-check.mjs` OK for root and nested base | LOCAL |
-| independent Core/Site | Test-Site `6c0246f…` digest `74fa5cd5…` immutable; `upgrade-check.mjs --old 7abc75b…` Site unchanged | LOCAL |
+| independent Core/Site | dev-push CI at `e239835` re-proved pinned Test-Site `6c0246f…` (digest unchanged, root+nested compose/artifact/SEO, provenance) — now CI, not only local | CI |
+| Core upgrade/rollback | `upgrade-check.mjs --old 7abc75b` at `e239835`: Site digest `23d159e4…` unchanged, outputs differ as expected | LOCAL |
 | optional modules with fixtures | `analytics-ga4` + `adblock-recovery` + `consent` 19/19 after #105 fix | LOCAL |
-| #74 lab perf/a11y | tip mobile+desktop Lighthouse receipts `BASELINE_RECORDED`, negative `EXPECTED_RED_VERIFIED`, LCP medians ≤ 3303 ms | LAB |
+| #74 lab perf/a11y | `artifacts/lighthouse/{mobile,desktop}` (2026-11-11): 6 URLs × 3 runs, LCP medians 2727–3303 ms, CLS medians ≤ 0.0016, negative gate `EXPECTED_RED_VERIFIED` | LAB |
 | trusted gate | 163 passed / 5 skipped / `REPORT_INVALID` on #91, #104, #105 | TRUSTED (FAIL) |
-| deployed host / Field CrUX / screen reader | not executed | NOT_VERIFIED / NOT_RUN |
+| empty taxonomy | a config category with zero posts emits no route and no index entry (fixture compose at `e239835`) | LOCAL |
+| deployed host | `https://xxxx-beryl-theta.vercel.app/` serves `core.revision=39ca829…` (GitHub `dev` snapshot, 2026-11-07); `/ALNILAM/` → 404 | DEPLOYED (stale) |
+| Field CrUX / manual screen reader | not executed | NOT_VERIFIED / NOT_RUN |
 
 ### Owner blockers (do not self-clear)
 
