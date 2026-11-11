@@ -22,7 +22,7 @@ product acceptance / P6 convergence work.
 - **UI matrix (LOCAL_BROWSER_PASS)**: native-shirone + navigation + pagefind + visual-baseline **36/36**; a11y + lightbox **72/72**.
 - **Tip dual-path compose**: artifact budgets + SEO CONTRACT OK both bases; provenance Core `2b7d18f…`, demo Site digest `23d159e4…`.
 - **Independent Core/Site**: external Test-Site `6c0246f…` digest `74fa5cd5…` immutable; `upgrade-check.mjs --old 7abc75b…` Site unchanged (Core outputs differ as expected).
-- **#74 lab**: tip mobile Lighthouse receipt `BASELINE_RECORDED` / negative `EXPECTED_RED_VERIFIED`; six-URL LCP medians ≤ 3301 ms, CLS ≤ ~0.0016. Desktop remount in flight. `FIELD_NOT_VERIFIED`; `SCREEN_READER_NOT_RUN`.
+- **#74 lab**: tip mobile+desktop Lighthouse receipts `BASELINE_RECORDED` / negative `EXPECTED_RED_VERIFIED`; six-URL LCP medians ≤ 3303 ms, CLS ≤ ~0.0016 (desktop 0.0). `FIELD_NOT_VERIFIED`; `SCREEN_READER_NOT_RUN`.
 - **#40 P4**: closed after tip revalidation; Project #17 → Done. Deployed-host remains #73.
 - **#81 / CNB PR #91**: head `87660db` hardens docs-links git preconditions + CNB-vs-GitHub authority wording; candidates green; trusted-consumer pending before merge.
 
@@ -35,7 +35,7 @@ product acceptance / P6 convergence work.
 
 ### Next task
 
-1. Finish tip desktop Lighthouse; merge CNB PR #91 only after trusted-consumer success + residual review check.
+1. Merge CNB PR #91 only after trusted-consumer success + residual review check; then merge docs PR #104.
 2. Keep #42 open while #73/#74/#81/#94 have unmet exit conditions.
 3. Do not develop #67/#68/#69/#88/#89/#83 ahead of Owner RC review.
 
