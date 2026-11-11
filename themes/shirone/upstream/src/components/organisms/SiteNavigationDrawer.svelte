@@ -183,13 +183,37 @@ onMount(() => {
 		syncButtonAria(open);
 		if (open) tick().then(() => focusFirstItem());
 	};
+	const closeDrawer = () => {
+		open = false;
+		syncButtonAria(false);
+		document.getElementById("nav-drawer-switch")?.focus();
+	};
+	// The panel is aria-modal, so Tab must stay inside it while it is open.
+	const focusableItems = () => {
+		const panel = drawerEl;
+		if (!panel) return [] as HTMLElement[];
+		return [...panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+			.filter((item) => item.checkVisibility?.({ visibilityProperty: true }) ?? true);
+	};
 	const onKey = (e: KeyboardEvent) => {
-		if (e.key === "Escape" && open) {
-			open = false;
-			syncButtonAria(false);
-			document.getElementById("nav-drawer-switch")?.focus();
+		if (!open) return;
+		if (e.key === "Escape") {
+			closeDrawer();
+			return;
+		}
+		if (e.key !== "Tab") return;
+		const items = focusableItems();
+		if (!items.length) return;
+		const first = items[0];
+		const last = items[items.length - 1];
+		const active = document.activeElement;
+		const outside = !drawerEl?.contains(active);
+		if (e.shiftKey ? active === first || outside : active === last || outside) {
+			e.preventDefault();
+			(e.shiftKey ? last : first).focus();
 		}
 	};
+	const onClose = () => closeDrawer();
 	const desktopMedia = window.matchMedia("(min-width: 1024px)");
 	const onDesktopChange = (e: MediaQueryListEvent) => {
 		if (e.matches && open) {
@@ -198,12 +222,14 @@ onMount(() => {
 		}
 	};
 	document.addEventListener("site-drawer:toggle", onToggle);
+	document.addEventListener("site-drawer:close", onClose);
 	document.addEventListener("swup:content:replace", syncFromRoute);
 	document.addEventListener("swup:page:view", syncFromRoute);
 	window.addEventListener("keydown", onKey);
 	desktopMedia.addEventListener("change", onDesktopChange);
 	return () => {
 		document.removeEventListener("site-drawer:toggle", onToggle);
+		document.removeEventListener("site-drawer:close", onClose);
 		document.removeEventListener("swup:content:replace", syncFromRoute);
 		document.removeEventListener("swup:page:view", syncFromRoute);
 		window.removeEventListener("keydown", onKey);
@@ -218,7 +244,7 @@ let drawerEl: HTMLElement | undefined = $state();
 	class="site-drawer"
 	class:site-drawer--open={open}
 >
-	<div class="site-drawer__scrim" aria-hidden="true" onclick={() => (open = false)}></div>
+	<div class="site-drawer__scrim" aria-hidden="true" onclick={() => document.dispatchEvent(new CustomEvent("site-drawer:close"))}></div>
 	<aside
 		bind:this={drawerEl}
 		class="site-drawer__panel"
