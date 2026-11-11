@@ -455,6 +455,10 @@ function loadTopAppBar() {
 	const drawerBtn = document.getElementById("nav-drawer-switch");
 	if (drawerBtn) {
 		drawerBtn.onclick = () => {
+			// The drawer island subscribes only after it mounts. Record the tap so one
+			// that lands inside the hydration window is replayed, not dropped.
+			const root = document.documentElement;
+			root.dataset.siteDrawerPending = String(Number(root.dataset.siteDrawerPending ?? 0) + 1);
 			document.dispatchEvent(new CustomEvent("site-drawer:toggle"));
 		};
 	}

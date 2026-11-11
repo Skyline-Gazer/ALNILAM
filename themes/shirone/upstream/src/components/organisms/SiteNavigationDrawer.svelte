@@ -157,15 +157,31 @@ onMount(() => {
 			.getElementById("nav-drawer-switch")
 			?.setAttribute("aria-expanded", String(isOpen));
 	};
+	// The open class and its computed visibility land one frame after the state
+	// update, so focusing in `tick()` alone silently did nothing.
+	const focusFirstItem = (frames = 0) => {
+		const panel = drawerEl;
+		const target = panel?.querySelector<HTMLElement>("a, button");
+		if (!open || !panel || !target) return;
+		if (getComputedStyle(panel).visibility !== "visible") {
+			if (frames < 120) requestAnimationFrame(() => focusFirstItem(frames + 1));
+			return;
+		}
+		target.focus();
+	};
+	// Replay taps recorded before this island subscribed, then own the state again.
+	const root = document.documentElement;
+	if (Number(root.dataset.siteDrawerPending ?? 0) % 2 === 1) {
+		open = true;
+		tick().then(() => focusFirstItem());
+	}
+	delete root.dataset.siteDrawerPending;
 	syncButtonAria(open);
 	const onToggle = () => {
+		delete document.documentElement.dataset.siteDrawerPending;
 		open = !open;
 		syncButtonAria(open);
-		if (open) {
-			tick().then(() => {
-				drawerEl?.querySelector<HTMLElement>("a, button")?.focus();
-			});
-		}
+		if (open) tick().then(() => focusFirstItem());
 	};
 	const onKey = (e: KeyboardEvent) => {
 		if (e.key === "Escape" && open) {

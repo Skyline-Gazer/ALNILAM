@@ -1932,7 +1932,7 @@
   "modified": {
     "src/user/user-config.ts": "Read-only ALNILAM Site adapter; replaces upstream generated config mount.",
     "package.json": "Consumer compatibility metadata uses ALNILAM existing locked Astro7.4.2 / Svelte integration9.1.1 / MDX8.1.1; upstream peer checks remain active. See existing #79 record; native integration verification pending.",
-    "src/layouts/Layout.astro": "Retain ALNILAM canonical and keyboard skip-link contracts in actual upstream layout. Default appearance from validated Site; omit unimplemented Atom feed link; consolidate Pagefind loader, WidgetLayout custom element and pagination jump handler into the Layout runtime script. Configure Pagefind result URLs with Astro's base. Initialize shared Markdown and Expressive Code runtimes for navigation from pages without Markdown. Emit layout variables once and omit disabled texture initialization to reduce per-page HTML.",
+    "src/layouts/Layout.astro": "Retain ALNILAM canonical and keyboard skip-link contracts in actual upstream layout. Default appearance from validated Site; omit unimplemented Atom feed link; consolidate Pagefind loader, WidgetLayout custom element and pagination jump handler into the Layout runtime script. Configure Pagefind result URLs with Astro's base. Initialize shared Markdown and Expressive Code runtimes for navigation from pages without Markdown. Emit layout variables once and omit disabled texture initialization to reduce per-page HTML. Record a pre-hydration drawer tap on documentElement so the island can replay it.",
     "src/components/content/Markdown.astro": "Retain a separate Markdown runtime binding and share the generated Expressive Code client modules with Layout to preserve code block behavior within script budgets.",
     "src/env.d.ts": "Declare the adapter-provided Expressive Code runtime virtual module used by Layout and Markdown.",
     "src/components/organisms/PostCard.astro": "Retain 640x360 layout dimensions for pass-through Site covers, with metadata dimensions overriding when available.",
@@ -1968,7 +1968,7 @@
     "src/components/organisms/SideBar.astro": "Render only widgets visible on the current page in static MPA mode and omit unused Swup polling script.",
     "src/components/organisms/FloatingControls.astro": "Render TOC floating panel/button only on pages where TOC is visible and consolidate FAB init into Layout.",
     "src/components/organisms/PostPage.astro": "Consolidate post-list masonry initialization into Layout runtime script.",
-    "src/components/organisms/SiteNavigationDrawer.svelte": "Sync aria-expanded on #nav-drawer-switch, restore focus on Escape, and close mobile drawer on desktop viewport resize.",
+    "src/components/organisms/SiteNavigationDrawer.svelte": "Sync aria-expanded on #nav-drawer-switch, replay a drawer tap recorded before the island mounted, restore focus on Escape, and close mobile drawer on desktop viewport resize. Focus the first drawer item only once the open class makes the panel visible.",
     "src/utils/fab-controller.ts": "Respect prefers-reduced-motion when scrolling to TOC anchors and keep mobile FAB controls visible across TOC anchor jumps.",
     "src/components/molecules/SidebarTOC.astro": "Respect prefers-reduced-motion when scrolling to TOC anchors.",
     "src/styles/markdown/generic.styl": "Ensure unbroken prose URLs wrap and wide code/table blocks scroll horizontally within .custom-md.",

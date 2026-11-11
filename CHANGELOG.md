@@ -23,6 +23,7 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 
 ### Fixed
 - Search pages retain their route when switching between available languages, including under nested base paths.
+- **Mobile navigation drawer (Issue #35):** a tap on the menu button before the drawer island hydrates is replayed instead of dropped, so the first tap always opens the drawer.
 - Archive pages serialize only the post fields needed for display and filtering, reducing HTML size while retaining archive interactions.
 - Markdown links retain their text while unsafe URL schemes are removed.
 - Markdown feature styles load as page-scoped assets, reducing HTML size for articles with code blocks and diagrams while retaining navigation cleanup.
