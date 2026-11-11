@@ -10,7 +10,7 @@ product acceptance / P6 convergence work.
 
 | Ref | Value |
 | --- | --- |
-| CNB `dev` | `e2398355ff4fd88f1eb748f05841868c037a4140` (tree `27f5a757…`), fast-forward from the `2b7d18f…` baseline. Diff vs baseline is **tests only** (`tests/browser/adblock-recovery.spec.ts`, `tests/browser/analytics-ga4.spec.ts`), so product output is unchanged |
+| CNB `dev` | `3da170e…` (tree `37c262ea…`) at the time of this reading. `2b7d18f… → e239835…` was the authorized test-only FF (#105); `e239835… → 3da170e…` is the #91 docs/CI merge (FF, trusted `cnb-sgb-1k749ovs5`, 36m29s). This HANDOFF itself lands as docs-only CNB PR #104; merging it advances the tip by that documentation commit only. Product code is unchanged from `2b7d18f…` through the #91 merge |
 | GitHub `dev` | lags CNB (handoff snapshot `39ca829…`); **do not mirror/push** |
 | Vercel Production | project name is literally `xxxx` (not a placeholder; `vercel projects list --json` returns `{"name":"xxxx","id":"prj_2eRtFJHWRJPlM90z2CPT5kJA1XNg"}`, and `GET /v9/projects/prj_2eRtFJHWRJPlM90z2CPT5kJA1XNg` returns `link.repo=ALNILAM`, `link.org=Skyline-Gazer`, `link.productionBranch="dev"`; read-only, 2026-11-11) |
 | CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — untouched |
@@ -49,13 +49,13 @@ Verified LOCAL before landing: with fixtures 19/19 (`analytics-ga4` 8,
 | Claim | Evidence | Class |
 | --- | --- | --- |
 | categories/ArchivePanel `preScoped` retained | taxonomy unit 2/2, content-model 9/9, `archive-taxonomy` 14/14 | LOCAL |
-| core `/` + `/ALNILAM/` regression | `shirone` / `native-shirone-base` / `pagefind` / `visual-baseline` 36/36; a11y + lightbox 72/72 | LOCAL |
+| core `/` + `/ALNILAM/` regression | full local suite at `e239835`: **163 passed, 1 skipped (164 tests)**; `archive-taxonomy`+`native-shirone-base`+`a11y` 45/45 | LOCAL |
 | dual-path compose + budgets | `compose.mjs` + `artifact-check.mjs` + `seo-check.mjs` OK for root and nested base | LOCAL |
 | independent Core/Site | dev-push CI at `e239835` re-proved pinned Test-Site `6c0246f…` (digest unchanged, root+nested compose/artifact/SEO, provenance) — now CI, not only local | CI |
 | Core upgrade/rollback | `upgrade-check.mjs --old 7abc75b` at `e239835`: Site digest `23d159e4…` unchanged, outputs differ as expected | LOCAL |
 | optional modules with fixtures | `analytics-ga4` + `adblock-recovery` + `consent` 19/19 after #105 fix | LOCAL |
-| #74 lab perf/a11y | `artifacts/lighthouse/{mobile,desktop}` (2026-11-11): 6 URLs × 3 runs, LCP medians 2727–3303 ms, CLS medians ≤ 0.0016, negative gate `EXPECTED_RED_VERIFIED` | LAB |
-| trusted gate | 163 passed / 5 skipped / `REPORT_INVALID` on #91, #104, #105 | TRUSTED (FAIL) |
+| #74 lab perf/a11y | local, gitignored `artifacts/lighthouse/{mobile,desktop}` (2026-11-11): 6 URLs × 3 runs, LCP medians 2727–3303 ms, CLS medians ≤ 0.0016; negative gate `EXPECTED_RED_VERIFIED` | LAB (local) |
+| trusted gate | after the #105 fix: #91 PASS ([cnb-sgb-1k749ovs5](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-sgb-1k749ovs5#001), 36m29s); before it, `REPORT_INVALID` (163 passed / 5 skipped) on #91, #104, #105 | TRUSTED |
 | empty taxonomy | a config category with zero posts emits no route and no index entry (fixture compose at `e239835`) | LOCAL |
 | deployed host | `https://xxxx-beryl-theta.vercel.app/` serves `core.revision=39ca829…` (GitHub `dev` snapshot, 2026-11-07); `/ALNILAM/` → 404 | DEPLOYED (stale) |
 | Field CrUX / manual screen reader | not executed | NOT_VERIFIED / NOT_RUN |
@@ -72,14 +72,22 @@ Verified LOCAL before landing: with fixtures 19/19 (`analytics-ga4` 8,
 | PR | Head | Scope | Candidates | Trusted |
 | --- | --- | --- | --- | --- |
 | [#105](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/105) | `e239835` | GA4 `page.evaluate` + adblock skip-budget fix | green (`cnb-ujf-1k745dd7k#002`) | landed by non-force FF (Owner-authorized) |
-| [#91](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/91) | `5d44d2f` | #81 docs-links (rebased on `e239835`) | green (`docs-links` candidate) | trusted re-run against the fixed target |
+| [#91](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/91) | `3da170e` | #81 docs-links (rebased on `e239835`) | green (`cnb-ln9-1k749ovs4#002/#003/#004`) | PASS; merged `3da170eefba92d8b94ac780bebcba756697b7336` |
+
+### Known flake (test-side, tracked)
+
+`native-shirone-base.spec.ts` `/ALNILAM 390` failed once in the first trusted run after the rebase (receipt kept in the PR checks; `.site-drawer__nav` link 'Categories' not found) and passed on the retried run `cnb-sgb-1k749ovs5`.
+(`.site-drawer__nav` link 'Categories' not found) and passed on retry `cnb-sgb-1k749ovs5`.
+Root cause: `#nav-drawer-switch` dispatches `site-drawer:toggle` from an inline handler, while only the
+hydrated island listens; a click inside the hydration window loses the event. Local evidence:
+`--repeat-each=2` on that spec is 20/20 at `e239835`, and the full local suite is 163 passed / 1 skipped.
+No product code change was made for this.
 
 ### Next task
 
-1. Resolve the trusted-gate deadlock (Owner decision), then merge #105 → #91 → #104.
-2. Re-run trusted on each PR after the target fix lands; do not bypass a real failure.
-3. Keep #42 open while #73/#74/#81/#94 have unmet exit conditions.
-4. Do not develop #67/#68/#69/#88/#89/#83 ahead of Owner RC review.
+1. Owner: decide Vercel `productionBranch` / mirror-sync / deployed-host E2E (#73); run the manual screen-reader pass (#74).
+2. Keep #42 open while #73/#74/#81/#94 have unmet exit conditions.
+3. Do not develop #67/#68/#69/#88/#89/#83 ahead of Owner RC review.
 
 ## Live-state update — 2026-11-09 (current, supersedes 2026-11-08 below)
 
