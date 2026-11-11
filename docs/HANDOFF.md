@@ -10,13 +10,13 @@ product acceptance / P6 convergence work.
 
 | Ref | Value |
 | --- | --- |
-| CNB `dev` | `2b7d18f980f83ff591f013fb760e5b0342b1f872` — handoff baseline; **still the live tip**, no merges landed this round |
+| CNB `dev` | `e2398355ff4fd88f1eb748f05841868c037a4140` (tree `27f5a757…`), fast-forward from the `2b7d18f…` baseline. Diff vs baseline is **tests only** (`tests/browser/adblock-recovery.spec.ts`, `tests/browser/analytics-ga4.spec.ts`), so product output is unchanged |
 | GitHub `dev` | lags CNB (handoff snapshot `39ca829…`); **do not mirror/push** |
 | Vercel Production | project name is literally `xxxx` (not a placeholder; `vercel projects list --json` returns `{"name":"xxxx","id":"prj_2eRtFJHWRJPlM90z2CPT5kJA1XNg"}`, and `GET /v9/projects/prj_2eRtFJHWRJPlM90z2CPT5kJA1XNg` returns `link.repo=ALNILAM`, `link.org=Skyline-Gazer`, `link.productionBranch="dev"`; read-only, 2026-11-11) |
 | CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — untouched |
 | ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` — unchanged |
 
-### Blocking defect: target-owned skip budget deadlocks every PR
+### Resolved: target-owned skip budget deadlocked every PR (fixed by FF at `e239835`)
 
 `scripts/ci/cnb-trusted-gate.mjs` copies `tests/browser` from the **target**
 checkout (`prepareTrustedTests`), so candidate test edits never reach the trusted
@@ -34,12 +34,15 @@ PR #91 (same diagnostic on its own trusted run)
 and PR #104 ([`cnb-r4o-1k7456n34`#001](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-r4o-1k7456n34#001))
 fail identically; all three have green candidates.
 
-Minimal fix (CNB PR #105, head `e239835`): register the fixture cases inside
+Resolution: CNB PR #105 registered the fixture cases inside
 `if (process.env.ADS_FIXTURE === "1")` / `if (process.env.CONSENT_FIXTURE === "1")`
-instead of `test.skip`, matching the existing adsense/GA4 pattern. Verified
-LOCAL on 2026-11-11: with fixtures 19/19 (`analytics-ga4` 8, `adblock-recovery` 5,
-`consent` 6), without fixtures 1 pass + 1 skip. Landing it needs dev to receive
-that test-only commit outside the trusted gate (Owner decision, see below).
+instead of `test.skip`, matching the existing adsense/GA4 pattern. Because the gate
+executes target-owned tests, the only landing path was a non-force fast-forward of
+the test-only commits onto `dev`; the Owner authorized that integration on
+2026-11-11 and it was performed as `2b7d18f… → e239835…` (no force, no deletion).
+Verified LOCAL before landing: with fixtures 19/19 (`analytics-ga4` 8,
+`adblock-recovery` 5, `consent` 6); without fixtures 1 pass + 1 skip
+(`cnb-negative`). Post-landing PR runs are the verification of record.
 
 ### Product acceptance this round (verification classes in parentheses)
 
@@ -56,22 +59,17 @@ that test-only commit outside the trusted gate (Owner decision, see below).
 
 ### Owner blockers (do not self-clear)
 
-- **Trusted-gate deadlock**: dev's target-owned browser suite has 5 skips; the
-  fix is staged on CNB PR #105 but cannot pass that same gate. Needs one Owner
-  decision: authorize a single non-force test-only integration to `dev`, or
-  authorize the audit budget change. Nothing else can merge until then.
 - Mirror sync / production deploy while Vercel Production tracks GitHub `dev`
   (`productionBranch="dev"`, verified above).
 - Deployed-host E2E (#73); screen-reader manual and Field CrUX/RUM (#74);
   Owner subjective visual sign-off (#35); #94 pilot exit criteria.
 
-### Open PRs (none merged)
+### PR state
 
 | PR | Head | Scope | Candidates | Trusted |
 | --- | --- | --- | --- | --- |
-| [#91](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/91) | `87660db` | #81 docs-links | green (`cnb-s90-1k743o3hd#002`) | FAIL (skip budget) |
-| [#104](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/104) | `9882540` | this HANDOFF tip | green (`cnb-3vh-1k7456n33#002`) | FAIL (skip budget) |
-| [#105](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/105) | `e239835` | GA4 `page.evaluate` + adblock skip-budget fix | green (`cnb-ujf-1k745dd7k#002`) | FAIL (skip budget; target-owned) |
+| [#105](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/105) | `e239835` | GA4 `page.evaluate` + adblock skip-budget fix | green (`cnb-ujf-1k745dd7k#002`) | landed by non-force FF (Owner-authorized) |
+| [#91](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/91) | `5d44d2f` | #81 docs-links (rebased on `e239835`) | green (`docs-links` candidate) | trusted re-run against the fixed target |
 
 ### Next task
 
