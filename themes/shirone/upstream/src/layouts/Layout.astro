@@ -451,6 +451,14 @@ function closeTopAppBarMenus() {
 	});
 }
 
+function syncPanelExpanded(panelId: string) {
+	const panel = document.getElementById(panelId);
+	const button = document.querySelector<HTMLElement>(`[aria-controls="${panelId}"]`);
+	if (panel && button) {
+		button.setAttribute("aria-expanded", String(!panel.classList.contains("float-panel-closed")));
+	}
+}
+
 function loadTopAppBar() {
 	const drawerBtn = document.getElementById("nav-drawer-switch");
 	if (drawerBtn) {
@@ -469,6 +477,7 @@ function loadTopAppBar() {
 			const settingPanel = document.getElementById("display-setting");
 			if (settingPanel) {
 				settingPanel.classList.toggle("float-panel-closed");
+				syncPanelExpanded("display-setting");
 			}
 		};
 	}
@@ -527,7 +536,10 @@ function setClickOutsideToClose(panel: string, ignores: string[]) {
 			const element = document.getElementById(ignore);
 			if (element === target || element?.contains(target)) return;
 		}
-		if (panelDom) panelDom.classList.add('float-panel-closed');
+		if (panelDom) {
+			panelDom.classList.add('float-panel-closed');
+			syncPanelExpanded(panel);
+		}
 	});
 }
 setClickOutsideToClose('display-setting', ['display-setting', 'display-settings-switch']);

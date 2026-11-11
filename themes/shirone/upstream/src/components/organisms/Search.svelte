@@ -45,26 +45,50 @@ const fakeResult: SearchResult[] = [
 	},
 ];
 
+let panelOpen = false;
+const syncPanelOpen = (panel = document.getElementById("search-panel")): void => {
+	panelOpen = Boolean(panel && !panel.classList.contains("float-panel-closed"));
+};
+
+// Visibility inherits a frame after the class change, so a synchronous focus()
+// on the freshly opened panel is ignored.
+const focusPanelInput = (frames = 0): void => {
+	const panel = document.getElementById("search-panel");
+	const input = panel?.querySelector<HTMLInputElement>("input");
+	if (!panelOpen || !input) return;
+	if (input.checkVisibility?.({ visibilityProperty: true }) === false) {
+		if (frames < 60) requestAnimationFrame(() => focusPanelInput(frames + 1));
+		return;
+	}
+	input.focus();
+};
+
 const togglePanel = () => {
 	const panel = document.getElementById("search-panel");
 	panel?.classList.toggle("float-panel-closed");
-	if (panel && !panel.classList.contains("float-panel-closed")) {
+	syncPanelOpen(panel);
+	if (panel && panelOpen) {
 		void (
 			window as unknown as { __loadPagefind?: () => Promise<unknown> }
 		).__loadPagefind?.();
-		panel.querySelector<HTMLInputElement>("input")?.focus();
+		requestAnimationFrame(() => focusPanelInput());
 	}
 };
 
 const setPanelVisibility = (show: boolean, isDesktop: boolean): void => {
 	const panel = document.getElementById("search-panel");
-	if (!panel || !isDesktop) return;
+	if (!panel) return;
+	if (!isDesktop) {
+		syncPanelOpen(panel);
+		return;
+	}
 
 	if (show) {
 		panel.classList.remove("float-panel-closed");
 	} else {
 		panel.classList.add("float-panel-closed");
 	}
+	syncPanelOpen(panel);
 };
 
 const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
@@ -150,6 +174,14 @@ onMount(() => {
 		document.getElementById(trigger)?.focus();
 	};
 	document.addEventListener("pagefindready", initializeSearch);
+	// Outside-click closing happens in the Layout runtime; observe the class so the
+	// toggle's aria-expanded never goes stale.
+	const panelEl = document.getElementById("search-panel");
+	const panelObserver = panelEl
+		? new MutationObserver(() => syncPanelOpen(panelEl))
+		: undefined;
+	panelObserver?.observe(panelEl as HTMLElement, { attributes: true, attributeFilter: ["class"] });
+	syncPanelOpen(panelEl);
 	document.addEventListener("pagefindloaderror", loadError);
 	document.addEventListener("keydown", escape);
 	initializeSearch();
@@ -160,6 +192,7 @@ onMount(() => {
 		document.removeEventListener("pagefindready", initializeSearch);
 		document.removeEventListener("pagefindloaderror", loadError);
 		document.removeEventListener("keydown", escape);
+		panelObserver?.disconnect();
 	};
 });
 
@@ -193,6 +226,8 @@ $: if (initialized) {
     id="search-switch"
     size="small"
     shape="round"
+    ariaExpanded={panelOpen}
+    ariaControls="search-panel"
     onclick={togglePanel}
     class="lg:!hidden !w-10 !h-10 !text-[1.25rem]"
 />
