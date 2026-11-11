@@ -1,10 +1,79 @@
 # ALNILAM — Current Agent Handoff
 
-## Live-state update — 2026-11-11 (current, supersedes 2026-11-09 below)
+## Live-state update — 2026-11-11 · product development round (current tip)
+
+Everything from "## Live-state update — 2026-11-11 · RC acceptance" downward is
+retained historical evidence. This section is the authoritative tip for the
+merged UX/accessibility round (#106–#112) and the current `dev` commit.
+
+### Git / remotes (verified live 2026-11-11)
+
+| Ref | Value |
+| --- | --- |
+| CNB `dev` | `6b55622040023e11d0e6983b3f6df8ed35b2dfb9` (tree `a53d8146…`) — fast-forward from #112. Round start was `3e061315…`; no force pushes or deletions were used. This HANDOFF lands as docs-only PR #109, which advances the tip by that documentation commit only |
+| Round commits | #106 `bbe06230…` → #107 `756bd09a…` → #108 `449d2d18…` → #110 `699b7d7a…` → #111 `18989c03…` → #112 `6b556220…`; each merged by fast-forward |
+| GitHub `dev` | lags CNB (handoff snapshot `39ca829…`); **do not mirror/push** |
+| Vercel Production | project name is literally `xxxx` (confirmed actual name; project id `prj_2eRtFJHWRJPlM90z2CPT5kJA1XNg`), `link.productionBranch="dev"`, repo `Skyline-Gazer/ALNILAM` — read-only |
+| CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — untouched |
+| ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` — unchanged |
+
+### Merged this round (user-visible effects)
+
+| PR | Effect | Trusted-consumer |
+| --- | --- | --- |
+| [#106](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/106) | A menu tap that lands before the drawer island hydrates is replayed, so the first tap always opens the drawer; opening moves focus to the first drawer item | success 32m03s ([cnb-vi1-1k74ghbbp](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-vi1-1k74ghbbp#001)) |
+| [#107](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/107) | The open drawer behaves as a modal: Tab/Shift+Tab stay inside the panel, Escape or a press outside closes it and returns focus to the menu button, and `aria-expanded`/`aria-controls` render before hydration | success 36m29s ([cnb-boh-1k74iduc1](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-boh-1k74iduc1#001)) |
+| [#108](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/108) | Menu, display-settings, search and theme-switch accessible names follow the page language in all ten dictionaries, including client-side language switches; a press anywhere outside the drawer panel dismisses it | success 28m17s ([cnb-r6e-1k74n8cq6](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-r6e-1k74n8cq6#001)) |
+| [#110](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/110) | `aria-expanded` flips only after the drawer is visible and focus is inside; Tab in the opening frame can no longer escape to the page | success 26m ([cnb-eu2-1k758t7ai](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-eu2-1k758t7ai#001)) |
+| [#111](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/111) | Closed search/display-settings panels leave the accessibility tree and tab order, and their toggles expose `aria-expanded`/`aria-controls` (kept correct after Escape or an outside click) | success 27m ([cnb-bci-1k75al3q5](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-bci-1k75al3q5#001)) |
+| [#112](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/112) | The header and page content are `inert` while the modal drawer is open, so assistive technology and scripts cannot reach the obscured page | success 36m ([cnb-4j5-1k75c9kb7](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-4j5-1k75c9kb7#001)) |
+
+### Verification
+
+- **Independent Site**: the `dev` push pipeline succeeded at all three tips (`bbe0623…`, `756bd09…`, `449d2d1…`) against the pinned Test-Site `6c0246f31cf6af04167c9ec7d09237731167c38d`, root and `/ALNILAM/`; compose, artifact budgets, SEO and provenance passed and the Site digest stayed `23d159e4…`.
+- **Full browser suite** at the final tip `6b556220…` (LOCAL): **185 passed, 1 skipped (186 tests)**.
+- **Remaining skip**: `tests/browser/cnb-negative.spec.ts` — `intentional browser failure probe`. It is skipped unless `CNB_BROWSER_FORCE_FAILURE=1`, which the separate negative check uses to prove the browser gate fails closed.
+- **`pnpm check`**: 0 errors / 0 warnings / 0 hints on every head of this round.
+- **New regression specs**: `drawer-hydration`, `drawer-focus-trap`, `nav-labels`, `panel-disclosure`, `drawer-background` — each failed on its pre-fix commit and passes on the merged tip (root and `/ALNILAM/`).
+
+### Historical scrim-test failure and resolution
+
+PR #108's first trusted run (`cnb-nc7-1k74lcg69`) failed the two
+`drawer-focus-trap` scrim cases and timed out once in
+`navigation-lifecycle /ALNILAM 390`. Cause: on the runner the drawer's open
+class lands one frame after `aria-expanded`, so the click at the scrim
+coordinates hit a surface that was not yet hit-testable. Resolution (in the
+same PR): the drawer now dismisses on any pointer-down outside the panel and
+restores focus on the following click, because mousedown's default action
+would otherwise steal it. Verified locally by removing the open class before
+the press. The merged run `cnb-r6e-1k74n8cq6` is green.
+
+The same run also exposed an ordering race that surfaced later on the
+docs-only PR #109: `aria-expanded` was announced one frame before the panel
+was visible and focused, so a Tab in that frame left the modal. #110 sets the
+attribute inside the visibility-gated focus step and keeps Tab inside while
+no focusable item is visible yet; `drawer-focus-trap` is 12/12 with
+`--repeat-each=3` and the related regression set is 32/32 at that tip.
+
+
+### Status and tracks
+
+- **#35** In Progress: the three engineering defects are fixed and evidenced; **Owner subjective visual acceptance is still outstanding** and is not claimed here.
+- **#42 / #73 / #74 / #81 / #94** unchanged on the RC/P6 track: deployed host still serves the stale mirror and 404s the nested base (#73); Field CrUX and manual screen reader not run (#74); ADR inventory and named doc owners incomplete (#81); CNB browser pilot exit criteria open (#94).
+- **Engineering development** continues on CNB `dev` through ordinary Issue-linked PRs.
+- **Owner release** is separate: mirror sync, production deploy, Vercel branch policy, tags and visual sign-off remain Owner-only.
+
+### Next task
+
+1. Continue targeted #35 product investigation (mobile navigation and modal behaviour, i18n, keyboard, search interaction, reduced motion).
+2. Keep #67–#69, #83, #88 and #89 deferred until their authorization conditions change.
+
+## Live-state update — 2026-11-11 · RC acceptance (superseded by the development round above)
 
 Everything from "## Live-state update — 2026-11-09" downward is retained
-historical evidence. This section is the authoritative tip for vNext RC
-product acceptance / P6 convergence work.
+historical evidence. This section records the RC acceptance state at
+`3da170e…` before the #106–#108 UX round; use the section above for the
+current tip.
 
 ### Git / remotes (verified live 2026-11-11, re-read 2026-11-11T02:0x UTC)
 
