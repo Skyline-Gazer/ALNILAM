@@ -25,6 +25,7 @@ product acceptance / P6 convergence work.
 - **#74 lab**: tip mobile+desktop Lighthouse receipts `BASELINE_RECORDED` / negative `EXPECTED_RED_VERIFIED`; six-URL LCP medians ≤ 3303 ms, CLS ≤ ~0.0016 (desktop 0.0). `FIELD_NOT_VERIFIED`; `SCREEN_READER_NOT_RUN`.
 - **#40 P4**: closed after tip revalidation; Project #17 → Done. Deployed-host remains #73.
 - **#81 / CNB PR #91**: head `87660db` hardens docs-links git preconditions + CNB-vs-GitHub authority wording; candidates green; trusted-consumer pending before merge.
+- **GA4 fixture fix / CNB PR #105**: `pageViewEntries` no longer closes over a Node helper inside `page.evaluate`; local GA4 suite 8/8.
 
 ### Owner blockers (do not self-clear)
 
