@@ -10,6 +10,8 @@ export const en: Translation = {
 	[Key.archiveGroupCategory]: "By Category",
 	[Key.archiveGroupTag]: "By Tag",
 	[Key.search]: "Search",
+	[Key.menu]: "Menu",
+	[Key.displaySettings]: "Display settings",
 	[Key.clear]: "Clear",
 
 	[Key.friends]: "Friends",

@@ -45,8 +45,9 @@ export function getTranslation(lang: string): Translation {
 	return map[lang.toLowerCase()] || defaultTranslation;
 }
 
-export function i18n(key: I18nKey): string {
-	const lang = (siteConfig.lang || "en").toLowerCase();
+/** Translate for an explicit page locale, keeping Site i18n overrides. */
+export function i18nForLocale(locale: string, key: I18nKey): string {
+	const lang = (locale || "en").toLowerCase().replaceAll("-", "_");
 
 	// 1. 查找用户自定义 i18n 覆盖域（支持原大小写及小写匹配，如 zh_CN / zh_cn）
 	if (i18nConfig && typeof i18nConfig === "object") {
@@ -64,4 +65,8 @@ export function i18n(key: I18nKey): string {
 
 	// 2. 回退到内置 10 语言词典
 	return getTranslation(lang)[key];
+}
+
+export function i18n(key: I18nKey): string {
+	return i18nForLocale(siteConfig.lang || "en", key);
 }

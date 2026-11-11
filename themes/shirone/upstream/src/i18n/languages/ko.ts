@@ -10,6 +10,8 @@ export const ko: Translation = {
 	[Key.archiveGroupCategory]: "분류별",
 	[Key.archiveGroupTag]: "태그별",
 	[Key.search]: "검색",
+	[Key.menu]: "메뉴",
+	[Key.displaySettings]: "표시 설정",
 	[Key.clear]: "지우기",
 
 	[Key.friends]: "친구",

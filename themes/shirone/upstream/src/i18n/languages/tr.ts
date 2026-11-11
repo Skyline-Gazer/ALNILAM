@@ -10,6 +10,8 @@ export const tr: Translation = {
 	[Key.archiveGroupCategory]: "Kategoriye göre",
 	[Key.archiveGroupTag]: "Etikete göre",
 	[Key.search]: "Ara",
+	[Key.menu]: "Menü",
+	[Key.displaySettings]: "Görünüm ayarları",
 	[Key.clear]: "Temizle",
 
 	[Key.friends]: "Arkadaşlar",

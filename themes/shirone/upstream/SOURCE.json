@@ -1946,7 +1946,7 @@
     "src/components/atoms/blog/PagePagination.astro": "Preserve rel=prev/next pagination semantics on both native desktop/mobile controls and consolidate jump handler into Layout runtime script.",
     "src/components/molecules/WidgetLayout.astro": "Consolidate widget-layout custom element registration into Layout runtime script.",
     "src/components/molecules/SearchBar.svelte": "Semantic keyboard search trigger, Escape/focus restoration, cancel focus/blur timers on unmount.",
-    "src/components/organisms/Search.svelte": "Preserve request ordering, Escape/focus restoration and remove listeners on unmount using native Search/Panel.",
+    "src/components/organisms/Search.svelte": "Preserve request ordering, Escape/focus restoration and remove listeners on unmount using native Search/Panel. Resolve search strings from the current page locale (documentElement.lang, kept in sync on Swup views).",
     "src/components/organisms/Footer.astro": "Link to existing Core rss.xml/sitemap.xml; omit unimplemented Atom route.",
     "src/components/organisms/Profile.astro": "Use configured Site name for avatar fallback; disabled About module links home.",
     "src/components/organisms/CategoryBar.astro": "ALNILAM addition: hide the category bar on category/tag detail routes using the base-stripped root-relative path; the upstream startsWith('/categories') check never matched under a nested base such as /ALNILAM/ (#124).",
@@ -1968,7 +1968,7 @@
     "src/components/organisms/SideBar.astro": "Render only widgets visible on the current page in static MPA mode and omit unused Swup polling script.",
     "src/components/organisms/FloatingControls.astro": "Render TOC floating panel/button only on pages where TOC is visible and consolidate FAB init into Layout.",
     "src/components/organisms/PostPage.astro": "Consolidate post-list masonry initialization into Layout runtime script.",
-    "src/components/organisms/SiteNavigationDrawer.svelte": "Sync aria-expanded on #nav-drawer-switch, replay a drawer tap recorded before the island mounted, trap Tab focus inside the aria-modal panel while open, restore focus on scrim/Escape dismissal, and close mobile drawer on desktop viewport resize. Focus the first drawer item only once the open class makes the panel visible.",
+    "src/components/organisms/SiteNavigationDrawer.svelte": "Sync aria-expanded on #nav-drawer-switch, replay a drawer tap recorded before the island mounted, trap Tab focus inside the aria-modal panel while open, dismiss on outside press or Escape with focus restored, and close mobile drawer on desktop viewport resize. Focus the first drawer item only once the open class makes the panel visible.",
     "src/utils/fab-controller.ts": "Respect prefers-reduced-motion when scrolling to TOC anchors and keep mobile FAB controls visible across TOC anchor jumps.",
     "src/components/molecules/SidebarTOC.astro": "Respect prefers-reduced-motion when scrolling to TOC anchors.",
     "src/styles/markdown/generic.styl": "Ensure unbroken prose URLs wrap and wide code/table blocks scroll horizontally within .custom-md.",
@@ -1981,6 +1981,9 @@
     "src/pages/[...permalink].astro": "Emit Markdown feature stylesheets as Swup-optional links; omit upstream CommentSection mount so disabled Sites emit no Twikoo/Waline/Giscus provider chunks.",
     "src/pages/about.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
     "src/pages/series/[slug]/index.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
-    "src/utils/fancybox-config.ts": "ALNILAM: drop @fancyapps/ui FancyboxOptions import; keep FANCYBOX_SELECTORS only; PhotoSwipe defaults live in fancybox-handler LIGHTBOX_DEFAULTS."
+    "src/utils/fancybox-config.ts": "ALNILAM: drop @fancyapps/ui FancyboxOptions import; keep FANCYBOX_SELECTORS only; PhotoSwipe defaults live in fancybox-handler LIGHTBOX_DEFAULTS.",
+    "src/components/organisms/LightDarkSwitch.svelte": "Resolve light/dark/system labels, the toggle aria-label and the menu label from the current page locale; keep the stored theme and system-preference behaviour.",
+    "src/i18n/translation.ts": "Add i18nForLocale(locale, key) so islands can translate for the current page while still honouring Site i18n overrides; i18n(key) delegates to the site default.",
+    "src/i18n/i18nKey.ts": "Add menu and displaySettings keys used by the header/drawer accessible names."
   }
 }

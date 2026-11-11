@@ -10,6 +10,8 @@ export const th: Translation = {
 	[Key.archiveGroupCategory]: "ตามหมวดหมู่",
 	[Key.archiveGroupTag]: "ตามแท็ก",
 	[Key.search]: "ค้นหา",
+	[Key.menu]: "เมนู",
+	[Key.displaySettings]: "การตั้งค่าการแสดงผล",
 	[Key.clear]: "ล้าง",
 
 	[Key.friends]: "เพื่อน",

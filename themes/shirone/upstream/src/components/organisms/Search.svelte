@@ -3,7 +3,7 @@ import IconButton from "@components/atoms/action/IconButton.svelte";
 import SearchPanel from "@components/atoms/blog/SearchPanel.svelte";
 import SearchBar from "@components/molecules/SearchBar.svelte";
 import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
+import { i18nForLocale } from "@i18n/translation";
 import Icon from "@iconify/svelte";
 import { url } from "@utils/url-utils.ts";
 import { onMount } from "svelte";
@@ -16,6 +16,10 @@ let isSearching = false;
 let pagefindLoaded = false;
 let initialized = false;
 let requestGeneration = 0;
+
+// client:only island: follow the page language, including after Swup navigation.
+let pageLocale = "en";
+$: t = (key: I18nKey) => i18nForLocale(pageLocale, key);
 
 $: panelResults = result.map((r) => ({
 	url: r.url,
@@ -119,6 +123,11 @@ const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
 };
 
 onMount(() => {
+	const syncLocale = () => {
+		pageLocale = document.documentElement.lang || pageLocale;
+	};
+	syncLocale();
+	document.addEventListener("swup:page:view", syncLocale);
 	const initializeSearch = () => {
 		initialized = true;
 		pagefindLoaded =
@@ -147,6 +156,7 @@ onMount(() => {
 	return () => {
 		initialized = false;
 		requestGeneration++;
+		document.removeEventListener("swup:page:view", syncLocale);
 		document.removeEventListener("pagefindready", initializeSearch);
 		document.removeEventListener("pagefindloaderror", loadError);
 		document.removeEventListener("keydown", escape);
@@ -171,7 +181,7 @@ $: if (initialized) {
     bind:value={keywordDesktop}
     id="search-input-desktop"
     name="search-desktop"
-    placeholder={i18n(I18nKey.search)}
+    placeholder={t(I18nKey.search)}
     onfocus={() => { void (window as unknown as { __loadPagefind?: () => Promise<unknown> }).__loadPagefind?.(); void search(keywordDesktop, true); }}
     oncollapse={() => { requestGeneration++; isSearching=false; setPanelVisibility(false, true); }}
 />
@@ -179,7 +189,7 @@ $: if (initialized) {
 <!-- toggle btn for phone/tablet view -->
 <IconButton
     icon="material-symbols:search"
-    label="Search Panel"
+    label={t(I18nKey.search)}
     id="search-switch"
     size="small"
     shape="round"
@@ -193,6 +203,6 @@ $: if (initialized) {
     class="float-panel float-panel-closed absolute md:w-[30rem] top-20 left-4 md:left-[unset] right-4"
     bind:query={keywordMobile}
     results={panelResults}
-    placeholder={i18n(I18nKey.search)}
+    placeholder={t(I18nKey.search)}
     hideInputOnDesktop
 />

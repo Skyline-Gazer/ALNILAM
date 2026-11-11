@@ -183,10 +183,10 @@ onMount(() => {
 		syncButtonAria(open);
 		if (open) tick().then(() => focusFirstItem());
 	};
-	const closeDrawer = () => {
+	const closeDrawer = (restoreFocus = true) => {
 		open = false;
 		syncButtonAria(false);
-		document.getElementById("nav-drawer-switch")?.focus();
+		if (restoreFocus) document.getElementById("nav-drawer-switch")?.focus();
 	};
 	// The panel is aria-modal, so Tab must stay inside it while it is open.
 	const focusableItems = () => {
@@ -214,6 +214,23 @@ onMount(() => {
 		}
 	};
 	const onClose = () => closeDrawer();
+	// Modal behaviour: any press outside the panel dismisses it, even during the
+	// frame before the open class makes the scrim hit-testable. Focus returns on
+	// the following click because mousedown's default action would steal it.
+	let closedByOutsidePress = false;
+	const onPointerDown = (event: PointerEvent) => {
+		if (!open) return;
+		const target = event.target;
+		if (target instanceof Node && drawerEl?.contains(target)) return;
+		if (target instanceof Element && target.closest("#nav-drawer-switch")) return;
+		closedByOutsidePress = true;
+		closeDrawer(false);
+	};
+	const onOutsideClick = () => {
+		if (!closedByOutsidePress) return;
+		closedByOutsidePress = false;
+		document.getElementById("nav-drawer-switch")?.focus();
+	};
 	const desktopMedia = window.matchMedia("(min-width: 1024px)");
 	const onDesktopChange = (e: MediaQueryListEvent) => {
 		if (e.matches && open) {
@@ -223,6 +240,8 @@ onMount(() => {
 	};
 	document.addEventListener("site-drawer:toggle", onToggle);
 	document.addEventListener("site-drawer:close", onClose);
+	document.addEventListener("pointerdown", onPointerDown, true);
+	document.addEventListener("click", onOutsideClick, true);
 	document.addEventListener("swup:content:replace", syncFromRoute);
 	document.addEventListener("swup:page:view", syncFromRoute);
 	window.addEventListener("keydown", onKey);
@@ -231,6 +250,8 @@ onMount(() => {
 		document.removeEventListener("site-drawer:toggle", onToggle);
 		document.removeEventListener("site-drawer:close", onClose);
 		document.removeEventListener("swup:content:replace", syncFromRoute);
+		document.removeEventListener("pointerdown", onPointerDown, true);
+		document.removeEventListener("click", onOutsideClick, true);
 		document.removeEventListener("swup:page:view", syncFromRoute);
 		window.removeEventListener("keydown", onKey);
 		desktopMedia.removeEventListener("change", onDesktopChange);
