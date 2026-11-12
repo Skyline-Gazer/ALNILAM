@@ -1,5 +1,65 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-12 · UX finalization closed, product lane resumed (current tip)
+
+Everything from "## Live-state update — 2026-11-11 · product development round" downward is
+retained historical evidence. This section is the authoritative tip for the closed #35 engineering
+probe set and for the resumed product-development lane.
+
+### Git / remotes (verified live 2026-11-12)
+
+| Ref | Value |
+| --- | --- |
+| CNB `dev` | `b1355573b689b8238d9988b7dd8a4c54b317a461` — fast-forward from PR #114. PR #113 (`12b1abae…`) preceded it. This HANDOFF lands with PR #115, which advances the tip by the search empty state and this documentation commit |
+| Round commits | #113 `e6d46ba`→`12b1aba`; #114 `b135557`; #115 `6ead210` (search empty state) + this HANDOFF; each merged by fast-forward |
+| GitHub `dev` | lags CNB; **do not mirror/push** |
+| Vercel Production | unchanged (`xxxx`, production branch `dev`, tracks the stale GitHub `dev`) — read-only |
+| CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — untouched |
+| ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` — unchanged |
+
+### This round — #35 engineering exit
+
+| PR | Effect | Trusted consumer |
+| --- | --- | --- |
+| [#113](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/113) | `i18nForLocale()` gained a defined contract (Site override → locale dictionary → English dictionary → key name), a regional locale falls back to its base language, and the navigation landmark got a stable `#main-navigation` id so the shared contracts no longer depend on its accessible name | success 28m44s ([cnb-tvb-1k76o6p89](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-tvb-1k76o6p89#001)) |
+| [#114](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/114) | The `Main navigation` and drawer navigation landmark names follow the page language in all ten dictionaries, also after a client-side language switch | success 38m18s ([cnb-74f-1k76pvvjn](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-74f-1k76pvvjn#001)) |
+| [#115](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/115) | A finished search that matched nothing states it in the page language instead of showing an empty box (mobile) or closing without feedback (desktop); Issue #131 | trusted receipt in the PR |
+
+### Verification
+
+- **Locale contract**: `scripts/tests/i18n-translation.test.mjs` — 46 parameterized cases over the ten
+  dictionaries (key-set equality, every key resolving to a non-empty string, the header labels per
+  locale, regional variants, unknown-locale fallback, Site override precedence/isolation/typing,
+  missing-key degradation).
+- **Reduced motion**: `tests/browser/reduced-motion.spec.ts` — navigation, drawer, search and theme
+  switch under `prefers-reduced-motion: reduce`, root and `/ALNILAM/`.
+- **Search empty state**: `tests/browser/search-empty-state.spec.ts` — 6/6; the same spec fails 6/6
+  on the pre-fix build (`element(s) not found`) and passes 6/6 with the fix.
+- **Unit suite**: `pnpm test` — 249/249 (serialized). Running the same files **without**
+  `--test-concurrency=1` on a many-core host runs the compose-based tests in parallel; they then
+  collide in the shared `apps/web/.astro` build cache (`ERR_MODULE_NOT_FOUND` on prerender chunks).
+  Use `pnpm test` locally, as the CI runner (2 CPUs) serializes by default.
+- **Local browser**: full suite at the round tip — **195 passed, 1 skipped (196 tests)** (the skip is
+  the intentional `cnb-negative` probe); `pnpm check` 0 errors / 0 warnings / 0 hints; Site digest
+  `23d159e4…` unchanged at every tip.
+- **dev push**: the independent pinned-Site pipeline is green at every merged tip of this round.
+
+### Status and tracks
+
+- **#35** In Progress: the limited engineering probe set is closed and the acceptance list is
+  classified PASS / SUPERSEDED / OWNER_PENDING in the Issue. Owner subjective visual sign-off,
+  deployed-host evidence (#73), Field CrUX and screen-reader pass (#74), docs governance (#81) and
+  the CNB pilot exit criteria (#94) stay with their owners.
+- **#131** (search empty state) is delivered by PR #115.
+- Product development continues on CNB `dev` through ordinary Issue-linked PRs; #67–#69, #83, #88 and
+  #89 stay deferred.
+
+### Next task
+
+1. Continue the product lane on CNB `dev`: the next authorized, non-deferred feature from
+   Project #17 and the frozen Plan/Spec.
+2. Do not reopen a full UX audit loop for #35; the Issue stays open only for the Owner sign-off.
+
 ## Live-state update — 2026-11-11 · product development round (current tip)
 
 Everything from "## Live-state update — 2026-11-11 · RC acceptance" downward is
