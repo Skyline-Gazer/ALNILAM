@@ -1,10 +1,53 @@
 # ALNILAM — Current Agent Handoff
 
-## Live-state update — 2026-11-12 · UX finalization closed, product lane resumed (current tip)
+## Live-state update — 2026-11-12 · offline Pages CMS PoC merged (current tip)
+
+Everything from "## Live-state update — 2026-11-12 · UX finalization closed" downward is
+retained historical evidence. This section is the authoritative tip for the offline
+Git-based authoring PoC (Issue #88) and the current `dev` commit.
+
+### Git / remotes (verified live 2026-11-12)
+
+| Ref | Value |
+| --- | --- |
+| CNB `dev` | `efc336ab709f1ca9eb76abf7a626a3ad064a5eb6` — previous tip. This HANDOFF lands with PR #116, which advances the tip by the offline Pages CMS PoC and its schema generator |
+| Round commits | #116 `fa46ae6` (PoC) → `349481b` (NPC review fixes) → `2b8f1db` (media diagnostic) → the `init` generator, docs and this HANDOFF; each merged by fast-forward |
+| GitHub `dev` | lags CNB; **do not mirror/push** |
+| Vercel Production | unchanged (`xxxx`, production branch `dev`, tracks the stale GitHub `dev`) — read-only |
+| CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — untouched |
+| ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` — unchanged |
+
+### This round — Issue #88 offline PoC
+
+| PR | Effect | Trusted consumer |
+| --- | --- | --- |
+| [#116](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/116) | Isolated Site `.pages.yml`, offline `verify`/`edit`/`init` adapter, category-drift detection and dual-base compose tests; zero Core/product changes | `<RECEIPT>` |
+
+### Verification
+
+- `pnpm test` **258/258** (serialized); `python3 -m unittest discover -s scripts/tests -p '*_test.py'` 14/14; `pnpm check` 0 errors / 0 warnings / 0 hints; `pnpm build` + `artifact-check` + `seo-check` green; demo Site digest `23d159e4…` unchanged by `.pages.yml`.
+- `scripts/tests/pages-cms.test.mjs` **9/9** locally: field mapping against the demo Site's real posts, unknown-key/comment/MDX byte roundtrip, root + `/ALNILAM/` builds with `artifact-check`/`seo-check`, CMS removal digest/provenance equality, CLI entry guard under a spaced path, missing `content/posts` diagnostics, `init` taxonomy generation/`--force`, and stale-select drift repair.
+- Candidate pipelines (docs-links, comments/a11y browser) and the trusted consumer are green; the dev push pipeline is green at the merged tip.
+- A trusted-consumer run failed once in the target-owned `navigation-lifecycle` browser spec (`browserContext.close` after a 90 s timeout, 2/4 cases). The same spec passes 4/4 locally in 1.1 min, and the change adds no browser surface; the gate was re-run with a new SHA rather than weakening any check.
+
+### Status and tracks
+
+- **#88** In Progress: offline PoC delivered (compatible-by-design / PoC-verified). Hosted Pages CMS and its GitHub App permissions, a real external Site, create/delete and concurrent-edit behavior, and the Decap/Keystatic comparison stay Owner-authorized; nothing is integrated or in production.
+- **#89** remains a separate post-launch headless-CMS assessment (not started).
+- **#67–#69, #83** remain deferred. **#35**, **#73/#74**, **#81**, **#94** keep their Owner/CI-infra tracks.
+
+### Next task
+
+Continue the product lane on CNB `dev`. The offline PoC is additive and inert
+(Core never reads `.pages.yml`); do not treat it as an integration. Any further
+CMS work that needs an external service or repository permission stays
+Owner-gated.
+
+## Live-state update — 2026-11-12 · UX finalization closed, product lane resumed
 
 Everything from "## Live-state update — 2026-11-11 · product development round" downward is
-retained historical evidence. This section is the authoritative tip for the closed #35 engineering
-probe set and for the resumed product-development lane.
+retained historical evidence. That section records the closed #35 engineering probe set and the
+resumed product-development lane.
 
 ### Git / remotes (verified live 2026-11-12)
 

@@ -42,7 +42,7 @@ Site and existing test resources.
 | Requirement | Evidence |
 | --- | --- |
 | Independent Site `.pages.yml` example | Fixture config parses with the Pages CMS schema shape (`media`, `content`, `settings`, `actions`); collection path `content/posts`, format `yaml-frontmatter`. |
-| Frontmatter field mapping | Every frontmatter key actually used by `sites/demo/content/posts/**` is declared in `.pages.yml`; `title` and `pubDate` (the two required Core fields) are required in the editor; `lang` carries the BCP-47 pattern from the Core schema. |
+| `scripts/pages-cms.mjs` | Offline adapter CLI: `verify` (mapping, required fields, media paths, category drift), `edit` (declared-field write-back that preserves comments, unknown keys and body bytes), `init` (generate `.pages.yml` from the Site taxonomy). No Core changes, no new dependency. |
 | Unknown frontmatter fields | `author`, `editorialNote`, nested `cmsMeta` and `mdxOnly` survive an edit with their values and a YAML comment. With `merge: false` the same edit drops all three — the exact data-loss mode the PoC guards against. |
 | Markdown / MDX content roundtrip | The post body is byte-identical before and after the edit for both `.md` and `.mdx`; MDX JSX (`data-pages-cms-mdx`) and `{1 + 1}` still render as `计算结果：2` in the composed HTML. Off-schema edit keys are rejected. |
 | Markdown and media path compatibility | `/site-assets/cms-mark.svg` resolves to `/site-assets/...` at root and `/ALNILAM/site-assets/...` under the subpath; the post-relative `./cms-local.svg` is emitted under `/_astro/` (base-prefixed on the subpath). `artifact-check.mjs` and `seo-check.mjs` pass on both builds. |
@@ -50,10 +50,13 @@ Site and existing test resources.
 | CMS disabled / removed | Removing `.pages.yml`, or appending to it, leaves `validateSiteRoot().digest` unchanged; the CMS-free build emits the same article and media and the same `site.digest` in provenance. The editor config never appears in the output. |
 | Site immutability | Site digest is re-checked after all composes; no `.pages.yml`, adapter or cache file is written into the Site by the build. |
 
-Reproduce locally:
+Generate the editor schema for a real Site (categories and tags come from
+`alnilam.config.yaml` plus optional `data/taxonomy.yaml`; an existing file is
+only replaced with `--force`):
 
 ```sh
-node scripts/pages-cms.mjs verify --site tests/fixtures/pages-cms-site
+node scripts/pages-cms.mjs init --site /path/to/site
+node scripts/pages-cms.mjs verify --site /path/to/site
 node --test --test-concurrency=1 scripts/tests/pages-cms.test.mjs
 ```
 
@@ -72,9 +75,9 @@ node --test --test-concurrency=1 scripts/tests/pages-cms.test.mjs
 - The adapter models a single write-back locally; concurrent edits, conflict
   handling, rollback, private test repositories and rejection of real deletes
   are not exercised. `operations.delete: false` is a configuration guard only.
-- `select` category values are static and must be kept in sync with
-  `alnilam.config.yaml` / `data/taxonomy.yaml`; Pages CMS `select` does not
-  source them dynamically.
+- Pages CMS `select` cannot source categories dynamically. `init` generates the
+  values from the Site taxonomy, and `verify` fails when a post uses a category
+  the select cannot represent (`selectDrift`). Regenerate after taxonomy changes.
 - New entries are created as `.md` via the collection filename template. MDX
   files can be edited but must be created through the source path; there is no
   WYSIWYG support for MDX.

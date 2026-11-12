@@ -16,7 +16,7 @@ const tool = path.join(root, "scripts/pages-cms.mjs");
 // test root but leaves candidate product scripts in the candidate checkout.
 // Resolve the adapter from cwd (the candidate under test), not from this file.
 const adapter = await import(pathToFileURL(tool).href);
-const { applyEdit, declaredFieldNames, loadCmsConfig, splitPost, CMS_CONFIG_FILENAME, POSTS_DIR, REQUIRED_FIELDS } = adapter;
+const { applyEdit, declaredFieldNames, loadCmsConfig, postsFields, splitPost, CMS_CONFIG_FILENAME, POSTS_DIR, REQUIRED_FIELDS } = adapter;
 
 const EDITED_MD_TITLE = "编辑后的往返标题";
 const EDITED_MDX_TITLE = "编辑后的 MDX 标题";
@@ -260,4 +260,59 @@ test("removing or changing .pages.yml leaves the Site digest, build and provenan
   assert.ok(html.includes(EDITED_MD_TITLE), "content no longer builds after CMS removal");
   assert.ok(html.includes('src="/site-assets/cms-mark.svg"'), "media no longer resolves after CMS removal");
   assert.equal(validateSiteRoot(siteWithCms).digest, withCms, "compose mutated the Site");
+});
+
+test("init generates a schema from the Site taxonomy and refuses to overwrite", () => {
+  const site = path.join(tmp, "init-site");
+  fs.cpSync(demoSite, site, { recursive: true });
+  for (const rel of fs.readdirSync(site, { recursive: true })) {
+    const target = path.join(site, rel);
+    fs.chmodSync(target, fs.statSync(target).isDirectory() ? 0o755 : 0o644);
+  }
+  const digest = validateSiteRoot(site).digest;
+  assert.equal(fs.existsSync(path.join(site, CMS_CONFIG_FILENAME)), false);
+
+  const init = run("init", [tool, "init", "--site", site]);
+  assert.equal(init.status, 0, init.stderr);
+  const config = loadCmsConfig(site);
+  const category = postsFields(config).find((field) => field.name === "category");
+  assert.deepEqual(category.options.values, ["guide", "release"]);
+  assert.equal(config.settings.content.merge, true);
+  assert.equal(config.content.find((entry) => entry.path === POSTS_DIR).operations.delete, false);
+  assert.equal(validateSiteRoot(site).digest, digest, "generating .pages.yml changed the Site digest");
+
+  const again = run("init", [tool, "init", "--site", site]);
+  assert.notEqual(again.status, 0);
+  assert.match(again.stderr, /already exists/);
+  const forced = run("init", [tool, "init", "--site", site, "--force"]);
+  assert.equal(forced.status, 0, forced.stderr);
+  const verify = run("verify", [tool, "verify", "--site", site, "--json"]);
+  assert.equal(verify.status, 0, verify.stderr);
+  assert.equal(JSON.parse(verify.stdout).ok, true);
+});
+
+test("verify reports a stale category select and init --force repairs it", () => {
+  const site = path.join(tmp, "drift-site");
+  copySite(site);
+  const configFile = path.join(site, "alnilam.config.yaml");
+  fs.writeFileSync(configFile, fs.readFileSync(configFile, "utf8").replace(
+    "\ntags:\n",
+    "\n  - id: notes\n    slug: notes\n    label:\n      zh-CN: 随笔\n      en: Notes\n      ja: ノート\ntags:\n",
+  ));
+  fs.writeFileSync(path.join(site, POSTS_DIR, "cms-drift.md"),
+    `---\ntitle: "Drift post"\npubDate: 2026-11-09\ncategory: "notes"\ntags: []\nlang: "zh-CN"\n---\n\nDrift fixture.\n`);
+
+  const drifted = run("verify", [tool, "verify", "--site", site, "--json"]);
+  assert.notEqual(drifted.status, 0, "a stale select must fail verification");
+  const report = JSON.parse(drifted.stdout);
+  assert.deepEqual(report.selectDrift, ["notes"]);
+  assert.equal(report.ok, false);
+
+  const init = run("init", [tool, "init", "--site", site, "--force"]);
+  assert.equal(init.status, 0, init.stderr);
+  const repaired = run("verify", [tool, "verify", "--site", site, "--json"]);
+  assert.equal(repaired.status, 0, repaired.stderr);
+  const after = JSON.parse(repaired.stdout);
+  assert.deepEqual(after.selectDrift, []);
+  assert.ok(after.selectValues.includes("notes"));
 });

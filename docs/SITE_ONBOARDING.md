@@ -424,8 +424,10 @@ repository without changing Core. The editor schema `.pages.yml` belongs in the
 Site root; compose snapshots only `alnilam.config.yaml`, `content/`, `assets/`
 and `data/`, so adding, editing or removing `.pages.yml` changes neither the
 build nor `alnilam-provenance.json`. See the isolated example in
-`tests/fixtures/pages-cms-site/` and the offline verification tool
-`scripts/pages-cms.mjs`.
+`tests/fixtures/pages-cms-site/` and the offline adapter `scripts/pages-cms.mjs`.
+`node scripts/pages-cms.mjs init --site <site>` generates `.pages.yml` from the
+Site taxonomy, and `verify` checks field mapping, media paths and category drift
+(the editor cannot show a category the schema does not declare).
 
 Two rules matter for content safety:
 

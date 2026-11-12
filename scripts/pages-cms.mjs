@@ -21,6 +21,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+import { normalizeSiteConfig, parseSiteConfigDocument, SITE_CONFIG_FILENAME } from "../packages/core/src/index.mjs";
 
 // Core owns the workspace's YAML dependency. Anchoring require() at the Core
 // package keeps this tool runnable from a plain checkout and from the isolated
@@ -56,25 +57,30 @@ function postsCollection(config) {
   return (config.content || []).find((entry) => entry?.type === "collection" && entry.path === POSTS_DIR);
 }
 
-export function loadCmsConfig(siteDir) {
-  const file = path.join(siteDir, CMS_CONFIG_FILENAME);
-  if (!fs.existsSync(file)) {
-    throw new Error(`${CMS_CONFIG_FILENAME} is absent; the Site still builds, but no Git editor is configured`);
-  }
-  const { data } = parseYaml(fs.readFileSync(file, "utf8"), CMS_CONFIG_FILENAME);
+/** Validate a `.pages.yml` document; shared by load and generated-config checks. */
+export function parseCmsConfig(text, label = CMS_CONFIG_FILENAME) {
+  const { data } = parseYaml(text, label);
   for (const key of Object.keys(data)) {
     if (!KNOWN_CONFIG_KEYS.has(key)) {
-      throw new Error(`${CMS_CONFIG_FILENAME}: unknown top-level key ${JSON.stringify(key)}`);
+      throw new Error(`${label}: unknown top-level key ${JSON.stringify(key)}`);
     }
   }
   // Pages CMS defaults settings.content.merge to false, which rewrites the file
   // from the editor schema only and silently drops undeclared keys. The PoC
   // refuses to operate with that data-loss mode.
   if (data.settings?.content?.merge !== true) {
-    throw new Error(`${CMS_CONFIG_FILENAME}: settings.content.merge must be true to preserve unknown frontmatter fields`);
+    throw new Error(`${label}: settings.content.merge must be true to preserve unknown frontmatter fields`);
   }
-  if (!postsCollection(data)) throw new Error(`${CMS_CONFIG_FILENAME}: missing ${POSTS_DIR} collection`);
+  if (!postsCollection(data)) throw new Error(`${label}: missing ${POSTS_DIR} collection`);
   return data;
+}
+
+export function loadCmsConfig(siteDir) {
+  const file = path.join(siteDir, CMS_CONFIG_FILENAME);
+  if (!fs.existsSync(file)) {
+    throw new Error(`${CMS_CONFIG_FILENAME} is absent; the Site still builds, but no Git editor is configured`);
+  }
+  return parseCmsConfig(fs.readFileSync(file, "utf8"));
 }
 
 /** Field definitions declared for the posts collection, excluding `body`. */
@@ -90,6 +96,178 @@ export function postsFields(config) {
 
 export function declaredFieldNames(config) {
   return postsFields(config).map((field) => field.name).filter((name) => name !== "body");
+}
+
+/**
+ * Category and tag entries the Site actually knows, mirroring
+ * `loadSiteTaxonomy` in apps/web/src/lib/taxonomy.ts: config entries first,
+ * then optional `data/taxonomy.yaml` entries with the same id/slug rules.
+ */
+function siteTaxonomy(siteDir, config) {
+  const merge = (base, extra, kind) => {
+    if (!extra?.length) return base;
+    const validated = normalizeSiteConfig({
+      schemaVersion: 2,
+      site: config.site,
+      locales: [...config.locales],
+      [kind]: extra,
+    })[kind];
+    const ids = new Set(base.map((entry) => entry.id));
+    const slugs = new Set(base.map((entry) => entry.slug));
+    const merged = [...base];
+    for (const entry of validated) {
+      if (ids.has(entry.id)) throw new Error(`duplicate ${kind} id ${JSON.stringify(entry.id)} in data/taxonomy.yaml`);
+      if (slugs.has(entry.slug)) throw new Error(`duplicate ${kind} slug ${JSON.stringify(entry.slug)} in data/taxonomy.yaml`);
+      ids.add(entry.id);
+      slugs.add(entry.slug);
+      merged.push(entry);
+    }
+    return merged;
+  };
+  const taxonomyFile = path.join(siteDir, "data/taxonomy.yaml");
+  if (!fs.existsSync(taxonomyFile)) return { categories: config.categories, tags: config.tags };
+  const parsed = parseSiteConfigDocument(fs.readFileSync(taxonomyFile, "utf8"), { filename: "data/taxonomy.yaml" });
+  for (const key of Object.keys(parsed)) {
+    if (key !== "categories" && key !== "tags") {
+      throw new Error(`unknown data/taxonomy.yaml field ${JSON.stringify(key)}`);
+    }
+  }
+  return {
+    categories: merge(config.categories, parsed.categories, "categories"),
+    tags: merge(config.tags, parsed.tags, "tags"),
+  };
+}
+
+/**
+ * Render a Site-owned `.pages.yml` from the Site's own taxonomy contract, so
+ * the editor's category choices cannot drift from the Site config. Returns the
+ * text plus the values it embedded.
+ */
+export function renderCmsConfig(siteDir) {
+  const configFile = path.join(siteDir, SITE_CONFIG_FILENAME);
+  if (!fs.existsSync(configFile)) {
+    throw new Error(`${SITE_CONFIG_FILENAME} is missing; cannot generate ${CMS_CONFIG_FILENAME}`);
+  }
+  const config = normalizeSiteConfig(parseSiteConfigDocument(
+    fs.readFileSync(configFile, "utf8"), { filename: SITE_CONFIG_FILENAME },
+  ));
+  const taxonomy = siteTaxonomy(siteDir, config);
+  const categories = taxonomy.categories.map((entry) => entry.slug);
+  const tags = taxonomy.tags.map((entry) => entry.slug);
+  const text = `# Pages CMS editor schema for this ALNILAM Site (generated by scripts/pages-cms.mjs init).
+#
+# Site-owned: ALNILAM Core never reads this file. Regenerate after changing
+# categories, tags or locales in alnilam.config.yaml.
+
+media:
+  input: assets
+  output: /site-assets
+  extensions: [svg, png, jpg, jpeg, webp, avif]
+  rename: false
+
+content:
+  - name: posts
+    label: Posts
+    type: collection
+    path: content/posts
+    format: yaml-frontmatter
+    subfolders: true
+    filename: "{primary}.md"
+    exclude: ["README.md"]
+    operations:
+      delete: false
+    view:
+      primary: title
+      sort: pubDate
+      order: desc
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: description
+        label: Description
+        type: text
+      - name: pubDate
+        label: Publication date
+        type: date
+        required: true
+      - name: updatedDate
+        label: Updated date
+        type: date
+      - name: cover
+        label: Cover image
+        type: image
+      - name: category
+        label: Category
+        type: select
+        options:
+          values: [${categories.join(", ")}]
+      - name: tags
+        label: Tags
+        type: string
+        list: true
+      - name: series
+        label: Series
+        type: string
+      - name: seriesOrder
+        label: Series order
+        type: number
+      - name: pinned
+        label: Pinned
+        type: boolean
+      - name: draft
+        label: Draft
+        type: boolean
+      - name: private
+        label: Private
+        type: boolean
+      - name: unlisted
+        label: Unlisted
+        type: boolean
+      - name: lang
+        label: Language
+        type: string
+        pattern: "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$"
+      - name: translationKey
+        label: Translation key
+        type: string
+      - name: commentId
+        label: Comment thread id
+        type: string
+        pattern: "^\\\\S+$"
+      - name: body
+        label: Body (Markdown / MDX source)
+        type: code
+        options:
+          format: markdown
+
+settings:
+  content:
+    merge: true
+  commit:
+    identity: app
+    templates:
+      create: "content(create): {path}"
+      update: "content(update): {path}"
+      delete: "content(delete): {path}"
+      rename: "content(rename): {oldPath} -> {newPath}"
+`;
+  return { text, categories, tags };
+}
+
+/** Write the generated schema; refuses to replace an existing file unless forced. */
+export function initCmsConfig(siteDir, { force = false } = {}) {
+  const target = path.join(siteDir, CMS_CONFIG_FILENAME);
+  if (fs.existsSync(target) && !force) {
+    throw new Error(`${target} already exists; pass --force to replace it`);
+  }
+  const generated = renderCmsConfig(siteDir);
+  // Fail closed: the generated document must pass the same validator the
+  // editor adapter uses before it is written.
+  parseCmsConfig(generated.text, `generated ${CMS_CONFIG_FILENAME}`);
+  fs.writeFileSync(target, generated.text);
+  return { path: target, categories: generated.categories, tags: generated.tags };
 }
 
 /**
@@ -214,16 +392,28 @@ export function verifySite(siteDir) {
       missingRequired: REQUIRED_FIELDS.filter((key) => !(key in data)),
       unknown: keys.filter((key) => !declared.includes(key)),
       bodyBytes: Buffer.byteLength(body),
+      category: typeof data.category === "string" ? data.category : "",
       media: mediaTargets(raw, abs, siteDir),
     };
   });
+  // A post using a category the editor's select cannot represent is a drift
+  // between alnilam.config.yaml / data/taxonomy.yaml and .pages.yml.
+  const categoryField = postsFields(config).find((field) => field.name === "category");
+  const selectValues = (categoryField?.options?.values || [])
+    .map((value) => (typeof value === "string" ? value : value?.name))
+    .filter(Boolean);
+  const usedCategories = [...new Set(posts.map((post) => post.category).filter(Boolean))];
+  const selectDrift = selectValues.length ? usedCategories.filter((category) => !selectValues.includes(category)) : [];
   return {
     config: CMS_CONFIG_FILENAME,
     merge: config.settings.content.merge,
     deleteDisabled: postsCollection(config)?.operations?.delete === false,
     declared,
+    selectValues,
+    selectDrift,
     posts,
     ok: posts.length > 0
+      && selectDrift.length === 0
       && posts.every((post) => post.missingRequired.length === 0)
       && posts.every((post) => post.media.every((media) => media.exists)),
   };
@@ -267,7 +457,12 @@ function main(argv) {
     console.log(`Edited ${rel}: changed=${result.changed.join(",")} preserved=${result.preserved.join(",") || "none"} bodyBytes=${Buffer.byteLength(result.body)} -> ${out}`);
     return;
   }
-  throw new Error("usage: pages-cms.mjs verify|edit --site <dir> [--post <rel> --set <json>]");
+  if (command === "init") {
+    const result = initCmsConfig(siteDir, { force: argv.includes("--force") });
+    console.log(`Generated ${result.path}\nCategories: ${result.categories.join(", ") || "none"}\nTags: ${result.tags.join(", ") || "none"}`);
+    return;
+  }
+  throw new Error("usage: pages-cms.mjs verify|edit|init --site <dir> [--post <rel> --set <json>] [--force]");
 }
 
 function isEntryPoint() {
