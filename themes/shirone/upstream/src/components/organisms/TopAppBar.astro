@@ -121,7 +121,7 @@ function isActive(link: (typeof links)[number]): boolean {
 			<span class="h-5 w-1 rounded-full bg-[var(--primary)] transition-all group-hover:h-7"></span>
 			<span class="text-lg font-bold group-hover:text-[var(--primary)]">{siteConfig.title}</span>
 		</a>
-		<nav class:list={["top-app-bar__nav hidden h-full items-center gap-1 lg:flex", siteConfig.topAppBar.contentAlign === "center" ? "lg:absolute lg:left-1/2 lg:-translate-x-1/2" : "ml-4"]} aria-label="Main navigation">
+		<nav id="main-navigation" class:list={["top-app-bar__nav hidden h-full items-center gap-1 lg:flex", siteConfig.topAppBar.contentAlign === "center" ? "lg:absolute lg:left-1/2 lg:-translate-x-1/2" : "ml-4"]} aria-label="Main navigation">
 			{links.map((link) => {
 				const href = link.external ? link.url : hrefFor(link.url);
 				const active = isActive(link);

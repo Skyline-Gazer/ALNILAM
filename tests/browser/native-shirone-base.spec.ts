@@ -3,7 +3,7 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
   test(`locale navigation boundaries ${new URL(origin).pathname}`, async ({page}) => {
     const base = new URL(origin).pathname.replace(/\/$/, '');
     await page.goto(origin + '/en/', {waitUntil:'networkidle'});
-    const nav = page.locator('#navbar nav[aria-label="Main navigation"]');
+    const nav = page.locator('#main-navigation');
     await expect(nav.locator('[data-nav-key="posts"]')).toHaveAttribute('href', base + '/en/posts/');
     await expect(nav.locator('[data-nav-key="posts"]')).toHaveText('Posts');
     for (const [route, active] of [

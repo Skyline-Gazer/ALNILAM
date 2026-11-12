@@ -4,8 +4,8 @@ import { expect, test } from "@playwright/test";
  * Header/drawer accessible names must follow the page language. They used to be
  * hardcoded English ("Menu", "Display Settings", "Light/Dark Mode", "Search
  * Panel"), so screen-reader users on zh-CN/ja pages heard English labels on
- * every page. The `Main navigation` landmark stays English because the shared
- * browser contracts select it by that name.
+ * every page. The navigation landmark is selected by its stable `#main-navigation`
+ * id in the shared browser contracts, so its name may follow the page language.
  */
 
 const ROOT = "http://127.0.0.1:4323";

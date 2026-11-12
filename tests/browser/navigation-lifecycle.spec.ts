@@ -101,7 +101,7 @@ for (const origin of ["http://127.0.0.1:4323", "http://127.0.0.1:4324/ALNILAM"])
             await page.locator("#nav-drawer-switch").click();
             await page.locator(".site-drawer__nav").getByRole("link", { name: "文章" }).click();
           } else {
-            await page.locator('#navbar nav[aria-label="Main navigation"]').getByRole("link", { name: "文章" }).click();
+            await page.locator('#main-navigation').getByRole("link", { name: "文章" }).click();
           }
           await expect(page.locator("#post-list")).toBeVisible();
           if (round === 0) {
