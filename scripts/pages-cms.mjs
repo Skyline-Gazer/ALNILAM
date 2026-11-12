@@ -12,10 +12,12 @@
  *   node scripts/pages-cms.mjs verify --site <site-dir> [--json]
  *   node scripts/pages-cms.mjs edit --site <site-dir> --post <relative-path> \
  *       --set '{"title":"New title"}' [--out <file>] [--merge false]
+ *   node scripts/pages-cms.mjs init --site <site-dir> [--force]
  *
- * `edit` writes to --out when given, otherwise back to the post. In a real
- * Site a CMS commit lands before compose; never edit a Site while a compose is
- * running (the builder re-hashes the four Site inputs and fails on mutation).
+ * `verify` is read-only. `edit` writes to --out when given, otherwise back to
+ * the post; `init` writes `.pages.yml` unless one already exists. In a real Site
+ * a CMS commit lands before compose; never run a writing command while a compose
+ * is running (the builder re-hashes the four Site inputs and fails on mutation).
  */
 import fs from "node:fs";
 import path from "node:path";
