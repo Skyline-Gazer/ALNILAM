@@ -242,20 +242,21 @@ export function applyEdit(raw, patch, { config, merge = true } = {}) {
   if (!patch || typeof patch !== "object" || Array.isArray(patch)) {
     throw new Error("--set must be a JSON object of frontmatter fields");
   }
-  const declared = declaredFieldNames(config);
-  for (const key of Object.keys(patch)) {
-    if (!declared.includes(key)) {
+  const declared = postsFields(config).filter((field) => field.name !== "body");
+  for (const [key, value] of Object.entries(patch)) {
+    const field = declared.find((item) => item.name === key);
+    if (!field) {
       throw new Error(`off-schema edit rejected: ${JSON.stringify(key)} is not a declared posts field`);
     }
+    validateFieldValue(field, value);
   }
-  if (Object.hasOwn(patch, "seriesOrder")) validateSeriesOrder(patch.seriesOrder);
   const { open, close, body, doc, data } = splitPost(raw);
   const before = Object.keys(data);
   let nextDoc = doc;
   if (merge === false) {
     nextDoc = new Document({});
-    for (const key of declared) {
-      if (key in data) nextDoc.set(key, data[key]);
+    for (const field of declared) {
+      if (field.name in data) nextDoc.set(field.name, data[field.name]);
     }
   }
   for (const [key, value] of Object.entries(patch)) nextDoc.set(key, value);
@@ -313,7 +314,7 @@ function validateSeriesOrder(value) {
 /** Reject values Core's content schema would fail on (Zod is the source of truth). */
 function validateFieldValue(field, value) {
   if (field.name === "seriesOrder") validateSeriesOrder(value);
-  const label = `new post field ${JSON.stringify(field.name)}`;
+  const label = `field ${JSON.stringify(field.name)}`;
   const type = field.component ? undefined : field.type;
   if (type === "date") {
     const time = typeof value === "string" || typeof value === "number" || value instanceof Date

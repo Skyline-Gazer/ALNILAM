@@ -515,6 +515,14 @@ test("create and edit enforce seriesOrder without partial writes", () => {
     assert.deepEqual(fs.readFileSync(originalPath), original, `${name}: failed edit changed the post`);
   }
 
+  for (const patch of [{ title: 7 }, { title: " " }, { pubDate: "invalid" },
+    { draft: "yes" }, { tags: "CMS" }, { category: "unknown" }]) {
+    const edited = run("edit", [tool, "edit", "--site", site, "--post", "cms-basics.md",
+      "--set", JSON.stringify(patch)]);
+    assert.notEqual(edited.status, 0, `invalid ${Object.keys(patch)[0]} must be rejected`);
+    assert.deepEqual(fs.readFileSync(originalPath), original, "failed edit changed the post");
+  }
+
   for (const value of [0, -2, 3]) {
     const filename = `valid-${value}.md`;
     const created = run("create", [tool, "create", "--site", site, "--file", filename,
