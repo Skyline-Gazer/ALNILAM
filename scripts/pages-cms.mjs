@@ -20,6 +20,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 
 // Core owns the workspace's YAML dependency. Anchoring require() at the Core
 // package keeps this tool runnable from a plain checkout and from the isolated
@@ -50,6 +51,11 @@ function parseYaml(raw, label) {
   return { doc, data };
 }
 
+/** The single posts collection entry; all callers must agree on this match. */
+function postsCollection(config) {
+  return (config.content || []).find((entry) => entry?.type === "collection" && entry.path === POSTS_DIR);
+}
+
 export function loadCmsConfig(siteDir) {
   const file = path.join(siteDir, CMS_CONFIG_FILENAME);
   if (!fs.existsSync(file)) {
@@ -67,15 +73,13 @@ export function loadCmsConfig(siteDir) {
   if (data.settings?.content?.merge !== true) {
     throw new Error(`${CMS_CONFIG_FILENAME}: settings.content.merge must be true to preserve unknown frontmatter fields`);
   }
-  const posts = (data.content || []).find((entry) => entry?.type === "collection" && entry.path === POSTS_DIR);
-  if (!posts) throw new Error(`${CMS_CONFIG_FILENAME}: missing ${POSTS_DIR} collection`);
+  if (!postsCollection(data)) throw new Error(`${CMS_CONFIG_FILENAME}: missing ${POSTS_DIR} collection`);
   return data;
 }
 
 /** Field definitions declared for the posts collection, excluding `body`. */
 export function postsFields(config) {
-  const posts = (config.content || []).find((entry) => entry?.type === "collection" && entry.path === POSTS_DIR);
-  const fields = posts?.fields || [];
+  const fields = postsCollection(config)?.fields || [];
   for (const field of fields) {
     if (typeof field?.name !== "string" || typeof field?.type !== "string") {
       throw new Error(`${CMS_CONFIG_FILENAME}: every posts field needs name and type`);
@@ -190,6 +194,9 @@ export function verifySite(siteDir) {
   const config = loadCmsConfig(siteDir);
   const declared = declaredFieldNames(config);
   const postsDir = path.join(siteDir, POSTS_DIR);
+  if (!fs.existsSync(postsDir) || !fs.statSync(postsDir).isDirectory()) {
+    throw new Error(`${CMS_CONFIG_FILENAME} declares ${POSTS_DIR}, but ${postsDir} is missing or not a directory`);
+  }
   const posts = walk(postsDir).filter((rel) => POST_RE.test(rel)).map((rel) => {
     const abs = path.join(postsDir, rel);
     const raw = fs.readFileSync(abs, "utf8");
@@ -208,10 +215,7 @@ export function verifySite(siteDir) {
   return {
     config: CMS_CONFIG_FILENAME,
     merge: config.settings.content.merge,
-    deleteDisabled: Boolean(
-      (config.content || []).find((entry) => entry?.type === "collection" && entry.path === POSTS_DIR)
-        ?.operations?.delete === false,
-    ),
+    deleteDisabled: postsCollection(config)?.operations?.delete === false,
     declared,
     posts,
     ok: posts.length > 0
@@ -261,7 +265,18 @@ function main(argv) {
   throw new Error("usage: pages-cms.mjs verify|edit --site <dir> [--post <rel> --set <json>]");
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === new URL(import.meta.url).pathname) {
+function isEntryPoint() {
+  if (!process.argv[1]) return false;
+  // fileURLToPath percent-decodes; comparing the raw URL pathname silently
+  // skips main() when the checkout path contains a space or non-ASCII bytes.
+  try {
+    return fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (isEntryPoint()) {
   try {
     main(process.argv.slice(2));
   } catch (error) {

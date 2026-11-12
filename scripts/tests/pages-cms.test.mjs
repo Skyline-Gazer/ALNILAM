@@ -152,6 +152,27 @@ test("the offline adapter CLI verifies mapping, preserved keys and media paths",
   assert.notEqual(lossy.status, 0, "the CLI must refuse Pages CMS's lossy merge=false write mode");
 });
 
+test("the CLI entry guard survives spaces and non-ASCII checkout paths", () => {
+  const spaced = path.join(tmp, "pages cms 空格");
+  fs.mkdirSync(path.join(spaced, "scripts"), { recursive: true });
+  fs.copyFileSync(tool, path.join(spaced, "scripts/pages-cms.mjs"));
+  fs.symlinkSync(path.join(root, "packages"), path.join(spaced, "packages"), "dir");
+  const result = spawnSync(process.execPath,
+    [path.join(spaced, "scripts/pages-cms.mjs"), "verify", "--site", fixture],
+    { cwd: tmp, encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /PASS: field mapping/);
+});
+
+test("verify names a missing content/posts directory instead of leaking ENOENT", () => {
+  const broken = path.join(tmp, "missing-posts");
+  copySite(broken);
+  fs.rmSync(path.join(broken, POSTS_DIR), { recursive: true });
+  const result = run("verify", [tool, "verify", "--site", broken]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /declares content\/posts, but .*content\/posts is missing/);
+});
+
 test("a CMS save preserves unknown frontmatter keys, comments and Markdown/MDX bytes", () => {
   const config = loadCmsConfig(fixture);
   for (const [relative, patch] of [
