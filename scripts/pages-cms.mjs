@@ -368,13 +368,15 @@ function mediaTargets(raw, postFile, siteDir) {
       // root-relative paths have no Site-owned backing file.
       return { field, src, kind: "root-relative-unmapped", exists: false };
     }
+    const assetsRoot = path.resolve(siteDir, "assets");
+    const postsRoot = path.resolve(siteDir, POSTS_DIR);
     const absolute = clean.startsWith("/site-assets/")
-      ? path.join(siteDir, "assets", clean.slice("/site-assets/".length))
+      ? path.join(assetsRoot, clean.slice("/site-assets/".length))
       : path.resolve(path.dirname(postFile), clean);
     // A media reference must resolve inside the Site's two media roots:
     // assets/ (served at /site-assets/) and the posts tree (post-relative).
     // Anything else (config, data, a sibling Site) is not a media path.
-    const inRoots = [path.join(siteDir, "assets"), path.join(siteDir, POSTS_DIR)]
+    const inRoots = [assetsRoot, postsRoot]
       .some((root) => absolute === root || absolute.startsWith(root + path.sep));
     if (!inRoots) return { field, src, kind: "outside-media-roots", exists: false };
     return {

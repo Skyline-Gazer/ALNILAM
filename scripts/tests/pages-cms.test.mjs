@@ -157,6 +157,11 @@ test("the offline adapter CLI verifies mapping, preserved keys and media paths",
   const lossy = run("edit", [tool, "edit", "--site", cliSite, "--post", "cms-basics.md",
     "--set", JSON.stringify({ title: "X" }), "--merge", "false", "--out", out]);
   assert.notEqual(lossy.status, 0, "the CLI must refuse Pages CMS's lossy merge=false write mode");
+
+  // The documented invocation uses a repo-relative --site; media roots must
+  // still resolve absolutely.
+  const relative = run("verify", [tool, "verify", "--site", path.relative(root, fixture)]);
+  assert.equal(relative.status, 0, relative.stderr);
 });
 
 test("the CLI entry guard survives spaces and non-ASCII checkout paths", () => {
