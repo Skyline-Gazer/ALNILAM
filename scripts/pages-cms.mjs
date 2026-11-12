@@ -184,16 +184,19 @@ ${template.replace("{{CATEGORY_FIELD}}", () => categoryField)}`;
   return { text, categories, tags };
 }
 
-
 /**
- * Write a Site file with predictable modes. A restrictive process umask must
- * not leave the file (or its directory) unwritable for the next editor save.
+ * Write a Site file. Only paths created here get an explicit mode, so a
+ * restrictive umask cannot leave a new file read-only for the next save while
+ * existing Site directories keep the owner's permission posture.
  */
 function writeSiteFile(file, content) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const dir = path.dirname(file);
+  const newDir = !fs.existsSync(dir);
+  const newFile = !fs.existsSync(file);
+  fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(file, content);
-  fs.chmodSync(file, 0o644);
-  fs.chmodSync(path.dirname(file), 0o755);
+  if (newDir) fs.chmodSync(dir, 0o755);
+  if (newFile) fs.chmodSync(file, 0o644);
 }
 
 /** Write the generated schema; refuses to replace an existing file unless forced. */
@@ -273,34 +276,68 @@ export function applyEdit(raw, patch, { config, merge = true } = {}) {
 }
 
 /**
- * Render a new post from declared fields. Required Core fields must be present;
- * frontmatter keys follow the editor's field order; the body is written
- * verbatim. Returns the text without touching the filesystem.
+ * Render a new post from declared fields. Values are validated against the
+ * editor's field types and select options before anything is written; the body
+ * is appended verbatim. Returns the text without touching the filesystem.
  */
 export function renderNewPost(fields, { config, body = "" }) {
   if (!fields || typeof fields !== "object" || Array.isArray(fields)) {
     throw new Error("--set must be a JSON object of frontmatter fields");
   }
-  const declared = declaredFieldNames(config);
+  const declared = postsFields(config).filter((field) => field.name !== "body");
   for (const key of Object.keys(fields)) {
-    if (!declared.includes(key)) {
+    if (!declared.some((field) => field.name === key)) {
       throw new Error(`off-schema field rejected: ${JSON.stringify(key)} is not a declared posts field`);
     }
   }
   for (const key of REQUIRED_FIELDS) {
     if (!(key in fields)) throw new Error(`new post is missing required field ${JSON.stringify(key)}`);
   }
+  for (const field of declared) {
+    if (!(field.name in fields)) continue;
+    validateFieldValue(field, fields[field.name]);
+  }
   const doc = new Document({});
-  for (const key of declared) {
-    if (key in fields) doc.set(key, fields[key]);
+  for (const field of declared) {
+    if (field.name in fields) doc.set(field.name, fields[field.name]);
   }
   const content = "---\n" + doc.toString() + "---\n" + (body ? "\n" + body : "");
-  const check = splitPost(content, "new post");
-  for (const key of REQUIRED_FIELDS) {
-    if (!(key in check.data)) throw new Error(`new post lost required field ${JSON.stringify(key)}`);
+  return { content };
+}
+
+/** Reject values Core's content schema would fail on (Zod is the source of truth). */
+function validateFieldValue(field, value) {
+  const label = `new post field ${JSON.stringify(field.name)}`;
+  const type = field.component ? undefined : field.type;
+  if (type === "date") {
+    const time = typeof value === "string" || typeof value === "number" || value instanceof Date
+      ? new Date(value).getTime()
+      : Number.NaN;
+    if (Number.isNaN(time)) throw new Error(`${label} must be a date`);
+    return;
   }
-  if (check.body !== (body ? "\n" + body : "")) throw new Error("new post body was altered");
-  return { content, data: check.data, body: check.body };
+  if (type === "number" && !(typeof value === "number" && Number.isFinite(value))) {
+    throw new Error(`${label} must be a number`);
+  }
+  if (type === "boolean" && typeof value !== "boolean") throw new Error(`${label} must be a boolean`);
+  if (field.list === true) {
+    if (!Array.isArray(value) || !value.every((entry) => typeof entry === "string" && entry.trim())) {
+      throw new Error(`${label} must be a list of non-empty strings`);
+    }
+    return;
+  }
+  if (type === "select") {
+    const values = (field.options?.values || []).map((option) => (typeof option === "string" ? option : option?.name));
+    if (values.length && !values.includes(value)) {
+      throw new Error(`${label} must be one of ${values.join(", ")}`);
+    }
+  }
+  if (["string", "text", "code", "image", "select"].includes(type) && typeof value !== "string") {
+    throw new Error(`${label} must be a string`);
+  }
+  if (REQUIRED_FIELDS.includes(field.name) && typeof value === "string" && !value.trim()) {
+    throw new Error(`${label} must not be empty`);
+  }
 }
 
 /** Write a new post; refuses to overwrite and stays inside content/posts. */

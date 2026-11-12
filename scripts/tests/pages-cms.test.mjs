@@ -468,20 +468,26 @@ test("create writes declared fields only and refuses unsafe input", () => {
   assert.equal(verify.status, 0, verify.stderr);
 
   const cases = [
-    ["existing file", ["--file", "cms-basics.md"], /already exists/],
-    ["undeclared field", ["--file", "off-schema.md"], /off-schema field rejected/],
-    ["missing required", ["--file", "incomplete.md"], /missing required field/],
-    ["outside posts", ["--file", "../escape.md"], /must stay inside content\/posts/],
-    ["wrong extension", ["--file", "notes.txt"], /must end in \.md or \.mdx/],
+    ["existing file", ["--file", "cms-basics.md"], fields, /already exists/],
+    ["undeclared field", ["--file", "off-schema.md"], { ...fields, author: "ghost" }, /off-schema field rejected/],
+    ["missing required", ["--file", "incomplete.md"], { title: "No date" }, /missing required field/],
+    ["empty title", ["--file", "empty-title.md"], { ...fields, title: "  " }, /must not be empty/],
+    ["numeric title", ["--file", "numeric-title.md"], { ...fields, title: 7 }, /must be a string/],
+    ["bad date", ["--file", "bad-date.md"], { ...fields, pubDate: "not-a-date" }, /must be a date/],
+    ["bad select", ["--file", "bad-select.md"], { ...fields, category: "unknown" }, /must be one of guide, release/],
+    ["bad boolean", ["--file", "bad-bool.md"], { ...fields, draft: "yes" }, /must be a boolean/],
+    ["bad list", ["--file", "bad-tags.md"], { ...fields, tags: "CMS" }, /list of non-empty strings/],
+    ["outside posts", ["--file", "../escape.md"], fields, /must stay inside content\/posts/],
+    ["wrong extension", ["--file", "notes.txt"], fields, /must end in \.md or \.mdx/],
   ];
-  for (const [name, args, pattern] of cases) {
-    const set = name === "undeclared field" ? { ...fields, author: "ghost" }
-      : name === "missing required" ? { title: "No date" }
-        : fields;
+  for (const [name, args, set, pattern] of cases) {
     const result = run("create", [tool, "create", "--site", site, ...args, "--set", JSON.stringify(set)]);
     assert.notEqual(result.status, 0, `${name}: create should fail`);
     assert.match(result.stderr, pattern, `${name}: ${result.stderr}`);
   }
-  assert.equal(fs.existsSync(path.join(site, POSTS_DIR, "incomplete.md")), false);
+  for (const file of ["off-schema.md", "incomplete.md", "empty-title.md", "numeric-title.md",
+    "bad-date.md", "bad-select.md", "bad-bool.md", "bad-tags.md"]) {
+    assert.equal(fs.existsSync(path.join(site, POSTS_DIR, file)), false, `${file} must not be written`);
+  }
   assert.equal(fs.existsSync(path.join(site, "escape.md")), false);
 });
