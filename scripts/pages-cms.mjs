@@ -22,7 +22,6 @@
  * builder re-hashes the four Site inputs and fails on mutation).
  */
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -33,32 +32,6 @@ import { normalizeSiteConfig, parseSiteConfigDocument, SITE_CONFIG_FILENAME } fr
 // CNB trusted-test tree (where packages/ is symlinked from the candidate).
 const require = createRequire(new URL("../packages/core/package.json", import.meta.url));
 const { parseDocument, Document, isMap } = require("yaml");
-
-// TEMP DIAGNOSTIC (removed before merge): report fixture modes in the trusted
-// test environment so the read-only copy failure can be diagnosed.
-if (process.env.CNB_TRUSTED_TEST_ROOT) {
-  process.on("exit", () => {
-    try {
-      const dir = process.env.CNB_TRUSTED_TEST_ROOT;
-      const fx = path.join(dir, "tests/fixtures/pages-cms-site");
-      const s = fs.statSync(fx);
-      const t = fs.statSync(os.tmpdir());
-      const probe = path.join(os.tmpdir(), "pages-cms-diag-probe");
-      fs.mkdirSync(probe, { recursive: true });
-      const p = fs.statSync(probe);
-      fs.rmSync(probe, { recursive: true, force: true });
-      console.error("PAGES_CMS_DIAG " + JSON.stringify({
-        fixtureMode: (s.mode & 0o7777).toString(8), fixtureUid: s.uid,
-        tmpMode: (t.mode & 0o7777).toString(8), tmpUid: t.uid,
-        probeMode: (p.mode & 0o7777).toString(8),
-        euid: typeof process.geteuid === "function" ? process.geteuid() : null,
-        umask: process.umask().toString(8),
-      }));
-    } catch (error) {
-      console.error("PAGES_CMS_DIAG error " + error.message);
-    }
-  });
-}
 
 export const CMS_CONFIG_FILENAME = ".pages.yml";
 export const POSTS_DIR = "content/posts";
