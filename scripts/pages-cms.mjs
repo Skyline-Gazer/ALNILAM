@@ -22,6 +22,7 @@
  * builder re-hashes the four Site inputs and fails on mutation).
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -32,6 +33,25 @@ import { normalizeSiteConfig, parseSiteConfigDocument, SITE_CONFIG_FILENAME } fr
 // CNB trusted-test tree (where packages/ is symlinked from the candidate).
 const require = createRequire(new URL("../packages/core/package.json", import.meta.url));
 const { parseDocument, Document, isMap } = require("yaml");
+
+// TEMP DIAGNOSTIC (removed before merge): report fixture modes in the trusted
+// test environment so the read-only copy failure can be diagnosed.
+if (process.env.CNB_TRUSTED_TEST_ROOT) {
+  try {
+    const dir = process.env.CNB_TRUSTED_TEST_ROOT;
+    const fx = path.join(dir, "tests/fixtures/pages-cms-site");
+    const s = fs.statSync(fx);
+    const t = fs.statSync(os.tmpdir());
+    console.error("PAGES_CMS_DIAG " + JSON.stringify({
+      fixtureMode: (s.mode & 0o7777).toString(8), fixtureUid: s.uid,
+      tmp: os.tmpdir(), tmpMode: (t.mode & 0o7777).toString(8), tmpUid: t.uid,
+      euid: typeof process.geteuid === "function" ? process.geteuid() : null,
+      umask: process.umask().toString(8),
+    }));
+  } catch (error) {
+    console.error("PAGES_CMS_DIAG error " + error.message);
+  }
+}
 
 export const CMS_CONFIG_FILENAME = ".pages.yml";
 export const POSTS_DIR = "content/posts";
@@ -184,6 +204,18 @@ ${template.replace("{{CATEGORY_FIELD}}", () => categoryField)}`;
   return { text, categories, tags };
 }
 
+
+/**
+ * Write a Site file with predictable modes. A restrictive process umask must
+ * not leave the file (or its directory) unwritable for the next editor save.
+ */
+function writeSiteFile(file, content) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, content);
+  fs.chmodSync(file, 0o644);
+  fs.chmodSync(path.dirname(file), 0o755);
+}
+
 /** Write the generated schema; refuses to replace an existing file unless forced. */
 function initCmsConfig(siteDir, { force = false } = {}) {
   const target = path.join(siteDir, CMS_CONFIG_FILENAME);
@@ -194,7 +226,7 @@ function initCmsConfig(siteDir, { force = false } = {}) {
   // Fail closed: the generated document must pass the same validator the
   // editor adapter uses before it is written.
   parseCmsConfig(generated.text, `generated ${CMS_CONFIG_FILENAME}`);
-  fs.writeFileSync(target, generated.text);
+  writeSiteFile(target, generated.text);
   return { path: target, categories: generated.categories, tags: generated.tags };
 }
 
@@ -301,8 +333,7 @@ export function createPost(siteDir, { file, fields, body = "" }) {
   if (!POST_RE.test(target)) throw new Error("--file must end in .md or .mdx");
   if (fs.existsSync(target)) throw new Error(`${target} already exists; refusing to overwrite`);
   const rendered = renderNewPost(fields, { config: loadCmsConfig(siteDir), body });
-  fs.mkdirSync(path.dirname(target), { recursive: true });
-  fs.writeFileSync(target, rendered.content);
+  writeSiteFile(target, rendered.content);
   return { path: target, bytes: Buffer.byteLength(rendered.content) };
 }
 
@@ -438,8 +469,7 @@ function main(argv) {
     if (!out.startsWith(postsRoot)) {
       throw new Error("--out must stay inside content/posts (copy the Site to preview elsewhere)");
     }
-    fs.mkdirSync(path.dirname(out), { recursive: true });
-    fs.writeFileSync(out, result.content);
+    writeSiteFile(out, result.content);
     console.log(`Edited ${rel}: changed=${result.changed.join(",")} preserved=${result.preserved.join(",") || "none"} bodyBytes=${Buffer.byteLength(result.body)} -> ${out}`);
     return;
   }

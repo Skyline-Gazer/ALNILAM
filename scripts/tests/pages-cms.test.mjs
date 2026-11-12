@@ -28,10 +28,14 @@ const siteNoCms = path.join(tmp, "without-cms");
 const builds = [];
 const edits = {};
 
-function copySite(destination) {
-  fs.cpSync(fixture, destination, { recursive: true });
-  for (const rel of fs.readdirSync(destination, { recursive: true })) {
-    const target = path.join(destination, rel);
+// The CNB trusted test root is read-only and fs.cpSync preserves those modes,
+// including the destination root; chmod the whole copy (root included) so the
+// temp Site is writable regardless of the fixture's modes.
+function copySite(destination, source = fixture) {
+  fs.cpSync(source, destination, { recursive: true });
+  const entries = [destination, ...fs.readdirSync(destination, { recursive: true })
+    .map((rel) => path.join(destination, rel))];
+  for (const target of entries) {
     fs.chmodSync(target, fs.statSync(target).isDirectory() ? 0o755 : 0o644);
   }
 }
@@ -79,7 +83,7 @@ before(() => {
     }),
     "--body", writeBodyFile("created-body.md", `${CREATED_BODY_TEXT}\n\n\`\`\`md\n---\n不在正文之外的 frontmatter\n---\n\`\`\`\n`)]);
   assert.equal(created.status, 0, created.stderr);
-  fs.cpSync(siteWithCms, siteNoCms, { recursive: true });
+  copySite(siteNoCms, siteWithCms);
   fs.rmSync(path.join(siteNoCms, CMS_CONFIG_FILENAME));
 
   const cache = path.join(tmp, "cache");
@@ -281,7 +285,7 @@ test("removing or changing .pages.yml leaves the Site digest, build and provenan
   const withCms = validateSiteRoot(siteWithCms).digest;
   assert.equal(validateSiteRoot(siteNoCms).digest, withCms, "removing the editor config changed the Site digest");
   const changed = path.join(tmp, "changed-cms-config");
-  fs.cpSync(siteWithCms, changed, { recursive: true });
+  copySite(changed, siteWithCms);
   const changedConfig = path.join(changed, CMS_CONFIG_FILENAME);
   fs.writeFileSync(changedConfig, fs.readFileSync(changedConfig, "utf8") + "\n# editor tweak\n");
   assert.equal(validateSiteRoot(changed).digest, withCms, "editing the editor config changed the Site digest");
