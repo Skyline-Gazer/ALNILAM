@@ -10,8 +10,8 @@ probe set and for the resumed product-development lane.
 
 | Ref | Value |
 | --- | --- |
-| CNB `dev` | `b1355573b689b8238d9988b7dd8a4c54b317a461` — fast-forward from PR #114. PR #113 (`12b1abae…`) preceded it. This HANDOFF lands with PR #115, which advances the tip by the search empty state and this documentation commit |
-| Round commits | #113 `e6d46ba`→`12b1aba`; #114 `b135557`; #115 `6ead210` (search empty state) + this HANDOFF; each merged by fast-forward |
+| CNB `dev` | `b1355573b689b8238d9988b7dd8a4c54b317a461` — fast-forward from PR #114. PR #113 (`12b1abae…`) preceded it. This HANDOFF lands with PR #115, which advances the tip by the search empty state, its review fix and the documentation commits |
+| Round commits | #113 `e6d46ba`→`12b1aba`; #114 `b135557`; #115 `6ead210` (search empty state) + the NPC review fix, changelog and this HANDOFF; each merged by fast-forward |
 | GitHub `dev` | lags CNB; **do not mirror/push** |
 | Vercel Production | unchanged (`xxxx`, production branch `dev`, tracks the stale GitHub `dev`) — read-only |
 | CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — untouched |
@@ -33,8 +33,10 @@ probe set and for the resumed product-development lane.
   missing-key degradation).
 - **Reduced motion**: `tests/browser/reduced-motion.spec.ts` — navigation, drawer, search and theme
   switch under `prefers-reduced-motion: reduce`, root and `/ALNILAM/`.
-- **Search empty state**: `tests/browser/search-empty-state.spec.ts` — 6/6; the same spec fails 6/6
-  on the pre-fix build (`element(s) not found`) and passes 6/6 with the fix.
+- **Search empty state**: `tests/browser/search-empty-state.spec.ts` — 8/8. The same spec fails 6/6
+  on the pre-feature build (`element(s) not found`); the layout-switch cases fail 2/2 on the
+  pre-review-fix build and pass 2/2 after the fix (the NPC review finding that the message followed
+  either input instead of the visible one).
 - **Unit suite**: `pnpm test` — 249/249 (serialized). Running the same files **without**
   `--test-concurrency=1` on a many-core host runs the compose-based tests in parallel; they then
   collide in the shared `apps/web/.astro` build cache (`ERR_MODULE_NOT_FOUND` on prerender chunks).

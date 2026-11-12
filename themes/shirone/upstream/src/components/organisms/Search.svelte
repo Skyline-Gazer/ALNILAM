@@ -16,6 +16,9 @@ let isSearching = false;
 let pagefindLoaded = false;
 let initialized = false;
 let requestGeneration = 0;
+// The desktop capsule and the mobile panel are separate inputs sharing one
+// results panel, so the empty state must follow the query the visitor can see.
+let desktopLayout = false;
 
 // client:only island: follow the page language, including after Swup navigation.
 let pageLocale = "en";
@@ -29,8 +32,9 @@ $: panelResults = result.map((r) => ({
 
 // A finished search that matched nothing is an answer, not a broken panel:
 // the panel states it instead of showing an empty box.
+$: visibleQuery = desktopLayout ? keywordDesktop : keywordMobile;
 $: showNoResults =
-	Boolean((keywordDesktop || keywordMobile).trim()) &&
+	Boolean(visibleQuery.trim()) &&
 	panelResults.length === 0 &&
 	!isSearching;
 
@@ -174,6 +178,15 @@ onMount(() => {
 	};
 
 	const loadError = () => initializeSearch();
+	// The visible query lives in the desktop capsule above 1024px and in the
+	// panel input below it, so the layout decides which query the empty state
+	// refers to.
+	const desktopMedia = window.matchMedia("(min-width: 1024px)");
+	const syncLayout = () => {
+		desktopLayout = desktopMedia.matches;
+	};
+	syncLayout();
+	desktopMedia.addEventListener("change", syncLayout);
 	const escape = (event: KeyboardEvent) => {
 		if (event.key !== "Escape") return;
 		const panel = document.getElementById("search-panel");
@@ -202,6 +215,7 @@ onMount(() => {
 		document.removeEventListener("pagefindready", initializeSearch);
 		document.removeEventListener("pagefindloaderror", loadError);
 		document.removeEventListener("keydown", escape);
+		desktopMedia.removeEventListener("change", syncLayout);
 		panelObserver?.disconnect();
 	};
 });

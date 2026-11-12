@@ -63,4 +63,26 @@ for (const origin of ORIGINS) {
 			await context.close();
 		}
 	});
+
+	test(`the empty state follows the query the visitor can see ${label}`, async ({ browser }) => {
+		const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
+		const page = await context.newPage();
+		try {
+			await page.goto(`${origin}/posts/hello-alnilam/`, { waitUntil: "networkidle" });
+			await page.locator("#search-input-desktop-switch").focus();
+			await page.keyboard.press("Enter");
+			await page.locator("#search-input-desktop").fill(NO_HIT);
+			await expect(page.locator("#search-panel .m3-blog-searchpanel__status")).toHaveText("没有找到结果");
+
+			// Narrowing the viewport hands the panel its own, empty input: the
+			// empty state must not claim that an empty query matched nothing.
+			await page.setViewportSize({ width: 390, height: 844 });
+			await expect(page.locator("#search-panel .m3-blog-searchpanel__status")).toHaveCount(0);
+
+			await page.locator("#search-panel input").fill(NO_HIT);
+			await expect(page.locator("#search-panel .m3-blog-searchpanel__status")).toHaveText("没有找到结果");
+		} finally {
+			await context.close();
+		}
+	});
 }
