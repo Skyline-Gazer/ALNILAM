@@ -20,7 +20,7 @@
 
   function decodeExcerpt(excerpt: string): string {
     const textarea = document.createElement("textarea");
-    textarea.innerHTML = excerpt.replaceAll("<mark>", "").replaceAll("</mark>", "");
+    textarea.innerHTML = excerpt.replaceAll("___END_PAGEFIND_WEIGHT___", "").replaceAll("<mark>", "").replaceAll("</mark>", "");
     return textarea.value;
   }
 
