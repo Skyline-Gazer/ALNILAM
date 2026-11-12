@@ -324,7 +324,6 @@ export function applyEdit(raw, patch, { config, merge = true } = {}) {
     }
   }
   for (const [key, value] of Object.entries(patch)) nextDoc.set(key, value);
-  const after = Object.keys(nextDoc.toJS({ maxAliasCount: 100 }));
   const content = open + nextDoc.toString() + close + body;
   // A serializer bug must fail closed instead of silently corrupting content.
   const check = splitPost(content);
@@ -372,6 +371,12 @@ function mediaTargets(raw, postFile, siteDir) {
     const absolute = clean.startsWith("/site-assets/")
       ? path.join(siteDir, "assets", clean.slice("/site-assets/".length))
       : path.resolve(path.dirname(postFile), clean);
+    // A media reference must resolve inside the Site's two media roots:
+    // assets/ (served at /site-assets/) and the posts tree (post-relative).
+    // Anything else (config, data, a sibling Site) is not a media path.
+    const inRoots = [path.join(siteDir, "assets"), path.join(siteDir, POSTS_DIR)]
+      .some((root) => absolute === root || absolute.startsWith(root + path.sep));
+    if (!inRoots) return { field, src, kind: "outside-media-roots", exists: false };
     return {
       field,
       src,
@@ -460,7 +465,11 @@ function main(argv) {
       throw new Error("--post must stay inside content/posts");
     }
     const result = applyEdit(fs.readFileSync(post, "utf8"), JSON.parse(rawPatch), { config });
-    const out = option(argv, "--out", post);
+    const out = path.resolve(option(argv, "--out", post));
+    const postsRoot = path.resolve(siteDir, POSTS_DIR) + path.sep;
+    if (!out.startsWith(postsRoot)) {
+      throw new Error("--out must stay inside content/posts (copy the Site to preview elsewhere)");
+    }
     fs.mkdirSync(path.dirname(out), { recursive: true });
     fs.writeFileSync(out, result.content);
     console.log(`Edited ${rel}: changed=${result.changed.join(",")} preserved=${result.preserved.join(",") || "none"} bodyBytes=${Buffer.byteLength(result.body)} -> ${out}`);

@@ -17,12 +17,15 @@ Run the offline adapter from the repository root:
 
 ```sh
 node scripts/pages-cms.mjs verify --site tests/fixtures/pages-cms-site
+cp -a tests/fixtures/pages-cms-site /tmp/pages-cms-site
 node scripts/pages-cms.mjs edit \
-  --site tests/fixtures/pages-cms-site \
+  --site /tmp/pages-cms-site \
   --post cms-basics.md \
-  --set '{"title":"Edited by the PoC"}' \
-  --out /tmp/cms-basics-edited.md
+  --set '{"title":"Edited by the PoC"}'
 ```
+
+`edit` writes back to the post; `--out` is allowed only inside the Site's
+`content/posts/`, so the tool cannot write into another Site or the config.
 
 Compose both deployment bases (the adapter never writes into the fixture during
 a build):

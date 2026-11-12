@@ -21,13 +21,13 @@ Git-based authoring PoC (Issue #88) and the current `dev` commit.
 
 | PR | Effect | Trusted consumer |
 | --- | --- | --- |
-| [#116](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/116) | Isolated Site `.pages.yml`, offline `verify`/`edit`/`init` adapter, category-drift detection and dual-base compose tests; zero Core/product changes | `<RECEIPT>` |
+| [#116](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/116) | Isolated Site `.pages.yml`, offline `verify`/`edit`/`init` adapter, category-drift detection and dual-base compose tests; zero Core/product changes | green on `349481b` (28m22s); the final head is re-gated after the NPC review fixes and must be green before merge — the exact build URL is in the PR timeline |
 
 ### Verification
 
-- `pnpm test` **259/259** (serialized); `python3 -m unittest discover -s scripts/tests -p '*_test.py'` 14/14; `pnpm check` 0 errors / 0 warnings / 0 hints; `pnpm build` + `artifact-check` + `seo-check` green; demo Site digest `23d159e4…` unchanged by `.pages.yml`.
-- `scripts/tests/pages-cms.test.mjs` **10/10** locally: field mapping against the demo Site's real posts, unknown-key/comment/MDX byte roundtrip, root + `/ALNILAM/` builds with `artifact-check`/`seo-check`, CMS removal digest/provenance equality, CLI entry guard under a spaced path, missing `content/posts` diagnostics, `init` taxonomy generation/`--force`, stale-select drift repair, and the no-catalog free-text fallback.
-- Candidate pipelines (docs-links, comments/a11y browser) and the trusted consumer are green; the dev push pipeline is green at the merged tip.
+- `pnpm test` **261/261** (serialized); `python3 -m unittest discover -s scripts/tests -p '*_test.py'` 14/14; `pnpm check` 0 errors / 0 warnings / 0 hints; `pnpm build` + `artifact-check` + `seo-check` green; demo Site digest `23d159e4…` unchanged by `.pages.yml`.
+- `scripts/tests/pages-cms.test.mjs` **12/12** locally: field mapping against the demo Site's real posts, unknown-key/comment/MDX byte roundtrip, root + `/ALNILAM/` builds with `artifact-check`/`seo-check`, CMS removal digest/provenance equality, CLI entry guard under a spaced path, missing `content/posts` diagnostics, `--out` confinement, out-of-root media rejection, frontmatter split boundaries, `init` taxonomy generation/`--force`, stale-select drift repair, and the no-catalog free-text fallback.
+- Candidate pipelines (docs-links, comments/a11y browser) are green; the trusted consumer is re-run on the final head and must be green before merge, and the dev push pipeline is verified on the merged tip.
 - A trusted-consumer run failed once in the target-owned `navigation-lifecycle` browser spec (`browserContext.close` after a 90 s timeout, 2/4 cases). The same spec passes 4/4 locally in 1.1 min, and the change adds no browser surface; the gate was re-run with a new SHA rather than weakening any check.
 
 ### Status and tracks

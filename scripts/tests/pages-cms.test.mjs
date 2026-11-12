@@ -139,16 +139,23 @@ test("the offline adapter CLI verifies mapping, preserved keys and media paths",
     for (const media of post.media) assert.equal(media.exists, true, `${post.file}: ${media.src} is unresolved`);
   }
 
-  const out = path.join(tmp, "cli-edited.md");
-  const edit = run("edit", [tool, "edit", "--site", fixture, "--post", "cms-basics.md",
+  const cliSite = path.join(tmp, "cli-site");
+  copySite(cliSite);
+  const out = path.join(cliSite, POSTS_DIR, "cms-cli.md");
+  const edit = run("edit", [tool, "edit", "--site", cliSite, "--post", "cms-basics.md",
     "--set", JSON.stringify({ title: "CLI edit" }), "--out", out]);
   assert.equal(edit.status, 0, edit.stderr);
-  const original = fs.readFileSync(path.join(fixture, POSTS_DIR, "cms-basics.md"), "utf8");
+  const original = fs.readFileSync(path.join(cliSite, POSTS_DIR, "cms-basics.md"), "utf8");
   assert.equal(splitPost(fs.readFileSync(out, "utf8")).body, splitPost(original).body);
   assert.equal(splitPost(fs.readFileSync(out, "utf8")).data.title, "CLI edit");
 
-  const lossy = run("edit", [tool, "edit", "--site", fixture, "--post", "cms-basics.md",
-    "--set", JSON.stringify({ title: "X" }), "--merge", "false", "--out", path.join(tmp, "unused.md")]);
+  const escaped = run("edit", [tool, "edit", "--site", cliSite, "--post", "cms-basics.md",
+    "--set", JSON.stringify({ title: "X" }), "--out", path.join(tmp, "outside.md")]);
+  assert.notEqual(escaped.status, 0, "--out must not write outside content/posts");
+  assert.match(escaped.stderr, /--out must stay inside content\/posts/);
+
+  const lossy = run("edit", [tool, "edit", "--site", cliSite, "--post", "cms-basics.md",
+    "--set", JSON.stringify({ title: "X" }), "--merge", "false", "--out", out]);
   assert.notEqual(lossy.status, 0, "the CLI must refuse Pages CMS's lossy merge=false write mode");
 });
 
@@ -337,4 +344,30 @@ theme:
   const verify = run("verify", [tool, "verify", "--site", site, "--json"]);
   assert.equal(verify.status, 0, verify.stderr);
   assert.deepEqual(JSON.parse(verify.stdout).selectDrift, []);
+});
+
+test("verify rejects media references that leave the Site media roots", () => {
+  const site = path.join(tmp, "media-escape-site");
+  copySite(site);
+  fs.writeFileSync(path.join(site, POSTS_DIR, "cms-escape.md"),
+    `---\ntitle: "Escape"\npubDate: 2026-11-08\ncover: "./../../alnilam.config.yaml"\ntags: []\nlang: "zh-CN"\n---\n\n![x](../data/taxonomy.yaml)\n`);
+  const verify = run("verify", [tool, "verify", "--site", site, "--json"]);
+  assert.notEqual(verify.status, 0, "an out-of-root media reference must fail verification");
+  const report = JSON.parse(verify.stdout);
+  const post = report.posts.find((entry) => entry.file === "cms-escape.md");
+  assert.deepEqual(post.media.map((entry) => entry.kind),
+    ["outside-media-roots", "outside-media-roots"]);
+  assert.ok(post.media.every((entry) => entry.exists === false));
+  assert.equal(report.ok, false);
+});
+
+test("a body starting with --- or a block scalar keeps its exact bytes", () => {
+  const raw = `---\ntitle: "Split"\nnote: |\n  a\n  ---\n  b\n---\n\n---\nbody\n`;
+  const split = splitPost(raw);
+  assert.equal(split.frontmatter, `title: "Split"\nnote: |\n  a\n  ---\n  b\n`);
+  assert.equal(split.body, "\n---\nbody\n");
+  assert.equal(split.data.note, "a\n---\nb\n");
+  const result = applyEdit(raw, { title: "Edited" }, { config: loadCmsConfig(fixture) });
+  assert.equal(result.body, "\n---\nbody\n");
+  assert.equal(splitPost(result.content).data.note, "a\n---\nb\n");
 });

@@ -34,7 +34,7 @@ Site and existing test resources.
 | --- | --- |
 | `tests/fixtures/pages-cms-site/.pages.yml` | Site-owned Pages CMS editor schema: media source, `content/posts` collection, all post frontmatter fields, `body` source field, `operations.delete: false`, `merge: true`. |
 | `tests/fixtures/pages-cms-site/` | Disposable independent Site: schema v2 config, one Markdown post and one MDX post (both with undeclared frontmatter keys), one Site asset and one post-relative image. No third-party media. |
-| `scripts/pages-cms.mjs` | Offline adapter CLI (`verify`, `edit`). Parses frontmatter as a YAML document, edits declared fields in place, and re-serializes without touching the body. No Core changes, no new dependency. |
+| `scripts/pages-cms.mjs` | Offline adapter CLI (`verify`, `edit`, `init`). Parses frontmatter as a YAML document, edits declared fields in place, re-serializes without touching the body, and generates the editor schema from the Site taxonomy. Writes are confined to the Site's `content/posts/`. No Core changes, no new dependency. |
 | `scripts/tests/pages-cms.test.mjs` | Field mapping, roundtrip, dual-base compose, CMS-removal and fail-closed tests. |
 
 ## What is verified (offline)
