@@ -10,14 +10,16 @@
  *
  * Usage:
  *   node scripts/pages-cms.mjs verify --site <site-dir> [--json]
+ *   node scripts/pages-cms.mjs create --site <site-dir> --file <relative-path> \
+ *       --set '{"title":"New post","pubDate":"2026-11-12"}' [--body <file>]
  *   node scripts/pages-cms.mjs edit --site <site-dir> --post <relative-path> \
  *       --set '{"title":"New title"}' [--out <file>] [--merge false]
  *   node scripts/pages-cms.mjs init --site <site-dir> [--force]
  *
- * `verify` is read-only. `edit` writes to --out when given, otherwise back to
- * the post; `init` writes `.pages.yml` unless one already exists. In a real Site
- * a CMS commit lands before compose; never run a writing command while a compose
- * is running (the builder re-hashes the four Site inputs and fails on mutation).
+ * `verify` is read-only. `create`, `edit` and `init` write only inside the
+ * Site's `content/posts/` (or `.pages.yml`). In a real Site a CMS commit lands
+ * before compose; never run a writing command while a compose is running (the
+ * builder re-hashes the four Site inputs and fails on mutation).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -258,6 +260,52 @@ export function applyEdit(raw, patch, { config, merge = true } = {}) {
   };
 }
 
+/**
+ * Render a new post from declared fields. Required Core fields must be present;
+ * frontmatter keys follow the editor's field order; the body is written
+ * verbatim. Returns the text without touching the filesystem.
+ */
+export function renderNewPost(fields, { config, body = "" }) {
+  if (!fields || typeof fields !== "object" || Array.isArray(fields)) {
+    throw new Error("--set must be a JSON object of frontmatter fields");
+  }
+  const declared = declaredFieldNames(config);
+  for (const key of Object.keys(fields)) {
+    if (!declared.includes(key)) {
+      throw new Error(`off-schema field rejected: ${JSON.stringify(key)} is not a declared posts field`);
+    }
+  }
+  for (const key of REQUIRED_FIELDS) {
+    if (!(key in fields)) throw new Error(`new post is missing required field ${JSON.stringify(key)}`);
+  }
+  const doc = new Document({});
+  for (const key of declared) {
+    if (key in fields) doc.set(key, fields[key]);
+  }
+  const content = "---\n" + doc.toString() + "---\n" + (body ? "\n" + body : "");
+  const check = splitPost(content, "new post");
+  for (const key of REQUIRED_FIELDS) {
+    if (!(key in check.data)) throw new Error(`new post lost required field ${JSON.stringify(key)}`);
+  }
+  if (check.body !== (body ? "\n" + body : "")) throw new Error("new post body was altered");
+  return { content, data: check.data, body: check.body };
+}
+
+/** Write a new post; refuses to overwrite and stays inside content/posts. */
+export function createPost(siteDir, { file, fields, body = "" }) {
+  const postsRoot = path.resolve(siteDir, POSTS_DIR);
+  const target = path.resolve(postsRoot, file);
+  if (!target.startsWith(postsRoot + path.sep)) {
+    throw new Error("--file must stay inside content/posts");
+  }
+  if (!POST_RE.test(target)) throw new Error("--file must end in .md or .mdx");
+  if (fs.existsSync(target)) throw new Error(`${target} already exists; refusing to overwrite`);
+  const rendered = renderNewPost(fields, { config: loadCmsConfig(siteDir), body });
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, rendered.content);
+  return { path: target, bytes: Buffer.byteLength(rendered.content) };
+}
+
 function walk(dir, base = dir) {
   const out = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -395,12 +443,22 @@ function main(argv) {
     console.log(`Edited ${rel}: changed=${result.changed.join(",")} preserved=${result.preserved.join(",") || "none"} bodyBytes=${Buffer.byteLength(result.body)} -> ${out}`);
     return;
   }
+  if (command === "create") {
+    const rel = option(argv, "--file", null);
+    const rawFields = option(argv, "--set", null);
+    if (!rel || !rawFields) throw new Error("create requires --file and --set");
+    const bodyFile = option(argv, "--body", null);
+    const body = bodyFile ? fs.readFileSync(bodyFile, "utf8") : "";
+    const result = createPost(siteDir, { file: rel, fields: JSON.parse(rawFields), body });
+    console.log(`Created ${rel}: ${result.bytes} bytes -> ${result.path}`);
+    return;
+  }
   if (command === "init") {
     const result = initCmsConfig(siteDir, { force: argv.includes("--force") });
     console.log(`Generated ${result.path}\nCategories: ${result.categories.join(", ") || "none"}\nTags: ${result.tags.join(", ") || "none"}`);
     return;
   }
-  throw new Error("usage: pages-cms.mjs verify|edit|init --site <dir> [--post <rel> --set <json>] [--force]");
+  throw new Error("usage: pages-cms.mjs verify|create|edit|init --site <dir> [--file <rel> --post <rel>] [--set <json>] [--body <file>] [--force]");
 }
 
 function isEntryPoint() {

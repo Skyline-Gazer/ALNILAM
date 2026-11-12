@@ -34,7 +34,7 @@ Site and existing test resources.
 | --- | --- |
 | `tests/fixtures/pages-cms-site/.pages.yml` | Site-owned Pages CMS editor schema: media source, `content/posts` collection, all post frontmatter fields, `body` source field, `operations.delete: false`, `merge: true`. |
 | `tests/fixtures/pages-cms-site/` | Disposable independent Site: schema v2 config, one Markdown post and one MDX post (both with undeclared frontmatter keys), one Site asset and one post-relative image. No third-party media. |
-| `scripts/pages-cms.mjs` | Offline adapter CLI (`verify`, `edit`, `init`). Parses frontmatter as a YAML document, edits declared fields in place, re-serializes without touching the body, and generates the editor schema from the Site taxonomy. Writes are confined to the Site's `content/posts/`. No Core changes, no new dependency. |
+| `scripts/pages-cms.mjs` | Offline adapter CLI (`verify`, `create`, `edit`, `init`). Parses frontmatter as a YAML document, edits declared fields in place, re-serializes without touching the body, and generates the editor schema from the Site taxonomy. Writes are confined to the Site's `content/posts/`. No Core changes, no new dependency. |
 | `scripts/pages-cms.schema.yml` | The single schema template `init` renders (`{{CATEGORY_FIELD}}` is replaced by a select with the Site's categories, or a free-text field when the Site declares none). |
 | `scripts/tests/pages-cms.test.mjs` | Field mapping, roundtrip, dual-base compose, CMS-removal and fail-closed tests. |
 
@@ -58,6 +58,8 @@ only replaced with `--force`):
 ```sh
 node scripts/pages-cms.mjs init --site /path/to/site
 node scripts/pages-cms.mjs verify --site /path/to/site
+node scripts/pages-cms.mjs create --site /tmp/pages-cms-site --file new-post.md \
+  --set '{"title":"New post","pubDate":"2026-11-12"}' --body /path/to/body.md
 node --test --test-concurrency=1 scripts/tests/pages-cms.test.mjs
 ```
 

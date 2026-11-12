@@ -10,8 +10,8 @@ Git-based authoring PoC (Issue #88) and the current `dev` commit.
 
 | Ref | Value |
 | --- | --- |
-| CNB `dev` | `efc336ab709f1ca9eb76abf7a626a3ad064a5eb6` — unchanged while PR #116 is open. When #116 merges fast-forward, `dev` becomes the PR head; the exact merged SHA is recorded in the PR timeline |
-| Round commits | #116 `fa46ae6` (PoC) → `349481b` (NPC review fixes) → `2b8f1db` (media diagnostic) → the `init` generator and later review fixes on the PR branch; open at the time of writing, merges as one fast-forward tip |
+| CNB `dev` | `1e2cdc1fba4eea22bb392610dd63b7ec74036589` — fast-forward from PR #116 (previously `efc336ab…`). PR #117 adds the `create` verb and is open above this tip |
+| Round commits | #116 `fa46ae6` → `349481b` → `2b8f1db` → `62c7043` → `2f46b53` → `0f6a9f5` → `1e2cdc1`; merged as one fast-forward tip. #117 open on top of it |
 | GitHub `dev` | lags CNB; **do not mirror/push** |
 | Vercel Production | unchanged (project name `xxxx` — not a commit SHA — production branch `dev`, tracks the stale GitHub `dev`) — read-only |
 | CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — untouched |
@@ -21,18 +21,19 @@ Git-based authoring PoC (Issue #88) and the current `dev` commit.
 
 | PR | Effect | Trusted consumer |
 | --- | --- | --- |
-| [#116](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/116) | Isolated Site `.pages.yml`, offline `verify`/`edit`/`init` adapter, category-drift detection and dual-base compose tests; zero Core/product changes | green on `2f46b53` (29m26s); later review fixes are re-gated on the final head and must be green before merge — the exact build URL is in the PR timeline |
+| [#116](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/116) | Isolated Site `.pages.yml`, offline `verify`/`edit`/`init` adapter, category-drift detection and dual-base compose tests; zero Core/product changes | green on the final head `1e2cdc1` (31m33s); merged fast-forward |
+| [#117](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/117) | `create` verb (declared fields only, required `title`/`pubDate`, no overwrite, confined to `content/posts`) and the corresponding docs/tests | pending; must be green before merge |
 
 ### Verification
 
-- `pnpm test` **264/264** (serialized); `python3 -m unittest discover -s scripts/tests -p '*_test.py'` 14/14; `pnpm check` 0 errors / 0 warnings / 0 hints; `pnpm build` + `artifact-check` + `seo-check` green; demo Site digest `23d159e4…` unchanged by `.pages.yml`.
-- `scripts/tests/pages-cms.test.mjs` **15/15** locally: field mapping against the demo Site's real posts, unknown-key/comment/MDX byte roundtrip, root + `/ALNILAM/` builds with `artifact-check`/`seo-check`, CMS removal digest/provenance equality, CLI entry guard under a spaced path, missing `content/posts` diagnostics, `--out` confinement, out-of-root media rejection, frontmatter split boundaries (body starting with `---`, block scalars, EOF without a trailing newline), `component` fields, the shared schema template, `init` taxonomy generation/`--force`, stale-select drift repair, and the no-catalog free-text fallback.
+- `pnpm test` **265/265** (serialized); `python3 -m unittest discover -s scripts/tests -p '*_test.py'` 14/14; `pnpm check` 0 errors / 0 warnings / 0 hints; `pnpm build` + `artifact-check` + `seo-check` green; demo Site digest `23d159e4…` unchanged by `.pages.yml`.
+- `scripts/tests/pages-cms.test.mjs` **16/16** locally: field mapping against the demo Site's real posts, unknown-key/comment/MDX byte roundtrip, root + `/ALNILAM/` builds with `artifact-check`/`seo-check`, CMS removal digest/provenance equality, CLI entry guard under a spaced path, missing `content/posts` diagnostics, `--out` confinement, out-of-root media rejection, frontmatter split boundaries (body starting with `---`, block scalars, EOF without a trailing newline), `component` fields, the shared schema template, `create` (declared fields only, refusals), `init` taxonomy generation/`--force`, stale-select drift repair, and the no-catalog free-text fallback.
 - Candidate pipelines (docs-links, comments/a11y browser) are green on every head; the trusted consumer is re-run on the final head and must be green before merge, and the dev push pipeline is verified on the merged tip.
 - A trusted-consumer run failed once in the target-owned `navigation-lifecycle` browser spec (`browserContext.close` after a 90 s timeout, 2/4 cases). The same spec passes 4/4 locally in 1.1 min, and the change adds no browser surface; the gate was re-run with a new SHA rather than weakening any check.
 
 ### Status and tracks
 
-- **#88** In Progress: offline PoC delivered (compatible-by-design / PoC-verified). Hosted Pages CMS and its GitHub App permissions, a real external Site, create/delete and concurrent-edit behavior, and the Decap/Keystatic comparison stay Owner-authorized; nothing is integrated or in production.
+- **#88** In Progress: offline PoC delivered and extended with post creation (compatible-by-design / PoC-verified). Hosted Pages CMS and its GitHub App permissions, a real external Site, deletion and concurrent-edit behavior, and the Decap/Keystatic comparison stay Owner-authorized; nothing is integrated or in production.
 - **#89** remains a separate post-launch headless-CMS assessment (not started).
 - **#67–#69, #83** remain deferred. **#35**, **#73/#74**, **#81**, **#94** keep their Owner/CI-infra tracks.
 

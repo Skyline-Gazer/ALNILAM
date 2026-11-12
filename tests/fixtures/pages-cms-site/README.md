@@ -24,8 +24,10 @@ node scripts/pages-cms.mjs edit \
   --set '{"title":"Edited by the PoC"}'
 ```
 
-`edit` writes back to the post; `--out` is allowed only inside the Site's
-`content/posts/`, so the tool cannot write into another Site or the config.
+`create` adds a post from declared fields (it requires `title` and `pubDate` and
+refuses to overwrite); `edit` writes back to the post. Every write is confined to
+the Site's `content/posts/` (plus `.pages.yml` for `init`), so the tool cannot
+write into another Site or the config.
 
 Compose both deployment bases (the adapter never writes into the fixture during
 a build):

@@ -20,6 +20,8 @@ const { applyEdit, declaredFieldNames, loadCmsConfig, postsFields, splitPost, CM
 
 const EDITED_MD_TITLE = "编辑后的往返标题";
 const EDITED_MDX_TITLE = "编辑后的 MDX 标题";
+const CREATED_TITLE = "由 CMS 新建的文章";
+const CREATED_BODY_TEXT = "这是新建文章的正文。";
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-pages-cms-"));
 const siteWithCms = path.join(tmp, "with-cms");
 const siteNoCms = path.join(tmp, "without-cms");
@@ -55,12 +57,28 @@ function run(name, args, extra = {}) {
   });
 }
 
+function writeBodyFile(name, content) {
+  const file = path.join(tmp, name);
+  fs.writeFileSync(file, content);
+  return file;
+}
+
 before(() => {
   copySite(siteWithCms);
   const config = loadCmsConfig(siteWithCms);
   recordEdit(siteWithCms, "cms-basics.md", { title: EDITED_MD_TITLE, tags: ["CMS", "edited"] });
   recordEdit(siteWithCms, "cms-mdx.mdx", { title: EDITED_MDX_TITLE });
   assert.equal(config.settings.content.merge, true);
+  const created = run("create", [tool, "create", "--site", siteWithCms, "--file", "cms-created.md",
+    "--set", JSON.stringify({
+      title: CREATED_TITLE,
+      pubDate: "2026-11-11",
+      category: "guide",
+      tags: ["CMS"],
+      lang: "zh-CN",
+    }),
+    "--body", writeBodyFile("created-body.md", `${CREATED_BODY_TEXT}\n\n\`\`\`md\n---\n不在正文之外的 frontmatter\n---\n\`\`\`\n`)]);
+  assert.equal(created.status, 0, created.stderr);
   fs.cpSync(siteWithCms, siteNoCms, { recursive: true });
   fs.rmSync(path.join(siteNoCms, CMS_CONFIG_FILENAME));
 
@@ -248,6 +266,10 @@ test("composed builds at root and /ALNILAM/ render the edited content and media"
         `${build.name}: canonical is not base-prefixed`);
     }
 
+    const created = fs.readFileSync(path.join(build.out, "posts/cms-created/index.html"), "utf8");
+    assert.ok(created.includes(CREATED_TITLE), `${build.name}: created post title is missing`);
+    assert.ok(created.includes(CREATED_BODY_TEXT), `${build.name}: created post body is missing`);
+
     const mdx = fs.readFileSync(path.join(build.out, "posts/cms-mdx/index.html"), "utf8");
     assert.ok(mdx.includes(EDITED_MDX_TITLE), `${build.name}: edited MDX title is missing`);
     assert.ok(mdx.includes('data-pages-cms-mdx="roundtrip"'), `${build.name}: MDX JSX was corrupted`);
@@ -423,3 +445,39 @@ function tmpSiteWithGeneratedConfig() {
   assert.equal(init.status, 0, init.stderr);
   return site;
 }
+
+test("create writes declared fields only and refuses unsafe input", () => {
+  const site = path.join(tmp, "create-site");
+  copySite(site);
+  const fields = { title: "Created", pubDate: "2026-11-11", category: "guide", tags: ["CMS"] };
+
+  const created = run("create", [tool, "create", "--site", site, "--file", "nested/created.md",
+    "--set", JSON.stringify(fields), "--body", writeBodyFile("create-body.md", "Body\n")]);
+  assert.equal(created.status, 0, created.stderr);
+  const raw = fs.readFileSync(path.join(site, POSTS_DIR, "nested/created.md"), "utf8");
+  const parsed = splitPost(raw);
+  assert.deepEqual(Object.keys(parsed.data), Object.keys(fields));
+  assert.deepEqual(parsed.data, fields);
+  assert.equal(parsed.body, "\nBody\n");
+
+  const verify = run("verify", [tool, "verify", "--site", site, "--json"]);
+  assert.equal(verify.status, 0, verify.stderr);
+
+  const cases = [
+    ["existing file", ["--file", "cms-basics.md"], /already exists/],
+    ["undeclared field", ["--file", "off-schema.md"], /off-schema field rejected/],
+    ["missing required", ["--file", "incomplete.md"], /missing required field/],
+    ["outside posts", ["--file", "../escape.md"], /must stay inside content\/posts/],
+    ["wrong extension", ["--file", "notes.txt"], /must end in \.md or \.mdx/],
+  ];
+  for (const [name, args, pattern] of cases) {
+    const set = name === "undeclared field" ? { ...fields, author: "ghost" }
+      : name === "missing required" ? { title: "No date" }
+        : fields;
+    const result = run("create", [tool, "create", "--site", site, ...args, "--set", JSON.stringify(set)]);
+    assert.notEqual(result.status, 0, `${name}: create should fail`);
+    assert.match(result.stderr, pattern, `${name}: ${result.stderr}`);
+  }
+  assert.equal(fs.existsSync(path.join(site, POSTS_DIR, "incomplete.md")), false);
+  assert.equal(fs.existsSync(path.join(site, "escape.md")), false);
+});
