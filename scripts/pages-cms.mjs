@@ -37,20 +37,27 @@ const { parseDocument, Document, isMap } = require("yaml");
 // TEMP DIAGNOSTIC (removed before merge): report fixture modes in the trusted
 // test environment so the read-only copy failure can be diagnosed.
 if (process.env.CNB_TRUSTED_TEST_ROOT) {
-  try {
-    const dir = process.env.CNB_TRUSTED_TEST_ROOT;
-    const fx = path.join(dir, "tests/fixtures/pages-cms-site");
-    const s = fs.statSync(fx);
-    const t = fs.statSync(os.tmpdir());
-    console.error("PAGES_CMS_DIAG " + JSON.stringify({
-      fixtureMode: (s.mode & 0o7777).toString(8), fixtureUid: s.uid,
-      tmp: os.tmpdir(), tmpMode: (t.mode & 0o7777).toString(8), tmpUid: t.uid,
-      euid: typeof process.geteuid === "function" ? process.geteuid() : null,
-      umask: process.umask().toString(8),
-    }));
-  } catch (error) {
-    console.error("PAGES_CMS_DIAG error " + error.message);
-  }
+  process.on("exit", () => {
+    try {
+      const dir = process.env.CNB_TRUSTED_TEST_ROOT;
+      const fx = path.join(dir, "tests/fixtures/pages-cms-site");
+      const s = fs.statSync(fx);
+      const t = fs.statSync(os.tmpdir());
+      const probe = path.join(os.tmpdir(), "pages-cms-diag-probe");
+      fs.mkdirSync(probe, { recursive: true });
+      const p = fs.statSync(probe);
+      fs.rmSync(probe, { recursive: true, force: true });
+      console.error("PAGES_CMS_DIAG " + JSON.stringify({
+        fixtureMode: (s.mode & 0o7777).toString(8), fixtureUid: s.uid,
+        tmpMode: (t.mode & 0o7777).toString(8), tmpUid: t.uid,
+        probeMode: (p.mode & 0o7777).toString(8),
+        euid: typeof process.geteuid === "function" ? process.geteuid() : null,
+        umask: process.umask().toString(8),
+      }));
+    } catch (error) {
+      console.error("PAGES_CMS_DIAG error " + error.message);
+    }
+  });
 }
 
 export const CMS_CONFIG_FILENAME = ".pages.yml";
