@@ -316,3 +316,25 @@ test("verify reports a stale category select and init --force repairs it", () =>
   assert.deepEqual(after.selectDrift, []);
   assert.ok(after.selectValues.includes("notes"));
 });
+
+test("init falls back to a free-text category when the Site declares no catalog", () => {
+  const site = path.join(tmp, "no-category-site");
+  copySite(site);
+  fs.writeFileSync(path.join(site, "alnilam.config.yaml"), `schemaVersion: 2
+site:
+  title: No Category Site
+  description: Fixture without a category catalog.
+  url: https://no-category.example.com
+  locale: zh-CN
+locales: [zh-CN]
+theme:
+  appearance: dark
+`);
+  const init = run("init", [tool, "init", "--site", site, "--force"]);
+  assert.equal(init.status, 0, init.stderr);
+  const field = postsFields(loadCmsConfig(site)).find((entry) => entry.name === "category");
+  assert.equal(field.type, "string", "a select without values would be unusable");
+  const verify = run("verify", [tool, "verify", "--site", site, "--json"]);
+  assert.equal(verify.status, 0, verify.stderr);
+  assert.deepEqual(JSON.parse(verify.stdout).selectDrift, []);
+});

@@ -25,8 +25,8 @@ Git-based authoring PoC (Issue #88) and the current `dev` commit.
 
 ### Verification
 
-- `pnpm test` **258/258** (serialized); `python3 -m unittest discover -s scripts/tests -p '*_test.py'` 14/14; `pnpm check` 0 errors / 0 warnings / 0 hints; `pnpm build` + `artifact-check` + `seo-check` green; demo Site digest `23d159e4…` unchanged by `.pages.yml`.
-- `scripts/tests/pages-cms.test.mjs` **9/9** locally: field mapping against the demo Site's real posts, unknown-key/comment/MDX byte roundtrip, root + `/ALNILAM/` builds with `artifact-check`/`seo-check`, CMS removal digest/provenance equality, CLI entry guard under a spaced path, missing `content/posts` diagnostics, `init` taxonomy generation/`--force`, and stale-select drift repair.
+- `pnpm test` **259/259** (serialized); `python3 -m unittest discover -s scripts/tests -p '*_test.py'` 14/14; `pnpm check` 0 errors / 0 warnings / 0 hints; `pnpm build` + `artifact-check` + `seo-check` green; demo Site digest `23d159e4…` unchanged by `.pages.yml`.
+- `scripts/tests/pages-cms.test.mjs` **10/10** locally: field mapping against the demo Site's real posts, unknown-key/comment/MDX byte roundtrip, root + `/ALNILAM/` builds with `artifact-check`/`seo-check`, CMS removal digest/provenance equality, CLI entry guard under a spaced path, missing `content/posts` diagnostics, `init` taxonomy generation/`--force`, stale-select drift repair, and the no-catalog free-text fallback.
 - Candidate pipelines (docs-links, comments/a11y browser) and the trusted consumer are green; the dev push pipeline is green at the merged tip.
 - A trusted-consumer run failed once in the target-owned `navigation-lifecycle` browser spec (`browserContext.close` after a 90 s timeout, 2/4 cases). The same spec passes 4/4 locally in 1.1 min, and the change adds no browser surface; the gate was re-run with a new SHA rather than weakening any check.
 
