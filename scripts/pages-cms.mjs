@@ -272,8 +272,8 @@ export function applyEdit(raw, patch, { config, merge = true } = {}) {
     data: check.data,
     body,
     changed: Object.keys(patch),
-    preserved: before.filter((key) => !declared.includes(key) && key in check.data),
-    dropped: merge === false ? before.filter((key) => !declared.includes(key)) : [],
+    preserved: before.filter((key) => !declared.some((field) => field.name === key) && key in check.data),
+    dropped: merge === false ? before.filter((key) => !declared.some((field) => field.name === key)) : [],
   };
 }
 
