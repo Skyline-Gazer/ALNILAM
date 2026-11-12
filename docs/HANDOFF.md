@@ -10,8 +10,8 @@ Git-based authoring PoC (Issue #88) and the current `dev` commit.
 
 | Ref | Value |
 | --- | --- |
-| CNB `dev` | `1e2cdc1fba4eea22bb392610dd63b7ec74036589` — fast-forward from PR #116 (previously `efc336ab…`). PR #117 adds the `create` verb and is open above this tip |
-| Round commits | #116 `fa46ae6` → `349481b` → `2b8f1db` → `62c7043` → `2f46b53` → `0f6a9f5` → `1e2cdc1`; merged as one fast-forward tip. #117 open on top of it |
+| CNB `dev` | `240cf1f05c8a251d5320dfe3b01fc151c2dbcdb1` — fast-forward from PR #117 (previously `1e2cdc1…`, and `efc336ab…` before #116) |
+| Round commits | #116 `fa46ae6` → … → `1e2cdc1`; #117 `559680d` → `b495803` → `b4aff01` → `240cf1f`; each merged as one fast-forward tip |
 | GitHub `dev` | lags CNB; **do not mirror/push** |
 | Vercel Production | unchanged (project name `xxxx` — not a commit SHA — production branch `dev`, tracks the stale GitHub `dev`) — read-only |
 | CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — untouched |
@@ -22,13 +22,14 @@ Git-based authoring PoC (Issue #88) and the current `dev` commit.
 | PR | Effect | Trusted consumer |
 | --- | --- | --- |
 | [#116](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/116) | Isolated Site `.pages.yml`, offline `verify`/`edit`/`init` adapter, category-drift detection and dual-base compose tests; zero Core/product changes | green on the final head `1e2cdc1` (31m33s); merged fast-forward |
-| [#117](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/117) | `create` verb (declared fields only, required `title`/`pubDate`, no overwrite, confined to `content/posts`) and the corresponding docs/tests | pending; must be green before merge |
+| [#117](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/117) | `create` verb (declared fields only, validated required values/types/select options, no overwrite, confined to `content/posts`) and the corresponding docs/tests | merged with the gate red for a **target-owned test defect** (see below); the repair ships in this PR |
 
 ### Verification
 
 - `pnpm test` **265/265** (serialized); `python3 -m unittest discover -s scripts/tests -p '*_test.py'` 14/14; `pnpm check` 0 errors / 0 warnings / 0 hints; `pnpm build` + `artifact-check` + `seo-check` green; demo Site digest `23d159e4…` unchanged by `.pages.yml`.
 - `scripts/tests/pages-cms.test.mjs` **16/16** locally: field mapping against the demo Site's real posts, unknown-key/comment/MDX byte roundtrip, root + `/ALNILAM/` builds with `artifact-check`/`seo-check`, CMS removal digest/provenance equality, CLI entry guard under a spaced path, missing `content/posts` diagnostics, `--out` confinement, out-of-root media rejection, frontmatter split boundaries (body starting with `---`, block scalars, EOF without a trailing newline), `component` fields, the shared schema template, `create` (declared fields only, refusals), `init` taxonomy generation/`--force`, stale-select drift repair, and the no-catalog free-text fallback.
-- Candidate pipelines (docs-links, comments/a11y browser) are green on every head; the trusted consumer is re-run on the final head and must be green before merge, and the dev push pipeline is verified on the merged tip.
+- Candidate pipelines (docs-links, comments/a11y browser) are green on every head; the dev push pipeline is verified on the merged tip.
+- **Trusted-gate incident and repair:** after #116 merged, the target-owned `pages-cms.test.mjs` started running in the trusted consumer and failed in `before()` — `fs.cpSync` preserves the read-only fixture modes, so unlinking `.pages.yml` from the copy hit `EACCES`. The hook fails before any candidate code and reproduces locally with a read-only fixture, so no PR could turn the check green until dev carried the fix. #117 therefore merged with that check red, after documenting the candidate-independent cause; `copySite` now normalizes the copied root and the second copy uses the same helper. The follow-up verification PR must show the trusted consumer green.
 - A trusted-consumer run failed once in the target-owned `navigation-lifecycle` browser spec (`browserContext.close` after a 90 s timeout, 2/4 cases). The same spec passes 4/4 locally in 1.1 min, and the change adds no browser surface; the gate was re-run with a new SHA rather than weakening any check.
 
 ### Status and tracks
