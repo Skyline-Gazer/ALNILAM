@@ -6,7 +6,7 @@ import { expect, test, type Page } from "@playwright/test";
  * Two demo posts exercise the covered #66 features through the real build
  * pipeline while keeping feature stylesheets split across documents:
  * - fixture-alpha-zh: expressive-code block, TOC headings, table, image.
- * - fixture-beta-zh: KaTeX inline + display math, mermaid diagram.
+ * - fixture-beta-zh: MDX expression, KaTeX inline + display math, mermaid diagram.
  * Runs at 1440px desktop on both root and /ALNILAM/ deployments.
  */
 
@@ -98,6 +98,7 @@ for (const [name, origin] of deployments) {
 		page.on("pageerror", (e) => errors.push(String(e)));
 		try {
 			await openArticle(page, origin, MATH_MERMAID);
+			await expect(page.locator("[data-demo-mdx]")).toHaveText("MDX 表达式：2");
 
 			// KaTeX: inline and display math render as katex elements.
 			await expect(page.locator(".markdown-content .katex")).toHaveCount(2);

@@ -17,7 +17,7 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 - **Bangumi snapshots (Issue #70):** opt-in builds cache public collections and locally emitted covers outside the Site. Provider or cover failures reuse the matching last valid snapshot; a successful empty result replaces it. Visitors make no third-party data or cover requests.
 
 ### Changed
-- The demo Site includes a two-article introductory series to exercise series navigation.
+- The demo Site includes a two-article introductory series and a published MDX example.
 - **Site configuration is YAML-only**: `alnilam.config.yaml` replaces `alnilam.config.toml`; a TOML-only Site now fails closed with an actionable message. No automatic v1→v2 migration is provided.
 - Local browser, CLS and Lighthouse commands share the CNB test configuration; CNB evidence upload verifies downloaded commit attachments and supports a confirmed per-file-limit fallback.
 - **Comments mapping migration (breaking when comments.enabled):** enabled Sites must explicitly set `mapping`. Existing Sites can select `pathname` to retain URL-based threads; `specific` uses stable terms and starts separate discussions. Omitted mapping now fails the build. `load` defaults to `click`.
