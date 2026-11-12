@@ -177,6 +177,11 @@ function mediaTargets(raw, postFile, siteDir) {
       return { field, src, kind: "remote", exists: true };
     }
     const clean = src.split(/[?#]/, 1)[0];
+    if (clean.startsWith("/") && !clean.startsWith("/site-assets/")) {
+      // Core only maps /site-assets/... and post-relative images; other
+      // root-relative paths have no Site-owned backing file.
+      return { field, src, kind: "root-relative-unmapped", exists: false };
+    }
     const absolute = clean.startsWith("/site-assets/")
       ? path.join(siteDir, "assets", clean.slice("/site-assets/".length))
       : path.resolve(path.dirname(postFile), clean);
