@@ -10,6 +10,7 @@ export const id: Translation = {
 	[Key.archiveGroupCategory]: "Berdasarkan kategori",
 	[Key.archiveGroupTag]: "Berdasarkan tag",
 	[Key.search]: "Cari",
+	[Key.searchNoResults]: "Tidak ada hasil",
 	[Key.menu]: "Menu",
 	[Key.displaySettings]: "Pengaturan tampilan",
 	[Key.mainNavigation]: "Navigasi utama",

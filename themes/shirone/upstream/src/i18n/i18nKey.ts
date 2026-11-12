@@ -11,6 +11,7 @@ enum I18nKey {
 	archiveGroupCategory = "archiveGroupCategory",
 	archiveGroupTag = "archiveGroupTag",
 	search = "search",
+	searchNoResults = "searchNoResults",
 	menu = "menu",
 	displaySettings = "displaySettings",
 	mainNavigation = "mainNavigation",

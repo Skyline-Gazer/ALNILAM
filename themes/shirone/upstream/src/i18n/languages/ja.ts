@@ -10,6 +10,7 @@ export const ja: Translation = {
 	[Key.archiveGroupCategory]: "カテゴリ別",
 	[Key.archiveGroupTag]: "タグ別",
 	[Key.search]: "検索",
+	[Key.searchNoResults]: "結果が見つかりません",
 	[Key.menu]: "メニュー",
 	[Key.displaySettings]: "表示設定",
 	[Key.mainNavigation]: "メインナビゲーション",

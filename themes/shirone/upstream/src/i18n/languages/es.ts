@@ -10,6 +10,7 @@ export const es: Translation = {
 	[Key.archiveGroupCategory]: "Por categoría",
 	[Key.archiveGroupTag]: "Por etiqueta",
 	[Key.search]: "Buscar",
+	[Key.searchNoResults]: "Sin resultados",
 	[Key.menu]: "Menú",
 	[Key.displaySettings]: "Ajustes de visualización",
 	[Key.mainNavigation]: "Navegación principal",

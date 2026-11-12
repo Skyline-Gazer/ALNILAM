@@ -27,6 +27,13 @@ $: panelResults = result.map((r) => ({
 	excerpt: r.excerpt,
 }));
 
+// A finished search that matched nothing is an answer, not a broken panel:
+// the panel states it instead of showing an empty box.
+$: showNoResults =
+	Boolean((keywordDesktop || keywordMobile).trim()) &&
+	panelResults.length === 0 &&
+	!isSearching;
+
 const fakeResult: SearchResult[] = [
 	{
 		url: url("/"),
@@ -135,7 +142,10 @@ const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
 
 		if (!initialized || generation !== requestGeneration) return;
 		result = searchResults;
-		setPanelVisibility(result.length > 0, isDesktop);
+		// The results panel opens when the search finishes, carrying either the
+		// results or the explicit no-results state. An empty result set must not
+		// read as a panel that failed to open.
+		setPanelVisibility(true, isDesktop);
 	} catch (error) {
 		if (!initialized || generation !== requestGeneration) return;
 		console.error("Search error:", error);
@@ -239,5 +249,7 @@ $: if (initialized) {
     bind:query={keywordMobile}
     results={panelResults}
     placeholder={t(I18nKey.search)}
+    noResultsText={t(I18nKey.searchNoResults)}
+    showNoResults={showNoResults}
     hideInputOnDesktop
 />

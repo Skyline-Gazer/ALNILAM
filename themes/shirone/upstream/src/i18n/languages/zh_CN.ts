@@ -10,6 +10,7 @@ export const zh_CN: Translation = {
 	[Key.archiveGroupCategory]: "按分类",
 	[Key.archiveGroupTag]: "按标签",
 	[Key.search]: "搜索",
+	[Key.searchNoResults]: "没有找到结果",
 	[Key.menu]: "菜单",
 	[Key.displaySettings]: "显示设置",
 	[Key.mainNavigation]: "主导航",
