@@ -62,7 +62,7 @@ function postsCollection(config) {
 }
 
 /** Validate a `.pages.yml` document; shared by load and generated-config checks. */
-export function parseCmsConfig(text, label = CMS_CONFIG_FILENAME) {
+function parseCmsConfig(text, label = CMS_CONFIG_FILENAME) {
   const { data } = parseYaml(text, label);
   for (const key of Object.keys(data)) {
     if (!KNOWN_CONFIG_KEYS.has(key)) {
@@ -150,7 +150,7 @@ function siteTaxonomy(siteDir, config) {
  * the editor's category choices cannot drift from the Site config. Returns the
  * text plus the values it embedded.
  */
-export function renderCmsConfig(siteDir) {
+function renderCmsConfig(siteDir) {
   const configFile = path.join(siteDir, SITE_CONFIG_FILENAME);
   if (!fs.existsSync(configFile)) {
     throw new Error(`${SITE_CONFIG_FILENAME} is missing; cannot generate ${CMS_CONFIG_FILENAME}`);
@@ -183,7 +183,7 @@ ${template.replace("{{CATEGORY_FIELD}}", () => categoryField)}`;
 }
 
 /** Write the generated schema; refuses to replace an existing file unless forced. */
-export function initCmsConfig(siteDir, { force = false } = {}) {
+function initCmsConfig(siteDir, { force = false } = {}) {
   const target = path.join(siteDir, CMS_CONFIG_FILENAME);
   if (fs.existsSync(target) && !force) {
     throw new Error(`${target} already exists; pass --force to replace it`);
