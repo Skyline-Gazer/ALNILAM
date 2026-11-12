@@ -1,5 +1,5 @@
 ---
-import { getCollection, type CollectionEntry } from "astro:content";
+import { getCollection } from "astro:content";
 import NativeArticle from "@alnilam/theme-shirone/Article.astro";
 import Card from "@alnilam/theme-shirone/Card.svelte";
 import Comments from "virtual:alnilam-comments";
@@ -9,11 +9,13 @@ import { loadSite } from "../../lib/site-source.mjs";
 import { canonicalUrl, postLang, postLocalSlug, postPath, translationAlternates, uiStrings, withBase } from "../../lib/i18n.mjs";
 import { commentLang, commentsCsp, resolveCommentIdentity } from "../../lib/comments.mjs";
 import { POSTS_PAGE_SIZE } from "../../lib/pagination.mjs";
+import { articleSeriesContexts } from "../../lib/article-series";
 
 import { llmsIndexPath, markdownPath, absolute } from "../../lib/llms.mjs";
 export async function getStaticPaths() {
   const allPosts = await getCollection("posts", ({ data }) => !data.draft);
   const { config } = loadSite();
+  const seriesContexts = await articleSeriesContexts(allPosts, config.site.locale);
   const lastPage = Math.ceil(allPosts.length / POSTS_PAGE_SIZE);
   const seenRoutes = new Set<string>();
   const seenTranslations = new Set<string>();
@@ -42,11 +44,11 @@ export async function getStaticPaths() {
     return slugs.map((slug) => {
       if (seenRoutes.has(slug)) throw new Error(`ALNILAM: duplicate post route "/posts/${slug}/"`);
       seenRoutes.add(slug);
-      return { params: { slug }, props: { post, allPosts, isLegacy: lang !== config.site.locale || slug !== localSlug } };
+      return { params: { slug }, props: { post, allPosts, series: seriesContexts.get(post.id) ?? null, isLegacy: lang !== config.site.locale || slug !== localSlug } };
     });
   });
 }
-const { post, allPosts, isLegacy } = Astro.props as { post: CollectionEntry<"posts">; allPosts: CollectionEntry<"posts">[]; isLegacy: boolean };
+const { post, allPosts, series, isLegacy } = Astro.props;
 const { config } = loadSite();
 const lang = postLang(post, config.site.locale);
 const t = uiStrings(lang);
@@ -67,7 +69,7 @@ const alternates = altMap
   </Card>
 </MainGridLayout>
 ) : (
-<NativeArticle entry={post} discovery={{related: [], random: []}} series={null} canonical={canonical} alternates={alternates}>
+<NativeArticle entry={post} discovery={{related: [], random: []}} {series} canonical={canonical} alternates={alternates}>
   <Fragment slot="head">
     <meta property="article:published_time" content={post.data.pubDate.toISOString()} />
     {config.llms.enabled && config.locales.includes(lang) && <link rel="alternate" type="text/markdown" href={absolute(markdownPath(post, config), config)} />}

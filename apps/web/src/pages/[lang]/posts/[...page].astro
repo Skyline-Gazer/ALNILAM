@@ -13,11 +13,13 @@ import { commentLang, commentsCsp, resolveCommentIdentity } from "../../../lib/c
 import { comparePosts } from "../../../lib/taxonomy";
 import type { GetStaticPaths } from "astro";
 import { POSTS_PAGE_SIZE } from "../../../lib/pagination.mjs";
+import { articleSeriesContexts } from "../../../lib/article-series";
 import { llmsIndexPath, markdownPath, absolute } from "../../../lib/llms.mjs";
 
 export const getStaticPaths = (async ({ paginate }) => {
   const allPosts = (await getCollection("posts", ({ data }) => !data.draft)).sort(comparePosts);
   const { config } = loadSite();
+  const seriesContexts = await articleSeriesContexts(allPosts, config.site.locale);
   const activeLocales = config.locales.filter((locale) => allPosts.some((post) => postLang(post, config.site.locale) === locale));
   const routes = new Set<string>();
   const articleLocales = new Set(allPosts.map((post) => postLang(post, config.site.locale)));
@@ -35,12 +37,12 @@ export const getStaticPaths = (async ({ paginate }) => {
       const route = `${locale}/${slug}`;
       if (routes.has(route)) throw new Error(`ALNILAM: duplicate post route "/${locale}/posts/${slug}/"`);
       routes.add(route);
-      return { params: { lang: locale, page: slug }, props: { post, allPosts, locale } };
+      return { params: { lang: locale, page: slug }, props: { post, allPosts, locale, series: seriesContexts.get(post.id) ?? null } };
     });
     return [...listings, ...articles];
   });
 }) satisfies GetStaticPaths;
-const { post, allPosts, locale, page, activeLocales } = Astro.props;
+const { post, allPosts, locale, page, activeLocales, series } = Astro.props;
 const { config } = loadSite();
 const canonical = post ? canonicalUrl(postPath(post, config.site.locale) + "/", config.site.url) : canonicalUrl(page.url.current, config.site.url);
 const altMap = post ? translationAlternates(post, allPosts, config.site.locale, config.locales) : page.currentPage === 1 ? routeAlternates(activeLocales, config.site.locale, config.locales, "posts") : null;
@@ -49,7 +51,7 @@ const t = uiStrings(locale);
 const comment = post && config.comments.enabled ? resolveCommentIdentity(post, config) : null;
 const csp = post ? commentsCsp(config) : null;
 ---
-{post ? <NativeArticle entry={post} discovery={{related: [], random: []}} series={null} canonical={canonical} alternates={alternates}>
+{post ? <NativeArticle entry={post} discovery={{related: [], random: []}} {series} canonical={canonical} alternates={alternates}>
   <Fragment slot="head">
     <meta property="article:published_time" content={post.data.pubDate.toISOString()} />
     {config.llms.enabled && config.locales.includes(locale) && <link rel="alternate" type="text/markdown" href={absolute(markdownPath(post, config), config)} />}
