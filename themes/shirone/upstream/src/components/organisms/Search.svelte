@@ -26,8 +26,8 @@ $: t = (key: I18nKey) => i18nForLocale(pageLocale, key);
 
 $: panelResults = result.map((r) => ({
 	url: r.url,
-	title: r.meta.title,
-	excerpt: r.excerpt,
+	title: r.meta.title.replaceAll("___END_PAGEFIND_WEIGHT___", "").trim(),
+	excerpt: r.excerpt.replaceAll("___END_PAGEFIND_WEIGHT___", ""),
 }));
 
 // A finished search that matched nothing is an answer, not a broken panel:

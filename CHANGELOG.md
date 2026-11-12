@@ -34,6 +34,7 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 - **Search and display-settings panels (Issue #35):** closed float panels leave the accessibility tree and tab order (`visibility: hidden`), and their toggles expose `aria-expanded`/`aria-controls`, including after Escape or an outside click.
 - **Header and drawer accessible names (Issue #35):** menu, display-settings, search and theme-switch labels now follow the page language (`zh-CN`/`en`/`ja` and every shipped dictionary) instead of hardcoded English, including after client-side language switches.
 - Search pages retain their route when switching between available languages, including under nested base paths.
+- Search results no longer display Pagefind's internal weight delimiter in titles or excerpts on the search page or header panel.
 - **Mobile navigation drawer (Issue #35):** a tap on the menu button before the drawer island hydrates is replayed instead of dropped, so the first tap always opens the drawer.
 - **Mobile navigation drawer (Issue #35):** the open drawer keeps keyboard focus inside its `aria-modal` panel and returns focus to the menu button when dismissed by a press outside the panel or Escape.
 - **Mobile navigation drawer (Issue #35):** the menu button ships `aria-expanded`/`aria-controls` before hydration, so assistive technology sees the disclosure relationship and state from first paint.
