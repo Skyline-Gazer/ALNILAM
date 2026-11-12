@@ -5,6 +5,8 @@ pubDate: 2026-11-01
 updatedDate: 2026-11-02
 category: "guide"
 tags: ["指南"]
+series: "alnilam-introduction"
+seriesOrder: 2
 lang: "zh-CN"
 translationKey: "getting-started"
 ---
