@@ -53,6 +53,7 @@ const breadcrumbJsonLd = breadcrumbListJsonLd([
   <PageHeader title={display} subtitle={t.postsCount(page.total)} />
   <ArchivePanel
     client:visible
+    {locale}
     sortedPosts={mappedPosts}
     initialCategory={isCategory ? slug : void 0}
     initialTag={isCategory ? void 0 : slug}
