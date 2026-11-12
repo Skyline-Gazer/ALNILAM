@@ -248,6 +248,7 @@ export function applyEdit(raw, patch, { config, merge = true } = {}) {
       throw new Error(`off-schema edit rejected: ${JSON.stringify(key)} is not a declared posts field`);
     }
   }
+  if (Object.hasOwn(patch, "seriesOrder")) validateSeriesOrder(patch.seriesOrder);
   const { open, close, body, doc, data } = splitPost(raw);
   const before = Object.keys(data);
   let nextDoc = doc;
@@ -305,8 +306,13 @@ export function renderNewPost(fields, { config, body = "" }) {
   return { content };
 }
 
+function validateSeriesOrder(value) {
+  if (!Number.isSafeInteger(value)) throw new Error('field "seriesOrder" must be a safe integer');
+}
+
 /** Reject values Core's content schema would fail on (Zod is the source of truth). */
 function validateFieldValue(field, value) {
+  if (field.name === "seriesOrder") validateSeriesOrder(value);
   const label = `new post field ${JSON.stringify(field.name)}`;
   const type = field.component ? undefined : field.type;
   if (type === "date") {

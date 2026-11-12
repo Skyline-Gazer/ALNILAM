@@ -25,6 +25,7 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 - Runtime TOML Site config parsing (`smol-toml` dependency), `alnilam.config.toml` support, and the in-repo `sites/legacy-demo` path (the v1 fixture moved to `tests/fixtures/site-v1-legacy`).
 
 ### Fixed
+- **Pages CMS series order (Issue #88):** post creation and edits reject non-integer or unsafe `seriesOrder` values before writing, while unrelated edits preserve existing metadata.
 - **Search panel (Issue #131):** a finished search that matched nothing now states it in the page language (all ten dictionaries) instead of leaving an empty panel on mobile and closing without any feedback on desktop.
 - **Navigation landmarks (Issue #35):** the desktop navigation and the drawer navigation announce their names in the page language instead of hardcoded English, also after a client-side language switch. The shared browser contracts select the navigation landmark by its stable id, not by its English name.
 - **Locale resolution (Issue #35):** a regional locale without its own dictionary entry now uses its base language (`es-ES` renders Spanish instead of English), and a translation key that no dictionary defines degrades to the English text instead of an empty label.

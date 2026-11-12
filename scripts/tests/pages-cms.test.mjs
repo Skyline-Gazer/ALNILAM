@@ -491,3 +491,45 @@ test("create writes declared fields only and refuses unsafe input", () => {
   }
   assert.equal(fs.existsSync(path.join(site, "escape.md")), false);
 });
+
+test("create and edit enforce seriesOrder without partial writes", () => {
+  const site = path.join(tmp, "series-order-site");
+  copySite(site);
+  const originalPath = postFile(site, "cms-basics.md");
+  const original = fs.readFileSync(originalPath);
+  const fields = { title: "Series", pubDate: "2026-11-11" };
+
+  for (const [name, value] of [["fraction", 1.5], ["string", "2"], ["null", null],
+    ["unsafe", Number.MAX_SAFE_INTEGER + 1]]) {
+    const filename = `invalid-${name}/post.md`;
+    const created = run("create", [tool, "create", "--site", site, "--file", filename,
+      "--set", JSON.stringify({ ...fields, seriesOrder: value })]);
+    assert.notEqual(created.status, 0, name);
+    assert.match(created.stderr, /seriesOrder.*safe integer/);
+    assert.equal(fs.existsSync(postFile(site, `invalid-${name}`)), false);
+
+    const edited = run("edit", [tool, "edit", "--site", site, "--post", "cms-basics.md",
+      "--set", JSON.stringify({ title: "Must not save", seriesOrder: value })]);
+    assert.notEqual(edited.status, 0, name);
+    assert.match(edited.stderr, /seriesOrder.*safe integer/);
+    assert.deepEqual(fs.readFileSync(originalPath), original, `${name}: failed edit changed the post`);
+  }
+
+  for (const value of [0, -2, 3]) {
+    const filename = `valid-${value}.md`;
+    const created = run("create", [tool, "create", "--site", site, "--file", filename,
+      "--set", JSON.stringify({ ...fields, seriesOrder: value })]);
+    assert.equal(created.status, 0, created.stderr);
+    assert.equal(splitPost(fs.readFileSync(postFile(site, filename), "utf8")).data.seriesOrder, value);
+    const edited = run("edit", [tool, "edit", "--site", site, "--post", filename,
+      "--set", JSON.stringify({ seriesOrder: value + 1 })]);
+    assert.equal(edited.status, 0, edited.stderr);
+    assert.equal(splitPost(fs.readFileSync(postFile(site, filename), "utf8")).data.seriesOrder, value + 1);
+  }
+
+  const config = loadCmsConfig(site);
+  const raw = original.toString("utf8").replace("title:", "seriesOrder: 1.5\ntitle:");
+  const result = applyEdit(raw, { title: "Unrelated edit" }, { config });
+  assert.equal(splitPost(result.content).data.seriesOrder, 1.5);
+  assert.equal(splitPost(result.content).body, splitPost(raw).body);
+});
