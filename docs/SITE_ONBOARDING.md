@@ -416,3 +416,28 @@ owner action and is never triggered by pushes or pull requests.
 Vercel builds serve `dist/site` directly (`outputDirectory` in `vercel.json`).
 Set `ALNILAM_SITE_URL` in the project environment to pin a custom domain; the
 derived deployment host is used only when it is absent.
+
+### Optional Git-based editors (PoC)
+
+An optional Git-based editor such as Pages CMS can author posts in the **Site**
+repository without changing Core. The editor schema `.pages.yml` belongs in the
+Site root; compose snapshots only `alnilam.config.yaml`, `content/`, `assets/`
+and `data/`, so adding, editing or removing `.pages.yml` changes neither the
+build nor `alnilam-provenance.json`. See the isolated example in
+`tests/fixtures/pages-cms-site/` and the offline verification tool
+`scripts/pages-cms.mjs`.
+
+Two rules matter for content safety:
+
+- Set `settings.content.merge: true`. The Pages CMS default `merge: false`
+  rewrites a post from the editor schema only and silently drops undeclared
+  frontmatter keys.
+- Edit MDX through a source/code field, not a WYSIWYG rich-text field, and keep
+  field names in sync with the post frontmatter contract above. Absolute
+  `/site-assets/...` paths and post-relative `![]()` images are re-based for
+  `/ALNILAM/` deployments automatically.
+
+The current evidence is an **offline PoC** (see `docs/pilots/PAGES-CMS-POC.md`):
+field mapping, unknown-field and MDX roundtrip, media paths and dual-base builds.
+A hosted editor, GitHub App permissions, a real external Site and production
+publishing are not exercised and remain separately Owner-authorized work.

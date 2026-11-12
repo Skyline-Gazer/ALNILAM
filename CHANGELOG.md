@@ -7,6 +7,7 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 ## [Unreleased]
 
 ### Added
+- **Git-based CMS authoring PoC (Issue #88):** an isolated Site `.pages.yml`, an offline write-back adapter and dual-base compose tests verify post field mapping, unknown-frontmatter and MDX roundtrip with no data loss, media paths at root and `/ALNILAM/`, and that removing the editor config leaves the Site digest, build and provenance unchanged. No Core runtime, hosted service or production integration is included.
 - **Opt-in llms.txt v2 discovery (Issue #78):** site and locale indexes, source-backed article Markdown views and HTML discovery; optional full aggregation defaults off. Draft, private and unlisted posts are excluded from published routes.
 - **Site schema v2 validation (Issue #51)**: strict `schemaVersion: 2`, closed-world unknown-field rejection, locale/routing/taxonomy validation, and a fail-closed YAML parser (no duplicate keys, unresolved tags or non-plain values).
 - **Comments provider/privacy contract (Issue #71):** Giscus is the single first-launch provider with stable `specific` terms (`commentId` → `translationKey` → content id), explicit `sharing`/`load`/`lang` options, third-party disclosure, provider-scoped CSP, non-blocking failure/retry fallback and idempotent provider teardown. Disabled comments still ship zero comment JS/network.
