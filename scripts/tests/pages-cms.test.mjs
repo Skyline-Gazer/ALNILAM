@@ -376,3 +376,50 @@ test("a body starting with --- or a block scalar keeps its exact bytes", () => {
   assert.equal(result.body, "\n---\nbody\n");
   assert.equal(splitPost(result.content).data.note, "a\n---\nb\n");
 });
+
+test("frontmatter that ends the file without a trailing newline still splits", () => {
+  const split = splitPost("---\ntitle: x\n---");
+  assert.equal(split.frontmatter, "title: x\n");
+  assert.equal(split.body, "");
+  assert.equal(split.data.title, "x");
+  const result = applyEdit("---\ntitle: x\n---", { title: "y" }, { config: loadCmsConfig(fixture) });
+  assert.equal(result.body, "");
+  assert.equal(splitPost(result.content).data.title, "y");
+});
+
+test("component-based fields are accepted", () => {
+  const site = path.join(tmp, "component-site");
+  copySite(site);
+  const configFile = path.join(site, CMS_CONFIG_FILENAME);
+  fs.writeFileSync(configFile, fs.readFileSync(configFile, "utf8").replace(
+    "      - name: description\n        label: Description\n        type: text",
+    "      - name: description\n        label: Description\n        component: seoDescription",
+  ));
+  assert.deepEqual(postsFields(loadCmsConfig(site))
+    .filter((field) => field.name === "description"), [{ name: "description", label: "Description", component: "seoDescription" }]);
+  const verify = run("verify", [tool, "verify", "--site", site, "--json"]);
+  assert.equal(verify.status, 0, verify.stderr);
+});
+
+test("init renders the shared schema template with the Site's category values", () => {
+  const template = fs.readFileSync(path.join(root, "scripts/pages-cms.schema.yml"), "utf8");
+  assert.equal(template.match(/\{\{CATEGORY_FIELD\}\}/g).length, 1, "template needs exactly one category placeholder");
+  const generated = loadCmsConfig(tmpSiteWithGeneratedConfig());
+  const fixtureConfig = loadCmsConfig(fixture);
+  assert.deepEqual(
+    postsFields(generated).map((field) => [field.name, field.type, field.component]),
+    postsFields(fixtureConfig).map((field) => [field.name, field.type, field.component]),
+  );
+});
+
+function tmpSiteWithGeneratedConfig() {
+  const site = path.join(tmp, "generated-schema-site");
+  fs.cpSync(demoSite, site, { recursive: true });
+  for (const rel of fs.readdirSync(site, { recursive: true })) {
+    const target = path.join(site, rel);
+    fs.chmodSync(target, fs.statSync(target).isDirectory() ? 0o755 : 0o644);
+  }
+  const init = run("init", [tool, "init", "--site", site]);
+  assert.equal(init.status, 0, init.stderr);
+  return site;
+}

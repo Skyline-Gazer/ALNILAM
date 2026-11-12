@@ -10,10 +10,10 @@ Git-based authoring PoC (Issue #88) and the current `dev` commit.
 
 | Ref | Value |
 | --- | --- |
-| CNB `dev` | `efc336ab709f1ca9eb76abf7a626a3ad064a5eb6` — previous tip. This HANDOFF lands with PR #116, which advances the tip by the offline Pages CMS PoC and its schema generator |
-| Round commits | #116 `fa46ae6` (PoC) → `349481b` (NPC review fixes) → `2b8f1db` (media diagnostic) → the `init` generator, docs and this HANDOFF; each merged by fast-forward |
+| CNB `dev` | `efc336ab709f1ca9eb76abf7a626a3ad064a5eb6` — unchanged while PR #116 is open. When #116 merges fast-forward, `dev` becomes the PR head; the exact merged SHA is recorded in the PR timeline |
+| Round commits | #116 `fa46ae6` (PoC) → `349481b` (NPC review fixes) → `2b8f1db` (media diagnostic) → the `init` generator and later review fixes on the PR branch; open at the time of writing, merges as one fast-forward tip |
 | GitHub `dev` | lags CNB; **do not mirror/push** |
-| Vercel Production | unchanged (`xxxx`, production branch `dev`, tracks the stale GitHub `dev`) — read-only |
+| Vercel Production | unchanged (project name `xxxx` — not a commit SHA — production branch `dev`, tracks the stale GitHub `dev`) — read-only |
 | CNB `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` — untouched |
 | ADS pin | `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` — unchanged |
 
@@ -21,13 +21,13 @@ Git-based authoring PoC (Issue #88) and the current `dev` commit.
 
 | PR | Effect | Trusted consumer |
 | --- | --- | --- |
-| [#116](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/116) | Isolated Site `.pages.yml`, offline `verify`/`edit`/`init` adapter, category-drift detection and dual-base compose tests; zero Core/product changes | green on `349481b` (28m22s); the final head is re-gated after the NPC review fixes and must be green before merge — the exact build URL is in the PR timeline |
+| [#116](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/116) | Isolated Site `.pages.yml`, offline `verify`/`edit`/`init` adapter, category-drift detection and dual-base compose tests; zero Core/product changes | green on `2f46b53` (29m26s); later review fixes are re-gated on the final head and must be green before merge — the exact build URL is in the PR timeline |
 
 ### Verification
 
-- `pnpm test` **261/261** (serialized); `python3 -m unittest discover -s scripts/tests -p '*_test.py'` 14/14; `pnpm check` 0 errors / 0 warnings / 0 hints; `pnpm build` + `artifact-check` + `seo-check` green; demo Site digest `23d159e4…` unchanged by `.pages.yml`.
-- `scripts/tests/pages-cms.test.mjs` **12/12** locally: field mapping against the demo Site's real posts, unknown-key/comment/MDX byte roundtrip, root + `/ALNILAM/` builds with `artifact-check`/`seo-check`, CMS removal digest/provenance equality, CLI entry guard under a spaced path, missing `content/posts` diagnostics, `--out` confinement, out-of-root media rejection, frontmatter split boundaries, `init` taxonomy generation/`--force`, stale-select drift repair, and the no-catalog free-text fallback.
-- Candidate pipelines (docs-links, comments/a11y browser) are green; the trusted consumer is re-run on the final head and must be green before merge, and the dev push pipeline is verified on the merged tip.
+- `pnpm test` **264/264** (serialized); `python3 -m unittest discover -s scripts/tests -p '*_test.py'` 14/14; `pnpm check` 0 errors / 0 warnings / 0 hints; `pnpm build` + `artifact-check` + `seo-check` green; demo Site digest `23d159e4…` unchanged by `.pages.yml`.
+- `scripts/tests/pages-cms.test.mjs` **15/15** locally: field mapping against the demo Site's real posts, unknown-key/comment/MDX byte roundtrip, root + `/ALNILAM/` builds with `artifact-check`/`seo-check`, CMS removal digest/provenance equality, CLI entry guard under a spaced path, missing `content/posts` diagnostics, `--out` confinement, out-of-root media rejection, frontmatter split boundaries (body starting with `---`, block scalars, EOF without a trailing newline), `component` fields, the shared schema template, `init` taxonomy generation/`--force`, stale-select drift repair, and the no-catalog free-text fallback.
+- Candidate pipelines (docs-links, comments/a11y browser) are green on every head; the trusted consumer is re-run on the final head and must be green before merge, and the dev push pipeline is verified on the merged tip.
 - A trusted-consumer run failed once in the target-owned `navigation-lifecycle` browser spec (`browserContext.close` after a 90 s timeout, 2/4 cases). The same spec passes 4/4 locally in 1.1 min, and the change adds no browser surface; the gate was re-run with a new SHA rather than weakening any check.
 
 ### Status and tracks
