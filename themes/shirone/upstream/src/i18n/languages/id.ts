@@ -12,6 +12,8 @@ export const id: Translation = {
 	[Key.search]: "Cari",
 	[Key.menu]: "Menu",
 	[Key.displaySettings]: "Pengaturan tampilan",
+	[Key.mainNavigation]: "Navigasi utama",
+	[Key.navigationDrawer]: "Panel navigasi",
 	[Key.clear]: "Hapus",
 
 	[Key.friends]: "Teman",

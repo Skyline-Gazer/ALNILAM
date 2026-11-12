@@ -12,6 +12,8 @@ export const tr: Translation = {
 	[Key.search]: "Ara",
 	[Key.menu]: "Menü",
 	[Key.displaySettings]: "Görünüm ayarları",
+	[Key.mainNavigation]: "Ana gezinme",
+	[Key.navigationDrawer]: "Gezinme paneli",
 	[Key.clear]: "Temizle",
 
 	[Key.friends]: "Arkadaşlar",

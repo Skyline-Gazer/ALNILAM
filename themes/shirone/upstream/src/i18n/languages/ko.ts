@@ -12,6 +12,8 @@ export const ko: Translation = {
 	[Key.search]: "검색",
 	[Key.menu]: "메뉴",
 	[Key.displaySettings]: "표시 설정",
+	[Key.mainNavigation]: "주요 탐색",
+	[Key.navigationDrawer]: "탐색 서랍",
 	[Key.clear]: "지우기",
 
 	[Key.friends]: "친구",

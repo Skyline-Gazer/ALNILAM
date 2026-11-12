@@ -12,6 +12,8 @@ export const th: Translation = {
 	[Key.search]: "ค้นหา",
 	[Key.menu]: "เมนู",
 	[Key.displaySettings]: "การตั้งค่าการแสดงผล",
+	[Key.mainNavigation]: "การนำทางหลัก",
+	[Key.navigationDrawer]: "แผงการนำทาง",
 	[Key.clear]: "ล้าง",
 
 	[Key.friends]: "เพื่อน",

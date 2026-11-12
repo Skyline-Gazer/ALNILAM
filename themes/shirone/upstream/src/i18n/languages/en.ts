@@ -12,6 +12,8 @@ export const en: Translation = {
 	[Key.search]: "Search",
 	[Key.menu]: "Menu",
 	[Key.displaySettings]: "Display settings",
+	[Key.mainNavigation]: "Main navigation",
+	[Key.navigationDrawer]: "Navigation drawer",
 	[Key.clear]: "Clear",
 
 	[Key.friends]: "Friends",

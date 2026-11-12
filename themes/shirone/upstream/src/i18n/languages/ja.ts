@@ -12,6 +12,8 @@ export const ja: Translation = {
 	[Key.search]: "検索",
 	[Key.menu]: "メニュー",
 	[Key.displaySettings]: "表示設定",
+	[Key.mainNavigation]: "メインナビゲーション",
+	[Key.navigationDrawer]: "ナビゲーションドロワー",
 	[Key.clear]: "クリア",
 
 	[Key.friends]: "フレンド",

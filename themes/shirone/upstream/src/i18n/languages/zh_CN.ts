@@ -12,6 +12,8 @@ export const zh_CN: Translation = {
 	[Key.search]: "搜索",
 	[Key.menu]: "菜单",
 	[Key.displaySettings]: "显示设置",
+	[Key.mainNavigation]: "主导航",
+	[Key.navigationDrawer]: "导航抽屉",
 	[Key.clear]: "清除",
 
 	[Key.friends]: "友链",

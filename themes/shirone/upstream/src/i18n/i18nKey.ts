@@ -13,6 +13,8 @@ enum I18nKey {
 	search = "search",
 	menu = "menu",
 	displaySettings = "displaySettings",
+	mainNavigation = "mainNavigation",
+	navigationDrawer = "navigationDrawer",
 	clear = "clear",
 
 	friends = "friends",

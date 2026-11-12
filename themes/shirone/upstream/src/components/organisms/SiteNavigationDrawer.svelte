@@ -7,7 +7,7 @@
  */
 import Icon from "@iconify/svelte";
 import I18nKey from "@i18n/i18nKey";
-import { getTranslation } from "@i18n/translation";
+import { i18nForLocale } from "@i18n/translation";
 import { resolveNavBarLinks, resolvePageKey } from "@utils/nav-utils";
 import { url } from "@utils/url-utils";
 import { onMount, tick } from "svelte";
@@ -19,6 +19,8 @@ let { lang }: { lang?: string } = $props();
 const defaultLocale = siteConfig.lang.replaceAll("_", "-");
 let pageLocale = $state((lang || defaultLocale).replaceAll("_", "-"));
 let localizedRoute = $state(false);
+// The drawer follows the page language, like the header it belongs to.
+const t = (key: I18nKey) => i18nForLocale(pageLocale, key);
 
 function routeLocale(path: string): string | undefined {
 	const base = (import.meta.env?.BASE_URL ?? "/").replace(/\/+$/, "");
@@ -36,14 +38,13 @@ function localizedHref(path?: string, external = false) {
 
 function localizedLabel(name: string, pageKey?: string) {
 	if (!localizedRoute || !pageKey) return name;
-	const t = getTranslation(pageLocale.replaceAll("-", "_"));
 	const labels: Record<string, string> = {
-		home: t[I18nKey.home],
+		home: t(I18nKey.home),
 		posts: pageLocale === "ja" ? "記事" : pageLocale.startsWith("en") ? "Posts" : "文章",
-		categories: t[I18nKey.categories],
-		archive: t[I18nKey.archive],
-		tags: t[I18nKey.tags],
-		series: t[I18nKey.series],
+		categories: t(I18nKey.categories),
+		archive: t(I18nKey.archive),
+		tags: t(I18nKey.tags),
+		series: t(I18nKey.series),
 	};
 	return labels[pageKey] ?? name;
 }
@@ -309,7 +310,7 @@ let drawerEl: HTMLElement | undefined = $state();
 			<div class="site-drawer__subtitle">{siteConfig.subtitle}</div>
 		</div>
 
-		<nav class="site-drawer__nav" aria-label="Navigation drawer">
+		<nav class="site-drawer__nav" aria-label={t(I18nKey.navigationDrawer)}>
 			{#each primaryItems as item (item.value)}
 				{#if item.children}
 					<div class="site-drawer__group">

@@ -12,6 +12,8 @@ export const es: Translation = {
 	[Key.search]: "Buscar",
 	[Key.menu]: "Menú",
 	[Key.displaySettings]: "Ajustes de visualización",
+	[Key.mainNavigation]: "Navegación principal",
+	[Key.navigationDrawer]: "Panel de navegación",
 	[Key.clear]: "Borrar",
 
 	[Key.friends]: "Amigos",

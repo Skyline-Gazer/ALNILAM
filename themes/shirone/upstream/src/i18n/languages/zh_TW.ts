@@ -12,6 +12,8 @@ export const zh_TW: Translation = {
 	[Key.search]: "搜尋",
 	[Key.menu]: "選單",
 	[Key.displaySettings]: "顯示設定",
+	[Key.mainNavigation]: "主導航",
+	[Key.navigationDrawer]: "導覽抽屜",
 	[Key.clear]: "清除",
 
 	[Key.friends]: "友鏈",

@@ -12,6 +12,8 @@ export const vi: Translation = {
 	[Key.search]: "Tìm kiếm",
 	[Key.menu]: "Menu",
 	[Key.displaySettings]: "Cài đặt hiển thị",
+	[Key.mainNavigation]: "Điều hướng chính",
+	[Key.navigationDrawer]: "Bảng điều hướng",
 	[Key.clear]: "Xóa",
 
 	[Key.friends]: "Bạn bè",
