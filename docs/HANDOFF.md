@@ -1,5 +1,37 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-12 · release readiness
+
+The sections below this update are historical snapshots. For the current tip,
+query CNB `dev` and the PRs directly; do not infer it from a prior handoff SHA.
+
+- CNB `dev` reached `9ab33132af0403526188f43d965e9435edcbd19a` with
+  [PR #120](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/120), which removed
+  Pagefind's internal marker from search results. Its trusted consumer passed
+  (run: https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/120);
+  the independent Site push check passed on that SHA.
+- CMS field validation is tracked by [PR #119](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/119).
+  Archive and taxonomy panel language is tracked by
+  [PR #121](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/121). Read their live
+  merge and CI states before treating either as delivered.
+- The existing Vercel project is `xxxx` (`prj_2eRtFJHWRJPlM90z2CPT5kJA1XNg`).
+  Its GitHub `dev` production branch and production alias were not changed.
+  GitHub and CNB `dev` have diverged; do not force a mirror update.
+- The non-production Preview
+  `https://xxxx-nf6anvlx1-martyjstogner-2766s-projects.vercel.app` was built
+  from clean CNB `9ab33132af0403526188f43d965e9435edcbd19a`, verified against
+  `alnilam-provenance.json`, and requires Vercel Authentication. It is an
+  intermediate deployment: check the live CNB tip and deploy it again after
+  later accepted changes. The Site digest was `23d159e4c5c77d4218994b5350fcc5ebb9d682fb45f97457a06292699d66ee5c`.
+- Local evidence: `pnpm test` 266/266 on the CMS candidate; the baseline browser
+  suite 229 passed and one intentional skip; search repair regression 2/2 and
+  archive/taxonomy regression 16/16 across root and `/ALNILAM/`. On search
+  candidate `9ab33132af0403526188f43d965e9435edcbd19a`, mobile and desktop
+  Lighthouse baselines and expected CLS-negative controls passed.
+- Field CrUX, manual screen-reader acceptance, Owner visual sign-off and
+  production release remain unverified or Owner decisions. P6 and its child
+  Issues remain open until their actual acceptance conditions are met.
+
 ## Live-state update — 2026-11-12 · offline Pages CMS PoC merged (current tip)
 
 Everything from "## Live-state update — 2026-11-12 · UX finalization closed" downward is
