@@ -123,6 +123,7 @@ function normalizePhoto(value, albumId, index) {
     fail(label, "width and height must be positive integers");
   }
   const title = text(value.title, `${label}.title`);
+  const description = text(value.description, `${label}.description`);
   return {
     id,
     src: normalizeGalleryImageUrl(value.src, `${label}.src`),
@@ -131,6 +132,7 @@ function normalizePhoto(value, albumId, index) {
       : {}),
     alt: text(value.alt, `${label}.alt`, { required: true }),
     ...(title ? { title } : {}),
+    ...(description ? { description } : {}),
     ...(text(value.location, `${label}.location`) ? { location: text(value.location, `${label}.location`) } : {}),
     tags: stringList(value.tags, `${label}.tags`),
     ...(value.date !== undefined ? { date: date(value.date, `${label}.date`) } : {}),
@@ -192,6 +194,11 @@ export function galleryRouteLocales(config) {
   return config.routing.prefixDefaultLocale
     ? config.locales
     : config.locales.filter((locale) => locale !== config.site.locale);
+}
+
+export function galleryAlbumDetailPath(locale, defaultLocale, prefixDefaultLocale, albumId) {
+  const localePrefix = prefixDefaultLocale || locale !== defaultLocale ? `/${locale}` : "";
+  return `${localePrefix}/albums/${albumId}/`;
 }
 
 export function toAlbumIndexItem(album) {

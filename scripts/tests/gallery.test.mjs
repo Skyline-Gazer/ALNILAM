@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { normalizeSiteConfig } from "../../packages/core/src/index.mjs";
-import { galleryPageText, galleryRouteLocales, loadSiteGallery, normalizeGalleryImageUrl } from "../../apps/web/src/lib/gallery.mjs";
+import { galleryAlbumDetailPath, galleryPageText, galleryRouteLocales, loadSiteGallery, normalizeGalleryImageUrl } from "../../apps/web/src/lib/gallery.mjs";
 
 const demo = path.resolve("sites/demo");
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-gallery-test-"));
@@ -31,6 +31,9 @@ test("Gallery routes follow Site default-locale prefix policy", () => {
   const prefixed = normalizeSiteConfig(baseConfig({ locales, routing: { prefixDefaultLocale: true } }));
   assert.deepEqual(galleryRouteLocales(unprefixed), ["ja"]);
   assert.deepEqual(galleryRouteLocales(prefixed), ["en", "ja"]);
+  assert.equal(galleryAlbumDetailPath("en", "en", false, "coast-and-mountains"), "/albums/coast-and-mountains/");
+  assert.equal(galleryAlbumDetailPath("ja", "en", false, "coast-and-mountains"), "/ja/albums/coast-and-mountains/");
+  assert.equal(galleryAlbumDetailPath("en", "en", true, "coast-and-mountains"), "/en/albums/coast-and-mountains/");
 });
 
 test("Gallery page copy follows all ten supported locales", () => {
@@ -72,6 +75,17 @@ test("Gallery image URLs preserve queries and resolve Site asset paths", () => {
   for (const unsafe of ["http://cdn.example/photo.jpg", "//cdn.example/photo.jpg", "../private.jpg", "javascript:alert(1)"]) {
     assert.throws(() => normalizeGalleryImageUrl(unsafe), /ALNILAM: data\/albums\.yaml/);
   }
+});
+
+test("Gallery photo descriptions survive Site data normalization", () => {
+  const site = path.join(scratch, "photo-description");
+  const data = path.join(site, "data");
+  fs.mkdirSync(data, { recursive: true });
+  fs.writeFileSync(
+    path.join(data, "albums.yaml"),
+    "schemaVersion: 1\nalbums:\n  - id: sample\n    title: Sample\n    photos:\n      - src: /site-assets/photo.jpg\n        alt: Photo\n        description: View across the lake\n",
+  );
+  assert.equal(loadSiteGallery(site)[0].photos[0].description, "View across the lake");
 });
 
 test("Demo Gallery loads independent local, remote, thumbnail and empty album data", () => {

@@ -1,18 +1,22 @@
 ---
 import AlbumSection from "@alnilam/theme-shirone/AlbumSection.svelte";
 import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
-import type { AlbumIndexItem } from "@alnilam/theme-shirone/album-types";
-import { galleryPageText, loadSiteGallery, toAlbumIndexItem } from "../lib/gallery.mjs";
+import { galleryAlbumDetailPath, galleryPageText, loadSiteGallery, toAlbumIndexItem } from "../lib/gallery.mjs";
 
 interface Props {
   siteRoot: string;
   locale: string;
+  defaultLocale: string;
+  prefixDefaultLocale: boolean;
 }
 
-const { siteRoot, locale } = Astro.props;
+const { siteRoot, locale, defaultLocale, prefixDefaultLocale } = Astro.props;
 const copy = galleryPageText(locale);
-const albums: AlbumIndexItem[] = loadSiteGallery(siteRoot).map(toAlbumIndexItem);
+const albums = loadSiteGallery(siteRoot).map((album) => ({
+  ...toAlbumIndexItem(album),
+  detailPath: galleryAlbumDetailPath(locale, defaultLocale, prefixDefaultLocale, album.id),
+}));
 ---
 <MainGridLayout lang={locale} title={copy.title} description={copy.description} page="albums">
-  <AlbumSection {albums} title={copy.title} subtitle={copy.description} client:visible />
+	<AlbumSection {albums} title={copy.title} subtitle={copy.description} locale={locale} client:visible />
 </MainGridLayout>

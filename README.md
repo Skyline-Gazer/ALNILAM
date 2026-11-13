@@ -80,7 +80,7 @@ configuration including `locales`, taxonomy and module blocks.
 - Non-default-locale posts: put them in `content/posts/<lang>/` with frontmatter `lang` + `translationKey` → served at `/<lang>/posts/<slug>/` with automatic hreflang alternates for real translations. Old `/posts/<lang>/<slug>/` URLs provide a noindex static navigation fallback to the canonical article.
 - Optional `llms.enabled` publishes locale-aware LLM discovery and source-backed Markdown views; `llms.full` separately opts into aggregation. Both default off; see [Site onboarding](docs/SITE_ONBOARDING.md) for privacy and hosting details.
 - Optional `gallery.enabled` adds Site-owned `/albums/` pages and the Shirone Gallery, off by default; see [Site onboarding](docs/SITE_ONBOARDING.md#gallery-gallery).
-- Optional `comments.enabled` adds Giscus discussions through an explicit identity mapping. Comments default off and load only on user action; see [Site onboarding](docs/SITE_ONBOARDING.md#comments-comments).
+- Optional `comments.enabled` adds Giscus discussions through an explicit identity mapping. Comments default off; the default `load: click` mode waits for reader action, while `load: visible` can load as the section approaches the viewport. See [Site onboarding](docs/SITE_ONBOARDING.md#comments-comments).
 - Full contract, slug rules, image policy, and private-Site CI strategy: [docs/SITE_ONBOARDING.md](docs/SITE_ONBOARDING.md).
 
 ## Search

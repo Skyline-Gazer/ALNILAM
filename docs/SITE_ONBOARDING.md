@@ -41,9 +41,10 @@ and `llms` module blocks are documented below. Omit keys your target Core does n
 know — an older Core fails closed on unknown fields even when the current Core accepts
 them.
 
-**Reserved fields:** `routing` is accepted and validated for forward compatibility but
-is not yet consumed by page routing. Categories and tags are Site-owned catalogs used by
-the current taxonomy routes; tag pages also derive entries from post frontmatter.
+**Routing:** `routing` is accepted and validated. `routing.prefixDefaultLocale`
+controls whether default-locale Gallery routes include the locale prefix; post
+and taxonomy routes retain their existing URL policy. Categories and tags are
+Site-owned catalogs; tag pages also use post frontmatter.
 
 ### Posts and slugs
 

@@ -4,4 +4,9 @@ import { loadSite } from "../lib/site-source.mjs";
 
 const { root, config } = loadSite();
 ---
-<GalleryIndexPage siteRoot={root} locale={config.site.locale} />
+<GalleryIndexPage
+  siteRoot={root}
+  locale={config.site.locale}
+  defaultLocale={config.site.locale}
+  prefixDefaultLocale={config.routing.prefixDefaultLocale}
+/>

@@ -30,12 +30,20 @@ for (const deployment of deployments) {
         await page.goto(`${deployment.origin}${deployment.base}/${locale}/albums/`, { waitUntil: "networkidle" });
         await expect(page.locator("main h1").first()).toHaveText(title);
         await expect(page.locator('#main-navigation [data-nav-key="albums"]')).toHaveText(title);
+        const search = page.locator(".album-section__search input");
+        await expect(search).toHaveAttribute("placeholder", locale === "en" ? "Search" : "検索");
+        await search.fill("no-such-album-matches-this-query");
+        const noResultsText = locale === "en" ? "No albums matched your filters" : "条件に合うアルバムがありません";
+        await expect(page.locator(".album-section__empty")).toContainText(noResultsText);
+        await search.fill("");
         if (viewport.name === "mobile") {
           await page.locator("#nav-drawer-switch").click();
           await expect(page.locator(".site-drawer__nav").getByRole("link", { name: title })).toBeVisible();
           await page.keyboard.press("Escape");
         }
-        await page.goto(`${deployment.origin}${deployment.base}/${locale}/albums/coast-and-mountains/`, { waitUntil: "networkidle" });
+        const albumLink = page.locator('a[href*="coast-and-mountains"]');
+        await expect(albumLink).toHaveAttribute("href", `${deployment.base}/${locale}/albums/coast-and-mountains/`);
+        await albumLink.click();
         await expect(page.locator(".album-detail__back")).toHaveText(`← ${back}`);
         await expect(page.locator('#main-navigation [data-nav-key="albums"]')).toHaveText(title);
       }

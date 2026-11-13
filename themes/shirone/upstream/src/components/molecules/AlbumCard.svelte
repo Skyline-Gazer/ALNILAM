@@ -5,13 +5,13 @@ import Icon from "@iconify/svelte";
 import { url } from "@utils/url-utils";
 import type { AlbumIndexItem } from "@/types/album";
 
-let { album }: { album: AlbumIndexItem } = $props();
+let { album, detailPath }: { album: AlbumIndexItem; detailPath?: string } = $props();
 let coverFailed = $state(false);
 </script>
 
 
 <article class="album-card">
-	<a class="album-card__link m3-state-layer" href={url(`/albums/${album.id}/`)} aria-label={album.title}>
+	<a class="album-card__link m3-state-layer" href={url(detailPath ?? `/albums/${album.id}/`)} aria-label={album.title}>
 		<div class="album-card__cover">
 			{#if album.cover && !coverFailed}
 				<img

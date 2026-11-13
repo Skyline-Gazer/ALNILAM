@@ -13,7 +13,12 @@ export const getStaticPaths: GetStaticPaths = () => {
   return galleryRouteLocales(config).map((lang) => ({ params: { lang }, props: { lang } }));
 };
 
-const { root } = loadSite();
+const { root, config } = loadSite();
 const { lang } = Astro.props;
 ---
-<GalleryIndexPage siteRoot={root} locale={lang} />
+<GalleryIndexPage
+  siteRoot={root}
+  locale={lang}
+  defaultLocale={config.site.locale}
+  prefixDefaultLocale={config.routing.prefixDefaultLocale}
+/>
