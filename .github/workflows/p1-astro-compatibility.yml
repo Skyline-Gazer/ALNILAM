@@ -87,6 +87,8 @@ jobs:
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser smoke on external Site
+        env:
+          ASTRO_COMPATIBILITY_FIXTURE: "1"
         run: pnpm browser tests/browser/astro-compatibility.spec.ts
       - name: Upload compatibility evidence
         if: always()
