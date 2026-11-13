@@ -131,11 +131,17 @@ onMount(() => {
 				</div>
 			{/each}
 		</div>
-	{:else}
-		<div class="album-section__empty">
-			<Icon icon="material-symbols:search-off-rounded" aria-hidden="true" />
-			<span>{i18n(I18nKey.albumsNoResults)}</span>
-		</div>
+      {#if albums.length === 0}
+        <div class="album-section__empty">
+          <Icon icon="material-symbols:photo-library-outline-rounded" aria-hidden="true" />
+          <span>{i18n(I18nKey.noData)}</span>
+        </div>
+      {:else}
+        <div class="album-section__empty">
+          <Icon icon="material-symbols:search-off-rounded" aria-hidden="true" />
+          <span>{i18n(I18nKey.albumsNoResults)}</span>
+        </div>
+      {/if}
 	{/if}
 </Card>
 

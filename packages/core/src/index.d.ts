@@ -70,6 +70,8 @@ export interface SiteConfig {
   consent: Readonly<ConsentConfig>;
   analytics: Readonly<{ googleAnalytics: Readonly<GoogleAnalyticsConfig> }>;
   ads: Readonly<{ adsense: Readonly<AdSenseConfig> }>;
+  /** Optional Site-owned Gallery module; absent means disabled. */
+  gallery: Readonly<{ enabled: boolean }>;
 }
 export declare function normalizeSiteConfig(input: unknown): Readonly<SiteConfig>;
 export declare const SITE_CONFIG_FILENAME: "alnilam.config.yaml";

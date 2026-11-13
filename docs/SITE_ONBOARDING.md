@@ -11,7 +11,7 @@ yoursite/
 ├── alnilam.config.yaml      # required — site configuration
 ├── content/posts/           # required — Markdown/MDX posts
 ├── assets/                  # optional — copied verbatim to /site-assets/ in output
-└── data/                    # optional — reserved, not yet read
+└── data/                     # optional — Site data such as taxonomy.yaml and albums.yaml
 ```
 
 ### `alnilam.config.yaml` (schema v2)
@@ -30,16 +30,20 @@ locales:                      # optional, defaults to [site.locale]; list every 
 
 theme:
   appearance: "dark"          # "dark" | "light", default dark
+
+gallery:
+  enabled: false             # default false; enable only when this Site owns albums.yaml
 ```
 
 Unknown top-level or nested keys fail the build, and so do malformed YAML, duplicate
-keys, unresolved YAML tags and non-plain YAML values. The `comments`, `bangumi` and
-`llms` module blocks are documented below. Omit keys your target Core does not yet
-know — an older Core fails closed on unknown fields even when the current Core accepts them.
+keys, unresolved YAML tags and non-plain YAML values. The `gallery`, `comments`, `bangumi`
+and `llms` module blocks are documented below. Omit keys your target Core does not yet
+know — an older Core fails closed on unknown fields even when the current Core accepts
+them.
 
-**Reserved fields:** `routing`, `categories` and `tags` are accepted and validated for
-forward compatibility, but this Core revision has no consumer for them — do not rely on
-them in Sites. Tag pages derive from post frontmatter.
+**Reserved fields:** `routing` is accepted and validated for forward compatibility but
+is not yet consumed by page routing. Categories and tags are Site-owned catalogs used by
+the current taxonomy routes; tag pages also derive entries from post frontmatter.
 
 ### Posts and slugs
 
@@ -109,6 +113,41 @@ finishes and stolen when its holder process is gone or after six hours.
 ## Optional modules (opt-in via config)
 
 Optional modules are feature-flagged: **disabled modules ship nothing** — no page, no 404 stub, no client JS, no third-party requests.
+
+### Gallery (`gallery`)
+
+Gallery is off by default. When enabled, Core emits `/albums/` and one detail route per album, adds the navigation link, and loads the Shirone Gallery components. It also emits localized index/detail routes for each configured locale with a URL prefix, respecting `routing.prefixDefaultLocale`. When disabled, the build emits no Gallery route, Gallery-specific client module or Gallery image requests.
+
+The Site owns `data/albums.yaml` (schemaVersion 1). Missing data is an empty album list; `photos: []` is a valid empty album. Each album requires a URL-safe `id`, a `title` and a `photos` array; `description`, `cover`, `date`, `location`, `tags`, `layout` (`grid` or `masonry`) and `columns` (2–4) are optional. A cover may be omitted. Each photo requires `src` and descriptive `alt`; `thumbnail`, `title`, `description`, `tags`, `date`, `location`, and paired positive `width`/`height` are optional. Cards reserve a 4:3 cover box; gallery photos without dimensions reserve a 4:3 tile.
+
+```yaml
+# alnilam.config.yaml
+gallery:
+  enabled: true
+
+# data/albums.yaml
+schemaVersion: 1
+albums:
+  - id: coast
+    title: Coast
+    description: A Site-owned album.
+    cover: gallery/coast-thumb.jpg
+    photos:
+      - src: gallery/coast-full.jpg
+        thumbnail: gallery/coast-thumb.jpg
+        alt: Coast at sunset
+        width: 2400
+        height: 1600
+      - src: https://images.example.org/signed/photo.jpg?signature=...
+        alt: A remotely hosted photo
+  - id: empty
+    title: Empty album
+    photos: []
+```
+
+Relative media paths resolve under the Site's `assets/` directory and are emitted under `/site-assets/`; `assets/gallery/photo.jpg` and `gallery/photo.jpg` both work. Root-relative paths such as `/site-assets/gallery/photo.jpg` and complete HTTPS URLs are also accepted. HTTPS queries and signatures are preserved. Core never downloads remote media during build, proxies images, or makes cross-origin pixel reads; ordinary browser image loading does not require CORS. The browser host must allow the remote image URL in its own CSP, if configured. No additional request is made to measure dimensions during build. Supplying `width` and `height` also lets PhotoSwipe avoid its on-open size probe; without them, the existing PhotoSwipe handler measures only when the viewer opens.
+
+Use media you have rights to publish. The Demo Site's remote samples are served by Unsplash under the [Unsplash License](https://unsplash.com/license); they are referenced by URL and are not copied into ALNILAM.
 
 ### Comments (`[comments]`)
 

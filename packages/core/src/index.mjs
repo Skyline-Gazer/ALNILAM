@@ -16,6 +16,7 @@ const ROOT_KEYS = new Set([
   "locales",
   "categories",
   "tags",
+  "gallery",
   "comments",
   "bangumi",
   "llms",
@@ -24,6 +25,7 @@ const ROOT_KEYS = new Set([
   "ads",
 ]);
 const SITE_KEYS = new Set(["title", "description", "url", "locale"]);
+const GALLERY_KEYS = new Set(["enabled"]);
 const THEME_KEYS = new Set(["appearance"]);
 const ROUTING_KEYS = new Set(["prefixDefaultLocale"]);
 const COMMENT_KEYS = new Set([
@@ -385,6 +387,12 @@ export function normalizeSiteConfig(input) {
       throw new Error("ALNILAM: bangumi.limit must be an integer between 1 and 50");
     }
   }
+  assertPlainObject(input.gallery ?? {}, "gallery");
+  rejectUnknownKeys(input.gallery ?? {}, GALLERY_KEYS, "gallery");
+  if (input.gallery?.enabled !== undefined && typeof input.gallery.enabled !== "boolean") {
+    throw new Error("ALNILAM: gallery.enabled must be a boolean");
+  }
+
 
   assertPlainObject(input.llms ?? {}, "llms");
   rejectUnknownKeys(input.llms ?? {}, LLMS_KEYS, "llms");
@@ -413,6 +421,7 @@ export function normalizeSiteConfig(input) {
     consent: normalizeConsent(input.consent),
     analytics: normalizeAnalytics(input.analytics),
     ads: normalizeAds(input.ads),
+    gallery: Object.freeze({ enabled: input.gallery?.enabled === true }),
     llms: Object.freeze({ enabled: input.llms?.enabled === true, full: input.llms?.full === true }),
     bangumi: Object.freeze({
       enabled: bangumi.enabled === true,

@@ -7,6 +7,7 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 ## [Unreleased]
 
 ### Added
+- **Optional Site Gallery (Issue #67):** `gallery.enabled` gates Site-owned `data/albums.yaml` album/list pages, locale-prefixed routes, lazy Gallery images and PhotoSwipe. Image references accept validated Site asset paths or HTTPS URLs; Core does not fetch or proxy remote images. The Demo Site opts in with licensed remote samples and local illustrations.
 - **Git-based CMS authoring PoC (Issue #88):** an isolated Site `.pages.yml`, an offline write-back adapter and dual-base compose tests verify post field mapping, unknown-frontmatter and MDX roundtrip with no data loss, media paths at root and `/ALNILAM/`, and that removing the editor config leaves the Site digest, build and provenance unchanged. No Core runtime, hosted service or production integration is included.
 - **Pages CMS post creation (Issue #88):** `scripts/pages-cms.mjs create` writes a new post from declared frontmatter fields, validating required values, field types and select options before writing; it refuses overwrite and paths outside `content/posts/`, and keeps the body verbatim.
 - **Pages CMS schema generation (Issue #88):** `scripts/pages-cms.mjs init` renders `.pages.yml` from the Site's categories and tags (including optional `data/taxonomy.yaml`), refuses to replace an existing file without `--force`, and `verify` reports category drift between the editor select and published posts.

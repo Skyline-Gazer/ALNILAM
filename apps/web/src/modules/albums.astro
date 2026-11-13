@@ -1,0 +1,7 @@
+---
+import GalleryIndexPage from "../components/GalleryIndexPage.astro";
+import { loadSite } from "../lib/site-source.mjs";
+
+const { root, config } = loadSite();
+---
+<GalleryIndexPage siteRoot={root} locale={config.site.locale} />

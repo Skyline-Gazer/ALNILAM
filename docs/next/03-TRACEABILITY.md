@@ -38,7 +38,7 @@ The table preserves the original planning snapshot; its status column is histori
 | P4 | #65 | BLOG-06; ROUTE-01–06; SEO-02, SEO-06 | Pending Spec freeze |
 | P4 | #66 | BLOG-05, NFR-05 | Pending Spec freeze |
 | P4 | **#78** | **BLOG-07; LLM-01–08** | Pending Spec freeze |
-| P5 | #67 | MOD-03, MOD-04 | Pending product scope decision |
+| P5 | **#67** | MOD-03, MOD-04 | Owner authorized Gallery engineering on GitHub `dev` (2026-11-13); engineering evidence pending, formal release acceptance not granted |
 | P5 | #68 | MOD-03, MOD-04 | Pending product scope decision |
 | P5 | #69 | MOD-03, MOD-04 | Pending product scope decision |
 | P5 | #70 | MOD-02, MOD-04 | Pending product scope decision |
@@ -77,7 +77,7 @@ An execution-ready Issue must include:
 
 ## Change management
 - Requirement changes first open a Spec review; changes are NOT silently applied to executable Issues.
-- P5 #67/#68/#69 historically conflict with recorded feature deferral; status is **DEFERRED by G0-F**; not approved for P1/current release until a new scoped decision.
+- P5 #67 is authorized for scoped Gallery engineering on GitHub `dev` by the 2026-11-13 Owner decision ([Issue #67](https://github.com/Skyline-Gazer/ALNILAM/issues/67#issuecomment-6854542688)); #68/#69 remain deferred. This does not grant formal release acceptance.
 - #34 and #35 remain provenance/regression references. They are not discarded but should not require patching UI slated for replacement.
 - G0 review approval precedes native Project hierarchy creation/field editing; GitHub Project membership remains **not verified** in this proposal.
 - Phase success is determined by the acceptance evidence of the *actual selected scope*, not number of closed Issues.

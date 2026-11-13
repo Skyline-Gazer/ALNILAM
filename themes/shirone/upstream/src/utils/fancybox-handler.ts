@@ -16,7 +16,13 @@ const LIGHTBOX_DEFAULTS = {
 	showHideAnimationType: "fade" as const,
 	padding: { top: 20, bottom: 40, left: 20, right: 20 },
 };
-type GalleryItem = { src: string; caption?: string };
+type GalleryItem = {
+  src: string;
+  thumbnail?: string;
+  caption?: string;
+  width?: number;
+  height?: number;
+};
 
 type ResolvedSlide = {
 	src: string;
@@ -528,10 +534,15 @@ export class FancyboxHandler {
 		for (const item of items) {
 			const src = canonicalizeSrc(item.src);
 			if (!src) continue;
+			const width = item.width && Number.isFinite(item.width) && item.width > 0 ? item.width : undefined;
+			const height = item.height && Number.isFinite(item.height) && item.height > 0 ? item.height : undefined;
+			const thumbnail = item.thumbnail ? canonicalizeSrc(item.thumbnail) : null;
 			filtered.push({
 				src,
+				...(thumbnail ? { msrc: thumbnail } : {}),
 				...(item.caption ? { caption: item.caption } : {}),
-				pendingSize: true,
+				...(width && height ? { width, height } : {}),
+				pendingSize: !(width && height),
 			});
 		}
 		if (!filtered.length) return;
@@ -872,7 +883,7 @@ export function cleanupFancybox(): void {
 }
 
 export async function openFancyboxGallery(
-	items: { src: string; caption?: string }[],
+	items: GalleryItem[],
 	startIndex = 0,
 ): Promise<void> {
 	await getFancyboxHandler().showGallery(items, startIndex);

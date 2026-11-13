@@ -45,16 +45,19 @@ const localePrefix = isLocalizedRoute ? `/${pageLocale}` : "";
 const links = resolveNavBarLinks(navBarConfig.links);
 const currentPageKey = resolvePageKey(Astro.url);
 
-const navLabelMap: Record<string, string> = isLocalizedRoute
-	? {
-			home: t(I18nKey.home),
-			posts: pageLocale === "ja" ? "記事" : pageLocale.startsWith("en") ? "Posts" : "文章",
-			categories: t(I18nKey.categories),
-			archive: t(I18nKey.archive),
-			tags: t(I18nKey.tags),
-			series: t(I18nKey.series),
-		}
-	: {};
+const navLabelMap: Record<string, string> = {
+	albums: t(I18nKey.albums),
+	...(isLocalizedRoute
+		? {
+				home: t(I18nKey.home),
+				posts: pageLocale === "ja" ? "記事" : pageLocale.startsWith("en") ? "Posts" : "文章",
+				categories: t(I18nKey.categories),
+				archive: t(I18nKey.archive),
+				tags: t(I18nKey.tags),
+				series: t(I18nKey.series),
+			}
+		: {}),
+};
 function hrefFor(path?: string) {
 	if (!path) return undefined;
 	const localized =
@@ -125,34 +128,42 @@ function isActive(link: (typeof links)[number]): boolean {
 			{links.map((link) => {
 				const href = link.external ? link.url : hrefFor(link.url);
 				const active = isActive(link);
-				return (
+				return link.children ? (
 					<div class="top-app-bar__nav-group" data-nav-group>
-						{link.children ? (
-							<button class:list={[
-								"top-app-bar__nav-link m3-state-layer relative flex h-10 items-center gap-1 px-3 text-sm font-bold text-[var(--on-surface-variant)] transition-colors hover:text-[var(--on-surface)]",
+						<button
+							class:list={[
+								"top-app-bar__nav-link m3-state-layer",
 								active && "top-app-bar__nav-link--active",
-							]} aria-expanded="false">
-								{link.icon && <Icon icon={link.icon} class="text-[1.1rem]"></Icon>}
-								{link.name}
-								<Icon icon="material-symbols:keyboard-arrow-down-rounded" class="text-[1rem]"></Icon>
-							</button>
-						) : (
-							<a href={href} target={link.external ? "_blank" : undefined} rel={link.external ? "noopener noreferrer" : undefined}
-								aria-current={active ? "page" : undefined} data-nav-key={link.pageKey ?? ""}
-								class:list={["top-app-bar__nav-link m3-state-layer relative flex h-10 items-center gap-1 px-3 text-sm font-bold text-[var(--on-surface-variant)] transition-colors hover:text-[var(--on-surface)]", active && "top-app-bar__nav-link--active"]}>
-								{link.icon && <Icon icon={link.icon} class="text-[1.1rem]"></Icon>}{link.pageKey && navLabelMap[link.pageKey] ? navLabelMap[link.pageKey] : link.name}
-								{link.external && <Icon icon="material-symbols:arrow-outward-rounded" class="ml-1 text-[0.875rem]"></Icon>}
-							</a>
-						)}
-						{link.children && <div class="top-app-bar__submenu" role="menu">
+							]}
+							aria-expanded="false"
+						>
+							{link.icon && <Icon icon={link.icon} class="text-[1.1rem]"></Icon>}
+							{link.name}
+							<Icon icon="material-symbols:keyboard-arrow-down-rounded" class="text-[1rem]"></Icon>
+						</button>
+						<div class="top-app-bar__submenu" role="menu">
 							{link.children.map((child) => {
 								const childHref = child.external ? child.url : hrefFor(child.url);
-							return <a href={childHref} target={child.external ? "_blank" : undefined} rel={child.external ? "noopener noreferrer" : undefined} role="menuitem" data-nav-key={child.pageKey ?? ""} class="top-app-bar__submenu-item">
+								return <a href={childHref} target={child.external ? "_blank" : undefined} rel={child.external ? "noopener noreferrer" : undefined} role="menuitem" data-nav-key={child.pageKey ?? ""} class="top-app-bar__submenu-item">
 									{child.icon && <Icon icon={child.icon} class="text-[1.2rem]"></Icon>}{child.name}{child.external && <Icon icon="material-symbols:arrow-outward-rounded" class="ml-auto text-[0.875rem]"></Icon>}
 								</a>;
 							})}
-						</div>}
+						</div>
 					</div>
+				) : (
+					<a
+						href={href}
+						target={link.external ? "_blank" : undefined}
+						rel={link.external ? "noopener noreferrer" : undefined}
+						aria-current={active ? "page" : undefined}
+						data-nav-key={link.pageKey ?? ""}
+						class:list={[
+							"top-app-bar__nav-link m3-state-layer",
+							active && "top-app-bar__nav-link--active",
+						]}
+					>
+						{link.icon && <Icon icon={link.icon} class="text-[1.1rem]"></Icon>}{link.pageKey && navLabelMap[link.pageKey] ? navLabelMap[link.pageKey] : link.name}{link.external && <Icon icon="material-symbols:arrow-outward-rounded" class="ml-1 text-[0.875rem]"></Icon>}
+					</a>
 				);
 			})}
 		</nav>
@@ -226,6 +237,23 @@ function isActive(link: (typeof links)[number]): boolean {
 
 		.top-app-bar--transparent .top-app-bar__nav-link--active::after {
 		background: white;
+	}
+
+	.top-app-bar__nav-link {
+		position: relative;
+		display: flex;
+		height: 2.5rem;
+		align-items: center;
+		gap: 0.25rem;
+		padding-inline: 0.75rem;
+		font-size: 0.875rem;
+		font-weight: 700;
+		line-height: 1.25rem;
+		color: var(--on-surface-variant);
+		transition: color var(--m3e-duration-short) var(--m3e-easing-standard);
+	}
+	.top-app-bar__nav-link:hover {
+		color: var(--on-surface);
 	}
 
 	.top-app-bar__nav-link--active {
