@@ -9,7 +9,7 @@ runtime. Earlier UX, product and issue evidence remains below.
 
 - The Demo was built from CNB `dev` `1cd67c47b7cab200f8bc4d25f7c359ef26dfe0f2`
   (tree `5ab0827df5c41ed5a1bb099e7f5e27578cc23fe9`). The `dev` push pipeline
-  `alnilam-independent-site` succeeded in 105s. PR #122's exact-merge trusted
+  succeeded in 105s. PR #122's exact-merge trusted
   consumer succeeded in 29m49s: 201 browser tests passed, 1 intentional skip;
   root and `/ALNILAM/` were covered.
 - GitHub `dev` remains `39ca829f97a60247f4c6a14e619dd847a5e895eb`; it was not
