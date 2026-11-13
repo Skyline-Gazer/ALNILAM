@@ -25,6 +25,17 @@ async function expectTimeline(page: Page, minItems: number) {
 }
 
 for (const [name, origin] of deployments) {
+	test(`archive controls follow the page language ${name}`, async ({ page }) => {
+		for (const [route, label, count] of [
+			["/en/archives/", "By Year", /\d+ posts?/],
+			["/ja/archives/", "年別", /\d+ 件の投稿/],
+		] as const) {
+			await page.goto(`${origin}${route}`, { waitUntil: "networkidle" });
+			await expect(page.getByRole("radio", { name: label })).toBeVisible();
+			await expect(page.locator(".m3-blog-archive__count").first()).toContainText(count);
+		}
+	});
+
 	test(`taxonomy pagination navigates to page 2 and back ${name}`, async ({ page }) => {
 		await page.goto(`${origin}/categories/release/`, { waitUntil: "networkidle" });
 		await expectTimeline(page, 1);
@@ -52,6 +63,8 @@ for (const [name, origin] of deployments) {
 			const response = await page.goto(`${origin}${route}`, { waitUntil: "networkidle" });
 			expect(response?.status()).toBe(200);
 			await expectTimeline(page, 1);
+			const count = page.locator(".m3-blog-archive__count").first();
+			await expect(count).toContainText(locale === "en" ? /\d+ posts?/ : /\d+ 件の投稿/);
 			const hrefs = await page.locator(".m3-blog-archive__item").evaluateAll((items) =>
 				items.map((item) => item.getAttribute("href")),
 			);

@@ -7,20 +7,40 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 ## [Unreleased]
 
 ### Added
+- **Git-based CMS authoring PoC (Issue #88):** an isolated Site `.pages.yml`, an offline write-back adapter and dual-base compose tests verify post field mapping, unknown-frontmatter and MDX roundtrip with no data loss, media paths at root and `/ALNILAM/`, and that removing the editor config leaves the Site digest, build and provenance unchanged. No Core runtime, hosted service or production integration is included.
+- **Pages CMS post creation (Issue #88):** `scripts/pages-cms.mjs create` writes a new post from declared frontmatter fields, validating required values, field types and select options before writing; it refuses overwrite and paths outside `content/posts/`, and keeps the body verbatim.
+- **Pages CMS schema generation (Issue #88):** `scripts/pages-cms.mjs init` renders `.pages.yml` from the Site's categories and tags (including optional `data/taxonomy.yaml`), refuses to replace an existing file without `--force`, and `verify` reports category drift between the editor select and published posts.
 - **Opt-in llms.txt v2 discovery (Issue #78):** site and locale indexes, source-backed article Markdown views and HTML discovery; optional full aggregation defaults off. Draft, private and unlisted posts are excluded from published routes.
 - **Site schema v2 validation (Issue #51)**: strict `schemaVersion: 2`, closed-world unknown-field rejection, locale/routing/taxonomy validation, and a fail-closed YAML parser (no duplicate keys, unresolved tags or non-plain values).
+- **Comments provider/privacy contract (Issue #71):** Giscus is the single first-launch provider with stable `specific` terms (`commentId` → `translationKey` → content id), explicit `sharing`/`load`/`lang` options, third-party disclosure, provider-scoped CSP, non-blocking failure/retry fallback and idempotent provider teardown. Disabled comments still ship zero comment JS/network.
 - **P1 Shirone frontend vertical slice (candidate, #48):** local Shirone-derived M3E home/list/article/archive/tag presentation with the retained ALNILAM Core/Site contracts, Pagefind, optional-module and rollback coverage. Not released or deployed.
 - **Bangumi snapshots (Issue #70):** opt-in builds cache public collections and locally emitted covers outside the Site. Provider or cover failures reuse the matching last valid snapshot; a successful empty result replaces it. Visitors make no third-party data or cover requests.
 
 ### Changed
+- The demo Site includes a two-article introductory series and a published MDX example.
 - **Site configuration is YAML-only**: `alnilam.config.yaml` replaces `alnilam.config.toml`; a TOML-only Site now fails closed with an actionable message. No automatic v1→v2 migration is provided.
 - Local browser, CLS and Lighthouse commands share the CNB test configuration; CNB evidence upload verifies downloaded commit attachments and supports a confirmed per-file-limit fallback.
+- **Comments mapping migration (breaking when comments.enabled):** enabled Sites must explicitly set `mapping`. Existing Sites can select `pathname` to retain URL-based threads; `specific` uses stable terms and starts separate discussions. Omitted mapping now fails the build. `load` defaults to `click`.
 
 ### Removed
 - Runtime TOML Site config parsing (`smol-toml` dependency), `alnilam.config.toml` support, and the in-repo `sites/legacy-demo` path (the v1 fixture moved to `tests/fixtures/site-v1-legacy`).
 
 ### Fixed
+- Article pages now render series context and previous/next links using their canonical localized routes.
+- **Pages CMS field validation (Issue #88):** post creation and edits reject non-integer or unsafe `seriesOrder` values before writing; edits also validate changed fields against the editor schema while preserving unrelated metadata.
+- **Search panel (Issue #131):** a finished search that matched nothing now states it in the page language (all ten dictionaries) instead of leaving an empty panel on mobile and closing without any feedback on desktop.
+- **Navigation landmarks (Issue #35):** the desktop navigation and the drawer navigation announce their names in the page language instead of hardcoded English, also after a client-side language switch. The shared browser contracts select the navigation landmark by its stable id, not by its English name.
+- **Locale resolution (Issue #35):** a regional locale without its own dictionary entry now uses its base language (`es-ES` renders Spanish instead of English), and a translation key that no dictionary defines degrades to the English text instead of an empty label.
+- Archive and taxonomy timeline controls and post counts follow the active page language.
+- **Mobile navigation drawer (Issue #35):** while the modal drawer is open, the header and page content are `inert`, so assistive technology and scripts cannot reach the obscured page; the state is cleared on Escape, outside press, desktop resize and unmount.
+- **Mobile navigation drawer (Issue #35):** `aria-expanded` now flips only once the panel is visible and focus has moved inside, so a Tab in the opening frame cannot reach the page behind the modal.
+- **Search and display-settings panels (Issue #35):** closed float panels leave the accessibility tree and tab order (`visibility: hidden`), and their toggles expose `aria-expanded`/`aria-controls`, including after Escape or an outside click.
+- **Header and drawer accessible names (Issue #35):** menu, display-settings, search and theme-switch labels now follow the page language (`zh-CN`/`en`/`ja` and every shipped dictionary) instead of hardcoded English, including after client-side language switches.
 - Search pages retain their route when switching between available languages, including under nested base paths.
+- Search results no longer display Pagefind's internal weight delimiter in titles or excerpts on the search page or header panel.
+- **Mobile navigation drawer (Issue #35):** a tap on the menu button before the drawer island hydrates is replayed instead of dropped, so the first tap always opens the drawer.
+- **Mobile navigation drawer (Issue #35):** the open drawer keeps keyboard focus inside its `aria-modal` panel and returns focus to the menu button when dismissed by a press outside the panel or Escape.
+- **Mobile navigation drawer (Issue #35):** the menu button ships `aria-expanded`/`aria-controls` before hydration, so assistive technology sees the disclosure relationship and state from first paint.
 - Archive pages serialize only the post fields needed for display and filtering, reducing HTML size while retaining archive interactions.
 - Markdown links retain their text while unsafe URL schemes are removed.
 - Markdown feature styles load as page-scoped assets, reducing HTML size for articles with code blocks and diagrams while retaining navigation cleanup.

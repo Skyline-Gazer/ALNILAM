@@ -10,6 +10,11 @@ export const vi: Translation = {
 	[Key.archiveGroupCategory]: "Theo danh mục",
 	[Key.archiveGroupTag]: "Theo thẻ",
 	[Key.search]: "Tìm kiếm",
+	[Key.searchNoResults]: "Không có kết quả",
+	[Key.menu]: "Menu",
+	[Key.displaySettings]: "Cài đặt hiển thị",
+	[Key.mainNavigation]: "Điều hướng chính",
+	[Key.navigationDrawer]: "Bảng điều hướng",
 	[Key.clear]: "Xóa",
 
 	[Key.friends]: "Bạn bè",
@@ -183,6 +188,21 @@ export const vi: Translation = {
 	[Key.commentsLoading]: "Đang tải bình luận...",
 	[Key.commentsLoadFailed]: "Không thể tải bình luận",
 	[Key.commentsRequiresJavaScript]: "Bình luận yêu cầu JavaScript để hiển thị",
+	[Key.consentTitle]: "Lựa chọn quyền riêng tư",
+	[Key.consentDescription]:
+		"Trang này có thể tải các dịch vụ bên thứ ba không bắt buộc. Hãy chọn những gì được tải — không có yêu cầu nào trước khi bạn cho phép.",
+	[Key.consentAnalytics]: "Phân tích (Google Analytics)",
+	[Key.consentAds]: "Quảng cáo (Google AdSense)",
+	[Key.consentAllow]: "Cho phép",
+	[Key.consentDeny]: "Từ chối",
+	[Key.consentNote]:
+		"Bạn có thể thay đổi bất cứ lúc nào qua window.alnilamConsent.open(); lựa chọn chỉ được lưu trong trình duyệt này.",
+	[Key.dkrecoveryTitle]: "Quảng cáo giúp duy trì trang này",
+	[Key.dkrecoveryDescription]:
+		"Có vẻ trình chặn quảng cáo đang ngăn tải quảng cáo. Quảng cáo chi trả cho lưu trữ và nội dung mới.",
+	[Key.dkrecoveryContinue]: "Đọc tiếp",
+	[Key.dkrecoveryAllowHint]:
+		"Bạn có thể cho phép trang này trong cài đặt trình chặn quảng cáo — nội dung không bao giờ bị khóa.",
 
 	[Key.untitled]: "Không tiêu đề",
 	[Key.uncategorized]: "Chưa phân loại",

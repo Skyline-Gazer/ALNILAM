@@ -245,7 +245,8 @@ export const prebundleSpecifiers: string[] = [
 	"mermaid",
 	"@panzoom/panzoom",
 	"overlayscrollbars",
-	"@fancyapps/ui",
+	"photoswipe",
+	"photoswipe/lightbox",
 	// share-poster.ts reaches for this one at runtime, on the first share
 	// dialog rather than during SSR. Without it here the dev server serves a
 	// stale pre-bundle id and the dynamic import rejects, so poster

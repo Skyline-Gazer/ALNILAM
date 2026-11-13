@@ -1,0 +1,110 @@
+# Pages CMS editor schema for an independently owned ALNILAM Site (Issue #88 PoC).
+#
+# This file is Site-owned. ALNILAM Core never reads it: compose snapshots only
+# alnilam.config.yaml, content/, assets/ and data/, and hashes only those four
+# paths. Adding or removing .pages.yml changes neither the build nor provenance.
+#
+# Keep the field names in sync with the Core post frontmatter contract
+# (apps/web/src/content.config.ts) and with docs/SITE_ONBOARDING.md.
+
+media:
+  input: assets
+  output: /site-assets
+  extensions: [svg, png, jpg, jpeg, webp, avif]
+  rename: false
+
+content:
+  - name: posts
+    label: Posts
+    type: collection
+    path: content/posts
+    format: yaml-frontmatter
+    subfolders: true
+    filename: "{primary}.md"
+    exclude: ["README.md"]
+    # A Git editor must not delete published posts by accident; removal stays a
+    # reviewed Site commit.
+    operations:
+      delete: false
+    view:
+      primary: title
+      sort: pubDate
+      order: desc
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: description
+        label: Description
+        type: text
+      - name: pubDate
+        label: Publication date
+        type: date
+        required: true
+      - name: updatedDate
+        label: Updated date
+        type: date
+      - name: cover
+        label: Cover image
+        type: image
+      - name: category
+        label: Category
+        type: select
+        options:
+          values: [guide, release]
+      - name: tags
+        label: Tags
+        type: string
+        list: true
+      - name: series
+        label: Series
+        type: string
+      - name: seriesOrder
+        label: Series order
+        type: number
+      - name: pinned
+        label: Pinned
+        type: boolean
+      - name: draft
+        label: Draft
+        type: boolean
+      - name: private
+        label: Private
+        type: boolean
+      - name: unlisted
+        label: Unlisted
+        type: boolean
+      - name: lang
+        label: Language
+        type: string
+        pattern: "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$"
+      - name: translationKey
+        label: Translation key
+        type: string
+      - name: commentId
+        label: Comment thread id
+        type: string
+        pattern: "^\\S+$"
+      # Source editing, not WYSIWYG: MDX/JSX and fenced code must not be
+      # reinterpreted by a rich-text editor. `body` maps to the bytes below
+      # the frontmatter delimiters.
+      - name: body
+        label: Body (Markdown / MDX source)
+        type: code
+        options:
+          format: markdown
+
+settings:
+  # Pages CMS defaults to merge:false, which rewrites a post from the editor
+  # schema only and silently drops undeclared frontmatter keys. The PoC adapter
+  # refuses to run without merge:true.
+  content:
+    merge: true
+  commit:
+    identity: app
+    templates:
+      create: "content(create): {path}"
+      update: "content(update): {path}"
+      delete: "content(delete): {path}"
+      rename: "content(rename): {oldPath} -> {newPath}"

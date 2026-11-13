@@ -10,6 +10,11 @@ export const th: Translation = {
 	[Key.archiveGroupCategory]: "ตามหมวดหมู่",
 	[Key.archiveGroupTag]: "ตามแท็ก",
 	[Key.search]: "ค้นหา",
+	[Key.searchNoResults]: "ไม่พบผลลัพธ์",
+	[Key.menu]: "เมนู",
+	[Key.displaySettings]: "การตั้งค่าการแสดงผล",
+	[Key.mainNavigation]: "การนำทางหลัก",
+	[Key.navigationDrawer]: "แผงการนำทาง",
 	[Key.clear]: "ล้าง",
 
 	[Key.friends]: "เพื่อน",
@@ -172,6 +177,21 @@ export const th: Translation = {
 	[Key.commentsLoadFailed]: "โหลดความคิดเห็นไม่สำเร็จ",
 	[Key.commentsRequiresJavaScript]:
 		"ความคิดเห็นจำเป็นต้องเปิดใช้งาน JavaScript เพื่อแสดงผล",
+	[Key.consentTitle]: "ตัวเลือกความเป็นส่วนตัว",
+	[Key.consentDescription]:
+		"เว็บไซต์นี้สามารถโหลดบริการของบุคคลที่สามที่ไม่บังคับได้ โปรดเลือกสิ่งที่อนุญาตให้โหลด — จะไม่มีการร้องขอใด ๆ ก่อนที่คุณจะอนุญาต",
+	[Key.consentAnalytics]: "การวิเคราะห์ (Google Analytics)",
+	[Key.consentAds]: "โฆษณา (Google AdSense)",
+	[Key.consentAllow]: "อนุญาต",
+	[Key.consentDeny]: "ปฏิเสธ",
+	[Key.consentNote]:
+		"คุณสามารถเปลี่ยนได้ทุกเมื่อผ่าน window.alnilamConsent.open(); การเลือกจะถูกเก็บไว้ในเบราว์เซอร์นี้เท่านั้น",
+	[Key.dkrecoveryTitle]: "โฆษณาช่วยให้เว็บไซต์นี้ใช้ได้ฟรี",
+	[Key.dkrecoveryDescription]:
+		"ดูเหมือนว่าตัวบล็อกโฆษณากำลังป้องกันไม่ให้โหลดโฆษณา โฆษณาเป็นค่าโฮสติ้งและค่าเนื้อหาใหม่",
+	[Key.dkrecoveryContinue]: "อ่านต่อ",
+	[Key.dkrecoveryAllowHint]:
+		"คุณสามารถอนุญาตเว็บไซต์นี้ในการตั้งค่าตัวบล็อกโฆษณา — ไม่มีการล็อกเนื้อหาทั้งสองกรณี",
 
 	[Key.untitled]: "ไม่ได้ตั้งชื่อ",
 	[Key.uncategorized]: "ไม่ได้จัดหมวดหมู่",

@@ -10,6 +10,11 @@ export const id: Translation = {
 	[Key.archiveGroupCategory]: "Berdasarkan kategori",
 	[Key.archiveGroupTag]: "Berdasarkan tag",
 	[Key.search]: "Cari",
+	[Key.searchNoResults]: "Tidak ada hasil",
+	[Key.menu]: "Menu",
+	[Key.displaySettings]: "Pengaturan tampilan",
+	[Key.mainNavigation]: "Navigasi utama",
+	[Key.navigationDrawer]: "Panel navigasi",
 	[Key.clear]: "Hapus",
 
 	[Key.friends]: "Teman",
@@ -185,6 +190,21 @@ export const id: Translation = {
 	[Key.commentsLoadFailed]: "Gagal memuat komentar",
 	[Key.commentsRequiresJavaScript]:
 		"Komentar memerlukan JavaScript untuk ditampilkan",
+	[Key.consentTitle]: "Pilihan privasi",
+	[Key.consentDescription]:
+		"Situs ini dapat memuat layanan pihak ketiga opsional. Pilih apa yang boleh dimuat — tidak ada yang diminta sebelum Anda mengizinkan.",
+	[Key.consentAnalytics]: "Analitik (Google Analytics)",
+	[Key.consentAds]: "Iklan (Google AdSense)",
+	[Key.consentAllow]: "Izinkan",
+	[Key.consentDeny]: "Tolak",
+	[Key.consentNote]:
+		"Anda dapat mengubahnya kapan saja lewat window.alnilamConsent.open(); pilihan hanya disimpan di peramban ini.",
+	[Key.dkrecoveryTitle]: "Iklan menjaga situs ini tetap gratis",
+	[Key.dkrecoveryDescription]:
+		"Sepertinya pemblokir iklan mencegah iklan dimuat. Iklan membiayai hosting dan konten baru.",
+	[Key.dkrecoveryContinue]: "Lanjut membaca",
+	[Key.dkrecoveryAllowHint]:
+		"Kamu dapat mengizinkan situs ini di pengaturan pemblokir iklan — konten tidak pernah dikunci.",
 
 	[Key.untitled]: "Tanpa Judul",
 	[Key.uncategorized]: "Tanpa Kategori",

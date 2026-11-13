@@ -18,6 +18,11 @@ export type Translation = {
 	[K in I18nKey]: string;
 };
 
+/** Site-owned overrides: locale → (UI key → custom text). */
+export type TranslationOverrides = {
+	[lang: string]: { [key: string]: string };
+};
+
 const defaultTranslation = en;
 
 const map: { [key: string]: Translation } = {
@@ -42,26 +47,75 @@ const map: { [key: string]: Translation } = {
 };
 
 export function getTranslation(lang: string): Translation {
-	return map[lang.toLowerCase()] || defaultTranslation;
+	const key = lang.toLowerCase();
+	const exact = map[key];
+	if (exact) return exact;
+	// A regional variant without its own entry falls back to the base language
+	// dictionary (es-ES → es) before it falls back to English.
+	const base = map[key.split("_")[0]];
+	return base || defaultTranslation;
+}
+
+/** 归一化语言代码：小写 + 连字符转下划线（zh-CN / zh_CN / zh_cn 等价）。 */
+function normalizeLocale(locale: string): string {
+	return (locale || "en").toLowerCase().replaceAll("-", "_");
+}
+
+/** 归一化 Site 覆盖表：语言代码同样按小写下划线匹配。 */
+function normalizeOverrides(
+	overrides?: TranslationOverrides | null,
+): Map<string, { [key: string]: string }> {
+	const normalized = new Map<string, { [key: string]: string }>();
+	if (!overrides || typeof overrides !== "object") return normalized;
+	for (const [name, scoped] of Object.entries(overrides)) {
+		if (!scoped || typeof scoped !== "object") continue;
+		normalized.set(normalizeLocale(name), scoped as { [key: string]: string });
+	}
+	return normalized;
+}
+
+/**
+ * 解析单个文案键：Site 覆盖 → 当前语言词典 → 英文词典 → 键名本身。
+ * 后两级是缺失键的既定退化行为，保证界面永远不会拿到 undefined。
+ */
+function lookup(
+	lang: string,
+	key: I18nKey,
+	overrides: Map<string, { [key: string]: string }>,
+): string {
+	// 1. Site 自定义覆盖（语言代码大小写与分隔符不敏感）
+	const custom = overrides.get(lang)?.[key];
+	if (typeof custom === "string") return custom;
+
+	// 2. 内置 10 语言词典
+	const localized = getTranslation(lang)[key];
+	if (typeof localized === "string") return localized;
+
+	// 3. 退化到英文词典，最后退到键名
+	const fallback = defaultTranslation[key];
+	return typeof fallback === "string" ? fallback : String(key);
+}
+
+const siteOverrides = normalizeOverrides(i18nConfig as TranslationOverrides | undefined);
+
+/** Translate one key for an explicit locale, with an injectable override map. */
+export function resolveTranslation(
+	locale: string,
+	key: I18nKey,
+	overrides?: TranslationOverrides | null,
+): string {
+	return lookup(
+		normalizeLocale(locale),
+		key,
+		overrides ? normalizeOverrides(overrides) : siteOverrides,
+	);
+}
+
+/** Translate for an explicit page locale, keeping Site i18n overrides. */
+export function i18nForLocale(locale: string, key: I18nKey): string {
+	return lookup(normalizeLocale(locale), key, siteOverrides);
 }
 
 export function i18n(key: I18nKey): string {
-	const lang = (siteConfig.lang || "en").toLowerCase();
-
-	// 1. 查找用户自定义 i18n 覆盖域（支持原大小写及小写匹配，如 zh_CN / zh_cn）
-	if (i18nConfig && typeof i18nConfig === "object") {
-		const langOverrides =
-			i18nConfig[lang] ??
-			Object.entries(i18nConfig).find(([k]) => k.toLowerCase() === lang)?.[1];
-
-		if (langOverrides && typeof langOverrides === "object") {
-			const customVal = langOverrides[key];
-			if (typeof customVal === "string") {
-				return customVal;
-			}
-		}
-	}
-
-	// 2. 回退到内置 10 语言词典
-	return getTranslation(lang)[key];
+	return i18nForLocale(siteConfig.lang || "en", key);
 }

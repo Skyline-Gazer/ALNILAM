@@ -7,7 +7,7 @@
  */
 import Icon from "@iconify/svelte";
 import I18nKey from "@i18n/i18nKey";
-import { getTranslation } from "@i18n/translation";
+import { i18nForLocale } from "@i18n/translation";
 import { resolveNavBarLinks, resolvePageKey } from "@utils/nav-utils";
 import { url } from "@utils/url-utils";
 import { onMount, tick } from "svelte";
@@ -19,6 +19,8 @@ let { lang }: { lang?: string } = $props();
 const defaultLocale = siteConfig.lang.replaceAll("_", "-");
 let pageLocale = $state((lang || defaultLocale).replaceAll("_", "-"));
 let localizedRoute = $state(false);
+// The drawer follows the page language, like the header it belongs to.
+const t = (key: I18nKey) => i18nForLocale(pageLocale, key);
 
 function routeLocale(path: string): string | undefined {
 	const base = (import.meta.env?.BASE_URL ?? "/").replace(/\/+$/, "");
@@ -36,14 +38,13 @@ function localizedHref(path?: string, external = false) {
 
 function localizedLabel(name: string, pageKey?: string) {
 	if (!localizedRoute || !pageKey) return name;
-	const t = getTranslation(pageLocale.replaceAll("-", "_"));
 	const labels: Record<string, string> = {
-		home: t[I18nKey.home],
+		home: t(I18nKey.home),
 		posts: pageLocale === "ja" ? "記事" : pageLocale.startsWith("en") ? "Posts" : "文章",
-		categories: t[I18nKey.categories],
-		archive: t[I18nKey.archive],
-		tags: t[I18nKey.tags],
-		series: t[I18nKey.series],
+		categories: t(I18nKey.categories),
+		archive: t(I18nKey.archive),
+		tags: t(I18nKey.tags),
+		series: t(I18nKey.series),
 	};
 	return labels[pageKey] ?? name;
 }
@@ -157,38 +158,131 @@ onMount(() => {
 			.getElementById("nav-drawer-switch")
 			?.setAttribute("aria-expanded", String(isOpen));
 	};
-	syncButtonAria(open);
-	const onToggle = () => {
-		open = !open;
-		syncButtonAria(open);
-		if (open) {
-			tick().then(() => {
-				drawerEl?.querySelector<HTMLElement>("a, button")?.focus();
-			});
+	// The open class and its computed visibility land one frame after the state
+	// update, so focusing in `tick()` alone silently did nothing.
+	const focusFirstItem = (frames = 0) => {
+		const panel = drawerEl;
+		const target = panel?.querySelector<HTMLElement>("a, button");
+		if (!open || !panel || !target) return;
+		if (getComputedStyle(panel).visibility !== "visible") {
+			if (frames < 120) requestAnimationFrame(() => focusFirstItem(frames + 1));
+			return;
+		}
+		target.focus();
+		// Announce the open state only once the panel is visible and focus is inside:
+		// consumers (including the shared browser contracts) treat aria-expanded as
+		// "the panel is ready", and a Tab in that frame used to escape the modal.
+		syncButtonAria(true);
+	};
+	// aria-modal alone does not stop assistive technology or scripts from
+	// reaching the page behind the dialog; mark every sibling outside the drawer.
+	const setBackgroundInert = (inert: boolean) => {
+		for (const child of Array.from(document.body.children)) {
+			if (!(child instanceof HTMLElement)) continue;
+			if (["SCRIPT", "STYLE", "LINK"].includes(child.tagName)) continue;
+			if (drawerEl && child.contains(drawerEl)) continue;
+			if (inert) child.setAttribute("inert", "");
+			else child.removeAttribute("inert");
 		}
 	};
-	const onKey = (e: KeyboardEvent) => {
-		if (e.key === "Escape" && open) {
-			open = false;
+	// Replay taps recorded before this island subscribed, then own the state again.
+	const root = document.documentElement;
+	syncButtonAria(open);
+	if (Number(root.dataset.siteDrawerPending ?? 0) % 2 === 1) {
+		open = true;
+		setBackgroundInert(true);
+		tick().then(() => focusFirstItem());
+	}
+	delete root.dataset.siteDrawerPending;
+	const onToggle = () => {
+		delete document.documentElement.dataset.siteDrawerPending;
+		open = !open;
+		if (open) {
+			setBackgroundInert(true);
+			tick().then(() => focusFirstItem());
+		} else {
+			setBackgroundInert(false);
 			syncButtonAria(false);
-			document.getElementById("nav-drawer-switch")?.focus();
 		}
+	};
+	const closeDrawer = (restoreFocus = true) => {
+		open = false;
+		setBackgroundInert(false);
+		syncButtonAria(false);
+		if (restoreFocus) document.getElementById("nav-drawer-switch")?.focus();
+	};
+	// The panel is aria-modal, so Tab must stay inside it while it is open.
+	const focusableItems = () => {
+		const panel = drawerEl;
+		if (!panel) return [] as HTMLElement[];
+		return [...panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+			.filter((item) => item.checkVisibility?.({ visibilityProperty: true }) ?? true);
+	};
+	const onKey = (e: KeyboardEvent) => {
+		if (!open) return;
+		if (e.key === "Escape") {
+			closeDrawer();
+			return;
+		}
+		if (e.key !== "Tab") return;
+		const items = focusableItems();
+		if (!items.length) {
+			// The open frame can precede the panel's computed visibility; keep focus
+			// in the modal instead of letting Tab reach the page behind it.
+			e.preventDefault();
+			tick().then(() => focusFirstItem());
+			return;
+		}
+		const first = items[0];
+		const last = items[items.length - 1];
+		const active = document.activeElement;
+		const outside = !drawerEl?.contains(active);
+		if (e.shiftKey ? active === first || outside : active === last || outside) {
+			e.preventDefault();
+			(e.shiftKey ? last : first).focus();
+		}
+	};
+	const onClose = () => closeDrawer();
+	// Modal behaviour: any press outside the panel dismisses it, even during the
+	// frame before the open class makes the scrim hit-testable. Focus returns on
+	// the following click because mousedown's default action would steal it.
+	let closedByOutsidePress = false;
+	const onPointerDown = (event: PointerEvent) => {
+		if (!open) return;
+		const target = event.target;
+		if (target instanceof Node && drawerEl?.contains(target)) return;
+		if (target instanceof Element && target.closest("#nav-drawer-switch")) return;
+		closedByOutsidePress = true;
+		closeDrawer(false);
+	};
+	const onOutsideClick = () => {
+		if (!closedByOutsidePress) return;
+		closedByOutsidePress = false;
+		document.getElementById("nav-drawer-switch")?.focus();
 	};
 	const desktopMedia = window.matchMedia("(min-width: 1024px)");
 	const onDesktopChange = (e: MediaQueryListEvent) => {
 		if (e.matches && open) {
 			open = false;
+			setBackgroundInert(false);
 			syncButtonAria(false);
 		}
 	};
 	document.addEventListener("site-drawer:toggle", onToggle);
+	document.addEventListener("site-drawer:close", onClose);
+	document.addEventListener("pointerdown", onPointerDown, true);
+	document.addEventListener("click", onOutsideClick, true);
 	document.addEventListener("swup:content:replace", syncFromRoute);
 	document.addEventListener("swup:page:view", syncFromRoute);
 	window.addEventListener("keydown", onKey);
 	desktopMedia.addEventListener("change", onDesktopChange);
 	return () => {
 		document.removeEventListener("site-drawer:toggle", onToggle);
+		setBackgroundInert(false);
+		document.removeEventListener("site-drawer:close", onClose);
 		document.removeEventListener("swup:content:replace", syncFromRoute);
+		document.removeEventListener("pointerdown", onPointerDown, true);
+		document.removeEventListener("click", onOutsideClick, true);
 		document.removeEventListener("swup:page:view", syncFromRoute);
 		window.removeEventListener("keydown", onKey);
 		desktopMedia.removeEventListener("change", onDesktopChange);
@@ -202,9 +296,10 @@ let drawerEl: HTMLElement | undefined = $state();
 	class="site-drawer"
 	class:site-drawer--open={open}
 >
-	<div class="site-drawer__scrim" aria-hidden="true" onclick={() => (open = false)}></div>
+	<div class="site-drawer__scrim" aria-hidden="true" onclick={() => document.dispatchEvent(new CustomEvent("site-drawer:close"))}></div>
 	<aside
 		bind:this={drawerEl}
+		id="site-drawer-panel"
 		class="site-drawer__panel"
 		role="dialog"
 		aria-modal="true"
@@ -215,7 +310,7 @@ let drawerEl: HTMLElement | undefined = $state();
 			<div class="site-drawer__subtitle">{siteConfig.subtitle}</div>
 		</div>
 
-		<nav class="site-drawer__nav" aria-label="Navigation drawer">
+		<nav class="site-drawer__nav" aria-label={t(I18nKey.navigationDrawer)}>
 			{#each primaryItems as item (item.value)}
 				{#if item.children}
 					<div class="site-drawer__group">

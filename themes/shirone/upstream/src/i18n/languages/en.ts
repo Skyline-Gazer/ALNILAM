@@ -10,6 +10,11 @@ export const en: Translation = {
 	[Key.archiveGroupCategory]: "By Category",
 	[Key.archiveGroupTag]: "By Tag",
 	[Key.search]: "Search",
+	[Key.searchNoResults]: "No results",
+	[Key.menu]: "Menu",
+	[Key.displaySettings]: "Display settings",
+	[Key.mainNavigation]: "Main navigation",
+	[Key.navigationDrawer]: "Navigation drawer",
 	[Key.clear]: "Clear",
 
 	[Key.friends]: "Friends",
@@ -182,6 +187,21 @@ export const en: Translation = {
 	[Key.commentsLoadFailed]: "Failed to load comments.",
 	[Key.commentsRequiresJavaScript]:
 		"Comments require JavaScript to be displayed.",
+	[Key.consentTitle]: "Privacy choices",
+	[Key.consentDescription]:
+		"This site can optionally load third-party services. Choose what may be loaded — nothing is requested before you allow it.",
+	[Key.consentAnalytics]: "Analytics (Google Analytics)",
+	[Key.consentAds]: "Advertising (Google AdSense)",
+	[Key.consentAllow]: "Allow",
+	[Key.consentDeny]: "Deny",
+	[Key.consentNote]:
+		"You can change this any time via window.alnilamConsent.open(); choices are stored in this browser only.",
+	[Key.dkrecoveryTitle]: "Ads keep this site free",
+	[Key.dkrecoveryDescription]:
+		"It looks like an ad blocker is preventing ads from loading. Ads pay for hosting and new content.",
+	[Key.dkrecoveryContinue]: "Continue reading",
+	[Key.dkrecoveryAllowHint]:
+		"You can allowlist this site in your ad blocker settings — no content is locked either way.",
 
 	[Key.untitled]: "Untitled",
 	[Key.uncategorized]: "Uncategorized",

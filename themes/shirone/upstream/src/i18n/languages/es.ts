@@ -10,6 +10,11 @@ export const es: Translation = {
 	[Key.archiveGroupCategory]: "Por categoría",
 	[Key.archiveGroupTag]: "Por etiqueta",
 	[Key.search]: "Buscar",
+	[Key.searchNoResults]: "Sin resultados",
+	[Key.menu]: "Menú",
+	[Key.displaySettings]: "Ajustes de visualización",
+	[Key.mainNavigation]: "Navegación principal",
+	[Key.navigationDrawer]: "Panel de navegación",
 	[Key.clear]: "Borrar",
 
 	[Key.friends]: "Amigos",
@@ -183,6 +188,21 @@ export const es: Translation = {
 	[Key.commentsLoadFailed]: "Error al cargar comentarios",
 	[Key.commentsRequiresJavaScript]:
 		"Los comentarios requieren JavaScript para mostrarse",
+	[Key.consentTitle]: "Preferencias de privacidad",
+	[Key.consentDescription]:
+		"Este sitio puede cargar servicios de terceros opcionales. Elige qué se puede cargar; no se solicita nada hasta que lo permitas.",
+	[Key.consentAnalytics]: "Analítica (Google Analytics)",
+	[Key.consentAds]: "Publicidad (Google AdSense)",
+	[Key.consentAllow]: "Permitir",
+	[Key.consentDeny]: "Denegar",
+	[Key.consentNote]:
+		"Puedes cambiarlo en cualquier momento con window.alnilamConsent.open(); las elecciones se guardan solo en este navegador.",
+	[Key.dkrecoveryTitle]: "Los anuncios mantienen este sitio gratuito",
+	[Key.dkrecoveryDescription]:
+		"Parece que un bloqueador de anuncios impide cargarlos. Los anuncios financian el alojamiento y el nuevo contenido.",
+	[Key.dkrecoveryContinue]: "Seguir leyendo",
+	[Key.dkrecoveryAllowHint]:
+		"Puedes permitir este sitio en la configuración de tu bloqueador; en ningún caso el contenido queda bloqueado.",
 
 	[Key.untitled]: "Sin título",
 	[Key.uncategorized]: "Sin categoría",

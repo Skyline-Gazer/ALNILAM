@@ -4,6 +4,8 @@ description: "First article in an independently owned Site."
 pubDate: 2026-10-25
 category: "release"
 tags: ["ALNILAM", "Astro"]
+series: "alnilam-introduction"
+seriesOrder: 1
 cover: "/site-assets/orion.svg"
 lang: "zh-CN"
 translationKey: "hello-alnilam"
@@ -16,6 +18,11 @@ Core can be upgraded independently. Site owns the post and its assets.
 ![Orion constellation artwork](/site-assets/orion.svg)
 
 ![Lighthouse lightbox fixture](/site-assets/lighthouse.png)
+
+![Second lighthouse body image](/site-assets/lighthouse.png)
+
+Ordinary text link that contains an image must navigate, not open the lightbox:
+[Read more about the lighthouse ![inline](/site-assets/lighthouse.png)](../).
 
 ## Core / Site composition
 

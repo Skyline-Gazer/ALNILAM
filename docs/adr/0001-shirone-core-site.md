@@ -1,5 +1,7 @@
 # ADR 0001 — Shirone frontend on retained ALNILAM platform
 
+> **Historical P1 decision:** the Site v1, Swup and migration statements below record the 2026-10-26 proposal, not the current contract. See [Site onboarding](../SITE_ONBOARDING.md), the later [native MPA proposal](0002-native-mpa-and-pagefind-lifecycle.md), and [HANDOFF](../HANDOFF.md) for later decisions and observed state.
+
 **Status: ACCEPTED for bounded P1 by G0-F on 2026-10-26.** Related #36/#44/#46/#80; normative Plan/Spec was frozen in [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77). P1 authorization does not authorize a production release or P2.
 
 The current ALNILAM platform has independently owned Site v1 inputs, staging, provenance, upgrade/rollback and regression fixtures. Shirone has the selected frontend design and broad blog UI; its content sync materializes/prunes Core mounts and writes a timestamped lock. Replacing the whole repository or importing that controller directly would discard verified guarantees.

@@ -56,7 +56,27 @@ already-published provenance records.
 - A normal Core upgrade changes only Core's selected commit. Site's content, config, assets and Git ref remain unchanged.
 - Rollback selects the previous Core commit and rebuilds against the same Site commit.
 - When a Site content schema changes, require explicit migration PR and a test against the old Site fixture.
+- Local/CI acceptance is `scripts/upgrade-check.mjs --old <sha> [--site <path>]`: same Site digest across current and old Core builds; expected fail-closed rejections (retired TOML requirement, unsupported `schemaVersion`, unknown config fields) still pass the non-mutation check.
 
 ## Theme boundary and P1 preview
 Released v0.1.3 uses Editorial. The authorized P1 vertical slice routes the main blog pages through `themes/shirone`, while retaining the Editorial package as an unchanged rollback surface and keeping Core/Site v1 untouched. This is still a **package boundary**, not a theme marketplace or plugin SDK. Runtime theme switching, authenticated comments, server adapters, CLI install/update flows and rich Firefly/Mizuki functionality are not implemented. P1 does not authorize production release.
+
+## Comments boundary
+Comments are an optional Site module, not a Core platform service. The Site owns
+`comments.enabled`, the Giscus public identifiers and the identity policy
+(`mapping`, `sharing`, `load`, `lang`, `csp`). `packages/ui/src/Comments.svelte`
+renders the disclosure/gate/fallback UI and delegates to exactly one
+`GiscusProvider` implementation (`packages/ui/src/comments/giscus.ts`), which
+owns the script, iframe, theme/language updates, observers and teardown.
+`apps/web/src/lib/comments.mjs` derives the stable Discussion term from
+`commentId`, `translationKey` or the content id and emits the provider-scoped
+CSP; it never uses the deployment URL as the default identity.
+
+Disabled comments ship no island, component JavaScript or CSS, script, iframe,
+placeholder DOM or third-party request. The build-time comments entry imports
+the island only when the Site enables comments. Enabled comments either wait
+for an explicit click (`load: click`, default) or load near the viewport
+(`load: visible`). Twikoo and Waline are not
+installed: they require separately operated persistence/backends and are
+post-launch evaluations rather than a second widget on the same article.
 

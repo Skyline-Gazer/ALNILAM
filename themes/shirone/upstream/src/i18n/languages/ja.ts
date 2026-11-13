@@ -10,6 +10,11 @@ export const ja: Translation = {
 	[Key.archiveGroupCategory]: "カテゴリ別",
 	[Key.archiveGroupTag]: "タグ別",
 	[Key.search]: "検索",
+	[Key.searchNoResults]: "結果が見つかりません",
+	[Key.menu]: "メニュー",
+	[Key.displaySettings]: "表示設定",
+	[Key.mainNavigation]: "メインナビゲーション",
+	[Key.navigationDrawer]: "ナビゲーションドロワー",
 	[Key.clear]: "クリア",
 
 	[Key.friends]: "フレンド",
@@ -180,6 +185,21 @@ export const ja: Translation = {
 	[Key.commentsLoadFailed]: "コメントの読み込みに失敗しました",
 	[Key.commentsRequiresJavaScript]:
 		"コメントを表示するには JavaScript を有効にしてください",
+	[Key.consentTitle]: "プライバシーの選択",
+	[Key.consentDescription]:
+		"本サイトは任意のサードパーティサービスを読み込めます。許可する内容を選択してください。許可するまで何も要求されません。",
+	[Key.consentAnalytics]: "アナリティクス（Google Analytics）",
+	[Key.consentAds]: "広告（Google AdSense）",
+	[Key.consentAllow]: "許可",
+	[Key.consentDeny]: "拒否",
+	[Key.consentNote]:
+		"window.alnilamConsent.open() でいつでも変更できます。選択はこのブラウザーにのみ保存されます。",
+	[Key.dkrecoveryTitle]: "広告がこのサイトを支えています",
+	[Key.dkrecoveryDescription]:
+		"広告ブロッカーによって広告が読み込まれていないようです。広告はホスティングと新しい記事の運営費用です。",
+	[Key.dkrecoveryContinue]: "このまま読む",
+	[Key.dkrecoveryAllowHint]:
+		"広告ブロッカーの設定でこのサイトを許可できます。どちらの場合でもコンテンツはブロックされません。",
 
 	[Key.untitled]: "タイトルなし",
 	[Key.uncategorized]: "カテゴリなし",

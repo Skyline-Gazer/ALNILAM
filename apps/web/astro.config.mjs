@@ -188,6 +188,17 @@ export default defineConfig({
         },
       },
     }] : []),
+    // Site-declared ads.txt (Issue #90) is emitted verbatim at the output
+    // root when non-empty. The apex-domain requirement is documented in the
+    // issue; subpath deployments cannot satisfy it.
+    ...(config.ads.adsense.adsTxt ? [{
+      name: "alnilam-ads-txt",
+      hooks: {
+        "astro:build:done": ({dir}) => {
+          fs.writeFileSync(path.join(fileURLToPath(dir), "ads.txt"), config.ads.adsense.adsTxt);
+        },
+      },
+    }] : []),
   ],
   // compose.mjs relocates Vite's dependency cache into the managed, Core-
   // revision-keyed build cache; stale optimized deps once served broken
@@ -196,6 +207,42 @@ export default defineConfig({
     // Publish only resolved values to Shirone's shared config module. Its browser
     // consumers must never import ALNILAM's Node-only YAML/filesystem loader.
     plugins: [
+      {
+        name: 'alnilam-comments-entry',
+        resolveId: (id) => id === 'virtual:alnilam-comments' ? '\0alnilam-comments' : undefined,
+        load(id) {
+          if (id !== '\0alnilam-comments') return;
+          return config.comments.enabled
+            ? `export { default } from ${JSON.stringify(fileURLToPath(new URL('./src/components/Comments.astro', import.meta.url)))};`
+            : 'export default null;';
+        },
+      },
+      {
+        // Public, validated Core privacy subset for browser consumers. Only
+        // booleans and public IDs cross this boundary — never raw YAML.
+        name: 'alnilam-privacy-entry',
+        resolveId: (id) => id === 'virtual:alnilam-privacy' ? '\0alnilam-privacy' : undefined,
+        load(id) {
+          if (id !== '\0alnilam-privacy') return;
+          const privacy = {
+            consent: { mode: config.consent.mode },
+            analytics: {
+              googleAnalytics: {
+                enabled: config.analytics.googleAnalytics.enabled,
+                measurementId: config.analytics.googleAnalytics.measurementId,
+              },
+            },
+            ads: {
+              adsense: {
+                enabled: config.ads.adsense.enabled,
+                clientId: config.ads.adsense.clientId,
+                recovery: { mode: config.ads.adsense.recovery.mode, dismissDays: config.ads.adsense.recovery.dismissDays },
+              },
+            },
+          };
+          return `export const privacyConfig = ${JSON.stringify(privacy)};`;
+        },
+      },
       {
         name: 'alnilam-shirone-site-values',
         enforce: 'pre',

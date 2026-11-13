@@ -17,6 +17,7 @@
     "./Categories.astro": "./upstream/src/pages/categories.astro",
     "./Series.astro": "./upstream/src/pages/series.astro",
     "./SeriesDetail.astro": "./upstream/src/pages/series/[slug]/index.astro",
+    "./series-utils": "./upstream/src/utils/series-utils.ts",
     "./Tags.astro": "./upstream/src/pages/tags.astro"
   },
   "dependencies": {
@@ -25,7 +26,7 @@
     "@expressive-code/core": "0.44.2",
     "@expressive-code/plugin-collapsible-sections": "0.44.2",
     "@expressive-code/plugin-line-numbers": "0.44.2",
-    "@fancyapps/ui": "6.1.15",
+    "photoswipe": "5.4.4",
     "@iconify-json/fa7-brands": "1.2.4",
     "@iconify-json/fa7-solid": "1.2.5",
     "@iconify-json/material-symbols": "1.2.95",

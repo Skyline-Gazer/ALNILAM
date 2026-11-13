@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
+import zlib from "node:zlib";
 
 const argv = process.argv.slice(2);
 const option = (name, fallback) => {
@@ -25,6 +26,7 @@ const contentTypes = {
   ".md": "text/markdown; charset=utf-8",
   ".txt": "text/plain; charset=utf-8",
 };
+const compressible = new Set(Object.keys(contentTypes));
 
 const server = http.createServer((request, response) => {
   const url = new URL(request.url ?? "/", "http://localhost");
@@ -46,8 +48,23 @@ const server = http.createServer((request, response) => {
     return;
   }
   record.status = 200;
-  response.setHeader("Content-Type", contentTypes[path.extname(file)] ?? "application/octet-stream");
-  fs.createReadStream(file).pipe(response);
+  const ext = path.extname(file);
+  response.setHeader("Content-Type", contentTypes[ext] ?? "application/octet-stream");
+  const accept = String(request.headers["accept-encoding"] ?? "");
+  const stream = fs.createReadStream(file);
+  if (compressible.has(ext)) response.setHeader("Vary", "Accept-Encoding");
+  const gzip = accept.split(",").some((entry) => {
+    const [encoding, ...params] = entry.trim().split(";");
+    if (encoding.trim().toLowerCase() !== "gzip") return false;
+    const quality = params.map((param) => param.trim()).find((param) => /^q\s*=/i.test(param));
+    return quality === undefined || Number(quality.slice(quality.indexOf("=") + 1)) > 0;
+  });
+  if (compressible.has(ext) && gzip) {
+    response.setHeader("Content-Encoding", "gzip");
+    stream.pipe(zlib.createGzip()).pipe(response);
+    return;
+  }
+  stream.pipe(response);
 }).listen(port, "127.0.0.1", () => {
   console.log(`Serving ${root} at http://127.0.0.1:${server.address().port}${base}`);
 });

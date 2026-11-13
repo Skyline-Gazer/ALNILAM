@@ -20,7 +20,7 @@
 
   function decodeExcerpt(excerpt: string): string {
     const textarea = document.createElement("textarea");
-    textarea.innerHTML = excerpt.replaceAll("<mark>", "").replaceAll("</mark>", "");
+    textarea.innerHTML = excerpt.replaceAll("___END_PAGEFIND_WEIGHT___", "").replaceAll("<mark>", "").replaceAll("</mark>", "");
     return textarea.value;
   }
 
@@ -65,7 +65,7 @@
       <ul class="space-y-3">
         {#each results as result (result.url)}
           <li><a class="block rounded-xl p-3 hover:bg-[var(--primary-container)]" href={result.url}>
-            <span class="block font-semibold">{result.meta?.title ?? result.url}</span>
+            <span class="block font-semibold">{(result.meta?.title ?? result.url).replaceAll("___END_PAGEFIND_WEIGHT___", "").trim()}</span>
             <span class="block text-sm">{result.excerpt ?? ""}</span>
           </a></li>
         {/each}

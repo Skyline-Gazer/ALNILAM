@@ -51,6 +51,22 @@ async function searchAndClickFirstResult(
 }
 
 for (const [name, origin] of deployments) {
+	test(`search excerpts hide Pagefind internals ${name}`, async ({ page }) => {
+		await page.goto(`${origin}/`, { waitUntil: "networkidle" });
+		const input = await openSearch(page, "desktop");
+		await input.fill("ALNILAM");
+		const panelResults = page.locator("#search-panel").getByRole("link");
+		await expect(panelResults.first()).toBeVisible({ timeout: 15_000 });
+		await expect(page.locator("#search-panel")).not.toContainText("___END_PAGEFIND_WEIGHT___");
+		await expect(page.locator("#search-panel mark").first()).toBeVisible();
+
+		await page.goto(`${origin}/search/`, { waitUntil: "networkidle" });
+		await page.getByRole("searchbox", { name: "搜索文章" }).fill("ALNILAM");
+		const pageResults = page.locator("[data-search-results]");
+		await expect(pageResults.getByRole("link").first()).toBeVisible({ timeout: 15_000 });
+		await expect(pageResults).not.toContainText("___END_PAGEFIND_WEIGHT___");
+	});
+
 	test(`search language switcher preserves the search route ${name}`, async ({ page }) => {
 		const base = new URL(origin).pathname.replace(/\/$/, "");
 		await page.goto(`${origin}/search/`, { waitUntil: "networkidle" });

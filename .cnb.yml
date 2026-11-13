@@ -46,6 +46,77 @@ $:
               "$CNB_PULL_REQUEST_TARGET_SHA" "$CNB_PULL_REQUEST_MERGE_SHA"
             cat ".tmp/cnb-review-${CNB_BUILD_ID}/review.json"
 
+    - name: alnilam-docs-links-candidate
+      breakIfModify: true
+      retry: 0
+      runner:
+        tags: cnb:arch:amd64
+        cpus: 2
+      docker:
+        image: node:24-bookworm@sha256:e2007d1f4e652444f88d9bb196256d2d035269015e3d27a0d47c1d0cb5192a98
+      git:
+        submodules: false
+      stages:
+        - name: Check relative links and negative fixture
+          script: |
+            set -eu
+            command -v git >/dev/null
+            test -d .git -o -f .git
+            python3 -m unittest discover -s scripts/tests -p 'docs_test.py'
+
+    - name: alnilam-comments-browser-candidate
+      breakIfModify: true
+      retry: 0
+      runner:
+        tags: cnb:arch:amd64
+        cpus: 2
+      docker:
+        image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
+      git:
+        submodules: false
+      stages:
+        - name: Install pinned pnpm without CNB credentials
+          script: env -u CNB_TOKEN -u TWINE_PASSWORD npm install --global --ignore-scripts pnpm@10.19.0
+        - name: Install workspace and run comments fixture browser suite
+          timeout: 30m
+          script: |
+            set -eu
+            env -u CNB_TOKEN -u TWINE_PASSWORD pnpm install --frozen-lockfile
+            node scripts/ci/cnb-comments-browser.mjs
+        - name: Preserve comments browser receipt
+          script: |
+            set -eu
+            test -s artifacts/cnb-comments-browser/receipt.json
+            test -s artifacts/cnb-comments-browser/results.json
+            cat artifacts/cnb-comments-browser/receipt.json
+
+    - name: alnilam-a11y-browser-candidate
+      breakIfModify: true
+      retry: 0
+      runner:
+        tags: cnb:arch:amd64
+        cpus: 2
+      docker:
+        image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
+      git:
+        submodules: false
+      stages:
+        - name: Install pinned pnpm without CNB credentials
+          script: env -u CNB_TOKEN -u TWINE_PASSWORD npm install --global --ignore-scripts pnpm@10.19.0
+        - name: Install workspace and run axe a11y browser suite
+          timeout: 30m
+          script: |
+            set -eu
+            env -u CNB_TOKEN -u TWINE_PASSWORD pnpm install --frozen-lockfile
+            node scripts/ci/cnb-a11y-browser.mjs
+        - name: Preserve a11y browser receipt
+          script: |
+            set -eu
+            test -s artifacts/cnb-a11y-browser/receipt.json
+            test -s artifacts/cnb-a11y-browser/results.json
+            cat artifacts/cnb-a11y-browser/receipt.json
+
+
   pull_request.target:
     - name: alnilam-trusted-consumer
       breakIfModify: true

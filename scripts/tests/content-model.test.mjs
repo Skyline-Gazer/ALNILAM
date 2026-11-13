@@ -223,6 +223,9 @@ test("series catalog drives the series index and orders detail members by series
     ["getting-started-part-1", "getting-started-part-2", "getting-started-part-3"],
     "members follow seriesOrder, not pubDate",
   );
+  const japanese = read(out, "ja/posts/series-overview-ja/index.html");
+  assert.match(japanese, /data-series-card[^>]*data-series-slug="without-default-category"/,
+    "localized article renders its series card");
 });
 
 test("translationKey groups render hreflang alternates plus self-canonical on articles and in the sitemap", (t) => {

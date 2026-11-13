@@ -10,6 +10,11 @@ export const tr: Translation = {
 	[Key.archiveGroupCategory]: "Kategoriye göre",
 	[Key.archiveGroupTag]: "Etikete göre",
 	[Key.search]: "Ara",
+	[Key.searchNoResults]: "Sonuç bulunamadı",
+	[Key.menu]: "Menü",
+	[Key.displaySettings]: "Görünüm ayarları",
+	[Key.mainNavigation]: "Ana gezinme",
+	[Key.navigationDrawer]: "Gezinme paneli",
 	[Key.clear]: "Temizle",
 
 	[Key.friends]: "Arkadaşlar",
@@ -183,6 +188,21 @@ export const tr: Translation = {
 	[Key.commentsLoadFailed]: "Yorumlar yüklenemedi",
 	[Key.commentsRequiresJavaScript]:
 		"Yorumların gösterilmesi için JavaScript etkinleştirilmelidir",
+	[Key.consentTitle]: "Gizlilik tercihleri",
+	[Key.consentDescription]:
+		"Bu site isteğe bağlı üçüncü taraf hizmetleri yükleyebilir. Nelerin yükleneceğini seçin — izin vermeden önce hiçbir şey istenmez.",
+	[Key.consentAnalytics]: "Analitik (Google Analytics)",
+	[Key.consentAds]: "Reklamlar (Google AdSense)",
+	[Key.consentAllow]: "İzin ver",
+	[Key.consentDeny]: "Reddet",
+	[Key.consentNote]:
+		"Bunu window.alnilamConsent.open() ile istediğiniz zaman değiştirebilirsiniz; tercihler yalnızca bu tarayıcıda saklanır.",
+	[Key.dkrecoveryTitle]: "Reklamlar bu siteyi ücretsiz tutuyor",
+	[Key.dkrecoveryDescription]:
+		"Bir reklam engelleyici reklamların yüklenmesini engelliyor gibi görünüyor. Reklamlar barındırma ve yeni içerik giderlerini karşılar.",
+	[Key.dkrecoveryContinue]: "Okumaya devam et",
+	[Key.dkrecoveryAllowHint]:
+		"Reklam engelleyicinizin ayarlarında bu siteye izin verebilirsiniz — hiçbir durumda içerik kilitlenmez.",
 
 	[Key.untitled]: "Başlıksız",
 	[Key.uncategorized]: "Katagorisiz",
