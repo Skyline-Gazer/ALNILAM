@@ -59,7 +59,7 @@ jobs:
             for (const attr of attrs) {
               for (const match of html.matchAll(new RegExp(`${attr}="([^"]+)"`, "g"))) {
                 const url = match[1];
-                if (url.startsWith("/") && !url.startsWith("/ALNILAM/")) {
+                if (url.startsWith("/") && !url.startsWith("//") && !url.startsWith("/ALNILAM/")) {
                   failures.push(`${file}: ${attr}=${url}`);
                 }
                 if (url.startsWith("/ALNILAM//")) failures.push(`${file}: duplicate slash ${attr}=${url}`);
