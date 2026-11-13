@@ -215,19 +215,6 @@ const defaultSchemeStyle =
 			/>
 		))}
 
-		<script is:inline>
-			const scrollPositionKey = "__alnilamScrollY";
-			window.addEventListener("pagehide", () => {
-				const state = history.state && typeof history.state === "object" ? history.state : {};
-				history.replaceState({ ...state, [scrollPositionKey]: window.scrollY }, "");
-			});
-			window.addEventListener("pageshow", () => {
-				const scrollY = history.state?.[scrollPositionKey];
-				if (!Number.isFinite(scrollY)) return;
-				requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, scrollY)));
-			});
-		</script>
-
 		<script is:inline define:vars={{DEFAULT_THEME, LIGHT_MODE, DARK_MODE, AUTO_MODE, BANNER_HEIGHT_EXTEND, configHue, lightTheme, darkTheme, defaultWallpaperMode, defaultTexturePreset, defaultTextureOpacity, textureEnabled}}>
 			const d = document.documentElement, s = localStorage, t = s.getItem('theme') || DEFAULT_THEME;
 			const dark = t === DARK_MODE || (t === AUTO_MODE && matchMedia('(prefers-color-scheme: dark)').matches);
@@ -332,6 +319,17 @@ import { packMasonry, setupMasonry } from "../utils/masonry";
 import { bindMarkdownRuntime } from "../utils/markdown-runtime";
 import { resolvePageKey } from "../utils/nav-utils";
 import { url } from "../utils/url-utils";
+
+const scrollPositionKey = "__alnilamScrollY";
+window.addEventListener("pagehide", () => {
+	const state = history.state && typeof history.state === "object" ? history.state : {};
+	history.replaceState({ ...state, [scrollPositionKey]: window.scrollY }, "");
+});
+window.addEventListener("pageshow", () => {
+	const scrollY = history.state?.[scrollPositionKey];
+	if (!Number.isFinite(scrollY)) return;
+	requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, scrollY)));
+});
 
 bindMarkdownRuntime();
 
