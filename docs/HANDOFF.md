@@ -1,54 +1,66 @@
 # ALNILAM — Current Agent Handoff
 
-## Live-state update — 2026-11-13 · Demo deployment verified
+## Live-state update — 2026-11-13 · GitHub development cutover
 
-This section records the current CNB `dev` revision and the verified public Demo
-runtime. Earlier UX, product and issue evidence remains below.
+This section records the development-provider cutover and the production Demo
+deployed from its merged GitHub `dev` commit. Historical product and issue
+evidence remains below.
 
 ### Source and CI
 
-- The Demo was built from CNB `dev` `1cd67c47b7cab200f8bc4d25f7c359ef26dfe0f2`
-  (tree `5ab0827df5c41ed5a1bb099e7f5e27578cc23fe9`). The `dev` push pipeline
-  succeeded in 105s. PR #122's exact-merge trusted
-  consumer succeeded in 29m49s: 201 browser tests passed, 1 intentional skip;
-  root and `/ALNILAM/` were covered.
-- GitHub `dev` remains `39ca829f97a60247f4c6a14e619dd847a5e895eb`; it was not
-  synchronized. GitHub PR #132 remains open and unmerged. CNB `main`, tags and
-  the ADS pin were not changed.
-- CNB PR #124 remains open. Its latest target trusted run failed after 202 tests
-  passed and 1 intentional skip: `tests/browser/shirone.spec.ts` hit the
-  5-second timeout while capturing the root desktop screenshot. The run did
-  not report a product assertion failure. GitHub Actions run 43403806749 belongs
-  to the open mirror-sync PR #132; it is not PR #124's trusted consumer.
+- CNB `dev` is frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`
+  (tree `002a063c24895b40954c0a66f19f0d3d3e7832c0`). Its final dev-push
+  pipeline succeeded in 65s. CNB `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`
+  (tree `ba61548aa2c828647e61a8a7c1b541abecb449a8`). Both CNB refs are frozen.
+- GitHub PR #132 merged by a normal merge commit `0bdab56f22935fdfea7d8b692de082caaa0553d8`
+  (tree `13d16cb0509babe28f3f92d8b8f3bd3c46355716`), retaining the former
+  GitHub `dev` tip `39ca829f97a60247f4c6a14e619dd847a5e895eb` and frozen CNB
+  `dev` as ancestors. The source head was `4b01771bf9f7fbfe14544a8204b084a445e1299d`.
+  Relative to the CNB tree, the merged tree adds `.greptile/config.json` and
+  changes only the provider/cutover documentation; application source is the
+  same. The PR's `verify` and `compatibility` checks passed. Post-merge GitHub
+  `verify` run [43421469150](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43421469150)
+  was still running its root and `/ALNILAM/` browser acceptance at handoff time.
+- CNB and GitHub `main` remain the same SHA and tree. Their `.ads` gitlink is
+  `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac`; `dev` retains the approved
+  `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` pin. No `main`, tag, or ADS pin
+  was changed by the cutover.
+- Each provider now has only `dev` and `main` branches and no open PRs. The
+  merged migration source branch was deleted after ancestry verification.
+- `.greptile/config.json` selects Base. One `@greptileai review` request was
+  posted on #132; no Greptile review or comment was returned. Do not claim an
+  AI review or infer that the integration is enabled from the config alone.
 
-### Artifact and deployment
+### Production Demo
 
-- Project `xxxx` deployment `dpl_8Qqz1ySC2EGtt7crjkxvv3pDdM7p` is READY on the
-  production target. The prebuilt output came from the source SHA above;
-  `vercel build --prod` generated 75 pages, `artifact-check` verified 74 pages,
-  and the artifact budgets passed.
-- `dist/site/alnilam-provenance.json` records Core revision
-  `1cd67c47b7cab200f8bc4d25f7c359ef26dfe0f2` and Site digest
+- Existing Vercel project `xxxx` automatically deployed and promoted GitHub
+  `dev` commit `0bdab56f22935fdfea7d8b692de082caaa0553d8` as deployment
+  `dpl_G6vb14SWV7xCzVWf4QPcDNwaQfVJ` (`READY` / `PROMOTED`). The stable alias
+  [https://xxxx-beryl-theta.vercel.app](https://xxxx-beryl-theta.vercel.app)
+  and both project aliases now resolve to it; no second deployment system or
+  manual alias rewrite was used.
+- `/alnilam-provenance.json` reports schema 1, Core revision
+  `0bdab56f22935fdfea7d8b692de082caaa0553d8`, and Site digest
   `6854784b7e62aa9d3337045678576396fc15062ecf5e1aa791782e17bf4ee9e6`.
-  The sorted `.vercel/output` file manifest SHA-256 is
-  `ab253c866e8b997c6be46af3120d33cba57912948035ace3879ba1f80a0bec6c`.
-- Public `https://xxxx-beryl-theta.vercel.app` now resolves to that deployment;
-  its `/alnilam-provenance.json` response matches the build. The previous
-  deployment was `dpl_GLi7EKtnRPatd9M87bntojBsKTJB`. Only the existing stable
-  alias was assigned with `vercel alias set`; no project-wide promotion ran.
+  `/`, `/posts/`, `/series/`, `/rss.xml`, and `/sitemap-index.xml` returned 200.
+- At 390×844 with reduced motion enabled, the browser opened and dismissed the
+  navigation drawer with Escape, restored focus to its trigger, switched to
+  dark theme, and returned four Pagefind results for `ALNILAM`. The PR preview
+  was checked through Vercel's same-project short-lived OIDC flow; no Deployment
+  Protection setting was changed.
+- Previous production deployment `dpl_8Qqz1ySC2EGtt7crjkxvv3pDdM7p` remains
+  `READY` / `STAGED`, preserving Vercel's rollback path.
 
-### Stable URL verification
+### #35 and continuation
 
-- A public browser session loaded the home page and `/posts/`; opened the series
-  index and detail; followed both article directions and confirmed each article
-  carries the two-item series context.
-- Pagefind search for `ALNILAM` returned four results, including both series
-  articles. Selecting the dark theme set `data-theme="github-dark"` and
-  `localStorage.theme="dark"`. The browser error log was empty.
-- No product route or interaction blocker was reproduced on the stable URL.
-  #35 remains Open / In Progress for Owner product acceptance and visual
-  sign-off; the finite engineering probe set remains closed.
-
+- #35 remains Open for Owner product acceptance and visual sign-off. Its finite
+  engineering probes are closed; the current PASS, SUPERSEDED and OWNER_PENDING
+  record remains in [the 2026-11-13 Issue update](https://github.com/Skyline-Gazer/ALNILAM/issues/35#issuecomment-6845988169).
+- Core/Site, PhotoSwipe and P6 evidence remain referenced from their existing
+  records; they were not re-audited. Do not start another broad #35 UX loop.
+- Select the next authorized product item from live Project #17 and the current
+  roadmap/spec after this cutover. Do not infer completion from this handoff;
+  #67–#69, #83, #88 and #89 remain outside this round's authorization.
 
 ## Live-state update — 2026-11-13 · UX closeout and series slice
 
