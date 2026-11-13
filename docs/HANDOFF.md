@@ -1,36 +1,60 @@
 # ALNILAM — Current Agent Handoff
 
-## Live-state update — 2026-11-12 · release readiness
+## Live-state update — 2026-11-13 · UX closeout and series slice
 
-The sections below this update are historical snapshots. For the current tip,
-query CNB `dev` and the PRs directly; do not infer it from a prior handoff SHA.
+Everything below this update is historical context. This section records the
+current CNB `dev` tip, the finite #35 engineering closeout, and the product slice
+delivered after the UX probes.
 
-- CNB `dev` reached `9ab33132af0403526188f43d965e9435edcbd19a` with
-  [PR #120](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/120), which removed
-  Pagefind's internal marker from search results. Its trusted consumer passed
-  (run: https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/120);
-  the independent Site push check passed on that SHA.
-- CMS field validation is tracked by [PR #119](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/119).
-  Archive and taxonomy panel language is tracked by
-  [PR #121](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/121). Read their live
-  merge and CI states before treating either as delivered.
-- The existing Vercel project is `xxxx` (`prj_2eRtFJHWRJPlM90z2CPT5kJA1XNg`).
-  Its GitHub `dev` production branch and production alias were not changed.
-  GitHub and CNB `dev` have diverged; do not force a mirror update.
-- The non-production Preview
-  `https://xxxx-nf6anvlx1-martyjstogner-2766s-projects.vercel.app` was built
-  from clean CNB `9ab33132af0403526188f43d965e9435edcbd19a`, verified against
-  `alnilam-provenance.json`, and requires Vercel Authentication. It is an
-  intermediate deployment: check the live CNB tip and deploy it again after
-  later accepted changes. The Site digest was `23d159e4c5c77d4218994b5350fcc5ebb9d682fb45f97457a06292699d66ee5c`.
-- Local evidence: `pnpm test` 266/266 on the CMS candidate; the baseline browser
-  suite 229 passed and one intentional skip; search repair regression 2/2 and
-  archive/taxonomy regression 16/16 across root and `/ALNILAM/`. On search
-  candidate `9ab33132af0403526188f43d965e9435edcbd19a`, mobile and desktop
-  Lighthouse baselines and expected CLS-negative controls passed.
-- Field CrUX, manual screen-reader acceptance, Owner visual sign-off and
-  production release remain unverified or Owner decisions. P6 and its child
-  Issues remain open until their actual acceptance conditions are met.
+### CNB delivery (verified 2026-11-13)
+
+- CNB `dev`: `38b345c64e110c04a29e809d8516597c48e0bc66`, merged from PR #122
+  (`fix(series): render article series context`). Before merge, `dev` was
+  `3172f989378444da9c1d33e38870de9b0d4cc731`; PR source was
+  `163c01a140c3593bb42da3a8e0357beecc6bbc9e`. The merge was non-force; source
+  ancestry and the resulting live `dev` ref were read back.
+- The delivered slice advances the series clause in `BLOG-02` of
+  `docs/next/01-SPEC.md`: default and localized article routes receive the
+  shared Shirone series context, and the demo exposes the two-article series and
+  an MDX example. Root and `/ALNILAM/` browser coverage passed.
+- Post-merge CNB push on `38b345c64e110c04a29e809d8516597c48e0bc66` succeeded:
+  pipeline `alnilam-independent-site`; `Validate pinned independent Site`
+  passed (98.2s total build).
+- GitHub `dev` still lags CNB `dev`; do not mirror or push. Vercel production,
+  `main`, tags and ADS pin were not changed.
+
+### Verification and review status
+
+- PR #122 trusted consumer passed in 29m49s on the exact merge candidate:
+  **201 browser tests passed, 1 skipped**; both root and `/ALNILAM/` were
+  exercised. Mobile and desktop Lighthouse assertions passed for six URLs
+  (home, post list and article, at both bases), three runs per URL and viewport.
+  The intentional CLS expected-red control, Node source coverage and evidence
+  receipt stages passed.
+- Docs-links, comments-browser and accessibility-browser candidate checks
+  passed. The optional AI review advisory errored after 13.3s; no platform review
+  was recorded, and no review approval is claimed. The advisory is not a required
+  development approval under the current Owner workflow.
+- The pre-fix trusted run reproduced Back/Forward restoring the nested article
+  position 32px away from recorded `scrollY` (contract: ≤2px; 198 passed,
+  1 skipped, 1 failed). PR #122's `fix(nav): share history restoration runtime`
+  resolved it in the passing exact-merge run; no gate was relaxed.
+
+### #35 engineering exit
+
+- #35 remains Open / In Progress for Owner product acceptance and visual
+  sign-off. Its finite engineering probes are complete; the current PASS,
+  SUPERSEDED and OWNER_PENDING classifications plus the resolved scroll result
+  are recorded in [the 2026-11-13 Issue update](https://github.com/Skyline-Gazer/ALNILAM/issues/35#issuecomment-6845988169).
+- Core/Site, PhotoSwipe and P6 evidence remain referenced from their existing
+  records; they were not re-audited. Do not start another broad #35 UX loop.
+
+### Continuation
+
+- Select the next product item from the live Project #17 and current roadmap/spec
+  state. Do not infer completion from this handoff; #67–#69, #83, #88 and #89
+  remain outside this round's authorization.
+
 
 ## Live-state update — 2026-11-12 · offline Pages CMS PoC merged (current tip)
 
