@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80" viewBox="0 0 120 80" role="img" aria-label="Pages CMS PoC mark">
+  <rect x="1" y="1" width="118" height="78" rx="8" fill="none" stroke="currentColor" stroke-width="2"/>
+  <circle cx="36" cy="40" r="12" fill="currentColor"/>
+  <path d="M64 28h40M64 40h40M64 52h26" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+</svg>

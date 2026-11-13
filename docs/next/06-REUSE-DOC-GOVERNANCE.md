@@ -47,18 +47,24 @@ For every nontrivial change that removes or rewrites existing ALNILAM code, the 
 
 ## D. Document governance — single source of truth, owners and timing
 
+The repository Owner reviews product and normative decisions; the maintainer of a change updates the affected documents in that same PR. These are responsibility roles, not a claim that named document owners have been assigned. Named owners and their review acceptance remain open under [#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81). Each document is versioned with the Git revision containing it; historical receipts retain the revision and date they describe.
+
 | Artifact | Authority / upkeep | Required update trigger |
 | --- | --- | --- |
-| `docs/next/00-PLAN.md` | Owner-approved product scope, feature choice, risks; unapproved copies always labelled DRAFT | Product direction/scope changes; no implementation status claims |
-| `docs/next/01-SPEC.md` and normative annexes | Testable requirements, routes, data contract, security/privacy/performance, DoR/DoD | Before any task enters Ready; change requires recorded review and affected Issue links |
-| ADR `docs/adr/NNNN-*.md` (planned) | One decision, considered options, decision/justification, consequence, reversal trigger, source refs | Framework/API/source selection, Site Schema compatibility, design or visibility policy changes |
-| `AGENTS.md` and pinned ADS | Binding agent governance, ADS release and CodeGraph/full RTK consumer dev-only rules | ADS pin update, tooling changes, Git governance revision |
-| `README.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md` | **Currently shipped** capabilities vs proposed vNext; architecture boundaries with actual files | PR that changes product behavior or build interfaces |
-| `docs/SITE_ONBOARDING.md` + Site Schema docs | How independently owned Site builds/validates/migrates/rolls back with exact tested CLI | Schema/CLI/config or content layout changes |
-| `docs/ROADMAP.md`, `docs/PROJECT_TRACKING.md` | Actual Milestone/Phase/Task status; Project links/IDs, blocked and verification evidence | Issue/Phase state changes, release planning, reconciliation |
-| `docs/HANDOFF.md`, maintenance/release docs | Current real HEAD/PR/tests, next steps, owner inputs, not aspirational 17/17 PASS | Every handoff, migration Phase Gate, CI/release strategy update |
-| `CHANGELOG.md`, `NOTICE`, `THIRD_PARTY_NOTICES.md` | Released deltas and per-file upstream legal attribution | Source code/assets copied, license changes, release candidate |
-| CI evidence index (planned) | Link actual PR, SHA, GitHub Actions run IDs, browser screenshots, root/base/site fixture results | Every Task/Phase gate; no screenshot/success claims without artifact |
+| [Plan](00-PLAN.md) | Owner-approved product scope, feature choice and risks; plans are not proof of implementation | Product direction or scope changes |
+| [Spec](01-SPEC.md) and linked normative annexes | Testable requirements and behavior; change requires recorded Owner review and affected Issue links | Before affected work enters Ready |
+| [Architecture decisions](../adr/) | Decision, alternatives, consequences and references; check each ADR's own status | Framework/API/source selection or compatibility decisions |
+| [AGENTS](../../AGENTS.md) | Agent governance and ADS consumer rules | Governance or tooling changes |
+| [README](../../README.md), [PRODUCT](../PRODUCT.md), [ARCHITECTURE](../ARCHITECTURE.md) | User entry point, product behavior and architecture boundaries, respectively; distinguish shipped behavior from targets | Product behavior or build interfaces change |
+| [Site onboarding](../SITE_ONBOARDING.md), [Site contract](../../scripts/site-contract.mjs), [composition CLI](../../scripts/compose.mjs) | Onboarding and executable Site/config interfaces; tests and source establish actual behavior | Schema, CLI, configuration or content layout changes |
+| [ROADMAP](../ROADMAP.md), [PROJECT_TRACKING](../PROJECT_TRACKING.md) | Planning and tracker context; live Issues and Project readback establish current status | Scope or status changes |
+| [HANDOFF](../HANDOFF.md), [maintainer release procedure](../MAINTAINERS.md#release-procedure-vxyz) | Handoff context and release instructions; authorize publication separately | Handoff, release or operational procedure changes |
+| [CHANGELOG](../../CHANGELOG.md), [NOTICE](../../NOTICE), [THIRD_PARTY_NOTICES](../../THIRD_PARTY_NOTICES.md) | Released changes and upstream attribution | Release, copied sources/assets or license changes |
+| [Traceability](03-TRACEABILITY.md) and task Issues | Requirement mapping and task-specific proof; link actual PR, revision and CI/browser artifacts rather than inferring a pass | Every task or Phase gate |
+
+The existing [Markdown link test](../../scripts/tests/docs_test.py) checks tracked Markdown relative file paths and includes a missing-link negative fixture. GitHub is the development authority: its [Actions CI workflow](../../.github/workflows/ci.yml) runs the check on pull requests and the `verify` status is required by the active ruleset. The CNB candidate in `.cnb.yml` is retained with the frozen CNB workflow, not as a current development gate. Candidate-controlled tests are not a trusted independent gate, and a configured pipeline is not proof until the observed CI status is recorded. Neither check validates anchors, external links, Markdown formatting, examples or feature claims. Independent Site onboarding requires reviewed evidence from a real separately owned Site; demo fixtures alone do not close that acceptance.
+
+ADR identifiers are not yet unique: [native MPA/Pagefind](../adr/0002-native-mpa-and-pagefind-lifecycle.md) and the [YAML requirement delta](../adr/0002-vnext-yaml-requirement-delta.md) both use `0002`. Link the full filename until a reviewed decision resolves the collision without losing history. The ADR inventory and requirement-to-Issue-to-run evidence remain incomplete; this table is not an audit sign-off.
 
 ### Governance rules
 

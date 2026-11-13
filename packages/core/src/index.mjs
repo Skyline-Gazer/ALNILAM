@@ -19,13 +19,48 @@ const ROOT_KEYS = new Set([
   "comments",
   "bangumi",
   "llms",
+  "consent",
+  "analytics",
+  "ads",
 ]);
 const SITE_KEYS = new Set(["title", "description", "url", "locale"]);
 const THEME_KEYS = new Set(["appearance"]);
 const ROUTING_KEYS = new Set(["prefixDefaultLocale"]);
-const COMMENT_KEYS = new Set(["enabled", "provider", "repo", "repoId", "category", "categoryId", "mapping"]);
+const COMMENT_KEYS = new Set([
+  "enabled",
+  "provider",
+  "repo",
+  "repoId",
+  "category",
+  "categoryId",
+  "mapping",
+  "sharing",
+  "load",
+  "lang",
+  "csp",
+]);
+const COMMENT_PROVIDERS = new Set(["giscus"]);
+const COMMENT_MAPPINGS = new Set(["specific", "pathname", "number"]);
+const COMMENT_SHARING = new Set(["translation", "locale"]);
+const COMMENT_LOADS = new Set(["click", "visible"]);
+// Public GitHub owner/name only. Tokens, webhook secrets and private API keys
+// are never part of this contract and fail closed as unknown fields.
+const COMMENT_REPO = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})\/[A-Za-z0-9._-]{1,100}$/;
 const BANGUMI_KEYS = new Set(["enabled", "userId", "subjectType", "limit"]);
 const LLMS_KEYS = new Set(["enabled", "full"]);
+const CONSENT_KEYS = new Set(["mode"]);
+const CONSENT_MODES = new Set(["off", "basic"]);
+const ANALYTICS_KEYS = new Set(["googleAnalytics"]);
+const GA_KEYS = new Set(["enabled", "measurementId"]);
+// Public measurement IDs only; no API secrets belong in this contract.
+const GA_MEASUREMENT_ID = /^G-[A-Z0-9]+$/;
+const ADS_KEYS = new Set(["adsense"]);
+const ADSENSE_KEYS = new Set(["enabled", "clientId", "mode", "adsTxt", "recovery"]);
+const ADSENSE_MODES = new Set(["auto"]);
+const RECOVERY_KEYS = new Set(["mode", "googleTag", "dismissDays"]);
+const RECOVERY_MODES = new Set(["off", "google", "custom"]);
+// Public client IDs only; ad-manager secrets never belong in Site config.
+const ADSENSE_CLIENT_ID = /^ca-pub-\d+$/;
 const BCP47 = /^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$/;
 const DEFAULT_SITE_LOCALE = "zh-CN";
 const isBcp47 = (value) => typeof value === "string" && BCP47.test(value);
@@ -111,6 +146,172 @@ function normalizeTaxonomy(entries, kind) {
   }));
 }
 
+function normalizeComments(value) {
+  assertPlainObject(value ?? {}, "comments");
+  rejectUnknownKeys(value ?? {}, COMMENT_KEYS, "comments");
+  const comments = value ?? {};
+  if (comments.enabled !== undefined && typeof comments.enabled !== "boolean") {
+    throw new Error("ALNILAM: comments.enabled must be a boolean");
+  }
+  const enabled = comments.enabled === true;
+  const provider = comments.provider ?? "giscus";
+  if (!COMMENT_PROVIDERS.has(provider)) {
+    throw new Error('ALNILAM: comments.provider must be "giscus" (the only supported provider)');
+  }
+  const mapping = comments.mapping ?? "specific";
+  if (!COMMENT_MAPPINGS.has(mapping)) {
+    throw new Error("ALNILAM: comments.mapping must be specific, pathname or number");
+  }
+  const sharing = comments.sharing ?? "translation";
+  if (!COMMENT_SHARING.has(sharing)) {
+    throw new Error("ALNILAM: comments.sharing must be translation or locale");
+  }
+  const load = comments.load ?? "click";
+  if (!COMMENT_LOADS.has(load)) {
+    throw new Error("ALNILAM: comments.load must be click or visible");
+  }
+  if (comments.lang !== undefined && comments.lang !== "auto" && !isBcp47(comments.lang)) {
+    throw new Error('ALNILAM: comments.lang must be "auto" or a BCP-47 tag');
+  }
+  if (comments.csp !== undefined && typeof comments.csp !== "boolean") {
+    throw new Error("ALNILAM: comments.csp must be a boolean");
+  }
+  const fields = {};
+  for (const field of ["repo", "repoId", "category", "categoryId"]) {
+    const raw = comments[field];
+    if (raw !== undefined && typeof raw !== "string") {
+      throw new Error(`ALNILAM: comments.${field} must be a string`);
+    }
+    fields[field] = typeof raw === "string" ? raw.trim() : "";
+  }
+  if (fields.repo && !COMMENT_REPO.test(fields.repo)) {
+    throw new Error('ALNILAM: comments.repo must be a public GitHub "owner/repo" identifier');
+  }
+  if (enabled) {
+    if (!fields.repo) {
+      throw new Error('ALNILAM: comments.repo is required when comments.enabled = true (format "owner/repo")');
+    }
+    for (const field of ["repoId", "category", "categoryId"]) {
+      if (!fields[field]) {
+        throw new Error(`ALNILAM: comments.${field} is required when comments.enabled = true`);
+      }
+    }
+  }
+  if (enabled && comments.mapping == null) {
+    throw new Error('ALNILAM: comments.mapping is required when comments.enabled = true; set "pathname" to preserve existing threads or "specific" for new threads');
+  }
+  return Object.freeze({
+    enabled,
+    provider: "giscus",
+    repo: fields.repo,
+    repoId: fields.repoId,
+    category: fields.category,
+    categoryId: fields.categoryId,
+    mapping,
+    sharing,
+    load,
+    lang: comments.lang ?? "auto",
+    csp: comments.csp !== false,
+  });
+}
+
+function normalizeConsent(value) {
+  assertPlainObject(value ?? {}, "consent");
+  rejectUnknownKeys(value ?? {}, CONSENT_KEYS, "consent");
+  const mode = value?.mode ?? "off";
+  if (!CONSENT_MODES.has(mode)) {
+    throw new Error('ALNILAM: consent.mode must be "off" or "basic"');
+  }
+  return Object.freeze({ mode });
+}
+
+function normalizeAnalytics(value) {
+  assertPlainObject(value ?? {}, "analytics");
+  rejectUnknownKeys(value ?? {}, ANALYTICS_KEYS, "analytics");
+  const ga = value?.googleAnalytics ?? {};
+  assertPlainObject(ga, "analytics.googleAnalytics");
+  rejectUnknownKeys(ga, GA_KEYS, "analytics.googleAnalytics");
+  if (ga.enabled !== undefined && typeof ga.enabled !== "boolean") {
+    throw new Error("ALNILAM: analytics.googleAnalytics.enabled must be a boolean");
+  }
+  const measurementId = typeof ga.measurementId === "string" ? ga.measurementId.trim() : "";
+  if (measurementId && !GA_MEASUREMENT_ID.test(measurementId)) {
+    throw new Error('ALNILAM: analytics.googleAnalytics.measurementId must match /^G-[A-Z0-9]+$/');
+  }
+  const enabled = ga.enabled === true;
+  if (enabled && !measurementId) {
+    throw new Error("ALNILAM: analytics.googleAnalytics.measurementId is required when enabled = true");
+  }
+  return Object.freeze({
+    googleAnalytics: Object.freeze({ enabled, measurementId }),
+  });
+}
+
+function normalizeAds(value) {
+  assertPlainObject(value ?? {}, "ads");
+  rejectUnknownKeys(value ?? {}, ADS_KEYS, "ads");
+  const adsense = value?.adsense ?? {};
+  assertPlainObject(adsense, "ads.adsense");
+  rejectUnknownKeys(adsense, ADSENSE_KEYS, "ads.adsense");
+  if (adsense.enabled !== undefined && typeof adsense.enabled !== "boolean") {
+    throw new Error("ALNILAM: ads.adsense.enabled must be a boolean");
+  }
+  const clientId = typeof adsense.clientId === "string" ? adsense.clientId.trim() : "";
+  if (clientId && !ADSENSE_CLIENT_ID.test(clientId)) {
+    throw new Error('ALNILAM: ads.adsense.clientId must match /^ca-pub-\\d+$/');
+  }
+  const mode = adsense.mode ?? "auto";
+  if (!ADSENSE_MODES.has(mode)) {
+    throw new Error('ALNILAM: ads.adsense.mode must be "auto" (manual slots are not supported in this slice)');
+  }
+  if (adsense.adsTxt !== undefined && typeof adsense.adsTxt !== "string") {
+    throw new Error("ALNILAM: ads.adsense.adsTxt must be a string");
+  }
+  const enabled = adsense.enabled === true;
+  if (enabled && !clientId) {
+    throw new Error('ALNILAM: ads.adsense.clientId is required when enabled = true (format "ca-pub-1234567890")');
+  }
+  const recovery = adsense.recovery ?? {};
+  assertPlainObject(recovery, "ads.adsense.recovery");
+  rejectUnknownKeys(recovery, RECOVERY_KEYS, "ads.adsense.recovery");
+  const recoveryMode = recovery.mode ?? "off";
+  if (!RECOVERY_MODES.has(recoveryMode)) {
+    throw new Error('ALNILAM: ads.adsense.recovery.mode must be "off", "google" or "custom"');
+  }
+  const googleTag = typeof recovery.googleTag === "string" ? recovery.googleTag.trim() : "";
+  if (recoveryMode === "google" && !googleTag) {
+    throw new Error("ALNILAM: ads.adsense.recovery.googleTag is required when recovery.mode = \"google\"");
+  }
+  if (googleTag && recoveryMode !== "google") {
+    throw new Error('ALNILAM: ads.adsense.recovery.googleTag is only valid when recovery.mode = "google"');
+  }
+  if (googleTag) {
+    let parsed;
+    try {
+      parsed = new URL(googleTag);
+    } catch {
+      parsed = null;
+    }
+    if (!parsed || parsed.protocol !== "https:" ||
+        !(parsed.hostname === "google.com" || parsed.hostname.endsWith(".google.com") || parsed.hostname.endsWith(".googlesyndication.com"))) {
+      throw new Error("ALNILAM: ads.adsense.recovery.googleTag must be the official https script URL from Google (fundingchoicesmessages.google.com or googlesyndication.com)");
+    }
+  }
+  const dismissDays = recovery.dismissDays ?? 7;
+  if (!Number.isInteger(dismissDays) || dismissDays < 1 || dismissDays > 365) {
+    throw new Error("ALNILAM: ads.adsense.recovery.dismissDays must be an integer between 1 and 365");
+  }
+  return Object.freeze({
+    adsense: Object.freeze({
+      enabled,
+      clientId,
+      mode,
+      adsTxt: adsense.adsTxt ?? "",
+      recovery: Object.freeze({ mode: recoveryMode, googleTag, dismissDays }),
+    }),
+  });
+}
+
 export function normalizeSiteConfig(input) {
   assertPlainObject(input, "config");
   const schemaVersion = input.schemaVersion;
@@ -169,24 +370,6 @@ export function normalizeSiteConfig(input) {
 
   const categories = normalizeTaxonomy(input.categories, "categories");
   const tags = normalizeTaxonomy(input.tags, "tags");
-
-  assertPlainObject(input.comments ?? {}, "comments");
-  rejectUnknownKeys(input.comments ?? {}, COMMENT_KEYS, "comments");
-  const comments = input.comments ?? {};
-  if (comments.enabled === true) {
-    if (comments.provider !== undefined && comments.provider !== "giscus") {
-      throw new Error('ALNILAM: comments.provider must be "giscus"');
-    }
-    for (const field of ["repo", "repoId", "category", "categoryId"]) {
-      if (typeof comments[field] !== "string" || !comments[field].trim()) {
-        throw new Error(`ALNILAM: comments.${field} is required when comments.enabled = true`);
-      }
-    }
-  }
-  if (comments.mapping !== undefined && !["pathname", "specific", "number"].includes(comments.mapping)) {
-    throw new Error("ALNILAM: comments.mapping must be pathname, specific or number");
-  }
-
   assertPlainObject(input.bangumi ?? {}, "bangumi");
   rejectUnknownKeys(input.bangumi ?? {}, BANGUMI_KEYS, "bangumi");
   const bangumi = input.bangumi ?? {};
@@ -226,15 +409,10 @@ export function normalizeSiteConfig(input) {
     locales: Object.freeze([...locales]),
     categories,
     tags,
-    comments: Object.freeze({
-      enabled: comments.enabled === true,
-      provider: "giscus",
-      repo: typeof comments.repo === "string" ? comments.repo : "",
-      repoId: typeof comments.repoId === "string" ? comments.repoId : "",
-      category: typeof comments.category === "string" ? comments.category : "",
-      categoryId: typeof comments.categoryId === "string" ? comments.categoryId : "",
-      mapping: comments.mapping === "specific" || comments.mapping === "number" ? comments.mapping : "pathname",
-    }),
+    comments: normalizeComments(input.comments),
+    consent: normalizeConsent(input.consent),
+    analytics: normalizeAnalytics(input.analytics),
+    ads: normalizeAds(input.ads),
     llms: Object.freeze({ enabled: input.llms?.enabled === true, full: input.llms?.full === true }),
     bangumi: Object.freeze({
       enabled: bangumi.enabled === true,

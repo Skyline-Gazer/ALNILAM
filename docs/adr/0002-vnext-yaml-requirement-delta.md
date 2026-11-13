@@ -1,5 +1,7 @@
 # ADR 0002 — Owner requirement delta: YAML-only vNext Site
 
+> **Historical decision snapshot:** the 2026-10-27 pending-implementation and GitHub-primary statements below describe the original decision, not current state. The current Site contract is YAML-only schema v2; TOML-only Sites fail closed without automatic migration. See [Site onboarding](../SITE_ONBOARDING.md), [Site contract](../../scripts/site-contract.mjs), and [HANDOFF](../HANDOFF.md) for implementation and current development authority.
+
 **Status: Owner-requested requirement, 2026-10-27; implementation pending a separate reviewed Spec amendment.** Refs #94, #37, #49, #50. This records the current assignment's explicit change against the frozen G0-F Plan/Spec; it does not rewrite the v0.1.3 release or authorize a Core rewrite inside the CNB Pilot.
 
 New vNext Site contracts and samples target YAML only. The current Site v1 TOML fixtures remain historical regression inputs. Their successful composition does not promise future TOML support. There is no TOML-to-YAML migration engine in this change.

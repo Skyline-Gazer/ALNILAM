@@ -12,7 +12,7 @@ import ArchiveList, {
 import Card from "@components/atoms/display/Card.svelte";
 import SegmentedButton from "@components/atoms/selection/SegmentedButton.svelte";
 import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
+import { i18n as siteI18n, i18nForLocale } from "@i18n/translation";
 import Icon from "@iconify/svelte";
 import { formatCalendarDate } from "@utils/content-date";
 import { getPostUrlBySlug, url } from "@utils/url-utils";
@@ -37,6 +37,7 @@ interface Breadcrumb {
 
 interface Props {
 	sortedPosts?: Post[];
+	locale?: string;
 	/** SSR 初始筛选：分类稳定键（slug/id）。仅预置，URL 显式参数仍可覆盖。 */
 	initialCategory?: string;
 	/** SSR 初始筛选：标签稳定键。 */
@@ -57,6 +58,7 @@ interface Props {
 
 let {
 	sortedPosts = [] as Post[],
+	locale,
 	initialCategory = "",
 	initialTag = "",
 	initialUncategorized = false,
@@ -66,6 +68,8 @@ let {
 	categoryLabels = {},
 	tagLabels = {},
 }: Props = $props();
+
+const i18n = (key: I18nKey) => locale ? i18nForLocale(locale, key) : siteI18n(key);
 
 let category = $state(initialCategory);
 let tag = $state(initialTag);

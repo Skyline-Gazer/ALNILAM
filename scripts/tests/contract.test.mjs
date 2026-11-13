@@ -97,9 +97,9 @@ test("comments module: disabled by default, giscus fields validated when enabled
   const off = parseConfig(validYaml);
   assert.equal(off.comments.enabled, false);
   assert.equal(off.comments.provider, "giscus");
-  assert.throws(() => parseConfig(`${validYaml}\ncomments:\n  enabled: true\n`), /comments\.repo/);
+  assert.throws(() => parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  mapping: specific\n`), /comments\.repo/);
   assert.throws(
-    () => parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R\n  category: C\n`),
+    () => parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R\n  category: C\n  mapping: specific\n`),
     /comments\.categoryId/,
   );
   assert.throws(
@@ -110,9 +110,16 @@ test("comments module: disabled by default, giscus fields validated when enabled
     () => parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R\n  category: C\n  categoryId: D\n  mapping: bogus\n`),
     /mapping/,
   );
-  const on = parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R_1\n  category: Announcements\n  categoryId: DIC_1\n  mapping: pathname\n`);
+  const legacyYaml = `${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R_1\n  category: Announcements\n  categoryId: DIC_1\n`;
+  assert.throws(() => parseConfig(legacyYaml), /comments\.mapping is required.*pathname.*specific/);
+  assert.equal(parseConfig(`${legacyYaml}  mapping: pathname\n`).comments.mapping, "pathname");
+  const on = parseConfig(`${legacyYaml}  mapping: specific\n`);
   assert.equal(on.comments.enabled, true);
-  assert.equal(on.comments.mapping, "pathname");
+  assert.equal(on.comments.mapping, "specific");
+  assert.equal(on.comments.sharing, "translation");
+  assert.equal(on.comments.load, "click");
+  assert.equal(on.comments.lang, "auto");
+  assert.equal(on.comments.csp, true);
 });
 
 test("YAML root documents must be mappings", () => {
@@ -584,9 +591,13 @@ test("upgrade-check classifies rollback outcomes", async () => {
   // `throw new Error(...)` prints with the `Error: ` prefix; accept both forms
   // while the line stays anchored.
   const schema = "Error: ALNILAM: unsupported schemaVersion 2 (supported: 1). Upgrade Core to build this Site.";
+  // A YAML v2 Core that predates a later optional module rejects unknown keys.
+  const unknown = 'Error: ALNILAM: unknown config field "llms"';
   assert.equal(isExpectedContractRejection(toml), true);
   assert.equal(isExpectedContractRejection(schema), true);
   assert.equal(isExpectedContractRejection(schema.replace(/^Error: /, "")), true);
+  assert.equal(isExpectedContractRejection(unknown), true);
+  assert.equal(isExpectedContractRejection(unknown.replace(/^Error: /, "")), true);
   // Indented stack frames, pnpm wrappers and unrelated failures do not qualify.
   assert.equal(isExpectedContractRejection("  at fail (" + toml + ")"), false);
   assert.equal(isExpectedContractRejection("ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL: " + schema), false);
@@ -595,6 +606,7 @@ test("upgrade-check classifies rollback outcomes", async () => {
   assert.equal(classifyRollback({ status: 0, output: "" }), "ok");
   assert.equal(classifyRollback({ status: 1, output: toml }), "expected-contract-failure");
   assert.equal(classifyRollback({ status: 1, output: schema }), "expected-contract-failure");
+  assert.equal(classifyRollback({ status: 1, output: unknown }), "expected-contract-failure");
   assert.equal(classifyRollback({ status: 1, output: "ELIFECYCLE Command failed with exit code 1." }), "unexpected");
   assert.equal(classifyRollback({ status: 2, output: toml }), "unexpected");
 });

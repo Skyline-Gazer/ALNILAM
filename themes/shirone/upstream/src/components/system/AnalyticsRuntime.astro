@@ -1,0 +1,35 @@
+---
+// GA4 runtime mount (GH Issue #91). Rendered only when Core ships
+// `analytics.googleAnalytics.enabled`; actual script injection and page_view
+// emission are additionally consent-gated inside the runtime module.
+import type { PrivacyConfig } from "virtual:alnilam-privacy";
+
+interface Props {
+	privacy: PrivacyConfig;
+}
+
+const { privacy } = Astro.props;
+const ga = privacy.analytics.googleAnalytics;
+
+if (!ga.enabled || !ga.measurementId || import.meta.env.DEV) {
+	return null;
+}
+
+const consentGated = privacy.consent.mode === "basic";
+---
+
+<div
+	id="alnilam-ga4"
+	hidden
+	data-measurement-id={ga.measurementId}
+	data-consent-gated={String(consentGated)}
+></div>
+
+<script>
+	import { initAnalytics } from "@utils/ga4";
+
+	const mount = document.getElementById("alnilam-ga4");
+	if (mount?.dataset.measurementId) {
+		initAnalytics(mount.dataset.measurementId, mount.dataset.consentGated === "true");
+	}
+</script>

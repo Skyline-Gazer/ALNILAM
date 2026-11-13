@@ -1,0 +1,89 @@
+media:
+  input: assets
+  output: /site-assets
+  extensions: [svg, png, jpg, jpeg, webp, avif]
+  rename: false
+
+content:
+  - name: posts
+    label: Posts
+    type: collection
+    path: content/posts
+    format: yaml-frontmatter
+    subfolders: true
+    filename: "{primary}.md"
+    exclude: ["README.md"]
+    operations:
+      delete: false
+    view:
+      primary: title
+      sort: pubDate
+      order: desc
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: description
+        label: Description
+        type: text
+      - name: pubDate
+        label: Publication date
+        type: date
+        required: true
+      - name: updatedDate
+        label: Updated date
+        type: date
+      - name: cover
+        label: Cover image
+        type: image
+{{CATEGORY_FIELD}}
+      - name: tags
+        label: Tags
+        type: string
+        list: true
+      - name: series
+        label: Series
+        type: string
+      - name: seriesOrder
+        label: Series order
+        type: number
+      - name: pinned
+        label: Pinned
+        type: boolean
+      - name: draft
+        label: Draft
+        type: boolean
+      - name: private
+        label: Private
+        type: boolean
+      - name: unlisted
+        label: Unlisted
+        type: boolean
+      - name: lang
+        label: Language
+        type: string
+        pattern: "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$"
+      - name: translationKey
+        label: Translation key
+        type: string
+      - name: commentId
+        label: Comment thread id
+        type: string
+        pattern: "^\\S+$"
+      - name: body
+        label: Body (Markdown / MDX source)
+        type: code
+        options:
+          format: markdown
+
+settings:
+  content:
+    merge: true
+  commit:
+    identity: app
+    templates:
+      create: "content(create): {path}"
+      update: "content(update): {path}"
+      delete: "content(delete): {path}"
+      rename: "content(rename): {oldPath} -> {newPath}"

@@ -4,7 +4,7 @@
 
 Apache-2.0 licensed, static-first Astro 7 / Svelte 5 / Tailwind CSS 4 blogging platform, with a strict Core/Site ownership boundary. Released v0.1.3 uses the Editorial theme; the P1 preview on `dev` uses the Shirone-derived theme.
 
-> **Status:** v0.1.3 is released; current CNB `dev` development is not a production release. P2 Core/Site work is accepted on the tracker: independent CNB Site and Core push runs are recorded in [#55](https://github.com/Skyline-Gazer/ALNILAM/issues/55). A GitHub reusable Site workflow [passed on an authorized non-production ref](https://github.com/Skyline-Gazer/Test-Site/actions/runs/41836937453); GitHub `dev` is not yet synchronized. See [Handoff](docs/HANDOFF.md) and check live Issues and CNB before starting work.
+> **Status:** v0.1.3 is released; GitHub `dev` carries unreleased development and CNB `dev` is frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`. P2 Core/Site work is accepted on the tracker: independent CNB Site and Core push runs are recorded in [#55](https://github.com/Skyline-Gazer/ALNILAM/issues/55). A reusable GitHub Site workflow [passed on an authorized non-production ref](https://github.com/Skyline-Gazer/Test-Site/actions/runs/41836937453). See [Handoff](docs/HANDOFF.md) and check live Issues and GitHub Actions before starting work.
 
 ## Quickstart
 
@@ -79,6 +79,7 @@ configuration including `locales`, taxonomy and module blocks.
 - Output is staged, then atomically swapped; `alnilam-provenance.json` binds the Core revision + Site SHA-256 digest.
 - Non-default-locale posts: put them in `content/posts/<lang>/` with frontmatter `lang` + `translationKey` → served at `/<lang>/posts/<slug>/` with automatic hreflang alternates for real translations. Old `/posts/<lang>/<slug>/` URLs provide a noindex static navigation fallback to the canonical article.
 - Optional `llms.enabled` publishes locale-aware LLM discovery and source-backed Markdown views; `llms.full` separately opts into aggregation. Both default off; see [Site onboarding](docs/SITE_ONBOARDING.md) for privacy and hosting details.
+- Optional `comments.enabled` adds Giscus discussions and requires an explicit mapping: choose `specific` for stable content identity or `pathname` to preserve existing URL-based threads. Comments default off; when enabled they are click-to-load by default, while disabled pages and pre-gate state make no third-party request. See [Site onboarding](docs/SITE_ONBOARDING.md#comments-comments).
 - Full contract, slug rules, image policy, and private-Site CI strategy: [docs/SITE_ONBOARDING.md](docs/SITE_ONBOARDING.md).
 
 ## Search
@@ -92,11 +93,13 @@ Local search is powered by [Pagefind](https://pagefind.app/) (MIT). The index is
 3. Compare `alnilam-provenance.json`'s `site.digest` with the previous build — must match.
 4. Swap the served directory. Rollback = rebuild with the previous Core revision.
 
-CI runs this acceptance on every PR (two revisions, one unchanged external Site, byte-identical provenance).
+Automated acceptance: `node scripts/upgrade-check.mjs --old <historical-core-sha> [--site /absolute/path]`. CI runs this on every PR (two Core revisions, one unchanged external Site). Site digest identity is the hard contract; output bytes may differ when Core rendering changed. See [Site onboarding](docs/SITE_ONBOARDING.md).
 
 ## Development and governance
 
-- Primary development: CNB `dev` with Issue-linked CNB PRs; GitHub Issues/Project remain the task tracker; `main` is release-only (rulesets `alnilam-dev` / `alnilam-main`: PR-only + required `verify` check, no force pushes/deletion).
+- Primary development: GitHub `dev` through Issue-linked PRs; GitHub Issues and Project #17 remain the task tracker; `main` is release-only. The active `alnilam-dev` / `alnilam-main` rulesets require PRs and the `verify` check, with no bypass or force pushes.
+- CNB `dev` is frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; new product work and current validation do not run through CNB.
+- Vercel `xxxx` is connected to `Skyline-Gazer/ALNILAM` with production branch `dev`; see [Handoff](docs/HANDOFF.md) for the live deployment and provenance.
 - Tagging: `vX.Y.Z` on `main` only, annotated, created by the release PR merge. See [CHANGELOG.md](CHANGELOG.md) for versioning rules (SemVer; `lang`/`translationKey` are schema-v1 additive fields).
 - ADS pinned at `.ads` to commit `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` (ADS `cnb/dev` development line, not a release tag; private — optional for public users, `git submodule update --init --checkout .ads` requires authorized access). CI never clones it.
 - Docs: [Architecture](docs/ARCHITECTURE.md) · [Site onboarding](docs/SITE_ONBOARDING.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/HANDOFF.md)

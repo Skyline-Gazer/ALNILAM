@@ -198,7 +198,7 @@
     },
     {
       "path": "src/utils/fancybox-config.ts",
-      "sha256": "b18c17e05213b0633dda9b2f6b9fd193226e73d8189d3974a11bf56c1c988d04"
+      "sha256": "1d006948ccb38084b4271b8aa8ab2976d24d7af1cd806801f3e74d18860e2850"
     },
     {
       "path": "src/utils/banner-animation.ts",
@@ -238,7 +238,7 @@
     },
     {
       "path": "src/utils/fancybox-handler.ts",
-      "sha256": "631723e7d39bda5715991d091799e37b3baebce9d7f18365254665d199463658"
+      "sha256": "4cbdb625d08ffe2a13d3f96110758d06e82fd1d8ff5c218ca52897f24a49394c"
     },
     {
       "path": "src/utils/post-decryption.ts",
@@ -654,7 +654,7 @@
     },
     {
       "path": "src/styles/fancybox-custom.css",
-      "sha256": "174dbab68821b7604c17c3fbd5ef2be7efad873ffa1a54d48df7291aad0d017d"
+      "sha256": "de87f3f584cb8e283c85432c928169186c6f9e12768f9dda335fac9ad849c7f7"
     },
     {
       "path": "src/styles/scrollbar.css",
@@ -1932,13 +1932,13 @@
   "modified": {
     "src/user/user-config.ts": "Read-only ALNILAM Site adapter; replaces upstream generated config mount.",
     "package.json": "Consumer compatibility metadata uses ALNILAM existing locked Astro7.4.2 / Svelte integration9.1.1 / MDX8.1.1; upstream peer checks remain active. See existing #79 record; native integration verification pending.",
-    "src/layouts/Layout.astro": "Retain ALNILAM canonical and keyboard skip-link contracts in actual upstream layout. Default appearance from validated Site; omit unimplemented Atom feed link; consolidate Pagefind loader, WidgetLayout custom element and pagination jump handler into the Layout runtime script. Configure Pagefind result URLs with Astro's base. Initialize shared Markdown and Expressive Code runtimes for navigation from pages without Markdown. Emit layout variables once and omit disabled texture initialization to reduce per-page HTML.",
+    "src/layouts/Layout.astro": "Retain ALNILAM canonical and keyboard skip-link contracts in actual upstream layout. Default appearance from validated Site; omit unimplemented Atom feed link; consolidate Pagefind loader, WidgetLayout custom element and pagination jump handler into the Layout runtime script. Configure Pagefind result URLs with Astro's base. Initialize shared Markdown and Expressive Code runtimes for navigation from pages without Markdown. Emit layout variables once and omit disabled texture initialization to reduce per-page HTML. Record a pre-hydration drawer tap on documentElement so the island can replay it. Keep the display-settings toggle's aria-expanded in sync on toggle and outside-click close.",
     "src/components/content/Markdown.astro": "Retain a separate Markdown runtime binding and share the generated Expressive Code client modules with Layout to preserve code block behavior within script budgets.",
     "src/env.d.ts": "Declare the adapter-provided Expressive Code runtime virtual module used by Layout and Markdown.",
     "src/components/organisms/PostCard.astro": "Retain 640x360 layout dimensions for pass-through Site covers, with metadata dimensions overriding when available.",
     "src/components/organisms/BannerStage.astro": "Give banner placeholders intrinsic layout dimensions; disabled banner still has no Site asset request.",
     "src/utils/url-utils.ts": "Preserve existing ALNILAM language-prefixed post URLs, /categories/<category>/, /tags/<tag>/ and plural /archives/ paths.",
-    "src/pages/posts/[...slug].astro": "Semantic article h1; forward Core hreflang/published metadata and optional existing lazy Comments slot; emit Markdown feature stylesheets as Swup-optional links.",
+    "src/pages/posts/[...slug].astro": "Semantic article h1; forward Core hreflang/published metadata and optional existing lazy Comments slot; emit Markdown feature stylesheets as Swup-optional links; omit upstream CommentSection mount so disabled Sites emit no Twikoo/Waline/Giscus provider chunks (Core comments remain slot-only).",
     "src/pages/archive.astro": "Add native PageHeader for one semantic page h1; serialize only fields used by ArchivePanel to reduce archive HTML size.",
     "src/components/molecules/ImageWrapper.astro": "Preserve explicit 640x360 layout dimensions for public/remote Site covers.",
     "src/utils/setting-utils.ts": "Default to Site appearance when no stored visitor choice; keep native theme state and controls.",
@@ -1946,7 +1946,8 @@
     "src/components/atoms/blog/PagePagination.astro": "Preserve rel=prev/next pagination semantics on both native desktop/mobile controls and consolidate jump handler into Layout runtime script.",
     "src/components/molecules/WidgetLayout.astro": "Consolidate widget-layout custom element registration into Layout runtime script.",
     "src/components/molecules/SearchBar.svelte": "Semantic keyboard search trigger, Escape/focus restoration, cancel focus/blur timers on unmount.",
-    "src/components/organisms/Search.svelte": "Preserve request ordering, Escape/focus restoration and remove listeners on unmount using native Search/Panel.",
+    "src/components/atoms/blog/SearchPanel.svelte": "Render an explicit no-results state with the localized message and a status role, driven by the caller so an empty result set reads as an answer instead of an empty box.",
+    "src/components/organisms/Search.svelte": "Preserve request ordering, Escape/focus restoration and remove listeners on unmount using native Search/Panel. Resolve search strings from the current page locale (documentElement.lang, kept in sync on Swup views). Track the panel open state (class observer covers outside-click closing) and expose aria-expanded/aria-controls on the toggle. Keep the results panel open after a finished search and pass the localized no-results state, so an empty result set is an answer instead of a silently closed panel. The empty state follows the query of the visible input (desktop capsule above 1024px, panel input below it), so a layout switch cannot show a no-results message next to an empty input. Remove Pagefind's internal weight delimiter from result titles and excerpts.",
     "src/components/organisms/Footer.astro": "Link to existing Core rss.xml/sitemap.xml; omit unimplemented Atom route.",
     "src/components/organisms/Profile.astro": "Use configured Site name for avatar fallback; disabled About module links home.",
     "src/components/organisms/CategoryBar.astro": "ALNILAM addition: hide the category bar on category/tag detail routes using the base-stripped root-relative path; the upstream startsWith('/categories') check never matched under a nested base such as /ALNILAM/ (#124).",
@@ -1963,23 +1964,38 @@
     "src/plugins/rehype-markdown-images.mjs": "Resolve relative and Site-asset Markdown images into managed _astro / subpath URLs, retain query and fragment, and guarantee explicit width/height dimensions.",
     "src/utils/nav-utils.ts": "Map ALNILAM /posts, /archives, /tags, and /bangumi routes in resolvePageKey for native active-link highlighting.",
     "src/components/molecules/FloatingActionButton.astro": "Render static FAB button shell without redundant per-button client:load island hydration.",
-    "src/components/organisms/TopAppBar.astro": "Gate DisplaySettings island on !siteConfig.themeColor.fixed and consolidate TopAppBar navigation runtime into Layout.",
+    "src/components/organisms/TopAppBar.astro": "Gate DisplaySettings island on !siteConfig.themeColor.fixed and consolidate TopAppBar navigation runtime into Layout. Add server-rendered aria-expanded/aria-controls to the menu button so the drawer disclosure is announced before hydration. Add aria-expanded/aria-controls to the display-settings toggle. Add the stable #main-navigation id so browser contracts select the navigation landmark without depending on its accessible name. Localize the navigation landmark name with the page language.",
     "src/layouts/MainGridLayout.astro": "Gate BannerStage when banner images and homeText are disabled; render RouteProgress without redundant island hydration; move the sidebar elements after the main content column so mobile DOM/parse order matches the visual order (content → sidebar → footer) and the already-painted aside is no longer pushed down by late-parsed article blocks (real mobile CLS); desktop columns stay on explicit lg:/xl: col-start/row-start.",
     "src/components/organisms/SideBar.astro": "Render only widgets visible on the current page in static MPA mode and omit unused Swup polling script.",
     "src/components/organisms/FloatingControls.astro": "Render TOC floating panel/button only on pages where TOC is visible and consolidate FAB init into Layout.",
     "src/components/organisms/PostPage.astro": "Consolidate post-list masonry initialization into Layout runtime script.",
-    "src/components/organisms/SiteNavigationDrawer.svelte": "Sync aria-expanded on #nav-drawer-switch, restore focus on Escape, and close mobile drawer on desktop viewport resize.",
+    "src/components/organisms/SiteNavigationDrawer.svelte": "Sync aria-expanded on #nav-drawer-switch, replay a drawer tap recorded before the island mounted, trap Tab focus inside the aria-modal panel while open, dismiss on outside press or Escape with focus restored, and close mobile drawer on desktop viewport resize. Focus the first drawer item only once the open class makes the panel visible. Expose aria-expanded only after the panel is visible and focused, and keep Tab inside while the opening frame precedes computed visibility. Mark non-drawer body children inert while the modal is open (restored on close, resize and unmount). Localize the drawer navigation landmark name with the page language.",
     "src/utils/fab-controller.ts": "Respect prefers-reduced-motion when scrolling to TOC anchors and keep mobile FAB controls visible across TOC anchor jumps.",
     "src/components/molecules/SidebarTOC.astro": "Respect prefers-reduced-motion when scrolling to TOC anchors.",
     "src/styles/markdown/generic.styl": "Ensure unbroken prose URLs wrap and wide code/table blocks scroll horizontally within .custom-md.",
     "src/components/atoms/blog/PostCard.astro": "Allow long unbroken card titles to wrap within .m3-blog-postcard__title.",
     "src/styles/transition.css": "Disable onload-animation initial translateY/opacity under prefers-reduced-motion and motion-reduced.",
-    "src/utils/fancybox-handler.ts": "ALNILAM addition: syncArticleImageSrcTargets() mirrors syncImageGridLinkTargets() for bare article <img> triggers, syncing currentSrc to data-src on every init/doInit and Swup remount so the lightbox resolves the rendered asset address (#123).",
-    "src/styles/fancybox-custom.css": "ALNILAM addition: restore the missing .f-panzoom__wrapper.is-fullsize width/height that vendor v6.1.15 CSS omits; without it the Panzoom wrapper collapses to 0x0 inside the slide flex column and the lightbox renders an empty frame at scale(0) (#123).",
-    "src/components/organisms/ArchivePanel.svelte": "ALNILAM addition: SSR initial filter props (initialCategory/initialTag/initialUncategorized/initialGroupBy), explicit-params-only onMount override so detail routes without query keep their SSR filter, preScoped flag so host pages that pre-filter members (alias/series fallback) skip panel-side re-filtering, optional breadcrumb override, and categoryLabels/tagLabels display maps so localized names never participate in filter matching (#124).",
+    "src/utils/fancybox-handler.ts": "ALNILAM: replace @fancyapps/ui with MIT photoswipe@5.4.4 behind FancyboxHandler public API; prefetch CSS+PhotoSwipe ctor at init for sync open; treat Markdown image-only original links (thumb→full) as lightbox triggers while leaving text links alone; HTTPS/site-path URL policy; parallel neighbor probes; generation-token abort; dimension probe with 8s timeout and original-link degrade; PhotoSwipe caption via textContent; LIGHTBOX_DEFAULTS inlined (#75).",
+    "src/styles/fancybox-custom.css": "ALNILAM: rewrite Fancybox/Panzoom skin to PhotoSwipe .pswp toolbar/counter/caption skin; drop #123 .is-fullsize patch; leave .pswp__bg opacity to PhotoSwipe bgOpacity; prefers-reduced-motion disables non-essential transitions.",
+    "src/components/organisms/ArchivePanel.svelte": "ALNILAM addition: SSR initial filter props (initialCategory/initialTag/initialUncategorized/initialGroupBy), explicit-params-only onMount override so detail routes without query keep their SSR filter, preScoped flag so host pages that pre-filter members (alias/series fallback) skip panel-side re-filtering, optional breadcrumb override, and categoryLabels/tagLabels display maps so localized names never participate in filter matching (#124). Translate panel controls and counts using the active page locale.",
     "src/utils/markdown-assets.ts": "Resolve each Markdown feature stylesheet to an externally emitted, base-aware URL instead of inlining CSS.",
-    "src/pages/[...permalink].astro": "Emit Markdown feature stylesheets as Swup-optional links.",
+    "src/pages/[...permalink].astro": "Emit Markdown feature stylesheets as Swup-optional links; omit upstream CommentSection mount so disabled Sites emit no Twikoo/Waline/Giscus provider chunks.",
     "src/pages/about.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
-    "src/pages/series/[slug]/index.astro": "Emit Markdown feature stylesheets as Swup-optional links."
+    "src/pages/series/[slug]/index.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
+    "src/utils/fancybox-config.ts": "ALNILAM: drop @fancyapps/ui FancyboxOptions import; keep FANCYBOX_SELECTORS only; PhotoSwipe defaults live in fancybox-handler LIGHTBOX_DEFAULTS.",
+    "src/components/organisms/LightDarkSwitch.svelte": "Resolve light/dark/system labels, the toggle aria-label and the menu label from the current page locale; keep the stored theme and system-preference behaviour.",
+    "src/i18n/translation.ts": "Add i18nForLocale(locale, key) so islands can translate for the current page while still honouring Site i18n overrides; i18n(key) delegates to the site default. Expose resolveTranslation(locale, key, overrides) as the testable seam, normalise Site override locale keys (case and separator insensitive) and define the missing-key degradation (locale dictionary, then English dictionary, then the key name). A regional variant without its own dictionary entry falls back to its base language.",
+    "src/i18n/i18nKey.ts": "Add menu and displaySettings keys used by the header/drawer accessible names, mainNavigation/navigationDrawer keys used by the navigation landmark names, and searchNoResults for the search panel empty state.",
+    "src/i18n/languages/en.ts": "Add the mainNavigation and navigationDrawer landmark names and the searchNoResults message.",
+    "src/i18n/languages/es.ts": "Add the mainNavigation and navigationDrawer landmark names and the searchNoResults message.",
+    "src/i18n/languages/id.ts": "Add the mainNavigation and navigationDrawer landmark names and the searchNoResults message.",
+    "src/i18n/languages/ja.ts": "Add the mainNavigation and navigationDrawer landmark names and the searchNoResults message.",
+    "src/i18n/languages/ko.ts": "Add the mainNavigation and navigationDrawer landmark names and the searchNoResults message.",
+    "src/i18n/languages/th.ts": "Add the mainNavigation and navigationDrawer landmark names and the searchNoResults message.",
+    "src/i18n/languages/tr.ts": "Add the mainNavigation and navigationDrawer landmark names and the searchNoResults message.",
+    "src/i18n/languages/vi.ts": "Add the mainNavigation and navigationDrawer landmark names and the searchNoResults message.",
+    "src/i18n/languages/zh_CN.ts": "Add the mainNavigation and navigationDrawer landmark names and the searchNoResults message.",
+    "src/i18n/languages/zh_TW.ts": "Add the mainNavigation and navigationDrawer landmark names and the searchNoResults message.",
+    "src/styles/main.css": "Closed float panels are hidden from the accessibility tree and tab order (opacity alone left invisible controls focusable)."
   }
 }

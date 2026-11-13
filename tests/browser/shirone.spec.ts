@@ -105,13 +105,13 @@ for (const [name, origin, width, height] of [
       await captureScreenshot(page, `browser-results/${name}-article-dark.png`);
       await selectTheme(page, "light");
       await captureScreenshot(page, `browser-results/${name}-article-light.png`);
-      await page.locator('#navbar nav[aria-label="Main navigation"]').getByRole("link", { name: /^(文章|Posts|記事)$/ }).click();
+      await page.locator('#main-navigation').getByRole("link", { name: /^(文章|Posts|記事)$/ }).click();
       await expect(page.locator("#post-list")).toBeVisible();
       await expect(page.locator("html")).not.toHaveClass(/dark/);
       await expect(page.locator("html")).toHaveAttribute("data-theme", "github-light");
       await page.goBack({ waitUntil: "domcontentloaded" });
       await expect(page.locator(".post-card")).toBeVisible();
-      await page.locator('#navbar nav[aria-label="Main navigation"]').getByRole("link", { name: /^(文章|Posts|記事)$/ }).click();
+      await page.locator('#main-navigation').getByRole("link", { name: /^(文章|Posts|記事)$/ }).click();
       await expect(page.locator("#post-list")).toBeVisible();
       await page.keyboard.press("Home");
       await page.keyboard.press("Tab");
@@ -119,7 +119,7 @@ for (const [name, origin, width, height] of [
       await page.keyboard.press("Tab");
       await expect(page.locator("#navbar a[href]").first()).toBeFocused();
       await page.keyboard.press("Tab");
-      await expect(page.locator('#navbar nav[aria-label="Main navigation"] a').first()).toBeFocused();
+      await expect(page.locator('#main-navigation a').first()).toBeFocused();
       await page.locator("#search-input-desktop-switch").click();
       await page.locator("#search-input-desktop").fill("ALNILAM");
       const firstResult = page.locator("#search-panel a.m3-blog-searchpanel__item").first();
@@ -354,7 +354,7 @@ for (const origin of [ROOT, NESTED]) {
       await page.setViewportSize({ width: 1440, height: 1000 });
       await expect(menu).toBeHidden();
       await expect(menu).toHaveAttribute("aria-expanded", "false");
-      await expect(page.locator('#navbar nav[aria-label="Main navigation"]')).toBeVisible();
+      await expect(page.locator('#main-navigation')).toBeVisible();
       await page.setViewportSize({ width: 390, height: 844 });
       await expect(drawer).not.toHaveClass(/site-drawer--open/);
       expect(errors).toEqual([]);

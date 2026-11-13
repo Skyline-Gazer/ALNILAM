@@ -1,0 +1,17 @@
+schemaVersion: 2
+site:
+  title: GA4 Fixture
+  description: Deterministic GA4 fixture for Issue #91.
+  url: https://ga4.example.com
+  locale: zh-CN
+locales:
+  - zh-CN
+  - en
+theme:
+  appearance: dark
+consent:
+  mode: off
+analytics:
+  googleAnalytics:
+    enabled: true
+    measurementId: G-GA4FIXTURE01

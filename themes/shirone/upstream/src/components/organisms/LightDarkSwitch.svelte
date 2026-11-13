@@ -2,7 +2,7 @@
 import Menu from "@components/atoms/navigation/Menu.svelte";
 import { AUTO_MODE, DARK_MODE, LIGHT_MODE } from "@constants/constants.ts";
 import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
+import { i18nForLocale } from "@i18n/translation";
 import Icon from "@iconify/svelte";
 import {
 	applyThemeToDocument,
@@ -16,7 +16,16 @@ let mode: LIGHT_DARK_MODE = $state(AUTO_MODE);
 let menuOpen = $state(false);
 let isDesktop = $state(false);
 
+// client:only island: follow the page language, including after Swup navigation.
+let pageLocale = $state("en");
+const t = (key: I18nKey) => i18nForLocale(pageLocale, key);
+
 onMount(() => {
+	const syncLocale = () => {
+		pageLocale = document.documentElement.lang || pageLocale;
+	};
+	syncLocale();
+	document.addEventListener("swup:page:view", syncLocale);
 	mode = getStoredTheme();
 	const darkModePreference = window.matchMedia("(prefers-color-scheme: dark)");
 	const changeThemeWhenSchemeChanged: Parameters<
@@ -34,6 +43,7 @@ onMount(() => {
 	desktopQuery.addEventListener("change", onDesktopChange);
 
 	return () => {
+		document.removeEventListener("swup:page:view", syncLocale);
 		darkModePreference.removeEventListener(
 			"change",
 			changeThemeWhenSchemeChanged,
@@ -71,7 +81,7 @@ function onMainButtonClick() {
 
 <!-- z-50 make the menu higher than other float panels -->
 <div class="relative z-50 flex h-10 w-10 shrink-0 items-center justify-center">
-    <button aria-label="Light/Dark Mode" aria-haspopup="menu" aria-expanded={menuOpen}
+    <button aria-label={`${t(I18nKey.lightMode)}/${t(I18nKey.darkMode)}`} aria-haspopup="menu" aria-expanded={menuOpen}
             class="m3-state-layer relative inline-flex items-center justify-center rounded-full h-10 w-10 border-none cursor-pointer select-none text-[var(--on-surface)]"
             style="font-size: 1.25rem; line-height: 1; --m3e-state-color: var(--on-surface); --m3e-focus-outline: var(--on-surface);"
             id="scheme-switch" onclick={onMainButtonClick}>
@@ -86,21 +96,21 @@ function onMainButtonClick() {
         </div>
     </button>
 
-    <Menu bind:open={menuOpen} label="Light/Dark Mode" class="absolute top-11 right-0 hidden lg:block">
+    <Menu bind:open={menuOpen} label={`${t(I18nKey.lightMode)}/${t(I18nKey.darkMode)}`} class="absolute top-11 right-0 hidden lg:block">
         <button class="m3-menu-item" class:selected={mode === LIGHT_MODE}
                 onclick={() => switchScheme(LIGHT_MODE)}>
             <Icon icon="material-symbols:wb-sunny-outline-rounded" class="text-[1.25rem]"></Icon>
-            {i18n(I18nKey.lightMode)}
+            {t(I18nKey.lightMode)}
         </button>
         <button class="m3-menu-item" class:selected={mode === DARK_MODE}
                 onclick={() => switchScheme(DARK_MODE)}>
             <Icon icon="material-symbols:dark-mode-outline-rounded" class="text-[1.25rem]"></Icon>
-            {i18n(I18nKey.darkMode)}
+            {t(I18nKey.darkMode)}
         </button>
         <button class="m3-menu-item" class:selected={mode === AUTO_MODE}
                 onclick={() => switchScheme(AUTO_MODE)}>
             <Icon icon="material-symbols:radio-button-partial-outline" class="text-[1.25rem]"></Icon>
-            {i18n(I18nKey.systemMode)}
+            {t(I18nKey.systemMode)}
         </button>
     </Menu>
 </div>

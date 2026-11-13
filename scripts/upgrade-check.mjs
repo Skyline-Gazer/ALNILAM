@@ -87,12 +87,15 @@ export function hashTree(dir) {
 
 // The only rollback failures that are expected while a Site contract migrates:
 // a pre-v2 Core rejects the YAML Site before building, either because it still
-// requires the retired TOML file or because it supports an older schemaVersion.
-// Both patterns are anchored to the exact line the Core prints; pnpm wrappers
-// or stack frames that merely mention the text do not qualify.
+// requires the retired TOML file, because it supports an older schemaVersion, or
+// because the Site declares a config field (for example a later module block)
+// that Core revision does not yet know. Patterns are anchored to the exact line
+// the Core prints; pnpm wrappers or stack frames that merely mention the text
+// do not qualify.
 const EXPECTED_CONTRACT_REJECTIONS = [
   /^Error: Site missing required input: alnilam\.config\.toml$/m,
   /^(?:Error: )?ALNILAM: unsupported schemaVersion \d+ \(supported: [\d, ]+\)\. Upgrade Core to build this Site\.$/m,
+  /^(?:Error: )?ALNILAM: unknown [\w.]+ field ".+"$/m,
 ];
 
 export function isExpectedContractRejection(output) {
@@ -189,7 +192,7 @@ function main() {
     }
   } else if (outcome === "expected-contract-failure") {
     console.warn(
-      "NOTE: old Core revision could not build this Site (expected for schema v2 Sites against pre-v2 Core). Site remained unchanged.",
+      "NOTE: old Core revision could not build this Site (expected contract rejection). Site remained unchanged.",
     );
     if (rollbackOutput.trim()) console.warn(rollbackOutput.trim());
     console.log("UPGRADE/ROLLBACK OK: Site unchanged; old Core build failed closed.");

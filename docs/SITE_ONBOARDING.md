@@ -33,8 +33,9 @@ theme:
 ```
 
 Unknown top-level or nested keys fail the build, and so do malformed YAML, duplicate
-keys, unresolved YAML tags and non-plain YAML values. The `comments` and `bangumi`
-module blocks are documented below.
+keys, unresolved YAML tags and non-plain YAML values. The `comments`, `bangumi` and
+`llms` module blocks are documented below. Omit keys your target Core does not yet
+know — an older Core fails closed on unknown fields even when the current Core accepts them.
 
 **Reserved fields:** `routing`, `categories` and `tags` are accepted and validated for
 forward compatibility, but this Core revision has no consumer for them — do not rely on
@@ -45,7 +46,8 @@ them in Sites. Tag pages derive from post frontmatter.
 - Place posts under `content/posts/*.md` (or `.mdx`). Frontmatter schema:
   `title` (required), `description`, `pubDate` (required date), `updatedDate`,
   `cover` (path), `tags`, `draft`, `lang` (optional BCP-47),
-  `translationKey` (optional, groups translations for hreflang).
+  `translationKey` (optional, groups translations for hreflang),
+  `commentId` (optional, explicit stable Giscus thread term; no whitespace).
 - **The slug is the file path** under `content/posts` (without extension). A post at
   `content/posts/2026/hello.md` is served at `/posts/2026/hello/`. Renaming or moving a
   file changes its public URL — treat paths as stable identifiers.
@@ -110,18 +112,87 @@ Optional modules are feature-flagged: **disabled modules ship nothing** — no p
 
 ### Comments (`[comments]`)
 
+Comments are **off by default** and intentionally support one provider for the
+first launch: Giscus over public GitHub Discussions. Twikoo/Waline are not
+configured here; they require separately operated backends and are post-launch
+evaluations, not alternate values for this block.
+
 ```yaml
 comments:
   enabled: true
-  provider: "giscus"            # only provider
+  provider: "giscus"            # only provider in this release
   repo: "you/your-repo"         # public GitHub repo hosting Discussions
   repoId: "R_..."               # from giscus.app
   category: "Announcements"
   categoryId: "DIC_..."
-  # mapping: "pathname"         # optional: pathname | specific | number
+  mapping: "specific"           # required when enabled: specific | pathname | number
+  sharing: "translation"        # translation | locale
+  load: "click"                 # click | visible
+  lang: "auto"                  # auto | giscus/BCP-47 locale
+  csp: true                     # emit the provider-scoped CSP meta tag
 ```
 
-Renders on post pages as a lazy `client:visible` island; the giscus script loads only after the section scrolls into view. Requires GitHub Discussions on the repo. Theme (dark/light) and language follow your Site config.
+All fields are public identifiers. Unknown keys and secret-looking fields
+(`token`, `accessToken`, `webhookSecret`, …) fail the build; never put a GitHub
+App private key, webhook secret or personal access token in a Site.
+
+Enabled comments require an explicit `mapping`. For an existing v2 Site whose
+enabled comments omitted it, add `mapping: pathname` to retain its existing
+URL-based Discussions. Choose `mapping: specific` for new threads; changing an
+existing Site to `specific` creates different threads and does not migrate
+comment data. A missing mapping fails the build until you choose.
+
+#### Stable identity and translation policy
+
+- `mapping: specific` sends an explicit Giscus `data-term` instead of using the
+  browser URL. The term is derived at build time from, in order:
+  frontmatter `commentId`, frontmatter `translationKey`
+  (`alnilam:translation:<key>`), or the Site content id
+  (`alnilam:content:<path-without-extension>`).
+- `sharing: translation` (default) makes every translated page that shares a
+  `translationKey`/`commentId` use one Discussion. `sharing: locale` appends
+  `::<page-locale>` so each translation has a separate thread. This is the
+  explicit per-translation sharing/partition policy; it does not guess from the
+  URL prefix.
+- Use `commentId` when a file or public slug may be renamed but its Discussion
+  must stay the same. A `commentId` must not contain whitespace and is limited
+  to 200 characters.
+- `mapping: number` requires a numeric `commentId` and
+  `sharing: translation`; otherwise the build fails with an actionable message.
+- `mapping: pathname` maps by the browser URL, so `/ALNILAM/`, locale prefixes
+  and future permalink renames create different discussions.
+
+#### Privacy, loading and failure behavior
+
+- With `comments.enabled: false` the output contains no comment component, no
+  giscus script/iframe, no placeholder and no client island — zero comment JS
+  and zero comment network requests.
+- With comments enabled, the page shows a distinct third-party disclosure. The
+  default `load: click` renders a button and makes **no** third-party request
+  until the reader activates it. `load: visible` loads the provider when the
+  section nears the viewport; that is still an enabled-provider request, so do
+  not claim zero third-party traffic for it.
+- The mounted container reserves height so late iframe creation does not move
+  the article above it. One provider instance owns the script, iframe, theme
+  listener and observer; failure, retry and unmount remove the mount node, so
+  a late iframe cannot appear in the failed comment area.
+- If the script is blocked or no iframe appears within 15 seconds, the article
+  and navigation remain usable and the comment area offers a non-blocking retry
+  plus a grounded link to the repository's GitHub Discussions.
+- When `csp: true`, comment-enabled articles emit a `Content-Security-Policy`
+  meta tag. `script-src`, `style-src`, `connect-src` and `frame-src` allow the
+  Giscus origin; `style-src` permits the stylesheet loaded by the Giscus client,
+  and `connect-src` also allows `https://api.github.com` for GitHub repository
+  cards. `script-src` includes `'wasm-unsafe-eval'` for
+  Pagefind WASM search; `frame-src` adds the supported Markdown player origins
+  (YouTube nocookie, Bilibili, AcFun); and `media-src` allows `'self' https:`
+  for author `<video>`/`<audio>`. Hosting-level CSP may extend this with
+  `frame-ancestors`, which `meta` cannot enforce. Comments disabled = no
+  giscus CSP allowance.
+
+Requires GitHub Discussions on the public repo and a Giscus configuration from
+<https://giscus.app>. Theme updates follow the Site's dark/light switch; the
+language follows the article locale unless `comments.lang` overrides it.
 
 ### Bangumi (`[bangumi]`)
 
@@ -202,6 +273,12 @@ or structured data.
 ```bash
 # From a checkout of ALNILAM (Core):
 node scripts/compose.mjs --site /absolute/path/to/yoursite --out /absolute/path/to/output
+
+# Root host vs project-page / subpath base (same Site, separate outputs):
+ALNILAM_SITE_URL=https://example.com/ \
+  node scripts/compose.mjs --site /absolute/path/to/yoursite --out /absolute/path/to/out-root
+ALNILAM_SITE_URL=https://example.com/ALNILAM/ \
+  node scripts/compose.mjs --site /absolute/path/to/yoursite --out /absolute/path/to/out-nested
 ```
 
 The output directory must not overlap the Site directory. The build:
@@ -222,6 +299,20 @@ Site ref and Site digest in your deployment configuration and fail closed if the
 2. Run `compose` against the **same unchanged Site directory**.
 3. Verify `alnilam-provenance.json` in the new output: the Site digest must match the previous build's.
 4. Swap the served output directory; rollback = rebuild with the previous Core revision.
+
+Automated acceptance (CI and local):
+
+```bash
+node scripts/upgrade-check.mjs --old <historical-core-sha> [--site /absolute/path/to/yoursite]
+```
+
+The script builds the Site with the current Core, then with `--old` in an isolated
+worktree. The Site digest must be identical before, after the upgrade build, and after
+the rollback build. Default `--site` is a throwaway copy of `sites/demo`. Expected
+fail-closed outcomes for a Site the old Core cannot yet consume (missing TOML on
+pre-YAML Core, unsupported `schemaVersion`, or unknown config fields such as a module
+block added later) still count as a passed Site non-mutation check; unexpected build
+failures fail the run. Output bytes may differ when Core rendering changed.
 
 The Site's Git ref is never touched by any of these steps.
 
@@ -325,3 +416,31 @@ owner action and is never triggered by pushes or pull requests.
 Vercel builds serve `dist/site` directly (`outputDirectory` in `vercel.json`).
 Set `ALNILAM_SITE_URL` in the project environment to pin a custom domain; the
 derived deployment host is used only when it is absent.
+
+### Optional Git-based editors (PoC)
+
+An optional Git-based editor such as Pages CMS can author posts in the **Site**
+repository without changing Core. The editor schema `.pages.yml` belongs in the
+Site root; compose snapshots only `alnilam.config.yaml`, `content/`, `assets/`
+and `data/`, so adding, editing or removing `.pages.yml` changes neither the
+build nor `alnilam-provenance.json`. See the isolated example in
+`tests/fixtures/pages-cms-site/` and the offline adapter `scripts/pages-cms.mjs`.
+`node scripts/pages-cms.mjs create` and `edit` write only declared frontmatter
+fields inside `content/posts/`; `init --site <site>` generates `.pages.yml` from the
+Site taxonomy, and `verify` checks field mapping, media paths and category drift
+(the editor cannot show a category the schema does not declare).
+
+Two rules matter for content safety:
+
+- Set `settings.content.merge: true`. The Pages CMS default `merge: false`
+  rewrites a post from the editor schema only and silently drops undeclared
+  frontmatter keys.
+- Edit MDX through a source/code field, not a WYSIWYG rich-text field, and keep
+  field names in sync with the post frontmatter contract above. Absolute
+  `/site-assets/...` paths and post-relative `![]()` images are re-based for
+  `/ALNILAM/` deployments automatically.
+
+The current evidence is an **offline PoC** (see `docs/pilots/PAGES-CMS-POC.md`):
+field mapping, unknown-field and MDX roundtrip, media paths and dual-base builds.
+A hosted editor, GitHub App permissions, a real external Site and production
+publishing are not exercised and remain separately Owner-authorized work.

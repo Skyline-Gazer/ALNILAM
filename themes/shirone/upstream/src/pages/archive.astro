@@ -32,6 +32,6 @@ const archiveSummary = `${sortedPostsList.length} ${t(I18nKey.postsCount)}`;
 
 <MainGridLayout title={t(I18nKey.archive)} description={archiveSummary} page="archive" lang={lang} alternates={alternates}>
     <PageHeader title={t(I18nKey.archive)} subtitle={archiveSummary} />
-    <ArchivePanel sortedPosts={archivePosts} client:visible></ArchivePanel>
+    <ArchivePanel sortedPosts={archivePosts} locale={lang} client:visible></ArchivePanel>
 </MainGridLayout>
 

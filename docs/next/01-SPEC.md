@@ -1,5 +1,7 @@
 # ALNILAM Next — Product and Engineering SPEC (G0-F owner approved)
 
+> **Historical requirement snapshot:** the frozen targets below do not by themselves establish current implementation or development authority. The current Site contract is YAML-only schema v2 (`alnilam.config.yaml`); TOML-only Sites fail closed without automatic migration. See [Site onboarding](../SITE_ONBOARDING.md), [Site contract](../../scripts/site-contract.mjs), and [HANDOFF](../HANDOFF.md) for current behavior, GitHub development authority and evidence.
+
 Current Owner requirement delta (2026-10-27): vNext Site is YAML-only. See [ADR 0002](../adr/0002-vnext-yaml-requirement-delta.md). Historical frozen v1/TOML text below remains evidence; no parser/migration change is implemented by the CNB Pilot.
 
 > **FROZEN P1 SCOPE · Owner G0-F approval 2026-10-26** ([decision](08-G0-F-DECISION.md)). Requirements are targets, not features already shipped in v0.1.3. P1 implementation is authorized through reviewed dev PRs, not production publication. The words MUST/SHOULD describe target behavior, not capabilities already shipped in v0.1.3. Linked plan: [00-PLAN.md](00-PLAN.md).

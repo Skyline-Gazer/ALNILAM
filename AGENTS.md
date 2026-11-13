@@ -23,11 +23,12 @@ If `.ads` is inaccessible, report the blocker; do not invent policy text.
 - Site contract: `alnilam.config.yaml` (`schemaVersion: 2`), `content/posts/`, optional
   `assets/` and `data/`. A TOML-only Site fails closed; there is no v1 fallback or
   automatic migration.
-- Development authority: CNB `https://cnb.cool/KoolingMachine/ALNILAM`. GitHub
-  `https://github.com/Skyline-Gazer/ALNILAM` hosts Issues and Project #17 and is a
-  mirror target; feature PRs land on CNB `dev`. `main` is release-only.
-- Task order: GitHub Project #17 live state → Issues and Owner decisions → merged CNB
-  code and evidence → `docs/HANDOFF.md` → `docs/ROADMAP.md`.
+- Development authority: GitHub `https://github.com/Skyline-Gazer/ALNILAM`. GitHub
+  `dev` is the feature-development branch; CNB `dev` is frozen at
+  `9916a0c4984f8e9d762f59247cf923f0fd7f0071`. `main` is release-only.
+- GitHub Issues and Project #17 remain task-tracking authority. Read live Project
+  state and Owner decisions before selecting work; use GitHub PR history and
+  Actions evidence, then update `docs/HANDOFF.md` and `docs/ROADMAP.md`.
 - Build and test:
 
 ```bash
@@ -40,17 +41,19 @@ node scripts/compose.mjs --site /absolute/path/to/site --out /absolute/path/to/o
 python3 -m unittest discover -s scripts/tests -p '*_test.py'
 ```
 
-Run affected tests locally in the DevBox before pushing; use `pnpm test`, `pnpm check`
-and build checks as appropriate. For browser work, `pnpm browser:local`, `pnpm cls:local`
-and `pnpm lighthouse:local` prepare root and subpath outputs and use the same Playwright,
-CLS and Lighthouse configuration as CNB. After the first build, `pnpm browser <spec>`
-reuses those outputs for fast test-only iteration; rebuild after product changes. Run
-`pnpm audit:local` for a full browser and Lighthouse audit when relevant. CNB remains the
-independent merge-candidate build, contract and regression verification; do not remove or
-ignore a failing check. See README for setup and evidence locations.
+Run affected checks locally in the DevBox before pushing. Use the existing
+`pnpm test`, `pnpm check`, build and browser commands as appropriate. For browser
+work, `pnpm browser:local`, `pnpm cls:local` and `pnpm lighthouse:local` prepare
+root and subpath outputs using the same Playwright, CLS and Lighthouse settings
+as CI. After the first build, `pnpm browser <spec>` reuses those outputs; rebuild
+after product changes. Run `pnpm audit:local` for a full audit only when relevant.
+GitHub Actions `verify` is the required PR check. Vercel's existing Git integration
+builds the `dev` branch. CNB is a frozen source snapshot, not a current validation
+or development provider. See README for setup and evidence locations.
 
-- Production deployment, release tags, the GitHub mirror and branch-protection changes
-  require explicit Owner authorization. CNB never publishes, mirrors, tags or deploys.
+- Production deployment, release tags, changes to `main`, and branch-protection
+  changes require explicit Owner authorization. Do not write new development work
+  to frozen CNB `dev` or start a recurring CNB mirror.
 - Secrets never belong in the repository, logs, URLs or Site config. Public CI must not
   check out the private ADS repository.
 
@@ -63,26 +66,23 @@ Core/Site independence, Site immutability, YAML-only v2, provenance/rollback and
 Apache-2.0/third-party notices. End each task with the exact SHA, CI run, PR, verified
 behavior and unresolved blockers.
 
-## CNB development workflow — Owner correction 2026-11-02
+## GitHub development workflow — Owner decision 2026-11-13
 
-- Single-maintainer `dev` defaults to no mandatory platform protection. Use an
-  Issue-linked ordinary PR or Owner-authorized non-force Git integration. This
-  reconciliation is delivered through one scoped PR to CNB `dev`.
-- Functional CI and CodeBuddy provide real feedback to find and fix defects; they
-  are not mandatory approval on every ordinary development change. Run checks
-  proportionate to the change, address material findings, and report failed,
-  missing or stale results honestly. Do not claim a plugin exit is review approval.
-- Existing configured required checks remain effective until explicitly changed;
-  never disable a check to disguise a failure. Serialize writes, reread live refs
-  before integration, then verify actual source ancestry and resulting tree.
-- CNB's merge API has no expected-head parameter; the read/merge race remains.
-  Do not force-push, force-merge or enable Auto Merge to bypass a real restriction.
-- Keep ADS pinned to `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`.
-  This project-local Owner decision supersedes conflicting older mandatory CNB
-  review/protection language at that pin; it does not opt into strict governance.
-- `main` retains necessary production quality and explicit authorization boundaries.
-  Main promotion, production mirror, tags/releases, deployments and protection
-  changes require separate Owner authorization. This session does not operate ADS.
+- Use Issue-linked pull requests to GitHub `dev`. The active ruleset requires a
+  pull request and the GitHub Actions `verify` check; it permits no force pushes
+  or bypass actors. Keep Auto-merge disabled.
+- Functional CI and Greptile feedback find defects; independent approval is not
+  mandatory on every ordinary development PR. Address material findings and
+  report failed, missing or stale results honestly.
+- Existing required checks remain effective. Serialize writes, reread live refs
+  before integration, preserve both histories, and verify the resulting GitHub
+  `dev` commit and tree. Do not force-push.
+- CNB `dev` is frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; do not push
+  development changes there or mirror it back into GitHub.
+- Keep ADS pinned to `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`. This project-local
+  Owner decision does not opt into ADS strict governance profiles.
+- `main` remains release-only. Main promotion, production releases, tags and
+  protection changes require separate Owner authorization.
 
 ## Handoff
 

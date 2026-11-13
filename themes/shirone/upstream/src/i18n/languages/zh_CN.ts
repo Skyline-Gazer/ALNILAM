@@ -10,6 +10,11 @@ export const zh_CN: Translation = {
 	[Key.archiveGroupCategory]: "按分类",
 	[Key.archiveGroupTag]: "按标签",
 	[Key.search]: "搜索",
+	[Key.searchNoResults]: "没有找到结果",
+	[Key.menu]: "菜单",
+	[Key.displaySettings]: "显示设置",
+	[Key.mainNavigation]: "主导航",
+	[Key.navigationDrawer]: "导航抽屉",
 	[Key.clear]: "清除",
 
 	[Key.friends]: "友链",
@@ -173,6 +178,21 @@ export const zh_CN: Translation = {
 	[Key.commentsLoading]: "正在加载评论...",
 	[Key.commentsLoadFailed]: "评论加载失败",
 	[Key.commentsRequiresJavaScript]: "评论区需要启用 JavaScript 才能显示",
+	[Key.consentTitle]: "隐私偏好",
+	[Key.consentDescription]:
+		"本站可选地加载第三方服务。请选择允许加载的内容；在你允许之前不会发起任何第三方请求。",
+	[Key.consentAnalytics]: "数据分析（Google Analytics）",
+	[Key.consentAds]: "广告（Google AdSense）",
+	[Key.consentAllow]: "允许",
+	[Key.consentDeny]: "拒绝",
+	[Key.consentNote]:
+		"你可以随时通过 window.alnilamConsent.open() 修改；选择仅保存在本浏览器中。",
+	[Key.dkrecoveryTitle]: "广告支撑着本站的免费阅读",
+	[Key.dkrecoveryDescription]:
+		"检测到广告拦截器阻止了广告加载。广告用于支付主机和内容创作成本。",
+	[Key.dkrecoveryContinue]: "继续阅读",
+	[Key.dkrecoveryAllowHint]:
+		"你可以在广告拦截器设置中将本站加入白名单；无论如何内容都不会被锁定。",
 
 	[Key.untitled]: "无标题",
 	[Key.uncategorized]: "未分类",

@@ -1,10 +1,17 @@
 # ALNILAM roadmap (Issue-driven)
 
-## Current workflow decision — 2026-11-03
+## Current workflow decision — 2026-11-13
 
-CNB is the development authority. Follow [AGENTS.md](../AGENTS.md) and the Owner's 2026-11-02 override: use ordinary Issue-linked PRs or already-authorized non-force dev integration, proportionate functional checks and material CodeBuddy feedback. Honor actually configured required checks; do not invent PASS or add Gatekeeper/extra-reviewer prerequisites. Main, mirror writes, tags/releases, production and ADS upstream remain separately authorized. Historical cutover decisions remain in [the cutover record](cnb/CUTOVER-READINESS.md).
+GitHub is the development authority. Use ordinary Issue-linked PRs to GitHub
+`dev` and the existing Actions `verify` check. CNB `dev` is frozen at
+`9916a0c4984f8e9d762f59247cf923f0fd7f0071`; do not use it for new work or start
+a recurring mirror. `main`, production, tags and protection changes retain their
+separate Owner authorization. Follow [AGENTS.md](../AGENTS.md) and [HANDOFF](HANDOFF.md)
+for exact live refs, CI evidence and the Vercel state.
 
-The work tracker is [GitHub Project #17](https://github.com/orgs/Skyline-Gazer/projects/17/), read live before each phase decision. Current correction (2026-11-03): P1 #37/#48/#50 and P3 #57–#60 are reopened for actual native Shirone implementation/acceptance; historical Owner signoff and CI remain historical records. P2 #51/#52/#54/#56 retain their Core implementation, while #53 native derived-state lifecycle and #55 real external-Site CI remain Open. P2 #38, P3 #39 and #61 are In Progress. Native code is WIP in CNB PR #47, not merged into dev; full taxonomy consumption belongs to P4 #62. Exact refs, actual failed CI, evidence, authorization and next steps are maintained in [HANDOFF](HANDOFF.md); older planning/status text is not current completion evidence.
+GitHub Project #17 remains the live work tracker. Read its state and the linked
+Issues before choosing work. Historical status and cutover decisions below remain
+records of their original dates; they do not override this current authority.
 
 ## Historical v0.1.x phase sketch
 

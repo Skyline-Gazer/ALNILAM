@@ -11,6 +11,9 @@ importers:
       '@astrojs/svelte':
         specifier: 9.1.1
         version: 9.1.1(@types/node@26.6.5)(astro@7.4.2(@astrojs/markdown-remark@7.3.3)(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(stylus@0.64.0)(yaml@2.9.1))(esbuild@0.28.2)(jiti@2.7.0)(stylus@0.64.0)(svelte@5.57.2)(typescript@5.9.3)(yaml@2.9.1)
+      '@axe-core/playwright':
+        specifier: 4.10.1
+        version: 4.10.1(playwright-core@1.64.1)
       '@lhci/cli':
         specifier: 0.15.1
         version: 0.15.1
@@ -117,9 +120,6 @@ importers:
       '@expressive-code/plugin-line-numbers':
         specifier: 0.44.2
         version: 0.44.2
-      '@fancyapps/ui':
-        specifier: 6.1.15
-        version: 6.1.15
       '@iconify-json/fa7-brands':
         specifier: 1.2.4
         version: 1.2.4
@@ -180,6 +180,9 @@ importers:
       pagefind:
         specifier: 1.5.2
         version: 1.5.2
+      photoswipe:
+        specifier: 5.4.4
+        version: 5.4.4
       qrcode:
         specifier: 1.5.4
         version: 1.5.4
@@ -387,6 +390,11 @@ packages:
 
   '@astrojs/yaml2ts@0.2.4':
     resolution: {integrity: sha512-8oddpOae35pJsXPQXhTkM0ypfKPskVsh2bCxRtbf7e+/Epw2nReakFYpLKjZMEr75CsoF203PMnCocpfz0s69A==}
+
+  '@axe-core/playwright@4.10.1':
+    resolution: {integrity: sha512-EV5t39VV68kuAfMKqb/RL+YjYKhfuGim9rgIaQ6Vntb2HgaCaau0h98Y3WEUqW1+PbdzxDtDNjFAipbtZuBmEA==}
+    peerDependencies:
+      playwright-core: '>= 1.0.0'
 
   '@babel/helper-string-parser@7.29.11':
     resolution: {integrity: sha512-snZbO7MEDOof+hvNa97EjEY7qD7h2kwvQr5AJC3ZhQudKW5dnej6k3kP9NQV88hJwaS8vDqRLFo9rivLEhle2g==}
@@ -691,9 +699,6 @@ packages:
 
   '@expressive-code/plugin-text-markers@0.44.3':
     resolution: {integrity: sha512-4Ae2xRSDV5kdWPsi40xWbOtoihbzM0zLVjQKkDAnD5KzFXl+6/kd+VhuWOlTRVaJ5cqGk++vCbAaf0MR1XbZlw==}
-
-  '@fancyapps/ui@6.1.15':
-    resolution: {integrity: sha512-J1w/ZLhkXzMSHZ7Bg1iX7GFA/YkH/Ka+r2HIX4pchwu6PNalfyzzgxghhP92CWlbH4ssV8qYPJ/KQcdRW5TVVw==}
 
   '@formatjs/ecma402-abstract@2.3.6':
     resolution: {integrity: sha512-HJnTFeRM2kVFVr5gr5kH1XP6K0JcJtE7Lzvtr3FS/so5f1kpsqqqxy5JF+FRaO6H2qmcMfAUIox7AJteieRtVw==}
@@ -1597,6 +1602,10 @@ packages:
     peerDependenciesMeta:
       '@astrojs/markdown-remark':
         optional: true
+
+  axe-core@4.10.3:
+    resolution: {integrity: sha512-Xm7bpRXnDSX2YE2YFfBk2FnF0ep6tmG7xPh8iHee8MIcrgq762Nkce856dYtJYLkuIoYZvGfTs/PbZhideTcEg==}
+    engines: {node: '>=4'}
 
   axe-core@4.14.0:
     resolution: {integrity: sha512-9WTZxEjsZ7b13TH8JPmbV2z8CHbl80/2hm3XPEG4JgNdQLK81IBRXmSxHfMAOkSqQeRxT/0dwNDz2GOm3zzpcQ==}
@@ -3449,6 +3458,10 @@ packages:
   pend@1.2.0:
     resolution: {integrity: sha512-F3asv42UuXchdzt+xXqfW1OGlVBe+mxa2mqI0pg5yAHZPvFmY3Y6drSf/GQ1A86WgWEN9Kzh/WrgKa6iGcHXLg==}
 
+  photoswipe@5.4.4:
+    resolution: {integrity: sha512-WNFHoKrkZNnvFFhbHL93WDkW3ifwVOXSW3w1UuZZelSmgXpIGiZSNlZJq37rR8YejqME2rHs9EhH9ZvlvFH2NA==}
+    engines: {node: '>= 0.12.0'}
+
   piccolore@0.1.3:
     resolution: {integrity: sha512-o8bTeDWjE086iwKrROaDf31K0qC/BENdm15/uH9usSC/uZjJOKb2YGiVHfLY4GhwsERiPI1jmwI2XrA7ACOxVw==}
 
@@ -4767,6 +4780,11 @@ snapshots:
     dependencies:
       yaml: 2.9.1
 
+  '@axe-core/playwright@4.10.1(playwright-core@1.64.1)':
+    dependencies:
+      axe-core: 4.10.3
+      playwright-core: 1.64.1
+
   '@babel/helper-string-parser@7.29.11': {}
 
   '@babel/helper-validator-identifier@7.29.7': {}
@@ -5007,8 +5025,6 @@ snapshots:
   '@expressive-code/plugin-text-markers@0.44.3':
     dependencies:
       '@expressive-code/core': 0.44.3
-
-  '@fancyapps/ui@6.1.15': {}
 
   '@formatjs/ecma402-abstract@2.3.6':
     dependencies:
@@ -5977,6 +5993,8 @@ snapshots:
       - tsx
       - uploadthing
       - yaml
+
+  axe-core@4.10.3: {}
 
   axe-core@4.14.0: {}
 
@@ -8282,6 +8300,8 @@ snapshots:
   path-to-regexp@0.1.13: {}
 
   pend@1.2.0: {}
+
+  photoswipe@5.4.4: {}
 
   piccolore@0.1.3: {}
 

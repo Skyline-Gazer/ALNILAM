@@ -10,6 +10,11 @@ export const zh_TW: Translation = {
 	[Key.archiveGroupCategory]: "依分類",
 	[Key.archiveGroupTag]: "依標籤",
 	[Key.search]: "搜尋",
+	[Key.searchNoResults]: "找不到結果",
+	[Key.menu]: "選單",
+	[Key.displaySettings]: "顯示設定",
+	[Key.mainNavigation]: "主導航",
+	[Key.navigationDrawer]: "導覽抽屜",
 	[Key.clear]: "清除",
 
 	[Key.friends]: "友鏈",
@@ -173,6 +178,21 @@ export const zh_TW: Translation = {
 	[Key.commentsLoading]: "正在載入評論...",
 	[Key.commentsLoadFailed]: "評論載入失敗",
 	[Key.commentsRequiresJavaScript]: "評論區需要啟用 JavaScript 才能顯示",
+	[Key.consentTitle]: "隱私偏好",
+	[Key.consentDescription]:
+		"本站可選擇性載入第三方服務。請選擇允許載入的內容；在你允許之前不會發起任何第三方請求。",
+	[Key.consentAnalytics]: "數據分析（Google Analytics）",
+	[Key.consentAds]: "廣告（Google AdSense）",
+	[Key.consentAllow]: "允許",
+	[Key.consentDeny]: "拒絕",
+	[Key.consentNote]:
+		"你可以隨時透過 window.alnilamConsent.open() 修改；選擇僅保存在本瀏覽器中。",
+	[Key.dkrecoveryTitle]: "廣告支撐著本站的免費閱讀",
+	[Key.dkrecoveryDescription]:
+		"偵測到廣告攔截器阻止了廣告載入。廣告用於支付主機與內容創作成本。",
+	[Key.dkrecoveryContinue]: "繼續閱讀",
+	[Key.dkrecoveryAllowHint]:
+		"你可以在廣告攔截器設定中將本站加入白名單；無論如何內容都不會被鎖定。",
 
 	[Key.untitled]: "無標題",
 	[Key.uncategorized]: "未分類",

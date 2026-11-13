@@ -6,6 +6,8 @@ Traceability rule: requirement → selected source/implementation → atomic Iss
 
 ## Proposed work-item traceability (all 39 active candidate atomic Issues)
 
+The table preserves the original planning snapshot; its status column is historical and must not be used as current Issue or implementation status. Consult the live Issue and its PR/CI evidence for current status.
+
 | Phase | Candidate Issue | Spec requirement IDs | Planning status |
 | --- | --- | --- | --- |
 | P0 | #43 | PRD-01, NFR-02 | Pending Spec freeze |
@@ -40,13 +42,15 @@ Traceability rule: requirement → selected source/implementation → atomic Iss
 | P5 | #68 | MOD-03, MOD-04 | Pending product scope decision |
 | P5 | #69 | MOD-03, MOD-04 | Pending product scope decision |
 | P5 | #70 | MOD-02, MOD-04 | Pending product scope decision |
-| P5 | #71 | MOD-02, MOD-04 | Pending product scope decision |
+| P5 | #71 | MOD-02, MOD-04 | [Implemented in worktree; PR/CI evidence pending](../p5/71-comments.md) |
 | P6 | #72 | MOD-01, NFR-04 | Pending Spec freeze |
 | P6 | #73 | BLOG-04, BLOG-06, BLOG-07, NFR-05; ROUTE/TAX/SEARCH/SEO/LLM E2E | Pending Spec freeze |
 | P6 | #74 | NFR-05, NFR-06 | Pending Spec freeze |
 | P6 | #75 | NFR-03, NFR-04 | Pending Spec freeze |
 | P6 | #76 | PRD-01, NFR-02, NFR-07, NFR-08, NFR-09 | Pending Spec freeze |
-| P6 | **#81** | **NFR-08; current-doc/spec/ADR/README/Site/manual CI governance** | Pending Spec freeze |
+| P6 | [#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81) | [NFR-08](01-SPEC.md); documentation governance | Pending Spec freeze |
+
+For #81, see the [governance scope](06-REUSE-DOC-GOVERNANCE.md#d-document-governance--single-source-of-truth-owners-and-timing), [link test and negative fixture](../../scripts/tests/docs_test.py), the CNB development [docs-links candidate](../../.cnb.yml) (`alnilam-docs-links-candidate`), and the GitHub mirror [CI workflow](../../.github/workflows/ci.yml). These sources alone do not establish acceptance or a CI run result.
 
 ## Future Backlog — not counted as an active Phase task
 

@@ -1,6 +1,10 @@
-# CNB to GitHub PR mirror
+# CNB to GitHub PR mirror protocol — historical
 
-Status: **operator-driven isolated PR mirror verified for two rounds and a repeat no-op; production mirror not executed** (2026-10-30). GitHub remains primary. The Owner selected CNB Agent-governed PRs plus a GitHub PR release mirror; production release authorization remains separate. Independent Gatekeeper and CNB Auto Merge prerequisites were canceled on 2026-10-30. GitHub Issues and Project #17 remain the task tracker.
+Status: GitHub `dev` is the development authority as of the PR #132 cutover; CNB
+`dev` is frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`. No recurring CNB
+development mirror is planned. The production-`main` mirror protocol and isolated
+experiments below are historical; no production `main` mirror, tag or release was
+performed. See [HANDOFF](../HANDOFF.md) for current refs and deployment evidence.
 
 
 [PR #113](https://github.com/Skyline-Gazer/ALNILAM/pull/113) proposes a local-only Git candidate preparer. It preserves both parents, verifies the candidate tree equals the supplied source tree, detects conflicts and GitHub-only tree drift, rejects an unrelated unmerged sync candidate, and reuses or no-ops on repeated inputs. A temporary bare repository prevents repository-configured merge drivers from executing. Six disposable Git-history tests cover two release rounds, a retry and a no-op, conflicts, drift, stale sync, and a custom merge driver. These are local mechanics, not GitHub PR/CI/Auto-merge or release acceptance. The helper does not validate a manifest or live refs, push a branch, create a PR, or sync a tag.

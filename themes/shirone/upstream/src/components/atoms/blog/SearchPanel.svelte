@@ -19,6 +19,8 @@ let {
 	query = $bindable(""),
 	placeholder = "",
 	hideInputOnDesktop = false,
+	noResultsText = "",
+	showNoResults = false,
 	id = "",
 	class: className = "",
 }: {
@@ -26,6 +28,10 @@ let {
 	query?: string;
 	placeholder?: string;
 	hideInputOnDesktop?: boolean;
+	/** Localized message shown when a finished search matched nothing. */
+	noResultsText?: string;
+	/** The caller decides when an empty result set is a "no results" answer. */
+	showNoResults?: boolean;
 	id?: string;
 	class?: string;
 } = $props();
@@ -50,6 +56,9 @@ let {
 			<span class="m3-blog-searchpanel__excerpt">{@html item.excerpt}</span>
 		</a>
 	{/each}
+	{#if showNoResults && noResultsText}
+		<p class="m3-blog-searchpanel__status" role="status">{noResultsText}</p>
+	{/if}
 </div>
 
 <style lang="stylus">
@@ -145,4 +154,11 @@ let {
 		:global(mark)
 			background: transparent
 			color: var(--primary)
+
+	/* 无结果提示：搜索完成但没有命中时的明确反馈 */
+	&__status
+		margin: 0
+		padding: var(--m3e-space-3)
+		font: var(--m3e-type-body-medium)
+		color: var(--on-surface-variant)
 </style>

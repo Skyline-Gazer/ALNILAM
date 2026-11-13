@@ -10,6 +10,11 @@ export const ko: Translation = {
 	[Key.archiveGroupCategory]: "분류별",
 	[Key.archiveGroupTag]: "태그별",
 	[Key.search]: "검색",
+	[Key.searchNoResults]: "결과가 없습니다",
+	[Key.menu]: "메뉴",
+	[Key.displaySettings]: "표시 설정",
+	[Key.mainNavigation]: "주요 탐색",
+	[Key.navigationDrawer]: "탐색 서랍",
 	[Key.clear]: "지우기",
 
 	[Key.friends]: "친구",
@@ -180,6 +185,21 @@ export const ko: Translation = {
 	[Key.commentsLoadFailed]: "댓글을 불러오지 못했습니다",
 	[Key.commentsRequiresJavaScript]:
 		"댓글을 표시하려면 JavaScript를 활성화해야 합니다",
+	[Key.consentTitle]: "개인정보 선택",
+	[Key.consentDescription]:
+		"이 사이트는 선택적 서드파티 서비스를 로드할 수 있습니다. 로드할 항목을 선택하세요. 허용하기 전까지는 아무것도 요청하지 않습니다.",
+	[Key.consentAnalytics]: "분석 (Google Analytics)",
+	[Key.consentAds]: "광고 (Google AdSense)",
+	[Key.consentAllow]: "허용",
+	[Key.consentDeny]: "거부",
+	[Key.consentNote]:
+		"window.alnilamConsent.open()으로 언제든 변경할 수 있으며, 선택은 이 브라우저에만 저장됩니다.",
+	[Key.dkrecoveryTitle]: "광고가 이 사이트를 유지합니다",
+	[Key.dkrecoveryDescription]:
+		"광고 차단기가 광고 로드를 막고 있는 것 같습니다. 광고는 호스팅과 새 글 운영 비용입니다.",
+	[Key.dkrecoveryContinue]: "계속 읽기",
+	[Key.dkrecoveryAllowHint]:
+		"광고 차단기 설정에서 이 사이트를 허용할 수 있습니다. 어느 쪽이든 콘텐츠는 잠기지 않습니다.",
 
 	[Key.untitled]: "제목 없음",
 	[Key.uncategorized]: "분류되지 않음",
