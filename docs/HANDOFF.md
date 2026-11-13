@@ -1,5 +1,55 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-13 · Demo deployment verified
+
+This section records the current CNB `dev` revision and the verified public Demo
+runtime. Earlier UX, product and issue evidence remains below.
+
+### Source and CI
+
+- The Demo was built from CNB `dev` `1cd67c47b7cab200f8bc4d25f7c359ef26dfe0f2`
+  (tree `5ab0827df5c41ed5a1bb099e7f5e27578cc23fe9`). The `dev` push pipeline
+  `alnilam-independent-site` succeeded in 105s. PR #122's exact-merge trusted
+  consumer succeeded in 29m49s: 201 browser tests passed, 1 intentional skip;
+  root and `/ALNILAM/` were covered.
+- GitHub `dev` remains `39ca829f97a60247f4c6a14e619dd847a5e895eb`; it was not
+  synchronized. GitHub PR #132 remains open and unmerged. CNB `main`, tags and
+  the ADS pin were not changed.
+- CNB PR #124 remains open. Its latest target trusted run failed after 202 tests
+  passed and 1 intentional skip: `tests/browser/shirone.spec.ts` hit the
+  5-second timeout while capturing the root desktop screenshot. The run did
+  not report a product assertion failure. GitHub Actions run 43403806749 belongs
+  to the open mirror-sync PR #132; it is not PR #124's trusted consumer.
+
+### Artifact and deployment
+
+- Project `xxxx` deployment `dpl_8Qqz1ySC2EGtt7crjkxvv3pDdM7p` is READY on the
+  production target. The prebuilt output came from the source SHA above;
+  `vercel build --prod` generated 75 pages, `artifact-check` verified 74 pages,
+  and the artifact budgets passed.
+- `dist/site/alnilam-provenance.json` records Core revision
+  `1cd67c47b7cab200f8bc4d25f7c359ef26dfe0f2` and Site digest
+  `6854784b7e62aa9d3337045678576396fc15062ecf5e1aa791782e17bf4ee9e6`.
+  The sorted `.vercel/output` file manifest SHA-256 is
+  `ab253c866e8b997c6be46af3120d33cba57912948035ace3879ba1f80a0bec6c`.
+- Public `https://xxxx-beryl-theta.vercel.app` now resolves to that deployment;
+  its `/alnilam-provenance.json` response matches the build. The previous
+  deployment was `dpl_GLi7EKtnRPatd9M87bntojBsKTJB`. Only the existing stable
+  alias was assigned with `vercel alias set`; no project-wide promotion ran.
+
+### Stable URL verification
+
+- A public browser session loaded the home page and `/posts/`; opened the series
+  index and detail; followed both article directions and confirmed each article
+  carries the two-item series context.
+- Pagefind search for `ALNILAM` returned four results, including both series
+  articles. Selecting the dark theme set `data-theme="github-dark"` and
+  `localStorage.theme="dark"`. The browser error log was empty.
+- No product route or interaction blocker was reproduced on the stable URL.
+  #35 remains Open / In Progress for Owner product acceptance and visual
+  sign-off; the finite engineering probe set remains closed.
+
+
 ## Live-state update — 2026-11-13 · UX closeout and series slice
 
 Everything below this update is historical context. This section records the
