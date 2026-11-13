@@ -4,7 +4,7 @@
 
 Apache-2.0 licensed, static-first Astro 7 / Svelte 5 / Tailwind CSS 4 blogging platform, with a strict Core/Site ownership boundary. Released v0.1.3 uses the Editorial theme; the P1 preview on `dev` uses the Shirone-derived theme.
 
-> **Status:** v0.1.3 is released; current CNB `dev` development is not a production release. P2 Core/Site work is accepted on the tracker: independent CNB Site and Core push runs are recorded in [#55](https://github.com/Skyline-Gazer/ALNILAM/issues/55). A GitHub reusable Site workflow [passed on an authorized non-production ref](https://github.com/Skyline-Gazer/Test-Site/actions/runs/41836937453); GitHub `dev` is not yet synchronized. See [Handoff](docs/HANDOFF.md) and check live Issues and CNB before starting work.
+> **Status:** v0.1.3 is released; GitHub `dev` carries unreleased development and CNB `dev` is frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`. P2 Core/Site work is accepted on the tracker: independent CNB Site and Core push runs are recorded in [#55](https://github.com/Skyline-Gazer/ALNILAM/issues/55). A reusable GitHub Site workflow [passed on an authorized non-production ref](https://github.com/Skyline-Gazer/Test-Site/actions/runs/41836937453). See [Handoff](docs/HANDOFF.md) and check live Issues and GitHub Actions before starting work.
 
 ## Quickstart
 
@@ -97,7 +97,9 @@ Automated acceptance: `node scripts/upgrade-check.mjs --old <historical-core-sha
 
 ## Development and governance
 
-- Primary development: CNB `dev` with Issue-linked CNB PRs; GitHub Issues/Project remain the task tracker; `main` is release-only (rulesets `alnilam-dev` / `alnilam-main`: PR-only + required `verify` check, no force pushes/deletion).
+- Primary development: GitHub `dev` through Issue-linked PRs; GitHub Issues and Project #17 remain the task tracker; `main` is release-only. The active `alnilam-dev` / `alnilam-main` rulesets require PRs and the `verify` check, with no bypass or force pushes.
+- CNB `dev` is frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; new product work and current validation do not run through CNB.
+- Vercel `xxxx` is connected to `Skyline-Gazer/ALNILAM` with production branch `dev`; see [Handoff](docs/HANDOFF.md) for the live deployment and provenance.
 - Tagging: `vX.Y.Z` on `main` only, annotated, created by the release PR merge. See [CHANGELOG.md](CHANGELOG.md) for versioning rules (SemVer; `lang`/`translationKey` are schema-v1 additive fields).
 - ADS pinned at `.ads` to commit `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` (ADS `cnb/dev` development line, not a release tag; private — optional for public users, `git submodule update --init --checkout .ads` requires authorized access). CI never clones it.
 - Docs: [Architecture](docs/ARCHITECTURE.md) · [Site onboarding](docs/SITE_ONBOARDING.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/HANDOFF.md)

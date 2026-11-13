@@ -1,6 +1,6 @@
 # ALNILAM Next — Product and Engineering SPEC (G0-F owner approved)
 
-> **Historical requirement snapshot:** the frozen targets below do not by themselves establish current implementation or development authority. The current Site contract is YAML-only schema v2 (`alnilam.config.yaml`); TOML-only Sites fail closed without automatic migration. See [Site onboarding](../SITE_ONBOARDING.md), [Site contract](../../scripts/site-contract.mjs), and [HANDOFF](../HANDOFF.md) for current behavior and evidence. CNB is the development authority.
+> **Historical requirement snapshot:** the frozen targets below do not by themselves establish current implementation or development authority. The current Site contract is YAML-only schema v2 (`alnilam.config.yaml`); TOML-only Sites fail closed without automatic migration. See [Site onboarding](../SITE_ONBOARDING.md), [Site contract](../../scripts/site-contract.mjs), and [HANDOFF](../HANDOFF.md) for current behavior, GitHub development authority and evidence.
 
 Current Owner requirement delta (2026-10-27): vNext Site is YAML-only. See [ADR 0002](../adr/0002-vnext-yaml-requirement-delta.md). Historical frozen v1/TOML text below remains evidence; no parser/migration change is implemented by the CNB Pilot.
 

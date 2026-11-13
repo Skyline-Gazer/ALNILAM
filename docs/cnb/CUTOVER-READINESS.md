@@ -1,4 +1,12 @@
-# ALNILAM CNB Primary / GitHub Mirror readiness
+# Historical CNB Primary / GitHub Mirror readiness
+
+## Current provider status — 2026-11-13
+
+GitHub `dev` is the development authority following PR #132. CNB `dev` is frozen
+at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; GitHub `main` and CNB `main` remain
+unchanged. The entries below preserve earlier CNB-primary decisions and evidence;
+they are not current development instructions. See [HANDOFF](../HANDOFF.md) for
+the exact GitHub merge, CI, and Vercel deployment records.
 
 ## CNB Dev Cutover — COMPLETE (2026-10-30)
 
