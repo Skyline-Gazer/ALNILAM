@@ -4,6 +4,8 @@ description: "First article in an independently owned Site."
 pubDate: 2026-10-25
 category: "release"
 tags: ["ALNILAM", "Astro"]
+series: "alnilam-introduction"
+seriesOrder: 1
 cover: "/site-assets/orion.svg"
 lang: "zh-CN"
 translationKey: "hello-alnilam"

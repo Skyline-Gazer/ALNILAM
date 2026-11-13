@@ -320,6 +320,17 @@ import { bindMarkdownRuntime } from "../utils/markdown-runtime";
 import { resolvePageKey } from "../utils/nav-utils";
 import { url } from "../utils/url-utils";
 
+const scrollPositionKey = "__alnilamScrollY";
+window.addEventListener("pagehide", () => {
+	const state = history.state && typeof history.state === "object" ? history.state : {};
+	history.replaceState({ ...state, [scrollPositionKey]: window.scrollY }, "");
+});
+window.addEventListener("pageshow", () => {
+	const scrollY = history.state?.[scrollPositionKey];
+	if (!Number.isFinite(scrollY)) return;
+	requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, scrollY)));
+});
+
 bindMarkdownRuntime();
 
 class WidgetLayout extends HTMLElement {

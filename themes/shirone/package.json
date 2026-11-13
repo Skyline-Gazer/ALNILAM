@@ -17,6 +17,7 @@
     "./Categories.astro": "./upstream/src/pages/categories.astro",
     "./Series.astro": "./upstream/src/pages/series.astro",
     "./SeriesDetail.astro": "./upstream/src/pages/series/[slug]/index.astro",
+    "./series-utils": "./upstream/src/utils/series-utils.ts",
     "./Tags.astro": "./upstream/src/pages/tags.astro"
   },
   "dependencies": {
