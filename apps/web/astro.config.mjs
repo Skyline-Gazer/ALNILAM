@@ -75,6 +75,7 @@ export default defineConfig({
     },
   },
   output: "static",
+  compressHTML: true,
   outDir: process.env.ALNILAM_OUTPUT_DIR || "./dist",
   build: {
     inlineStylesheets: "never",
@@ -118,6 +119,12 @@ export default defineConfig({
           if (fs.existsSync(path.join(siteRoot, "content/series"))) {
             injectRoute({ pattern: "/series/", entrypoint: "./src/modules/series.astro", prerender: true });
             injectRoute({ pattern: "/series/[slug]/", entrypoint: "./src/modules/series-detail.astro", prerender: true });
+          }
+          if (config.gallery.enabled) {
+            injectRoute({ pattern: "/albums/", entrypoint: "./src/modules/albums.astro", prerender: true });
+            injectRoute({ pattern: "/albums/[id]/", entrypoint: "./src/modules/album-detail.astro", prerender: true });
+            injectRoute({ pattern: "/[lang]/albums/", entrypoint: "./src/modules/albums-localized.astro", prerender: true });
+            injectRoute({ pattern: "/[lang]/albums/[id]/", entrypoint: "./src/modules/album-detail-localized.astro", prerender: true });
           }
         },
         "astro:build:setup": ({ vite }) => {

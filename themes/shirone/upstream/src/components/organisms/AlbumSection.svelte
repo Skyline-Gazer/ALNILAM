@@ -6,20 +6,26 @@ import TextField from "@components/atoms/input/TextField.svelte";
 import AlbumCard from "@components/molecules/AlbumCard.svelte";
 import PageHeader from "@components/molecules/PageHeader.svelte";
 import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
+import { i18n, i18nForLocale } from "@i18n/translation";
 import Icon from "@iconify/svelte";
 import { onMount } from "svelte";
 import type { AlbumIndexItem } from "@/types/album";
 
+type RoutedAlbumIndexItem = AlbumIndexItem & { detailPath?: string };
+
 let {
-	albums = [] as AlbumIndexItem[],
-	title = i18n(I18nKey.albums),
-	subtitle = i18n(I18nKey.albumsBanner),
+	albums = [] as RoutedAlbumIndexItem[],
+	title,
+	subtitle,
+	locale,
 }: {
-	albums?: AlbumIndexItem[];
+	albums?: RoutedAlbumIndexItem[];
 	title?: string;
 	subtitle?: string;
+	locale?: string;
 } = $props();
+
+const translate = (key: I18nKey) => (locale ? i18nForLocale(locale, key) : i18n(key));
 let query = $state("");
 let selectedTag = $state("");
 let initialized = false;
@@ -81,8 +87,8 @@ onMount(() => {
 <Card color="var(--card-bg)" radius="l" class="album-section px-8 py-6">
 	<PageHeader
 		icon="material-symbols:photo-library-outline-rounded"
-		{title}
-		{subtitle}
+		title={title ?? translate(I18nKey.albums)}
+		subtitle={subtitle ?? translate(I18nKey.albumsBanner)}
 	/>
 
 	{#if albums.length > 0}
@@ -91,8 +97,8 @@ onMount(() => {
 				<TextField
 					type="search"
 					bind:value={query}
-					placeholder={i18n(I18nKey.search)}
-					label={i18n(I18nKey.search)}
+					placeholder={translate(I18nKey.search)}
+					label={translate(I18nKey.search)}
 					hideLabel
 					variant="outlined"
 					class="!rounded-(--shape-corner-l)"
@@ -103,7 +109,7 @@ onMount(() => {
 					<button
 						type="button"
 						class="album-section__clear"
-						aria-label={i18n(I18nKey.clear)}
+						aria-label={translate(I18nKey.clear)}
 						onclick={() => (query = "")}
 					>
 						<Icon icon="material-symbols:close-rounded" aria-hidden="true" />
@@ -114,7 +120,7 @@ onMount(() => {
 				<Chips items={tagItems} variant="filter" bind:value={selectedTag} onchange={onTagChange} />
 			{/if}
 			<p class="album-section__count" aria-live="polite">
-				{filtered.length} {i18n(I18nKey.albumsCounts)}
+				{filtered.length} {translate(I18nKey.albumsCounts)}
 			</p>
 		</div>
 	{/if}
@@ -127,14 +133,14 @@ onMount(() => {
 		<div class="album-section__grid">
 			{#each filtered as album, index (album.id)}
 				<div class="album-section__item" style={`--album-delay: ${Math.min(index, 7) * 45}ms`}>
-					<AlbumCard {album} />
+					<AlbumCard {album} detailPath={album.detailPath} />
 				</div>
 			{/each}
 		</div>
 	{:else}
 		<div class="album-section__empty">
-			<Icon icon="material-symbols:search-off-rounded" aria-hidden="true" />
-			<span>{i18n(I18nKey.albumsNoResults)}</span>
+			<Icon icon={albums.length === 0 ? "material-symbols:photo-library-outline-rounded" : "material-symbols:search-off-rounded"} aria-hidden="true" />
+			<span>{translate(albums.length === 0 ? I18nKey.noData : I18nKey.albumsNoResults)}</span>
 		</div>
 	{/if}
 </Card>

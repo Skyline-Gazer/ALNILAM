@@ -1,0 +1,22 @@
+---
+import type { GetStaticPaths } from "astro";
+import GalleryDetailPage from "../components/GalleryDetailPage.astro";
+import { galleryRouteLocales, loadSiteGallery } from "../lib/gallery.mjs";
+import { loadSite } from "../lib/site-source.mjs";
+
+import type { AlbumGroup } from "@alnilam/theme-shirone/album-types";
+
+interface Props {
+  lang: string;
+  album: AlbumGroup;
+}
+
+export const getStaticPaths: GetStaticPaths = () => {
+  const { root, config } = loadSite();
+  const albums = loadSiteGallery(root);
+  return galleryRouteLocales(config).flatMap((lang) => albums.map((album) => ({ params: { lang, id: album.id }, props: { lang, album } })));
+};
+
+const { lang, album } = Astro.props;
+---
+<GalleryDetailPage album={album} locale={lang} localized />

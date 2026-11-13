@@ -69,7 +69,7 @@ my-site/
   alnilam.config.yaml     # schemaVersion: 2, site: {title, url, locale}, locales, theme: {appearance}
   content/posts/          # *.md / *.mdx
   assets/                 # optional → served at /site-assets/
-  data/                   # optional, reserved
+  data/                   # optional — taxonomy.yaml and albums.yaml when Gallery is enabled
 ```
 
 See [Site onboarding](docs/SITE_ONBOARDING.md) for the complete, copy-ready
@@ -79,7 +79,8 @@ configuration including `locales`, taxonomy and module blocks.
 - Output is staged, then atomically swapped; `alnilam-provenance.json` binds the Core revision + Site SHA-256 digest.
 - Non-default-locale posts: put them in `content/posts/<lang>/` with frontmatter `lang` + `translationKey` → served at `/<lang>/posts/<slug>/` with automatic hreflang alternates for real translations. Old `/posts/<lang>/<slug>/` URLs provide a noindex static navigation fallback to the canonical article.
 - Optional `llms.enabled` publishes locale-aware LLM discovery and source-backed Markdown views; `llms.full` separately opts into aggregation. Both default off; see [Site onboarding](docs/SITE_ONBOARDING.md) for privacy and hosting details.
-- Optional `comments.enabled` adds Giscus discussions and requires an explicit mapping: choose `specific` for stable content identity or `pathname` to preserve existing URL-based threads. Comments default off; when enabled they are click-to-load by default, while disabled pages and pre-gate state make no third-party request. See [Site onboarding](docs/SITE_ONBOARDING.md#comments-comments).
+- Optional `gallery.enabled` adds Site-owned `/albums/` pages and the Shirone Gallery, off by default; see [Site onboarding](docs/SITE_ONBOARDING.md#gallery-gallery).
+- Optional `comments.enabled` adds Giscus discussions through an explicit identity mapping. Comments default off; the default `load: click` mode waits for reader action, while `load: visible` can load as the section approaches the viewport. See [Site onboarding](docs/SITE_ONBOARDING.md#comments-comments).
 - Full contract, slug rules, image policy, and private-Site CI strategy: [docs/SITE_ONBOARDING.md](docs/SITE_ONBOARDING.md).
 
 ## Search

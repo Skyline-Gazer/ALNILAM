@@ -16,16 +16,15 @@ let {
 	columns?: 2 | 3 | 4;
 } = $props();
 
-let measuredRatios = $state<Record<string, number>>({});
+let failedPhotos = $state<Set<string>>(new Set());
 
 function photoRatio(photo: AlbumPhoto): number | undefined {
-	if (photo.width && photo.height) return photo.width / photo.height;
-	return measuredRatios[photo.id];
+  if (photo.width && photo.height) return photo.width / photo.height;
+  return undefined;
 }
 
 function orientationPriority(photo: AlbumPhoto): number {
-	// Only authoritative metadata may affect ordering; measured image ratios arrive
-	// asynchronously and must not reshuffle an already rendered masonry grid.
+  // Only authored dimensions affect ordering, so asynchronous image loads cannot reshuffle the grid.
 	const value =
 		photo.width && photo.height ? photo.width / photo.height : undefined;
 	if (value === undefined || value === 1) return 1;
@@ -44,23 +43,26 @@ const visiblePhotos = $derived.by(() => {
 		.map(({ photo }) => photo);
 });
 
-function rememberNaturalRatio(photo: AlbumPhoto, event: Event) {
-	if (photo.width && photo.height) return;
-	const image = event.currentTarget as HTMLImageElement;
-	if (!image.naturalWidth || !image.naturalHeight) return;
-	measuredRatios[photo.id] = image.naturalWidth / image.naturalHeight;
+function markPhotoFailed(id: string) {
+  failedPhotos = new Set(failedPhotos).add(id);
 }
 
-function openPhoto(event: MouseEvent, photo: AlbumPhoto) {
-	event.preventDefault();
-	event.stopPropagation();
-	const fullSrc = photo.src ? url(photo.src) : "";
-	void openFancyboxGallery([{ src: fullSrc }]);
+function openPhoto(event: MouseEvent, selected: AlbumPhoto) {
+  event.preventDefault();
+  event.stopPropagation();
+  const items = photos.map((photo) => ({
+    src: url(photo.src),
+    ...(photo.thumbnail ? { thumbnail: url(photo.thumbnail) } : {}),
+    caption: photo.title || photo.description || photo.alt,
+    ...(photo.width && photo.height ? { width: photo.width, height: photo.height } : {}),
+  }));
+  const startIndex = photos.findIndex((photo) => photo.id === selected.id);
+  void openFancyboxGallery(items, Math.max(startIndex, 0));
 }
 
 function ratio(photo: AlbumPhoto): string {
-	const value = photoRatio(photo);
-	return value === undefined ? "4 / 3" : String(value);
+  const value = photoRatio(photo);
+  return value === undefined ? "4 / 3" : String(value);
 }
 </script>
 
@@ -68,7 +70,7 @@ function ratio(photo: AlbumPhoto): string {
 			<div
 				class="album-gallery album-gallery--{layout}"
 				style={`--album-columns: ${columns}`}
-				role="list"
+				role="group"
 				aria-label={i18n(I18nKey.imageViewer)}
 			>
 		{#each visiblePhotos as photo, index (photo.id)}
@@ -79,16 +81,21 @@ function ratio(photo: AlbumPhoto): string {
 					aria-label={`${i18n(I18nKey.openImage)} ${index + 1}: ${photo.alt}`}
 						onclick={(event) => openPhoto(event, photo)}
 				>
-					<img
-					src={url(photo.thumbnail || photo.src)}
-						alt={photo.alt}
-						width={photo.width}
-						height={photo.height}
-						loading="lazy"
-					decoding="async"
-					referrerpolicy="no-referrer"
-					onload={(event) => rememberNaturalRatio(photo, event)}
-					/>
+          {#if !failedPhotos.has(photo.id)}
+            <img
+              src={url(photo.thumbnail || photo.src)}
+              width={photo.width ?? 4}
+              height={photo.height ?? 3}
+              loading="lazy"
+              decoding="async"
+              referrerpolicy="no-referrer"
+              onerror={() => markPhotoFailed(photo.id)}
+            />
+          {:else}
+            <span class="album-gallery__image-fallback" aria-hidden="true">
+              <Icon icon="material-symbols:image-not-supported-outline-rounded" />
+            </span>
+          {/if}
 				</button>
 		{/each}
 	</div>
@@ -140,9 +147,15 @@ function ratio(photo: AlbumPhoto): string {
 			aspect-ratio: var(--album-photo-ratio)
 			object-fit: cover
 			transition: transform var(--m3e-duration-medium) var(--m3e-easing-emphasized-decelerate), filter var(--m3e-duration-medium) var(--m3e-easing-standard)
-		.album-gallery--masonry & > img
-			aspect-ratio: auto
-			object-fit: cover
+	&__image-fallback
+		display: grid
+		place-items: center
+		width: 100%
+		aspect-ratio: var(--album-photo-ratio)
+		color: var(--on-surface-variant)
+		> :global(svg)
+			width: 2rem
+			height: 2rem
 
 	&__item:hover > img
 		transform: scale(1.025)

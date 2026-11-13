@@ -1,0 +1,24 @@
+---
+import type { GetStaticPaths } from "astro";
+import GalleryIndexPage from "../components/GalleryIndexPage.astro";
+import { galleryRouteLocales } from "../lib/gallery.mjs";
+import { loadSite } from "../lib/site-source.mjs";
+
+interface Props {
+  lang: string;
+}
+
+export const getStaticPaths: GetStaticPaths = () => {
+  const { config } = loadSite();
+  return galleryRouteLocales(config).map((lang) => ({ params: { lang }, props: { lang } }));
+};
+
+const { root, config } = loadSite();
+const { lang } = Astro.props;
+---
+<GalleryIndexPage
+  siteRoot={root}
+  locale={lang}
+  defaultLocale={config.site.locale}
+  prefixDefaultLocale={config.routing.prefixDefaultLocale}
+/>

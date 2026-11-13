@@ -28,3 +28,10 @@
 - PR #77 is **documentation-only after reconciling to current dev**; no ADS tool state or existing validated application source is reverted.
 - Project #17 existing 18 Done items are historical; new Milestones/parent–subissue links/Next items require actual API operations and readback. Until then status is `PROJECT_UNVERIFIED`; do not block already authorized limited P1 coding on unverified board bookkeeping, but preserve traceability and reconcile when permissions allow.
 - Actual frozen implementation authority is this owner decision plus the final reviewed PR #77 merge SHA (once merged). Later material changes require an ADR/Spec PR and new owner decision.
+## Owner addendum — Gallery engineering authorization — 2026-11-13
+
+The Owner decision recorded on [Issue #67](https://github.com/Skyline-Gazer/ALNILAM/issues/67#issuecomment-6854542688) supersedes only the 2026-10-26 timing restriction that barred Gallery implementation until vNext launch and full product acceptance. It authorizes scoped #67 engineering on GitHub `dev` before launch; #35 visual sign-off and unfinished P6 work are not prerequisites for this engineering delivery.
+
+The authorization is limited to a Site-owned, optional Gallery/Album using Shirone's existing routes/components and PhotoSwipe integration, with necessary backward-compatible Site config/content model, tests, a PR to GitHub `dev`, and verification through the existing Vercel Demo chain. Gallery remains default OFF unless a Site explicitly enables it. Moments, music, CMS Issues #68, #69, #88 and #89 are outside scope.
+
+The existing boundaries remain: no GitHub `main`, CNB refs, ADS pin, release tags, or manual production switch. Vercel Demo verification via the existing automatic chain is authorized. This decision permits merge to GitHub `dev` after required CI and material review findings pass; it records engineering authorization only, not formal product acceptance or release approval. The historical G0-F decisions and P1 scope above remain preserved.

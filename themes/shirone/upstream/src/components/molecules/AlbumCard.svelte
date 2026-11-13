@@ -5,22 +5,30 @@ import Icon from "@iconify/svelte";
 import { url } from "@utils/url-utils";
 import type { AlbumIndexItem } from "@/types/album";
 
-let { album }: { album: AlbumIndexItem } = $props();
+let { album, detailPath }: { album: AlbumIndexItem; detailPath?: string } = $props();
+let coverFailed = $state(false);
 </script>
 
+
 <article class="album-card">
-	<a class="album-card__link m3-state-layer" href={url(`/albums/${album.id}/`)} aria-label={album.title}>
+	<a class="album-card__link m3-state-layer" href={url(detailPath ?? `/albums/${album.id}/`)} aria-label={album.title}>
 		<div class="album-card__cover">
-			<img
-				src={album.cover ? url(album.cover) : ""}
-				alt={album.title}
-				loading="lazy"
-				decoding="async"
-				referrerpolicy="no-referrer"
-			/>
-			<div class="album-card__cover-fallback" aria-hidden="true">
-				<Icon icon="material-symbols:image-outline-rounded" />
-			</div>
+			{#if album.cover && !coverFailed}
+				<img
+					src={url(album.cover)}
+					width="4"
+					height="3"
+					alt=""
+					loading="lazy"
+					decoding="async"
+					referrerpolicy="no-referrer"
+					onerror={() => (coverFailed = true)}
+				/>
+			{:else}
+				<div class="album-card__cover-fallback" aria-hidden="true">
+					<Icon icon="material-symbols:image-outline-rounded" />
+				</div>
+			{/if}
 			{#if album.protected}
 				<div class="album-card__badges">
 					<span class="album-card__protected" title={i18n(I18nKey.albumPasswordTitle)}>

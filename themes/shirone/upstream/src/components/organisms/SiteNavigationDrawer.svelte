@@ -37,7 +37,9 @@ function localizedHref(path?: string, external = false) {
 }
 
 function localizedLabel(name: string, pageKey?: string) {
-	if (!localizedRoute || !pageKey) return name;
+	if (!pageKey) return name;
+	if (pageKey === "albums") return t(I18nKey.albums);
+	if (!localizedRoute) return name;
 	const labels: Record<string, string> = {
 		home: t(I18nKey.home),
 		posts: pageLocale === "ja" ? "記事" : pageLocale.startsWith("en") ? "Posts" : "文章",

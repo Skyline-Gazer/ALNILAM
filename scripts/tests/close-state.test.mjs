@@ -109,7 +109,7 @@ function compose(name, options, { seedBangumi = false } = {}) {
 before(() => {
   builds.off = compose(
     "off",
-    "\nllms:\n  enabled: false\nbangumi:\n  enabled: false\ncomments:\n  enabled: false\n",
+    "\ngallery:\n  enabled: false\nllms:\n  enabled: false\nbangumi:\n  enabled: false\ncomments:\n  enabled: false\n",
   );
   builds.defaults = compose("defaults", "\n");
   builds.bangumiOn = compose(
@@ -122,6 +122,17 @@ before(() => {
 
 after(() => {
   fs.rmSync(root, { recursive: true, force: true });
+});
+
+test("disabled Gallery emits no routes, navigation, module assets, or image-host URLs", () => {
+  for (const { out, emitted } of [builds.off, builds.defaults]) {
+    assert.deepEqual(emitted.filter((file) => /(^|\/)albums\//.test(file)), [], out);
+    for (const file of emitted.filter((entry) => /\.(?:html|js|css)$/.test(entry))) {
+      const text = read(out, file);
+      assert.doesNotMatch(text, /href=["'][^"']*\/albums\//i, file);
+      assert.doesNotMatch(text, /album-gallery__item|images\.unsplash\.com/i, file);
+    }
+  }
 });
 
 test("disabled Bangumi emits no route, covers, nav link, or bgm host residual", () => {

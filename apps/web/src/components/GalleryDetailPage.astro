@@ -1,0 +1,50 @@
+---
+import AlbumGallery from "@alnilam/theme-shirone/AlbumGallery.svelte";
+import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
+import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
+import type { AlbumGroup } from "@alnilam/theme-shirone/album-types";
+import { galleryPageText } from "../lib/gallery.mjs";
+import { withBase } from "../lib/i18n.mjs";
+
+interface Props {
+  album: AlbumGroup;
+  locale: string;
+  localized?: boolean;
+}
+
+const { album, locale, localized = false } = Astro.props;
+const copy = galleryPageText(locale);
+const indexPath = localized ? `/${locale}/albums/` : "/albums/";
+---
+<MainGridLayout lang={locale} title={album.title} description={album.description || album.title} page="albums">
+  <section class="album-detail">
+    <a class="album-detail__back" href={withBase(indexPath)}>← {copy.back}</a>
+    <PageHeader
+      title={album.title}
+      subtitle={album.description}
+      icon="material-symbols:photo-library-outline-rounded"
+    />
+    <p class="album-detail__meta">
+      {album.date && <span>{album.date} · </span>}
+      {album.location && <span>{album.location} · </span>}
+      <span>{album.photos.length} {copy.photos}</span>
+    </p>
+    {album.tags.length > 0 && <p class="album-detail__tags">{album.tags.map((tag) => `#${tag}`).join("　")}</p>}
+    <AlbumGallery photos={album.photos} layout={album.layout} columns={album.columns} client:load />
+  </section>
+</MainGridLayout>
+
+<style>
+  .album-detail { display: grid; gap: 1rem; }
+  .album-detail__back {
+    width: fit-content;
+    color: var(--on-surface-variant);
+    text-decoration: none;
+  }
+  .album-detail__back:hover { color: var(--primary); }
+  .album-detail__back:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+  .album-detail__meta, .album-detail__tags {
+    margin: 0;
+    color: var(--on-surface-variant);
+  }
+</style>
