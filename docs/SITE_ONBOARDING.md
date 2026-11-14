@@ -490,6 +490,10 @@ build nor `alnilam-provenance.json`. See the isolated example in
 fields inside `content/posts/`; `init --site <site>` generates `.pages.yml` from the
 Site taxonomy, and `verify` checks field mapping, media paths and category drift
 (the editor cannot show a category the schema does not declare).
+For a Git checkout, `create`, `edit` and `init` also accept
+`--expect-branch <name>` to refuse writes when the current Site branch differs.
+This is a local selection check; enforce review and protected-branch policy in
+the Git provider separately.
 
 Two rules matter for content safety:
 
