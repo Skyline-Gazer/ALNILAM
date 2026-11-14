@@ -2,5 +2,6 @@ reviews:
   auto_review:
     enabled: true
     drafts: false
+    # Adds `dev`; CodeRabbit always includes the repository's default branch.
     base_branches:
       - "^dev$"
