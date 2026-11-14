@@ -74,6 +74,13 @@ behavior and unresolved blockers.
 - Functional CI and Greptile feedback find defects; independent approval is not
   mandatory on every ordinary development PR. Address material findings and
   report failed, missing or stale results honestly.
+- CodeRabbit automatically reviews PRs to `dev`; the repository's default
+  `main` branch is also always included by CodeRabbit. CodeRabbit is advisory;
+  GitHub Actions `verify` remains the required check.
+- For every actionable CodeRabbit finding, verify the current diff and reply in
+  its original thread with the disposition and exact verification evidence.
+  Resolve the thread only when the disposition is supported; keep material
+  disagreements open.
 - Existing required checks remain effective. Serialize writes, reread live refs
   before integration, preserve both histories, and verify the resulting GitHub
   `dev` commit and tree. Do not force-push.
