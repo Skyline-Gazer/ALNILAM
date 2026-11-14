@@ -54,7 +54,7 @@
     },
     {
       "path": "src/pages/moments.astro",
-      "sha256": "57a5f788af1e200c8370e63401d1755d34f7eaefa38e85994d01da47aa084e66"
+      "sha256": "6d30a94e0ca3b0b4b53ba31fed167804b8a81eb2d86c49730049576e7c666c2d"
     },
     {
       "path": "src/pages/tags.astro",
