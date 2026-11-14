@@ -1,8 +1,9 @@
 # ALNILAM — Current Agent Handoff
 
-## Live-state update — 2026-11-14 · build cache and deployment recovery
+## Live-state update — 2026-11-15 · deployment boundary and cache review
 
-This is the latest state; earlier entries are historical context.
+This is the latest verified state. Earlier entries remain historical; the
+2026-11-14 cache measurements are retained as recorded evidence.
 
 ### GitHub development and review
 
@@ -11,19 +12,19 @@ This is the latest state; earlier entries are historical context.
 - PR #144 merged at `fb2010d755bc2ee96557547607d2e69b8e973b52`. Required PR `verify` passed in [43598173641](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43598173641). Post-merge run [43600470335](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43600470335) was cancelled after later branch activity.
 - PR #142 remains open at `844d6be9dbb401553137eae2d6d27fbabe6eb764`; refreshed required `verify` passed in [43600593600](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43600593600). Its earlier source head received CodeRabbit review run `4f75239b-0b9d-4fa6-a796-e3f2f4f18b15`; the base-only refresh skipped. Do not merge until #138's deployment split is resolved.
 - Issue #140 remains open until #142 can be integrated. Issue #145 is In Progress. Cache implementation PR #149 is open against `dev`; the [live PR](https://github.com/Skyline-Gazer/ALNILAM/pull/149) is authoritative for its current head, checks, and review threads. CodeRabbit's review of `72ac58c` found dangling namespace symlinks, a concurrent corrupt-artifact unlink race, and stale-lock eviction racing a live successor. The cache branch now validates namespace entries with `lstat`, atomically replaces corrupt artifacts, and fails closed on stale locks.
+- In Project #17, #138, #140 and #145 remain In Progress; #148 remains Todo. The ADS Learning Loop trigger is not met while this delivery tranche is open; no pilot implementation has started.
 
 ### Vercel deployment boundary
 
-- The existing Vercel project's `productionBranch` remains `dev`. Merging #144 triggered Production deployment `dpl_FbRUb7mePoNG3wpDrkZ2kAQw1dKs` (`READY`) with stable alias `https://xxxx-beryl-theta.vercel.app`; `/alnilam-provenance.json` reports Core `fb2010d755bc2ee96557547607d2e69b8e973b52` and Site digest `527909af24317e93ea7129e89e0da952397b95ac1fdea93bd0646b29e2dfd87f`.
-- Previous deployment `dpl_8Qqz1ySC2EGtt7crjkxvv3pDdM7p` is still `READY` and remains a rollback candidate. The stable Demo URL is still assigned to the current deployment.
-- #138 remains In Progress. The Vercel CLI/API route tried here could not change the Production Branch; the API rejected the project `link` field, and the official Dashboard opened at its login page. No branch/domain setting was changed. Owner authentication is required to continue the authorized split.
+- The Vercel project remains linked to GitHub `dev` with `productionBranch=dev`. Current Production deployment `dpl_FbRUb7mePoNG3wpDrkZ2kAQw1dKs` is `READY` from SHA `fb2010d755bc2ee96557547607d2e69b8e973b52`; the stable Demo alias `https://xxxx-beryl-theta.vercel.app` returned HTTP 200 and has no Git-branch override.
+- Project Vercel Authentication is `all_except_custom_domains` (Standard Protection). Vercel's branch-domain flow assigns a domain to Preview plus a Git branch; Standard Protection protects non-production URLs. Binding this generated `vercel.app` Demo domain to Preview branch `dev` would require Vercel Authentication, so anonymous Demo access would be lost. Do not disable protection globally, which would expose PR previews. See [branch-domain assignment](https://vercel.com/docs/domains/working-with-domains/assign-domain-to-a-git-branch) and [Deployment Protection](https://vercel.com/docs/deployment-protection).
+- The domain PATCH API supports `gitBranch`, but the Vercel CLI/API available here do not expose Production Branch mutation. The official Dashboard redirects this browser session to login. No setting or domain changed; #138 remains In Progress pending an Owner topology choice. The current READY deployment above is the known-source rollback target. Older deployment `dpl_8Qqz1ySC2EGtt7crjkxvv3pDdM7p` remains READY but has no Git SHA/ref metadata. A direct Preview URL probe failed during TLS setup; anonymous Preview access was not verified.
 
 ### Cache safety and reuse evidence
 
 - P0 and P1 changes are in #149: normal Compose no longer removes Legacy paths; `--clean-cache` is restricted to an owned managed root; `--clean-legacy` and dry-run are separate; explicit GC uses the managed root, active locks, TTL, and size policy; Shirone bundles use Core compiler input keys, content hashes, and atomic publication. Dangling namespace symlinks now fail closed; corrupt bundle repairs replace atomically.
-- `pnpm test` passed 301/301 on the review-fixed tree before the final staging-cleanup error-path fix; `node --test scripts/tests/build-lock.test.mjs` then passed 5/5 on final code head `5f2d16974f856f555523ece0d19dbf6588c12560`.
-- Both required `verify` runs on `5f2d169` passed: [43608022675](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43608022675) and [43608025948](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43608025948). They cover contract tests, Astro checks, Demo and nested-base composition, root and `/ALNILAM/` browser acceptance, generated output, external Site isolation, Core rollback, and ADS pin.
-- Astro compatibility passed in [run 43608025749](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43608025749); CodeRabbit passed in [run 132486804737](https://github.com/Skyline-Gazer/ALNILAM/runs/132486804737) with no new comments on the final head. The PR remains open and unmerged pending Owner acceptance.
+- `pnpm test` passed 301/301 on the review-fixed tree before the staging-cleanup error-path fix. On the current PR tree (`de57f2f21b2623e69a8557b91e22b4d67c6cf3f5`), `node --test scripts/tests/build-lock.test.mjs` passed 5/5, including simulated `EACCES` during staging cleanup.
+- Both required `verify` runs on `de57f2f` passed: [43609979215](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43609979215) and [43609976756](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43609976756); Astro compatibility passed in [43609979261](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43609979261). CodeRabbit's code-head review passed on `5f2d169`; a later outside-diff finding on `7a4bf94` is already fixed in the current tree, with the disposition posted on PR #149. CodeRabbit skipped the docs-only `de57f2f` head. The PR remains open and unmerged pending Owner acceptance.
 - An isolated Compose workload built 93 HTML pages and Pagefind output for two Site digests plus a warm rebuild. The shared bundle directory stayed at 6 artifacts (28,524,274 logical bytes; 28,536,832 allocated bytes; 6 unique SHA-256 hashes). Total isolated cache use was 31 MiB after cold build, 33 MiB after the Site digest changed, and 33 MiB after the warm rebuild. Times were 25.04s cold, 23.20s after Site change, 22.58s warm; this single sample does not establish a speed gain.
 - The reported old 7.2 GiB cache is absent from the inspected DevBox locations. Old Bundle identities, old hardlink/reflink relationships, effective working-set size, before/after savings, and cache hit rate therefore remain unverified. Do not claim the 70% space target or measured savings. GC defaults of 14 days / 2 GiB are explicit-operation candidates, not a measured guarantee.
 
