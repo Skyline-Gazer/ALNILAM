@@ -62,7 +62,8 @@ function run(name, args, extra = {}) {
 }
 
 function runGit(site, ...args) {
-  const result = spawnSync("git", ["-C", site, ...args], { encoding: "utf8" });
+  const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")));
+  const result = spawnSync("git", ["-C", site, ...args], { encoding: "utf8", env });
   assert.equal(result.status, 0, result.stderr || result.error?.message);
   return result.stdout.trim();
 }
