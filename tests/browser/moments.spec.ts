@@ -30,6 +30,11 @@ for (const deployment of deployments) {
         await expect(page.locator("main h1").first()).toHaveText(route.title);
         await expect(page.locator('#main-navigation [data-nav-key="moments"]')).toHaveText(route.title);
         await expect(page.locator(".moment-card")).toHaveCount(8);
+        const textOnlyCard = page.locator(".moment-card").filter({
+          hasText: "A text-only entry keeps the timeline useful when there is no cover image.",
+        });
+        await expect(textOnlyCard).toHaveCount(1);
+        await expect(textOnlyCard.locator(".moment-card__gallery")).toHaveCount(0);
         await expect(page.getByText("This draft must not be published", { exact: false })).toHaveCount(0);
 
         if (viewport.name === "mobile") {
@@ -40,6 +45,11 @@ for (const deployment of deployments) {
 
         const search = page.locator(".moment-section__search input");
         await expect(search).toHaveAttribute("placeholder", route.search);
+        await search.fill("independent");
+        await expect(page.locator(".moment-card")).toHaveCount(1);
+        await search.fill("no-matching-moment");
+        await expect(page.locator(".moment-card")).toHaveCount(0);
+        await expect(page.locator(".moment-section__empty")).toBeVisible();
         await search.fill("independent");
         await expect(page.locator(".moment-card")).toHaveCount(1);
         await search.fill("");
@@ -55,6 +65,9 @@ for (const deployment of deployments) {
       const twoImageCard = page.locator(".moment-card").nth(1);
       const imageTiles = twoImageCard.locator(".moment-card__tile");
       await expect(imageTiles).toHaveCount(2);
+      const firstTileImage = imageTiles.first().locator("img");
+      await expect(firstTileImage).toHaveAttribute("width", "640");
+      await expect(firstTileImage).toHaveAttribute("height", "360");
       await imageTiles.first().click();
       const viewer = twoImageCard.locator(".moment-viewer");
       await expect(viewer).toBeVisible();

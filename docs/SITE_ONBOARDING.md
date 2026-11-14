@@ -161,10 +161,10 @@ and the build emits no Moments route or navigation link.
 
 Each entry is a Markdown file under `content/moments/`. Its frontmatter accepts
 `published` (required date), `draft` and `pinned` (booleans), `location` and
-`mood` (strings), `tags` (string list), and `images` (list of `{ src, alt,
-thumbnail }`). The body uses the Site Markdown renderer. Drafts are omitted from
-production output. Image paths may be Site-relative (`assets/photo.jpg` or
-`photo.jpg`), `/site-assets/...`, or absolute HTTPS URLs; external images are
+`mood` (string), `tags` (string list), and `images` (list of
+`{ src, alt, thumbnail, width, height }`). The body uses the Site Markdown
+renderer. Drafts are omitted from production output. Image paths may be Site-relative
+(`assets/photo.jpg` or `photo.jpg`), `/site-assets/...`, or absolute HTTPS URLs; external images are
 never downloaded by Core. `thumbnail` is optional and is used for the timeline
 tile while `src` remains the original image in the viewer. `width` and `height`
 are an optional pair; absent values reserve a 4:3 ratio. The timeline shows eight

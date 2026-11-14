@@ -6,6 +6,8 @@ tags: [sky, notes]
 images:
   - src: orion.svg
     alt: Orion constellation illustration
+    width: 640
+    height: 360
   - src: /site-assets/lighthouse.png
     alt: A lighthouse under a clear night sky
 ---
