@@ -12,6 +12,8 @@ theme:
   appearance: dark
 gallery:
   enabled: true
+moments:
+  enabled: true
 llms:
   enabled: false
   full: false

@@ -1,0 +1,32 @@
+---
+import MomentSection from "@alnilam/theme-shirone/MomentSection.svelte";
+import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
+import { getSortedMoments } from "@alnilam/theme-shirone/moments-utils";
+import I18nKey from "../../../../themes/shirone/upstream/src/i18n/i18nKey";
+import { i18nForLocale } from "../../../../themes/shirone/upstream/src/i18n/translation";
+import { canonicalUrl } from "../lib/i18n.mjs";
+import { momentsPath } from "../lib/moments.mjs";
+import { loadSite } from "../lib/site-source.mjs";
+import { url } from "../../../../themes/shirone/upstream/src/utils/url-utils";
+interface Props {
+  locale: string;
+}
+
+const { locale } = Astro.props;
+const { config } = loadSite();
+const moments = await getSortedMoments();
+const title = i18nForLocale(locale, I18nKey.moments);
+const subtitle = i18nForLocale(locale, I18nKey.momentsBanner);
+const author = {
+  name: config.site.title,
+  avatar: "",
+  url: url("/"),
+};
+const alternates = config.locales.map((lang) => ({
+  lang,
+  href: canonicalUrl(momentsPath(lang, config), config.site.url),
+}));
+---
+<MainGridLayout lang={locale} {title} description={subtitle} page="moments" {alternates}>
+  <MomentSection {moments} {author} {locale} {title} subtitle={subtitle} client:visible />
+</MainGridLayout>

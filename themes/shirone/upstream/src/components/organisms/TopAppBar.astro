@@ -47,6 +47,7 @@ const currentPageKey = resolvePageKey(Astro.url);
 
 const navLabelMap: Record<string, string> = {
 	albums: t(I18nKey.albums),
+	moments: t(I18nKey.moments),
 	...(isLocalizedRoute
 		? {
 				home: t(I18nKey.home),

@@ -7,7 +7,7 @@ import { resolveImageAsset } from "@utils/asset-utils";
 import { getSortedMoments } from "@utils/content-utils";
 import { resolveI18nText } from "@utils/i18n-utils";
 import { url } from "@utils/url-utils";
-import { momentsConfig, profileConfig } from "@/config";
+import { momentsConfig, profileConfig, siteConfig } from "@/config";
 
 if (!momentsConfig.enable) {
 	return Astro.redirect("/404/");
@@ -55,5 +55,5 @@ const author = {
 ---
 
 <MainGridLayout title={pageTitle} description={pageDescription} page="moments">
-    <MomentSection {moments} {author} title={pageTitle} subtitle={pageDescription} client:visible></MomentSection>
+    <MomentSection {moments} {author} locale={siteConfig.lang} title={pageTitle} subtitle={pageDescription} client:visible></MomentSection>
 </MainGridLayout>

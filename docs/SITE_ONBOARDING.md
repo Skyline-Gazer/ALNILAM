@@ -36,15 +36,15 @@ gallery:
 ```
 
 Unknown top-level or nested keys fail the build, and so do malformed YAML, duplicate
-keys, unresolved YAML tags and non-plain YAML values. The `gallery`, `comments`, `bangumi`
-and `llms` module blocks are documented below. Omit keys your target Core does not yet
+keys, unresolved YAML tags and non-plain YAML values. The `gallery`, `moments`, `comments`,
+`bangumi` and `llms` module blocks are documented below. Omit keys your target Core does not yet
 know — an older Core fails closed on unknown fields even when the current Core accepts
 them.
 
 **Routing:** `routing` is accepted and validated. `routing.prefixDefaultLocale`
-controls whether default-locale Gallery routes include the locale prefix; post
-and taxonomy routes retain their existing URL policy. Categories and tags are
-Site-owned catalogs; tag pages also use post frontmatter.
+controls whether default-locale Gallery and Moments routes include the locale
+prefix; post and taxonomy routes retain their existing URL policy. Categories and
+tags are Site-owned catalogs; tag pages also use post frontmatter.
 
 ### Posts and slugs
 
@@ -149,6 +149,27 @@ albums:
 Relative media paths resolve under the Site's `assets/` directory and are emitted under `/site-assets/`; `assets/gallery/photo.jpg` and `gallery/photo.jpg` both work. Root-relative paths such as `/site-assets/gallery/photo.jpg` and complete HTTPS URLs are also accepted. HTTPS queries and signatures are preserved. Core never downloads remote media during build, proxies images, or makes cross-origin pixel reads; ordinary browser image loading does not require CORS. The browser host must allow the remote image URL in its own CSP, if configured. No additional request is made to measure dimensions during build. Supplying `width` and `height` also lets PhotoSwipe avoid its on-open size probe; without them, the existing PhotoSwipe handler measures only when the viewer opens.
 
 Use media you have rights to publish. The Demo Site's remote samples are served by Unsplash under the [Unsplash License](https://unsplash.com/license); they are referenced by URL and are not copied into ALNILAM.
+
+### Moments (`moments`)
+
+Moments is off by default. Set `moments.enabled: true` to emit the `/moments/`
+timeline, localized routes for configured non-default locales, its navigation
+link and its interactive image viewer. When `routing.prefixDefaultLocale` is
+true, every configured locale, including the default locale, uses a prefixed
+Moments route. With Moments disabled, its content collection loads no entries
+and the build emits no Moments route or navigation link.
+
+Each entry is a Markdown file under `content/moments/`. Its frontmatter accepts
+`published` (required date), `draft` and `pinned` (booleans), `location` and
+`mood` (string), `tags` (string list), and `images` (list of
+`{ src, alt, thumbnail, width, height }`). The body uses the Site Markdown
+renderer. Drafts are omitted from production output. Image paths may be Site-relative
+(`assets/photo.jpg` or `photo.jpg`), `/site-assets/...`, or absolute HTTPS URLs; external images are
+never downloaded by Core. `thumbnail` is optional and is used for the timeline
+tile while `src` remains the original image in the viewer. `width` and `height`
+are an optional pair; absent values reserve a 4:3 ratio. The timeline shows eight
+entries initially and reveals the next eight on request; filters and search
+operate on the build-time dataset without a runtime data service.
 
 ### Comments (`[comments]`)
 

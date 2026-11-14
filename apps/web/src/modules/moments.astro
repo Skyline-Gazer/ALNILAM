@@ -1,0 +1,7 @@
+---
+import MomentsIndexPage from "../components/MomentsIndexPage.astro";
+import { loadSite } from "../lib/site-source.mjs";
+
+const { config } = loadSite();
+---
+<MomentsIndexPage locale={config.site.locale} />

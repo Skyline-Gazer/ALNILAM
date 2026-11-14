@@ -10,13 +10,15 @@
 import IconButton from "@components/atoms/action/IconButton.svelte";
 import LoadingIndicator from "@components/atoms/feedback/LoadingIndicator.svelte";
 import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
+import { i18nForLocale } from "@i18n/translation";
 import type { MomentImage } from "@utils/content-utils";
 import { openFancyboxGallery } from "@utils/fancybox-handler";
 import { prefersReducedMotion } from "@utils/motion";
 import { tick } from "svelte";
 
-let { images = [] as MomentImage[] }: { images?: MomentImage[] } = $props();
+let { images = [] as MomentImage[], locale }: { images?: MomentImage[]; locale: string } = $props();
+
+const t = (key: I18nKey) => i18nForLocale(locale, key);
 
 const MAX_TILES = 6;
 
@@ -104,7 +106,7 @@ function handleKeydown(event: KeyboardEvent) {
 }
 
 function tileLabel(i: number) {
-	return `${i18n(I18nKey.openImage)} ${i + 1}`;
+	return `${t(I18nKey.openImage)} ${i + 1}`;
 }
 
 function thumbnailSrc(image: MomentImage) {
@@ -148,7 +150,7 @@ $effect(() => {
 		class="moment-viewer"
 		bind:this={viewerEl}
 		role="group"
-		aria-roledescription={i18n(I18nKey.imageViewer)}
+		aria-roledescription={t(I18nKey.imageViewer)}
 		tabindex="-1"
 		onkeydown={handleKeydown}
 	>
@@ -161,14 +163,14 @@ $effect(() => {
 					icon="material-symbols:open-in-full-rounded"
 					variant="standard"
 					size="xsmall"
-					label={i18n(I18nKey.viewOriginal)}
+					label={t(I18nKey.viewOriginal)}
 					onclick={() => openLightbox(index)}
 				/>
 				<IconButton
 					icon="material-symbols:contract-rounded"
 					variant="standard"
 					size="xsmall"
-					label={i18n(I18nKey.backToGrid)}
+					label={t(I18nKey.backToGrid)}
 					onclick={collapseViewer}
 				/>
 			</div>
@@ -179,7 +181,7 @@ $effect(() => {
 				icon="material-symbols:chevron-left-rounded"
 				variant="tonal"
 				size="xsmall"
-				label={i18n(I18nKey.previousImage)}
+				label={t(I18nKey.previousImage)}
 				disabled={index === 0}
 				onclick={() => go(-1)}
 			/>
@@ -188,8 +190,8 @@ $effect(() => {
 					type="button"
 					class="moment-viewer__stage-btn"
 					aria-label={current.alt
-						? `${i18n(I18nKey.viewOriginal)}: ${current.alt}`
-						: i18n(I18nKey.viewOriginal)}
+						? `${t(I18nKey.viewOriginal)}: ${current.alt}`
+						: t(I18nKey.viewOriginal)}
 					onclick={() => openLightbox(index)}
 				>
 					{#if !loadedViewerImages.has(current.src)}
@@ -199,6 +201,8 @@ $effect(() => {
 					{/if}
 					<img
 						src={current.src}
+						width={current.width ?? 640}
+						height={current.height ?? 480}
 						alt=""
 						loading="eager"
 						decoding="async"
@@ -213,7 +217,7 @@ $effect(() => {
 				icon="material-symbols:chevron-right-rounded"
 				variant="tonal"
 				size="xsmall"
-				label={i18n(I18nKey.nextImage)}
+				label={t(I18nKey.nextImage)}
 				disabled={index === images.length - 1}
 				onclick={() => go(1)}
 			/>
@@ -238,6 +242,8 @@ $effect(() => {
 						src={thumbnailSrc(image)}
 						srcset={image.thumbnailSrcset}
 						sizes="56px"
+						width={image.width ?? 640}
+						height={image.height ?? 480}
 						alt=""
 						loading="lazy"
 						decoding="async"
@@ -266,6 +272,8 @@ $effect(() => {
 					src={thumbnailSrc(image)}
 					srcset={image.thumbnailSrcset}
 					sizes={tileSizes(i)}
+					width={image.width ?? 640}
+					height={image.height ?? 480}
 					alt={image.alt}
 					loading="lazy"
 					decoding="async"

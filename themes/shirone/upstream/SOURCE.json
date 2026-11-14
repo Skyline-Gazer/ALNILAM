@@ -54,7 +54,7 @@
     },
     {
       "path": "src/pages/moments.astro",
-      "sha256": "57a5f788af1e200c8370e63401d1755d34f7eaefa38e85994d01da47aa084e66"
+      "sha256": "6d30a94e0ca3b0b4b53ba31fed167804b8a81eb2d86c49730049576e7c666c2d"
     },
     {
       "path": "src/pages/tags.astro",
@@ -262,7 +262,7 @@
     },
     {
       "path": "src/utils/content-utils.ts",
-      "sha256": "52b23cee603741a5a05c2279ffe732c3700ae634bbf1f29f602b2dc0e312940d"
+      "sha256": "0601c7b49d4c759517fc5dfdd2dba9b625809a962aa79cca09785bcb8e73be66"
     },
     {
       "path": "src/utils/mc-utils.ts",
@@ -402,7 +402,7 @@
     },
     {
       "path": "src/utils/nav-utils.ts",
-      "sha256": "08e4c8422629c9bb9e7346a323681f8288c6bf59fd9035bd477c63b62431ac48"
+      "sha256": "3b387d0db5ccc41b909d5193493cbed9e297f5e867375e0e6c96d2ba54278fb1"
     },
     {
       "path": "src/utils/responsive-utils.ts",
@@ -950,7 +950,7 @@
     },
     {
       "path": "src/components/organisms/TopAppBar.astro",
-      "sha256": "5b0d8e3f452cac862fe26b247604591e1e6b2896b57d205175f5262074d0855b"
+      "sha256": "eb51e5972d4dc01fed86d891bcb8706b0fd8bd5b314b27459c599115f718ef1e"
     },
     {
       "path": "src/components/organisms/BannerStage.astro",
@@ -962,7 +962,7 @@
     },
     {
       "path": "src/components/organisms/MomentSection.svelte",
-      "sha256": "2e762ef99d8b8fbdd6d50b49999b51b9d14e42e184743dcf2ce07ab3d09a64b6"
+      "sha256": "cae13656a4a6ed495c2c58be2285affe571c9d53a99aa05f90979fa585839007"
     },
     {
       "path": "src/components/organisms/ArticleDiscovery.astro",
@@ -994,7 +994,7 @@
     },
     {
       "path": "src/components/organisms/SiteNavigationDrawer.svelte",
-      "sha256": "28b5847e393862155d06dcb3070a48c3e2fe74dbb19407a88fa3f10f74f7a998"
+      "sha256": "1305df2d0f760be9ad1afa5817b6cc0cb7c1e09c359950be4395009c6ec3de8d"
     },
     {
       "path": "src/components/organisms/Search.svelte",
@@ -1098,7 +1098,7 @@
     },
     {
       "path": "src/components/molecules/MomentCard.svelte",
-      "sha256": "3d0d7e909d207011676054459c389a10aced3cabfbe1aa10fd732a9cc60baf0a"
+      "sha256": "39e4e4c1fbe925fbeb09f7a2e584e4648019c87654c639c94b4a00614e1b12da"
     },
     {
       "path": "src/components/molecules/SkillCard.svelte",
@@ -1130,7 +1130,7 @@
     },
     {
       "path": "src/components/molecules/MomentGallery.svelte",
-      "sha256": "5076a590e267843af6ed6533f8ddd32e5b02c715b9bf3a53376824131bf5f9af"
+      "sha256": "0cb483083bba9b917024dfcaa3e7492bc33737e03960d8050d933bc317ea4781"
     },
     {
       "path": "src/components/molecules/Pagination.astro",
@@ -1962,14 +1962,15 @@
     "src/utils/markdown-processor.mjs": "Pass siteConfig.base to rehypeMarkdownImages for subpath and build-space asset resolution; remove unsafe schemes from Markdown links.",
     "src/plugins/rehype-safe-markdown-links.mjs": "Remove unsafe URL schemes from Markdown links while retaining link text.",
     "src/plugins/rehype-markdown-images.mjs": "Resolve relative and Site-asset Markdown images into managed _astro / subpath URLs, retain query and fragment, and guarantee explicit width/height dimensions.",
-    "src/utils/nav-utils.ts": "Map ALNILAM /posts, /archives, /tags, and /bangumi routes in resolvePageKey for native active-link highlighting.",
+    "src/utils/nav-utils.ts": "Map ALNILAM /posts, /archives, /tags, /bangumi and /moments routes in resolvePageKey for native active-link highlighting.",
+    "src/utils/content-utils.ts": "Add optional original image dimensions to the MomentImage contract for CLS-safe gallery slots.",
     "src/components/molecules/FloatingActionButton.astro": "Render static FAB button shell without redundant per-button client:load island hydration.",
-    "src/components/organisms/TopAppBar.astro": "Gate DisplaySettings island on !siteConfig.themeColor.fixed and consolidate TopAppBar navigation runtime into Layout. Add server-rendered aria-expanded/aria-controls to the menu button so the drawer disclosure is announced before hydration. Add aria-expanded/aria-controls to the display-settings toggle. Add the stable #main-navigation id so browser contracts select the navigation landmark without depending on its accessible name. Localize the navigation landmark name with the page language.",
+    "src/components/organisms/TopAppBar.astro": "Gate DisplaySettings island on !siteConfig.themeColor.fixed and consolidate TopAppBar navigation runtime into Layout. Add server-rendered aria-expanded/aria-controls to the menu button so the drawer disclosure is announced before hydration. Add aria-expanded/aria-controls to the display-settings toggle. Add the stable #main-navigation id so browser contracts select the navigation landmark without depending on its accessible name. Localize the navigation landmark name with the page language and resolve the Moments link label from the active locale.",
     "src/layouts/MainGridLayout.astro": "Gate BannerStage when banner images and homeText are disabled; render RouteProgress without redundant island hydration; move the sidebar elements after the main content column so mobile DOM/parse order matches the visual order (content → sidebar → footer) and the already-painted aside is no longer pushed down by late-parsed article blocks (real mobile CLS); desktop columns stay on explicit lg:/xl: col-start/row-start.",
     "src/components/organisms/SideBar.astro": "Render only widgets visible on the current page in static MPA mode and omit unused Swup polling script.",
     "src/components/organisms/FloatingControls.astro": "Render TOC floating panel/button only on pages where TOC is visible and consolidate FAB init into Layout.",
     "src/components/organisms/PostPage.astro": "Consolidate post-list masonry initialization into Layout runtime script.",
-    "src/components/organisms/SiteNavigationDrawer.svelte": "Sync aria-expanded on #nav-drawer-switch, replay a drawer tap recorded before the island mounted, trap Tab focus inside the aria-modal panel while open, dismiss on outside press or Escape with focus restored, and close mobile drawer on desktop viewport resize. Focus the first drawer item only once the open class makes the panel visible. Expose aria-expanded only after the panel is visible and focused, and keep Tab inside while the opening frame precedes computed visibility. Mark non-drawer body children inert while the modal is open (restored on close, resize and unmount). Localize the drawer navigation landmark name with the page language.",
+    "src/components/organisms/SiteNavigationDrawer.svelte": "Sync aria-expanded on #nav-drawer-switch, replay a drawer tap recorded before the island mounted, trap Tab focus inside the aria-modal panel while open, dismiss on outside press or Escape with focus restored, and close mobile drawer on desktop viewport resize. Focus the first drawer item only once the open class makes the panel visible. Expose aria-expanded only after the panel is visible and focused, and keep Tab inside while the opening frame precedes computed visibility. Mark non-drawer body children inert while the modal is open (restored on close, resize and unmount). Localize the drawer navigation landmark name with the page language and resolve the Moments link label from the active locale.",
     "src/utils/fab-controller.ts": "Respect prefers-reduced-motion when scrolling to TOC anchors and keep mobile FAB controls visible across TOC anchor jumps.",
     "src/components/molecules/SidebarTOC.astro": "Respect prefers-reduced-motion when scrolling to TOC anchors.",
     "src/styles/markdown/generic.styl": "Ensure unbroken prose URLs wrap and wide code/table blocks scroll horizontally within .custom-md.",
@@ -1996,6 +1997,9 @@
     "src/i18n/languages/vi.ts": "Add the mainNavigation and navigationDrawer landmark names and the searchNoResults message.",
     "src/i18n/languages/zh_CN.ts": "Add the mainNavigation and navigationDrawer landmark names and the searchNoResults message.",
     "src/i18n/languages/zh_TW.ts": "Add the mainNavigation and navigationDrawer landmark names and the searchNoResults message.",
+    "src/components/organisms/MomentSection.svelte": "Accept an explicit page locale and resolve section labels, search, empty state and pagination copy for that locale; show eight entries initially to stay within the static HTML page budget.",
+    "src/components/molecules/MomentCard.svelte": "Pass the page locale into MomentGallery and localize the pinned badge through the current locale dictionary.",
+    "src/components/molecules/MomentGallery.svelte": "Accept an explicit page locale and localize image viewer labels, accessible descriptions and controls; emit width and height attributes for CLS-safe image slots.",
     "src/styles/main.css": "Closed float panels are hidden from the accessibility tree and tab order (opacity alone left invisible controls focusable)."
   }
 }

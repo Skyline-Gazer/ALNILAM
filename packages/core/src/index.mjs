@@ -17,6 +17,7 @@ const ROOT_KEYS = new Set([
   "categories",
   "tags",
   "gallery",
+  "moments",
   "comments",
   "bangumi",
   "llms",
@@ -26,6 +27,7 @@ const ROOT_KEYS = new Set([
 ]);
 const SITE_KEYS = new Set(["title", "description", "url", "locale"]);
 const GALLERY_KEYS = new Set(["enabled"]);
+const MOMENTS_KEYS = new Set(["enabled"]);
 const THEME_KEYS = new Set(["appearance"]);
 const ROUTING_KEYS = new Set(["prefixDefaultLocale"]);
 const COMMENT_KEYS = new Set([
@@ -392,6 +394,11 @@ export function normalizeSiteConfig(input) {
   if (input.gallery?.enabled !== undefined && typeof input.gallery.enabled !== "boolean") {
     throw new Error("ALNILAM: gallery.enabled must be a boolean");
   }
+  assertPlainObject(input.moments ?? {}, "moments");
+  rejectUnknownKeys(input.moments ?? {}, MOMENTS_KEYS, "moments");
+  if (input.moments?.enabled !== undefined && typeof input.moments.enabled !== "boolean") {
+    throw new Error("ALNILAM: moments.enabled must be a boolean");
+  }
 
 
   assertPlainObject(input.llms ?? {}, "llms");
@@ -422,6 +429,7 @@ export function normalizeSiteConfig(input) {
     analytics: normalizeAnalytics(input.analytics),
     ads: normalizeAds(input.ads),
     gallery: Object.freeze({ enabled: input.gallery?.enabled === true }),
+    moments: Object.freeze({ enabled: input.moments?.enabled === true }),
     llms: Object.freeze({ enabled: input.llms?.enabled === true, full: input.llms?.full === true }),
     bangumi: Object.freeze({
       enabled: bangumi.enabled === true,
