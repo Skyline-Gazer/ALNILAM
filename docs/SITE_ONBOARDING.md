@@ -98,18 +98,24 @@ markup by always emitting explicit `width`/`height` on generated cover `<img>` t
 
 ### Build cache
 
-Derived build state (the verified Site snapshot, Astro's content/image store,
-Vite's dependency cache and Bangumi snapshots and covers) lives in one managed
-cache root — `<repo>/.cache/alnilam` by default, overridable with
-`ALNILAM_CACHE_DIR`. The Site snapshot and Astro's content/image store are keyed
-by Core revision and Site digest; Vite's dependency cache is keyed by Core
-revision alone. Bangumi snapshots are scoped by user ID, subject type and limit.
-Keep the cache outside your Site; repeated builds never write into your Site.
-`node scripts/compose.mjs --clean-cache` removes the whole cache and the
-legacy cache directories (`apps/web/.astro`, `apps/web/node_modules/.astro`)
-left by earlier versions. Builds of the same Core revision and Site digest
-are serialized by a lock in the cache; a lock is released when its build
-finishes and stolen when its holder process is gone or after six hours.
+Derived build state lives under `<repo>/.cache/alnilam` by default, overridable with
+`ALNILAM_CACHE_DIR`. The root carries `.alnilam-cache-owner.json`. On first use,
+ALNILAM creates that marker only when no managed `v1`, `bangumi` or `shirone` namespace
+exists; unmarked cache namespaces fail closed. Unrelated sibling files are preserved.
+The Site snapshot and Astro content/image state are keyed by Core revision and Site
+digest; Vite's dependency cache is keyed by Core revision. Shirone's compiled bundles
+are shared by a Core input fingerprint and verified by SHA-256. Bangumi snapshots are
+scoped by user ID, subject type and limit. Keep the cache outside your Site.
+
+Normal Compose never recursively deletes project-local legacy directories.
+`node scripts/compose.mjs --clean-cache` removes only the verified managed cache,
+and refuses active builds, symlinks, hard links and nested filesystem boundaries.
+`node scripts/compose.mjs --gc-cache --dry-run` reports proposed TTL/size eviction;
+`--gc-cache` applies a 14-day unused TTL and 2 GiB allocated-size cap. Set
+`ALNILAM_CACHE_TTL_DAYS` or `ALNILAM_CACHE_MAX_BYTES` to override these limits.
+`node scripts/compose.mjs --clean-legacy --dry-run` lists allowlisted legacy paths,
+types and estimated space. `--clean-legacy` removes empty allowlisted directories;
+it preserves files and directories whose contents do not have verified ownership.
 
 ## Optional modules (opt-in via config)
 

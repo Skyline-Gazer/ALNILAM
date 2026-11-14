@@ -1,5 +1,58 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-15 · Vercel Production branch mismatch
+
+The API-configured dual-project setup did not prove runtime branch separation. Issue #138 is reopened; its Project #17 item is `In Progress`.
+
+### GitHub source and integration
+
+- GitHub `dev` remains `113ab9c7a9e6fbb38c75e808c7f94e6095244564` (tree `1e411f2e08e46ace52e3971c11de8f1760321442`); `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`. PR #142 merged by normal merge at the `dev` SHA, and post-merge `verify` run [43621930750](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43621930750) passed. PRs #143 and #144 remain merged; their CI evidence is recorded below.
+- PR #149 remains open and unmerged pending Owner acceptance. Its live PR page is authoritative for the current head, checks, and review threads.
+
+### Vercel runtime
+
+- Existing Demo project `xxxx` still tracks `dev`. The stable public alias returned HTTP 200 after PR #142; `/alnilam-provenance.json` reports Core revision `113ab9c7a9e6fbb38c75e808c7f94e6095244564` and Site digest `527909af24317e93ea7129e89e0da952397b95ac1fdea93bd0646b29e2dfd87f`.
+- Separate project `alnilam-production` reports API `link.productionBranch=main` and `ssoProtection=all`, but deployment `dpl_9L7gWLzfAYJtwQRwmZhBTu3LT3q9` is `READY`, `target=production`, and records Git ref `dev`, SHA `113ab9c7a9e6fbb38c75e808c7f94e6095244564`. Its aliases include `alnilam-production.vercel.app` and the generated `git-dev` alias. This automatic deployment is not Owner acceptance of a formal release.
+- The project is paused (`paused=true`); the generated Production hostname returns HTTP 503. The PR #149 Preview deployment is protected and its direct URL returns HTTP 302 to Vercel SSO. There is no custom external domain.
+- The API branch field and observed deployment target disagree. Confirm or correct Production → Branch Tracking in the official Dashboard before unpausing. No Dashboard change was made in this session: the required `computer-use` command `orca-ide` is unavailable (`command not found`). Keep the project paused; the first formal `main` deployment and external-domain activation remain Owner-accepted release actions.
+
+### Issue and Project tracking
+
+- Issue #138 was reopened with the deployment IDs, branch/SHA mismatch, public Demo response, and containment evidence. Its Project #17 item is `In Progress`. Issue #140 remains closed.
+
+## Live-state update — 2026-11-15 · deployment boundary and cache review (configuration snapshot)
+
+This section records the configuration snapshot before the later Production-target deployment from `dev`. Earlier entries remain historical; cache measurements are retained as recorded evidence.
+
+### GitHub development and review
+
+- GitHub `dev` is `113ab9c7a9e6fbb38c75e808c7f94e6095244564` (tree `1e411f2e08e46ace52e3971c11de8f1760321442`); `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`. No CNB ref, release tag, or ADS gitlink changed.
+- PR #143 merged at `8d96d0a205bf82a4d4afd489e00fb4ca57823253`; its required `verify` passed in [43580970549](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43580970549). Post-merge run [43597086446](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43597086446) was cancelled, not passed.
+- PR #144 merged at `fb2010d755bc2ee96557547607d2e69b8e973b52`; required `verify` passed in [43598173641](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43598173641). Post-merge run [43600470335](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43600470335) was cancelled after later branch activity.
+- PR #142 merged by normal merge commit `113ab9c7a9e6fbb38c75e808c7f94e6095244564`. Its required PR `verify` passed in [43600593600](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43600593600); CodeRabbit full review passed in [132489573639](https://github.com/Skyline-Gazer/ALNILAM/runs/132489573639). Post-merge `verify` [43621930750](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43621930750) passed.
+- Issue #138 was closed at this configuration snapshot and later reopened after the Vercel runtime mismatch; its Project #17 item is now `In Progress`. Issue #140 remains closed. Issue #145 remains `In Progress`; #148 remains `Todo`, and no ADS Learning Loop pilot has started. PR #149 remains open and unmerged pending Owner acceptance; the live PR is authoritative for its refreshed head, checks, and review threads. Its review findings on dangling namespace symlinks, concurrent corrupt-artifact unlink, and stale-lock eviction have fixes and posted dispositions.
+
+### Vercel deployment boundary
+
+- The existing Vercel Demo project remains linked to GitHub `dev` (`productionBranch=dev`) with `all_except_custom_domains` protection and the same stable alias. After PR #142, deployment `dpl_2nR4a1SU5pkKghE4K8b9ZMrfBq8N` is `READY` from SHA `113ab9c7a9e6fbb38c75e808c7f94e6095244564`; the alias returned HTTP 200 anonymously. No existing-project branch, protection, or domain setting changed.
+- Separate Vercel project `alnilam-production` (`prj_KGHwW5DRgJMpkmYNg4dCRAoCzgCW`) links the same repository with API-reported `productionBranch=main`, Astro, Node `26.x`, no environment variables, and `ssoProtection=all`. At this snapshot it had no deployments and no custom domain; its generated hostname then returned HTTP 404.
+- The team is on Hobby ($0/month). Later Vercel-created `dev` Production and PR Preview deployments are recorded in the update above and are not a formal `main` release. No custom external domain is active. The first formal `main` deployment remains Owner-accepted; GitHub `main` was not changed.
+
+### Cache safety and reuse evidence
+
+- P0 and P1 changes are in #149: normal Compose no longer removes Legacy paths; `--clean-cache` is restricted to an owned managed root; `--clean-legacy` and dry-run are separate; explicit GC uses the managed root, active locks, TTL, and size policy; Shirone bundles use Core compiler input keys, content hashes, and atomic publication. Dangling namespace symlinks now fail closed; corrupt bundle repairs replace atomically.
+- `pnpm test` passed 301/301 on the review-fixed tree before the staging-cleanup error-path fix. On the current PR tree (`de57f2f21b2623e69a8557b91e22b4d67c6cf3f5`), `node --test scripts/tests/build-lock.test.mjs` passed 5/5, including simulated `EACCES` during staging cleanup.
+- Both required `verify` runs on `de57f2f` passed: [43609979215](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43609979215) and [43609976756](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43609976756); Astro compatibility passed in [43609979261](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43609979261). CodeRabbit's code-head review passed on `5f2d169`; a later outside-diff finding on `7a4bf94` is already fixed in the current tree, with the disposition posted on PR #149. CodeRabbit skipped the docs-only `de57f2f` head. The PR remains open and unmerged pending Owner acceptance.
+- An isolated Compose workload built 93 HTML pages and Pagefind output for two Site digests plus a warm rebuild. The shared bundle directory stayed at 6 artifacts (28,524,274 logical bytes; 28,536,832 allocated bytes; 6 unique SHA-256 hashes). Total isolated cache use was 31 MiB after cold build, 33 MiB after the Site digest changed, and 33 MiB after the warm rebuild. Times were 25.04s cold, 23.20s after Site change, 22.58s warm; this single sample does not establish a speed gain.
+- The reported old 7.2 GiB cache is absent from the inspected DevBox locations. Old Bundle identities, old hardlink/reflink relationships, effective working-set size, before/after savings, and cache hit rate therefore remain unverified. Do not claim the 70% space target or measured savings. GC defaults of 14 days / 2 GiB are explicit-operation candidates, not a measured guarantee.
+
+### Local footprint snapshot
+
+- 848 tracked files; Git object store reports 18.02 MiB of loose objects and 2.06 MiB packed; 20 registered worktrees.
+- Root `node_modules`: 679 MiB; shared pnpm store: 711 MiB (reported separately; do not add because pnpm hardlinks may overlap). `artifacts/`: 44 MiB.
+- `dist/`: 87 MiB across existing build variants; `dist/site`: 438 files, 11,165,255 logical bytes and 12,226,560 allocated bytes. In `dist/site`, JS 4,690,439 bytes, CSS 648,250 bytes, fonts 1,072,948 bytes, and images 266,239 bytes.
+- Default `.cache/alnilam` is absent; `.cache` totals 4 KiB. Among the reviewed Legacy paths, `apps/web/.astro` was 48 KiB; `apps/web/node_modules/.astro`, `apps/web/.shirones`, `apps/web/src/generated`, and `apps/web/public/assets/moments/thumbnails` were absent. Browser/test artifacts directory `artifacts/` was 44 MiB; standard `playwright-report`, `test-results`, and `coverage` directories were absent.
+
 ## Live-state update — 2026-11-13 · GitHub development cutover
 
 This section records the development-provider cutover and the production Demo

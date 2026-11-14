@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { loadBundledArtifact } from "./bundle-cache.mjs";
 import {
 	existsSync,
 	mkdirSync,
@@ -27,9 +28,9 @@ import {
  * We therefore bundle those modules on the fly with esbuild, applying the same
  * override rules the Vite plugin uses, and import the result.
  *
- * The bundle is self-contained (npm dependencies are inlined) and written to
- * `<projectRoot>/.shirones/loaded/`, keyed by a hash of its own contents so
- * repeated builds reuse it.
+ * The bundle is self-contained (npm dependencies are inlined). Compose writes
+ * it to a Core-input-keyed managed cache; direct theme use defaults to
+ * `<projectRoot>/.shirones/loaded/`.
  */
 
 export interface LoadedModule {
@@ -205,52 +206,66 @@ export async function loadModuleFile(
 	const cached = cache.get(cacheKey);
 	if (cached) return cached;
 
-	const { build } = await import("esbuild");
-	let result: Awaited<ReturnType<typeof build>>;
-	try {
-		result = await build({
-			entryPoints: [entry],
-			bundle: true,
-			write: false,
-			format: "esm",
-			platform: "node",
-			target: "node20",
-			absWorkingDir: paths.projectRoot,
-			logLevel: "silent",
-			// Keep JSON/asset imports inert: config modules only need plain values.
-			loader: { ".json": "json" },
-			// Some transitive dependencies are CommonJS and call `require()` for
-			// Node builtins. esbuild's ESM output shims that with a `__require`
-			// helper which prefers a real `require` when one is in scope, so we
-			// provide one.
-			banner: {
-				js:
-					"import { createRequire as __shironesCreateRequire } from 'node:module';\n" +
-					"const require = __shironesCreateRequire(import.meta.url);",
-			},
-			plugins: [overlayEsbuildPlugin(paths, registryRef)],
-		});
-	} catch (error) {
-		// esbuild already reports `file:line:col`. Name the module as well, so a
-		// typo in a user's own config reads as *their* file failing rather than
-		// as something breaking inside the theme.
-		throw new Error(
-			`[shirones] Failed to bundle "${cacheKey}" from ${entry}:\n` +
-				`  ${(error as Error).message}`,
-			{ cause: error },
-		);
-	}
+  const buildBundle = async (): Promise<string> => {
+    const { build } = await import("esbuild");
+    let result: Awaited<ReturnType<typeof build>>;
+    try {
+      result = await build({
+        entryPoints: [entry],
+        bundle: true,
+        write: false,
+        format: "esm",
+        platform: "node",
+        target: "node20",
+        absWorkingDir: paths.projectRoot,
+        logLevel: "silent",
+        // Keep JSON/asset imports inert: config modules only need plain values.
+        loader: { ".json": "json" },
+        // Some transitive dependencies are CommonJS and call `require()` for
+        // Node builtins. esbuild's ESM output shims that with a `__require`
+        // helper which prefers a real `require` when one is in scope, so we
+        // provide one.
+        banner: {
+          js:
+            "import { createRequire as __shironesCreateRequire } from 'node:module';\n" +
+            "const require = __shironesCreateRequire(import.meta.url);",
+        },
+        plugins: [overlayEsbuildPlugin(paths, registryRef)],
+      });
+    } catch (error) {
+      throw new Error(
+        `[shirones] Failed to bundle "${cacheKey}" from ${entry}:\n` +
+          `  ${(error as Error).message}`,
+        { cause: error },
+      );
+    }
+    return result.outputFiles?.[0]?.text ?? "";
+  };
 
-	const code = result.outputFiles?.[0]?.text ?? "";
-	const hash = createHash("sha1").update(code).digest("hex").slice(0, 12);
-	const prefix = `${sanitise(cacheKey)}.`;
-	const file = join(outputDir(paths), `${prefix}${hash}.mjs`);
-	if (!existsSync(file)) writeFileSync(file, code, "utf8");
-	pruneStaleBundles(paths, prefix, file);
+  const output = outputDir(paths);
+  const bundleCacheDir = process.env.ALNILAM_SHIRONE_BUNDLE_CACHE || output;
+  const inputKey = process.env.ALNILAM_SHIRONE_INPUT_KEY;
+  let file: string;
+  if (inputKey) {
+    const artifact = await loadBundledArtifact({
+      outputDir: bundleCacheDir,
+      cacheKey,
+      inputKey,
+      build: buildBundle,
+    });
+    file = artifact.file;
+  } else {
+    const code = await buildBundle();
+    const hash = createHash("sha1").update(code).digest("hex").slice(0, 12);
+    const prefix = `${sanitise(cacheKey)}.`;
+    file = join(output, `${prefix}${hash}.mjs`);
+    if (!existsSync(file)) writeFileSync(file, code, "utf8");
+    pruneStaleBundles(paths, prefix, file);
+  }
 
-	const module = (await import(pathToFileURL(file).href)) as LoadedModule;
-	cache.set(cacheKey, module);
-	return module;
+  const module = (await import(pathToFileURL(file).href)) as LoadedModule;
+  cache.set(cacheKey, module);
+  return module;
 }
 
 /**
