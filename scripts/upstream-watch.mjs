@@ -13,6 +13,9 @@ const DEFAULT_REGISTRY = path.join(repoRoot, "docs/upstream-watch/sources.json")
 const DEFAULT_STATE = path.join(repoRoot, "docs/upstream-watch/state.json");
 const MAX_CONCURRENT_REQUESTS = 6;
 const STALE_RELEASE_DAYS = 365;
+const ISSUE_PAGE_SIZE = 100;
+const MAX_ISSUE_PAGES = 10;
+const MAX_RECENT_ISSUES = 10;
 
 export function readDependencyInventory(root = repoRoot) {
   const lockPath = path.join(root, "pnpm-lock.yaml");
@@ -96,17 +99,36 @@ async function fetchJson(url, { fetchFn = fetch, headers = {}, allowNotFound = f
   return response.json();
 }
 
+async function fetchRecentIssues(repoUrl, fetchFn) {
+  const recentIssues = [];
+  let pagesFetched = 0;
+  for (let page = 1; page <= MAX_ISSUE_PAGES; page++) {
+    const rows = await fetchJson(`${repoUrl}/issues?state=all&sort=updated&direction=desc&per_page=${ISSUE_PAGE_SIZE}&page=${page}`, { fetchFn });
+    if (!Array.isArray(rows)) throw new Error("GitHub returned an invalid issue page");
+    pagesFetched++;
+    recentIssues.push(...rows.filter((issue) => !issue.pull_request).slice(0, MAX_RECENT_ISSUES - recentIssues.length));
+    if (recentIssues.length >= MAX_RECENT_ISSUES || rows.length < ISSUE_PAGE_SIZE) {
+      return { issues: recentIssues, status: "complete", pagesFetched };
+    }
+  }
+  return {
+    issues: recentIssues,
+    status: recentIssues.length >= MAX_RECENT_ISSUES ? "complete" : "truncated",
+    pagesFetched,
+  };
+}
+
 export async function fetchSourceSnapshot(source, { fetchFn = fetch, apiBase = "https://api.github.com" } = {}) {
   const repositoryPath = source.repository.replace(/^https:\/\/github\.com\//, "").replace(/\.git$/, "");
   const repoUrl = `${apiBase}/repos/${repositoryPath}`;
   const repo = await fetchJson(repoUrl, { fetchFn });
   const branch = repo.default_branch;
   if (!branch) throw new Error(`${source.id}: GitHub returned no default branch`);
-  const [commit, release, tags, issues] = await Promise.all([
+  const [commit, release, tags, issueResult] = await Promise.all([
     fetchJson(`${repoUrl}/commits/${encodeURIComponent(branch)}`, { fetchFn }),
     fetchJson(`${repoUrl}/releases/latest`, { fetchFn, allowNotFound: true }),
     fetchJson(`${repoUrl}/tags?per_page=10`, { fetchFn }),
-    fetchJson(`${repoUrl}/issues?state=all&sort=updated&direction=desc&per_page=10`, { fetchFn }),
+    fetchRecentIssues(repoUrl, fetchFn),
   ]);
   return {
     repository: repo.html_url,
@@ -126,21 +148,27 @@ export async function fetchSourceSnapshot(source, { fetchFn = fetch, apiBase = "
     } : null,
     tags: (Array.isArray(tags) ? tags : []).map((tag) => ({ name: tag.name, sha: tag.commit?.sha ?? null,
       url: tag.html_url ?? `${repo.html_url}/tree/${encodeURIComponent(tag.name)}` })),
-    recentIssues: (Array.isArray(issues) ? issues : []).filter((issue) => !issue.pull_request).map((issue) => ({
+    recentIssues: issueResult.issues.map((issue) => ({
       number: issue.number,
       title: issue.title,
       state: issue.state,
       updatedAt: issue.updated_at,
       url: issue.html_url,
     })),
-    issueCoverage: "latest 10 updated issue records; pull requests excluded",
+    issueCoverage: {
+      status: issueResult.status,
+      issueCount: issueResult.issues.length,
+      pagesFetched: issueResult.pagesFetched,
+      pageLimit: MAX_ISSUE_PAGES,
+      pageSize: ISSUE_PAGE_SIZE,
+    },
   };
 }
 
-async function fetchPackageMetadata(packageNames, { fetchFn = fetch, registryBase = "https://registry.npmjs.org" } = {}) {
+export async function fetchPackageMetadata(packageNames, { fetchFn = fetch, registryBase = "https://registry.npmjs.org" } = {}) {
   return mapLimit(packageNames, MAX_CONCURRENT_REQUESTS, async (name) => {
     const url = `${registryBase}/${encodeURIComponent(name)}`;
-    const metadata = await fetchJson(url, { fetchFn, headers: { accept: "application/vnd.npm.install-v1+json" } });
+    const metadata = await fetchJson(url, { fetchFn, headers: { accept: "application/json" } });
     const latest = metadata["dist-tags"]?.latest ?? null;
     const latestVersion = latest ? metadata.versions?.[latest] : null;
     const publishedAt = latest ? metadata.time?.[latest] ?? null : null;
@@ -233,9 +261,8 @@ function sourceObservation(snapshot) {
 function dependencyObservation(scan, dependencies, audit) {
   return {
     lockfileSha256: scan.lockfileSha256,
-    packages: dependencies.map((item) => [item.importer, item.package, item.lockedVersion, item.latest, item.candidateClass,
-      item.lockDrift, item.deprecated, item.staleRelease]),
-    advisories: [audit.status, audit.entries?.map((entry) => [entry.package, entry.id, entry.severity]) ?? [], audit.counts ?? null],
+    packages: dependencies.map((item) => [item.importer, item.package, item.kind, item.specifier, item.lockedSpecifier,
+      item.lockedVersion, item.workspace, item.lockDrift, item.latest, item.candidateClass, item.deprecated, item.staleRelease]),
   };
 }
 

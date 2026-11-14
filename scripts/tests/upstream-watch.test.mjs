@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { classifyVersion, readDependencyInventory, reconcileWatch, summarizeAudit } from "../upstream-watch.mjs";
+import { classifyVersion, fetchPackageMetadata, fetchSourceSnapshot, readDependencyInventory, reconcileWatch, summarizeAudit } from "../upstream-watch.mjs";
 
 const registry = {
   sources: [{ id: "alpha", repository: "https://github.com/example/alpha", role: "reference", baselineRevision: "base" }],
@@ -17,10 +17,12 @@ const snapshot = (headSha = "head-1") => ({
   latestRelease: { tag: "v1.1.0", publishedAt: "2026-11-13T00:00:00Z", url: "https://github.com/example/alpha/releases/tag/v1.1.0" },
   tags: [{ name: "v1.1.0", sha: headSha, url: "https://github.com/example/alpha/tree/v1.1.0" }],
   recentIssues: [{ number: 4, title: "Example issue", state: "open", updatedAt: "2026-11-14T00:00:00Z", url: "https://github.com/example/alpha/issues/4" }],
-  issueCoverage: "latest 10 updated issue records; pull requests excluded",
+  issueCoverage: { status: "complete", issueCount: 1, pagesFetched: 1, pageLimit: 10, pageSize: 100 },
 });
 const scan = { lockfileVersion: "9.0", lockfileSha256: "lock-hash" };
 const dependency = { importer: ".", package: "sample", kind: "dependencies", specifier: "^1.0.0", lockedSpecifier: "^1.0.0", lockedVersion: "1.0.0", workspace: false, lockDrift: null, latest: "1.1.0", candidateClass: "minor", deprecated: null, staleRelease: false };
+
+const response = (body, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => body });
 const audit = { status: "clear", counts: { low: 0, moderate: 0, high: 0, critical: 0 }, entries: [] };
 
 test("version classification separates patch, minor, major, current and unknown", () => {
@@ -57,6 +59,45 @@ test("workspace manifest inventory reports direct locked versions and specifier 
   }
 });
 
+test("GitHub issue inventory pages past pull requests and reports when its page cap truncates coverage", async () => {
+  const requests = [];
+  const source = { id: "alpha", repository: "https://github.com/example/alpha" };
+  const fetchFn = async (url) => {
+    requests.push(url);
+    if (url.endsWith("/repos/example/alpha")) return response({ html_url: source.repository, default_branch: "main", license: { spdx_id: "MIT" }, archived: false });
+    if (url.endsWith("/commits/main")) return response({ sha: "head", commit: { committer: { date: "2026-11-14T00:00:00Z" }, message: "fix" }, html_url: "https://example.test/commit/head" });
+    if (url.endsWith("/releases/latest")) return response({}, 404);
+    if (url.endsWith("/tags?per_page=10")) return response([]);
+    if (url.includes("/issues?")) {
+      const page = Number(new URL(url).searchParams.get("page"));
+      if (page === 1) return response(Array.from({ length: 100 }, (_, index) => ({ number: index + 1, pull_request: {} })));
+      return response(Array.from({ length: 10 }, (_, index) => ({ number: 101 + index, title: `Issue ${index + 1}`, state: "open", updated_at: "2026-11-14T00:00:00Z", html_url: `https://example.test/issues/${101 + index}` })));
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  const result = await fetchSourceSnapshot(source, { fetchFn });
+  assert.equal(result.recentIssues.length, 10);
+  assert.equal(result.recentIssues[0].number, 101);
+  assert.deepEqual(result.issueCoverage, { status: "complete", issueCount: 10, pagesFetched: 2, pageLimit: 10, pageSize: 100 });
+  assert.equal(requests.filter((url) => url.includes("/issues?")).length, 2);
+
+  const capped = await fetchSourceSnapshot(source, { fetchFn: async (url) => {
+    if (url.includes("/issues?")) return response(Array.from({ length: 100 }, (_, index) => ({ number: index + 1, pull_request: {} })));
+    return fetchFn(url);
+  } });
+  assert.deepEqual(capped.issueCoverage, { status: "truncated", issueCount: 0, pagesFetched: 10, pageLimit: 10, pageSize: 100 });
+});
+
+test("npm package metadata requests publication timestamps and records latest-version time", async () => {
+  let accept;
+  const result = await fetchPackageMetadata(["sample"], { fetchFn: async (_url, init) => {
+    accept = init.headers.accept;
+    return response({ "dist-tags": { latest: "1.2.0" }, versions: { "1.2.0": {} }, time: { "1.2.0": "2026-10-01T00:00:00Z", modified: "2026-10-02T00:00:00Z" } });
+  } });
+  assert.equal(accept, "application/json");
+  assert.deepEqual(result, [["sample", { latest: "1.2.0", publishedAt: "2026-10-01T00:00:00Z", metadataUpdatedAt: "2026-10-02T00:00:00Z", deprecated: null }]]);
+});
+
 test("watch state deduplicates unchanged source and dependency evidence while preserving analysis and integration", () => {
   const empty = { schemaVersion: 1, sources: {}, dependencies: {} };
   const inputs = {
@@ -89,6 +130,14 @@ test("watch state deduplicates unchanged source and dependency evidence while pr
   assert.deepEqual(changed.state.sources.alpha.last_analyzed, { through: "head-1", outcome: "rejected", reason: "not applicable" });
   assert.equal(changed.state.sources.alpha.last_integrated, null);
   assert.equal(changed.state.sources.alpha.decisions[0].action, "REJECT");
+});
+
+test("dependency state fingerprints include manifest and lockfile declarations", () => {
+  const inputs = { registry, snapshots: { alpha: snapshot() }, dependencyScan: scan, dependencies: [dependency], audit };
+  const first = reconcileWatch({ ...inputs, state: { schemaVersion: 1, sources: {}, dependencies: {} }, now: "2026-11-14T01:00:00.000Z" });
+  const changed = reconcileWatch({ ...inputs, dependencies: [{ ...dependency, specifier: "~1.0.0", lockDrift: "specifier-mismatch" }], state: first.state, now: "2026-11-14T02:00:00.000Z" });
+  assert.equal(changed.report.dependencies.status, "changed");
+  assert.equal(changed.state.dependencies.last_seen.observation.packages[0][3], "~1.0.0");
 });
 
 test("pnpm audit summaries handle modern and legacy advisory formats without hiding errors", () => {
