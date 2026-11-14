@@ -1,5 +1,37 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-14 · build cache and deployment recovery
+
+This is the latest state; earlier entries are historical context.
+
+### GitHub development and review
+
+- GitHub `dev` is `fb2010d755bc2ee96557547607d2e69b8e973b52` (tree `75393aa0ad0487081b2ed5cbe4bab19f7351aea7`). `main` was not changed by this work; no CNB ref, release tag, or ADS gitlink was changed.
+- PR #143 merged at `8d96d0a205bf82a4d4afd489e00fb4ca57823253`. Its required PR `verify` passed in run [43580970549](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43580970549); the post-merge push run [43597086446](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43597086446) was cancelled, not passed.
+- PR #144 merged at `fb2010d755bc2ee96557547607d2e69b8e973b52`. Required PR `verify` passed in [43598173641](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43598173641). Post-merge run [43600470335](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43600470335) was cancelled after later branch activity.
+- PR #142 remains open at `844d6be9dbb401553137eae2d6d27fbabe6eb764`; refreshed required `verify` passed in [43600593600](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43600593600). Its earlier source head received CodeRabbit review run `4f75239b-0b9d-4fa6-a796-e3f2f4f18b15`; the base-only refresh skipped. Do not merge until #138's deployment split is resolved.
+- Issue #140 remains open until #142 can be integrated. Issue #145 is In Progress. Cache implementation PR #149 is open against `dev`; its current remote head and checks are tracked on the [PR](https://github.com/Skyline-Gazer/ALNILAM/pull/149). The initial pushed code head was `3b455ab73333c0b5fc69f0b9392ced40eea5442a` (compatibility passed; `verify` and CodeRabbit were still running). The local follow-up adds explicit lockfile, Astro config, and runtime invalidation coverage; the targeted cache suite passes 5/5, and a new push will restart remote checks.
+
+### Vercel deployment boundary
+
+- The existing Vercel project's `productionBranch` remains `dev`. Merging #144 triggered Production deployment `dpl_FbRUb7mePoNG3wpDrkZ2kAQw1dKs` (`READY`) with stable alias `https://xxxx-beryl-theta.vercel.app`; `/alnilam-provenance.json` reports Core `fb2010d755bc2ee96557547607d2e69b8e973b52` and Site digest `527909af24317e93ea7129e89e0da952397b95ac1fdea93bd0646b29e2dfd87f`.
+- Previous deployment `dpl_8Qqz1ySC2EGtt7crjkxvv3pDdM7p` is still `READY` and remains a rollback candidate. The stable Demo URL is still assigned to the current deployment.
+- #138 remains In Progress. The Vercel CLI/API route tried here could not change the Production Branch; the API rejected the project `link` field, and the official Dashboard opened at its login page. No branch/domain setting was changed. Owner authentication is required to continue the authorized split.
+
+### Cache safety and reuse evidence
+
+- P0 and P1 changes are in #149: normal Compose no longer removes Legacy paths; `--clean-cache` is restricted to an owned managed root; `--clean-legacy` and dry-run are separate; explicit GC uses the managed root, locks, TTL, and size policy; Shirone bundles use Core compiler input keys, content hashes, and atomic publication.
+- Local `pnpm test` passed 289/289 on the cache code before rebasing to the latest `dev`; `pnpm check` reported 0 errors, warnings, and hints. After rebase, the isolated Shirone cache tests passed 5/5, including lockfile, Astro config, Node version, platform, architecture, changed Site, corruption, and concurrent publication cases.
+- An isolated Compose workload built 93 HTML pages and Pagefind output for two Site digests plus a warm rebuild. The shared bundle directory stayed at 6 artifacts (28,524,274 logical bytes; 28,536,832 allocated bytes; 6 unique SHA-256 hashes). Total isolated cache use was 31 MiB after cold build, 33 MiB after the Site digest changed, and 33 MiB after the warm rebuild. Times were 25.04s cold, 23.20s after Site change, 22.58s warm; this single sample does not establish a speed gain.
+- The reported old 7.2 GiB cache is absent from the inspected DevBox locations. Old Bundle identities, old hardlink/reflink relationships, effective working-set size, before/after savings, and cache hit rate therefore remain unverified. Do not claim the 70% space target or measured savings. GC defaults of 14 days / 2 GiB are explicit-operation candidates, not a measured guarantee.
+
+### Local footprint snapshot
+
+- 848 tracked files; Git object store reports 18.02 MiB of loose objects and 2.06 MiB packed; 20 registered worktrees.
+- Root `node_modules`: 679 MiB; shared pnpm store: 711 MiB (reported separately; do not add because pnpm hardlinks may overlap). `artifacts/`: 44 MiB.
+- `dist/`: 87 MiB across existing build variants; `dist/site`: 438 files, 11,165,255 logical bytes and 12,226,560 allocated bytes. In `dist/site`, JS 4,690,439 bytes, CSS 648,250 bytes, fonts 1,072,948 bytes, and images 266,239 bytes.
+- Default `.cache/alnilam` is absent; `.cache` totals 4 KiB. Among the reviewed Legacy paths, `apps/web/.astro` was 48 KiB; `apps/web/node_modules/.astro`, `apps/web/.shirones`, `apps/web/src/generated`, and `apps/web/public/assets/moments/thumbnails` were absent. Browser/test artifacts directory `artifacts/` was 44 MiB; standard `playwright-report`, `test-results`, and `coverage` directories were absent.
+
 ## Live-state update — 2026-11-13 · GitHub development cutover
 
 This section records the development-provider cutover and the production Demo

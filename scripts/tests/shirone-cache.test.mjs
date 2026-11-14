@@ -41,6 +41,27 @@ test("Shirone input identity ignores Site changes and tracks compiler inputs", (
   assert.notEqual(shironeBuildInputKey(root, { version: "v24", platform: "linux", arch: "x64" }), first);
 });
 
+test("Shirone input identity tracks dependency, compiler configuration, and runtime changes", (t) => {
+  const root = fixture(t);
+  createInputTree(root);
+  const runtime = { version: "v24", platform: "linux", arch: "x64" };
+  const baseline = shironeBuildInputKey(root, runtime);
+  for (const relative of ["pnpm-lock.yaml", "apps/web/astro.config.mjs"]) {
+    const file = path.join(root, relative);
+    const original = fs.readFileSync(file);
+    fs.appendFileSync(file, "changed input\n");
+    assert.notEqual(shironeBuildInputKey(root, runtime), baseline, `${relative} must invalidate compiled artifacts`);
+    fs.writeFileSync(file, original);
+  }
+  for (const changedRuntime of [
+    { ...runtime, version: "v25" },
+    { ...runtime, platform: "darwin" },
+    { ...runtime, arch: "arm64" },
+  ]) {
+    assert.notEqual(shironeBuildInputKey(root, changedRuntime), baseline, "runtime identity must invalidate compiled artifacts");
+  }
+});
+
 test("Shirone input identity refuses symlinked compiler inputs", (t) => {
   const root = fixture(t);
   createInputTree(root);
