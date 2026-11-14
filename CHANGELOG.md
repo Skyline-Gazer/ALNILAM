@@ -19,6 +19,7 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 - **Comments provider/privacy contract (Issue #71):** Giscus is the single first-launch provider with stable `specific` terms (`commentId` → `translationKey` → content id), explicit `sharing`/`load`/`lang` options, third-party disclosure, provider-scoped CSP, non-blocking failure/retry fallback and idempotent provider teardown. Disabled comments still ship zero comment JS/network.
 - **P1 Shirone frontend vertical slice (candidate, #48):** local Shirone-derived M3E home/list/article/archive/tag presentation with the retained ALNILAM Core/Site contracts, Pagefind, optional-module and rollback coverage. Not released or deployed.
 - **Bangumi snapshots (Issue #70):** opt-in builds cache public collections and locally emitted covers outside the Site. Provider or cover failures reuse the matching last valid snapshot; a successful empty result replaces it. Visitors make no third-party data or cover requests.
+- **Build cache safety and reuse (Issue #145):** normal Compose never deletes project-local legacy directories; managed cleanup, explicit legacy cleanup and TTL/size GC have separate commands. Shirone's compiled bundles are shared by validated Core input fingerprint and SHA-256 artifact manifests; mutable Site state stays isolated.
 
 ### Changed
 - The demo Site includes a two-article introductory series and a published MDX example.

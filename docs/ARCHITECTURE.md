@@ -25,20 +25,35 @@ scripts/compose.mjs    # non-mutating external Site builder
 
 ## Build algorithm
 1. Resolve and validate an absolute Site source, hash the read-only inputs.
-2. Copy config, content, assets and data into a deterministic snapshot under the managed build cache (keyed by Core revision and Site digest) and verify its digest against the source.
-3. Run Astro in Core with `ALNILAM_SITE_DIR` pointing to the snapshot; Content Layer reads its `content/posts` and output goes to staging. Composes of one Core checkout serialize on fail-closed locks: one over the shared Astro build state (`apps/web/.astro`) and one per managed-cache build directory — a contending compose fails fast, and a lock left by a crashed build older than six hours (or whose holder process is gone) is stolen.
+2. Copy config, content, assets and data into a deterministic snapshot under the managed build cache (currently keyed by Core revision and Site digest) and verify its digest against the source.
+3. Run Astro in Core with `ALNILAM_SITE_DIR` pointing at the snapshot; Content Layer reads its `content/posts` and output goes to staging. Composes serialize only while registering a per-build lock; builds with different cache keys remain concurrent. A lock is reclaimable only after its recorded process is confirmed absent.
 4. Copy optional snapshot assets into the staged static output (not back into Core or Site).
 5. Hash the Site inputs again and abort on changes.
 6. Replace the final destination from staging; retain/restore the existing output if staging fails.
 
-The managed cache root (`<repo>/.cache/alnilam`, override `ALNILAM_CACHE_DIR`) holds
-the snapshot and Astro's build-time content/image store, keyed by Core revision and
-Site digest; Vite's dependency cache is keyed by Core revision alone. The optional
-Bangumi module also stores its last valid snapshot and downloaded covers there,
-scoped by user ID, subject type and limit; covers are emitted into the build output,
-not the Site. All derived resources are generated only in the build space (cache or
-staging) — never in the Site; removals inside the cache refuse to follow symbolic
-links. `--clean-cache` removes it.
+The managed cache root (`<repo>/.cache/alnilam`, override `ALNILAM_CACHE_DIR`) contains
+an ALNILAM ownership marker and managed `v1`, `bangumi` and `shirone` namespaces.
+The Site snapshot and Astro content/image state are keyed by Core revision and Site
+digest; Vite's dependency cache is keyed by Core revision. Bangumi snapshots are scoped by
+user ID, subject type and limit. Covers are emitted into staged output, not the Site.
+Shirone's Site-independent compiled modules use a fingerprint of Core source,
+dependency lock/configuration, Node version and target platform. Their content-hashed
+bundles are shared across Site digests and Core revisions only when that fingerprint
+matches; a manifest and SHA-256 check verify every reuse. Shirone's mutable generated
+state remains under the Core-revision/Site-digest build directory.
+
+Normal builds never remove project-local generated or legacy directories.
+`--clean-cache` verifies the root marker, acquires the cache-operation lock, rejects
+active builds, symlinks, hard-linked files and nested filesystem boundaries, then removes
+only the three managed namespaces. Unknown files beside those namespaces are preserved.
+`--gc-cache --dry-run` reports each managed candidate's logical and allocated bytes,
+last successful use and planned action. `--gc-cache` applies a 14-day unused TTL and a
+2 GiB allocated-size limit, evicting oldest candidates first; `ALNILAM_CACHE_TTL_DAYS`
+and `ALNILAM_CACHE_MAX_BYTES` override those defaults. GC serializes with build admission,
+rejects active builds and fails closed on symlinks, hard links, unexpected entries or
+filesystem boundaries. Use `--clean-legacy --dry-run` to inspect allowlisted project
+paths; explicit `--clean-legacy` removes only empty allowlisted directories, leaving
+content without a verified ownership manifest untouched.
 
 The staged output also carries `alnilam-provenance.json`: the Core revision, the Site
 ref (`ALNILAM_SITE_REF`, or the Site's own Git `HEAD` when the Site directory is its

@@ -47,6 +47,8 @@ function scopeKey(userId, subjectType, limit) {
 }
 
 function seedBangumiSnapshot(cacheRoot, { userId, subjectType, limit }) {
+  fs.mkdirSync(cacheRoot, { recursive: true });
+  fs.writeFileSync(path.join(cacheRoot, ".alnilam-cache-owner.json"), '{"owner":"ALNILAM","schema":1}\n', { flag: "wx" });
   const bangumiRoot = path.join(cacheRoot, "bangumi");
   const covers = path.join(bangumiRoot, "covers");
   const snapshots = path.join(bangumiRoot, "snapshots");

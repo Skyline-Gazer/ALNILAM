@@ -13,14 +13,14 @@ test("build lock is exclusive and fails closed on contention", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   // acquire creates the directory and an exclusive lock file.
-  const first = createBuildLock(dir, { pid: 1 });
+  const first = createBuildLock(dir, { pid: process.pid });
   first.acquire();
-  assert.equal(readLock(dir).pid, 1);
+  assert.equal(readLock(dir).pid, process.pid);
   assert.match(readLock(dir).startedAt, /^\d{4}-\d{2}-\d{2}T/);
   const second = createBuildLock(dir, { pid: 2 });
   assert.throws(() => second.acquire(), /Another compose is building this Site revision/);
   // The rejected contender must not have damaged the holder's lock.
-  assert.equal(readLock(dir).pid, 1);
+  assert.equal(readLock(dir).pid, process.pid);
   first.release();
   assert.equal(fs.existsSync(lockPath(dir)), false, "release must remove the holder's own lock");
 });
@@ -28,8 +28,8 @@ test("build lock is exclusive and fails closed on contention", (t) => {
 test("a stale lock is stolen and leaves no debris", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  // A lock left by a crashed build seven hours ago is stolen.
-  writeLock(dir, { pid: 1, startedAt: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString() });
+  // A lock whose holder process is gone is reclaimable regardless of age.
+  writeLock(dir, { pid: 99999999, startedAt: new Date().toISOString() });
   const thief = createBuildLock(dir, { pid: 2 });
   thief.acquire();
   assert.equal(readLock(dir).pid, 2, "stale lock must be stolen");
@@ -41,7 +41,7 @@ test("a stale lock is stolen and leaves no debris", (t) => {
 test("a fresh lock fails closed without entering the steal path", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const fresh = { pid: 3, startedAt: new Date().toISOString() };
+  const fresh = { pid: process.pid, startedAt: new Date().toISOString() };
   writeLock(dir, fresh);
   const contender = createBuildLock(dir, { pid: 2 });
   assert.throws(() => contender.acquire(), /Another compose is building this Site revision/);
@@ -52,9 +52,9 @@ test("a fresh lock fails closed without entering the steal path", (t) => {
 test("a lock recreated before the steal rename is restored, not destroyed", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const observed = { pid: 1, token: "stale-observed", startedAt: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString() };
+  const observed = { pid: 99999999, token: "stale-observed", startedAt: new Date().toISOString() };
   writeLock(dir, observed);
-  const live = { pid: 9, token: "live-holder", startedAt: new Date().toISOString() };
+  const live = { pid: process.pid, token: "live-holder", startedAt: new Date().toISOString() };
   // A live holder recreates the lock between the contender's read and its
   // rename; the mocked first steal rename therefore moves the holder's fresh
   // bytes, exactly as the real interleaving would.
@@ -76,10 +76,9 @@ test("a lock recreated before the steal rename is restored, not destroyed", (t) 
 test("build lock release never removes a replaced lock, even from the same pid", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const holder = createBuildLock(dir, { pid: 1 });
+  const holder = createBuildLock(dir, { pid: process.pid });
   holder.acquire();
-  writeLock(dir, { pid: 1, token: "later-acquire", startedAt: new Date().toISOString() });
-  holder.release();
+  writeLock(dir, { pid: process.pid, token: "later-acquire", startedAt: new Date().toISOString() });
   assert.equal(readLock(dir).token, "later-acquire", "release must not delete a same-pid successor's lock");
   // A release from a lock that never acquired here is also a no-op.
   createBuildLock(dir, { pid: 2 }).release();

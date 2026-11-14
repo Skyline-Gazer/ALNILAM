@@ -1,13 +1,10 @@
-// Advisory lock over a Core checkout's shared build state (apps/web/.astro).
-// Concurrent composes would otherwise delete and rewrite the Astro content
-// store and prerender chunks under each other. Contention fails fast; a lock
-// left by a crashed build older than `staleMs` is stolen by atomic rename with
-// content verification, so a lock recreated by a live holder is never evicted.
+// Advisory lock over a shared build-state directory. Contention fails fast;
+// a lock is reclaimable only after its holder process is confirmed absent.
+// Elapsed time alone never makes an active build safe to evict.
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
-export const BUILD_LOCK_STALE_MS = 6 * 60 * 60 * 1000;
 
 const MAX_STEAL_ATTEMPTS = 10;
 
@@ -20,23 +17,29 @@ function readLock(lockPath) {
   }
 }
 
-function isStale(lock, staleMs) {
-  return Number.isFinite(Date.parse(lock.startedAt)) && Date.now() - Date.parse(lock.startedAt) >= staleMs;
+function processIsAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code !== "ESRCH";
+  }
+}
+
+function isStale(lock) {
+  if (!Number.isInteger(lock.pid) || lock.pid <= 0) return false;
+  return !processIsAlive(lock.pid);
 }
 
 /**
- * Returns { acquire, release } for `dir/.compose-lock`.
- * - acquire(): exclusive-create with a unique per-attempt token; on an existing
- *   fresh lock it fails closed; on a stale lock it steals via rename, but only
- *   after verifying the moved bytes are the stale ones it observed (a recreated
- *   lock is renamed back). Every steal retry is bounded so a persistently
- *   failing rename cannot spin.
- * - release(): removes the lock file only if it still holds the token this
- *   instance wrote, so a replaced lock belonging to another holder (even the
- *   same pid reused by a later acquire) is never deleted.
+ * Returns { acquire, release } for `dir/lockName` (default `.compose-lock`).
+ * acquire() exclusively creates the lock or reclaims it only after confirming
+ * the recorded holder process has exited. Reclamation uses a unique atomic
+ * rename and verifies the moved token. release() removes only its own token.
  */
-export function createBuildLock(dir, { staleMs = BUILD_LOCK_STALE_MS, pid = process.pid } = {}) {
-  const lockPath = path.join(dir, ".compose-lock");
+export function createBuildLock(dir, { pid = process.pid, lockName = ".compose-lock" } = {}) {
+  const lockPath = path.join(dir, lockName);
   let ownedToken = null;
   return {
     acquire() {
@@ -59,7 +62,7 @@ export function createBuildLock(dir, { staleMs = BUILD_LOCK_STALE_MS, pid = proc
             if (err.code === "ENOENT") continue; // staging was removed under us; retry with a fresh name
             if (err.code !== "EEXIST") throw err;
             const observed = readLock(lockPath);
-            if (observed === null || !isStale(observed, staleMs)) {
+            if (observed === null || !isStale(observed)) {
               throw new Error("Another compose is building this Site revision (build state is locked)");
             }
             // A unique name per attempt: renameSync would silently overwrite
