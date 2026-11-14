@@ -62,7 +62,11 @@ function run(name, args, extra = {}) {
 }
 
 function runGit(site, ...args) {
-  const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")));
+  const env = {
+    ...Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_"))),
+    GIT_CONFIG_GLOBAL: os.devNull,
+    GIT_CONFIG_SYSTEM: os.devNull,
+  };
   const result = spawnSync("git", ["-C", site, ...args], { encoding: "utf8", env });
   assert.equal(result.status, 0, result.stderr || result.error?.message);
   return result.stdout.trim();
@@ -247,17 +251,32 @@ test("write commands validate an explicitly selected independent Site branch", (
   assert.equal(fs.existsSync(path.join(initSite, CMS_CONFIG_FILENAME)), true);
 });
 
-test("branch preflight ignores inherited Git repository selectors", () => {
+test("branch preflight ignores inherited Git selectors and fixture configuration", () => {
   const site = path.join(tmp, "git-selected-site");
   const foreignSite = path.join(tmp, "git-foreign-site");
   copySite(site);
   copySite(foreignSite);
   const selectorSite = path.join(tmp, "git-environment-selector");
   copySite(selectorSite);
-  runGit(selectorSite, "init", "--quiet", "--initial-branch=selector");
-  const previousGitDir = process.env.GIT_DIR;
+  const hooks = path.join(tmp, "host-git-hooks");
+  fs.mkdirSync(hooks);
+  const failingHook = path.join(hooks, "pre-commit");
+  fs.writeFileSync(failingHook, "#!/bin/sh\nexit 1\n");
+  fs.chmodSync(failingHook, 0o755);
+  const globalConfig = path.join(tmp, "host-git-global.config");
+  const systemConfig = path.join(tmp, "host-git-system.config");
+  fs.writeFileSync(globalConfig, "[commit]\n\tgpgsign = true\n");
+  fs.writeFileSync(systemConfig, `[core]\n\thooksPath = ${hooks}\n`);
+  const previous = {
+    GIT_DIR: process.env.GIT_DIR,
+    GIT_CONFIG_GLOBAL: process.env.GIT_CONFIG_GLOBAL,
+    GIT_CONFIG_SYSTEM: process.env.GIT_CONFIG_SYSTEM,
+  };
   process.env.GIT_DIR = path.join(selectorSite, ".git");
+  process.env.GIT_CONFIG_GLOBAL = globalConfig;
+  process.env.GIT_CONFIG_SYSTEM = systemConfig;
   try {
+    runGit(selectorSite, "init", "--quiet", "--initial-branch=selector");
     for (const [directory, branch] of [[site, "cms-poc"], [foreignSite, "main"]]) {
       runGit(directory, "init", "--quiet", `--initial-branch=${branch}`);
       runGit(directory, "config", "user.name", "ALNILAM CMS PoC");
@@ -268,10 +287,11 @@ test("branch preflight ignores inherited Git repository selectors", () => {
     assert.equal(runGit(site, "branch", "--show-current"), "cms-poc");
     assert.equal(runGit(foreignSite, "branch", "--show-current"), "main");
   } finally {
-    if (previousGitDir === undefined) delete process.env.GIT_DIR;
-    else process.env.GIT_DIR = previousGitDir;
+    for (const [name, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
   }
-
   const post = postFile(site, "blocked-by-inherited-git-dir.md");
   const result = run("create", [tool, "create", "--site", site, "--file", "blocked-by-inherited-git-dir.md",
     "--set", JSON.stringify({ title: "Must stay blocked", pubDate: "2026-11-14" }), "--expect-branch", "main"], {
