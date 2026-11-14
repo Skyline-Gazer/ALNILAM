@@ -11,18 +11,21 @@
  * Usage:
  *   node scripts/pages-cms.mjs verify --site <site-dir> [--json]
  *   node scripts/pages-cms.mjs create --site <site-dir> --file <relative-path> \
- *       --set '{"title":"New post","pubDate":"2026-11-12"}' [--body <file>]
+ *       --set '{"title":"New post","pubDate":"2026-11-12"}' [--body <file>] [--expect-branch <name>]
  *   node scripts/pages-cms.mjs edit --site <site-dir> --post <relative-path> \
- *       --set '{"title":"New title"}' [--out <file>] [--merge false]
- *   node scripts/pages-cms.mjs init --site <site-dir> [--force]
+ *       --set '{"title":"New title"}' [--out <file>] [--merge false] [--expect-branch <name>]
+ *   node scripts/pages-cms.mjs init --site <site-dir> [--force] [--expect-branch <name>]
  *
  * `verify` is read-only. `create`, `edit` and `init` write only inside the
- * Site's `content/posts/` (or `.pages.yml`). In a real Site a CMS commit lands
- * before compose; never run a writing command while a compose is running (the
- * builder re-hashes the four Site inputs and fails on mutation).
+ * Site's `content/posts/` (or `.pages.yml`). Write commands accept
+ * `--expect-branch <name>` to refuse a Git checkout on a different branch;
+ * this checks selection, not remote branch protection. In a real Site a CMS
+ * commit lands before compose; never write while compose is running because
+ * the builder re-hashes the Site inputs and fails if they change.
  */
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { normalizeSiteConfig, parseSiteConfigDocument, SITE_CONFIG_FILENAME } from "../packages/core/src/index.mjs";
@@ -461,9 +464,28 @@ function option(argv, flag, fallback) {
   return index < 0 ? fallback : argv[index + 1];
 }
 
+function assertExpectedBranch(siteDir, expectedBranch) {
+  if (typeof expectedBranch !== "string" || !expectedBranch || expectedBranch.startsWith("--")) {
+    throw new Error("--expect-branch requires a branch name");
+  }
+  const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")));
+  const result = spawnSync("git", ["-C", path.resolve(siteDir), "branch", "--show-current"], { encoding: "utf8", env });
+  if (result.error || result.status !== 0) {
+    throw new Error("--expect-branch requires --site to be inside a Git working tree");
+  }
+  const actualBranch = result.stdout.trim();
+  if (actualBranch !== expectedBranch) {
+    throw new Error(`--expect-branch mismatch: expected ${expectedBranch}, current branch is ${actualBranch || "detached HEAD"}`);
+  }
+}
+
 function main(argv) {
   const command = argv[0];
   const siteDir = option(argv, "--site", ".");
+  if (["create", "edit", "init"].includes(command)) {
+    const expectedBranch = option(argv, "--expect-branch", null);
+    if (expectedBranch !== null) assertExpectedBranch(siteDir, expectedBranch);
+  }
   if (command === "verify") {
     const report = verifySite(siteDir);
     console.log(argv.includes("--json") ? JSON.stringify(report, null, 2) : [
