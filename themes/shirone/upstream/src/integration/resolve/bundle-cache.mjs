@@ -99,9 +99,10 @@ export async function loadBundledArtifact({ outputDir, cacheKey, inputKey, build
   const artifact = path.join(outputDir, filename);
   if (existsSync(artifact)) {
     regularFile(artifact);
-    if (await hashFile(artifact) !== artifactHash) unlinkSync(artifact);
+    if (await hashFile(artifact) !== artifactHash) atomicWrite(artifact, code);
+  } else {
+    atomicWrite(artifact, code);
   }
-  if (!existsSync(artifact)) atomicWrite(artifact, code);
   const record = JSON.stringify({ schema: 1, inputKey, file: filename, artifactHash }) + "\n";
   atomicWrite(manifestPath(outputDir, cacheKey), record);
   return { file: artifact, hit: false };

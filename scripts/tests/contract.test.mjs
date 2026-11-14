@@ -384,18 +384,29 @@ test("concurrent composes of the same revision are serialized by the cache lock"
   });
   assert.notEqual(blocked.status, 0);
   assert.match(blocked.stderr, /Another compose is building this Site revision/);
-  // A lock whose holder is gone is a crash leftover: stolen immediately. The
-  // fixture PID is above Linux pid_max (4194304), so no live process can hold it.
+  // A crash leftover is preserved; recovery requires an operator to verify
+  // the holder is gone before removing the lock.
   const unassignablePid = 2 ** 22 + 12345;
   fs.writeFileSync(lock, JSON.stringify({ pid: unassignablePid, token: "crash", startedAt: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString() }));
-  fs.mkdirSync(path.join(buildDir, "site.staging-999999"), { recursive: true });
+  const orphanedStage = path.join(buildDir, "site.staging-999999");
+  fs.mkdirSync(orphanedStage, { recursive: true });
+  const stale = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CORE_REV: "lock-test", SOURCE_DATE_EPOCH: "1700000000" },
+    encoding: "utf8",
+  });
+  assert.notEqual(stale.status, 0);
+  assert.match(stale.stderr, /Stale compose lock/);
+  assert.equal(fs.existsSync(lock), true, "automatic recovery must preserve the stale lock for explicit review");
+  assert.equal(fs.existsSync(orphanedStage), true, "staging cleanup must wait until the lock is explicitly recovered");
+
+  fs.rmSync(lock); // The fixture PID is above Linux pid_max and cannot be live.
   const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
     env: { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CORE_REV: "lock-test", SOURCE_DATE_EPOCH: "1700000000" },
     encoding: "utf8",
   });
-  assert.equal(result.status, 0, "crash-leftover lock must be stolen: " + result.stderr);
+  assert.equal(result.status, 0, result.stderr);
   assert.equal(fs.existsSync(lock), false, "lock must be released after a successful build");
-  assert.equal(fs.existsSync(path.join(buildDir, "site.staging-999999")), false, "orphaned staging dirs must be swept");
+  assert.equal(fs.existsSync(orphanedStage), false, "orphaned staging dirs are swept after explicit recovery");
   assert.equal(validateSiteRoot(site).digest, digest);
   // Even a stale timestamp cannot authorize displacement of a live process.
   fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, token: "expired", startedAt: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString() }));
@@ -588,6 +599,28 @@ test("managed cache cleanup refuses active builds and symlinked cache paths", (t
   });
   assert.notEqual(cleanAncestor.status, 0);
   assert.match(cleanAncestor.stderr, /symbolic-link component/);
+});
+
+test("managed cleanup and GC reject dangling namespace symlinks", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cache-dangling-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const marker = JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n";
+
+  for (const namespace of ["v1", "bangumi", "shirone"]) {
+    const cache = path.join(root, namespace + "-cache");
+    fs.mkdirSync(cache, { recursive: true });
+    fs.writeFileSync(path.join(cache, ".alnilam-cache-owner.json"), marker);
+    const entry = path.join(cache, namespace);
+    fs.symlinkSync(path.join(root, "missing-" + namespace), entry, "dir");
+    const env = { ...process.env, ALNILAM_CACHE_DIR: cache };
+
+    for (const args of [["--clean-cache"], ["--gc-cache", "--dry-run"]]) {
+      const result = spawnSync(process.execPath, ["scripts/compose.mjs", ...args], { env, encoding: "utf8" });
+      assert.notEqual(result.status, 0, `${namespace} dangling symlink must fail closed for ${args.join(" ")}`);
+      assert.match(result.stderr, /symbolic link/);
+      assert.equal(fs.lstatSync(entry).isSymbolicLink(), true, "cleanup must preserve the unverified namespace entry");
+    }
+  }
 });
 
 test("managed cache cleanup preserves siblings and refuses unmarked namespaces", (t) => {

@@ -25,52 +25,44 @@ test("build lock is exclusive and fails closed on contention", (t) => {
   assert.equal(fs.existsSync(lockPath(dir)), false, "release must remove the holder's own lock");
 });
 
-test("a stale lock is stolen and leaves no debris", (t) => {
+test("stale lock requires explicit operator recovery", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  // A lock whose holder process is gone is reclaimable regardless of age.
-  writeLock(dir, { pid: 99999999, startedAt: new Date().toISOString() });
-  const thief = createBuildLock(dir, { pid: 2 });
-  thief.acquire();
-  assert.equal(readLock(dir).pid, 2, "stale lock must be stolen");
-  assert.deepEqual(fs.readdirSync(dir).filter((n) => n.startsWith(".compose-lock.")), [], "steal must not leave debris");
-  thief.release();
+  const stale = { pid: 99999999, token: "stale", startedAt: new Date().toISOString() };
+  writeLock(dir, stale);
+  const contender = createBuildLock(dir, { pid: 2 });
+  assert.throws(() => contender.acquire(), /Stale compose lock/);
+  assert.deepEqual(readLock(dir), stale, "automatic recovery must not move or remove a possibly replaced lock");
+  assert.deepEqual(fs.readdirSync(dir).filter((name) => name.startsWith(".compose-lock.")), [], "failed recovery must not leave staging files");
+
+  fs.rmSync(lockPath(dir)); // Simulate an operator verifying the stale PID and removing the lock.
+  contender.acquire();
+  assert.equal(readLock(dir).pid, 2);
+  contender.release();
   assert.equal(fs.existsSync(lockPath(dir)), false);
 });
 
-test("a fresh lock fails closed without entering the steal path", (t) => {
+test("a live successor replacing a stale lock is never moved", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const fresh = { pid: process.pid, startedAt: new Date().toISOString() };
-  writeLock(dir, fresh);
-  const contender = createBuildLock(dir, { pid: 2 });
-  assert.throws(() => contender.acquire(), /Another compose is building this Site revision/);
-  assert.deepEqual(readLock(dir), fresh, "a live holder's lock must not be evicted");
-  assert.deepEqual(fs.readdirSync(dir).filter((n) => n.startsWith(".compose-lock.")), [], "failed steals must not leave debris");
-});
-
-test("a lock recreated before the steal rename is restored, not destroyed", (t) => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
-  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const observed = { pid: 99999999, token: "stale-observed", startedAt: new Date().toISOString() };
-  writeLock(dir, observed);
+  writeLock(dir, { pid: 99999999, token: "stale-observed", startedAt: new Date().toISOString() });
   const live = { pid: process.pid, token: "live-holder", startedAt: new Date().toISOString() };
-  // A live holder recreates the lock between the contender's read and its
-  // rename; the mocked first steal rename therefore moves the holder's fresh
-  // bytes, exactly as the real interleaving would.
-  const realRenameSync = fs.renameSync;
-  let stealSeen = false;
-  t.mock.method(fs, "renameSync", (from, to) => {
-    if (!stealSeen && String(to).includes(".compose-lock.stealing-")) {
-      stealSeen = true;
-      fs.writeFileSync(from, JSON.stringify(live));
+  const realKill = process.kill;
+  let replaced = false;
+  t.mock.method(process, "kill", (pid, signal) => {
+    if (!replaced) {
+      replaced = true;
+      writeLock(dir, live);
+      const error = new Error("simulated stale owner");
+      error.code = "ESRCH";
+      throw error;
     }
-    return realRenameSync(from, to);
+    return realKill(pid, signal);
   });
   const contender = createBuildLock(dir, { pid: 2 });
-  assert.throws(() => contender.acquire(), /Another compose is building this Site revision/);
-  assert.equal(readLock(dir).token, "live-holder", "the recreated lock must be restored to lockPath");
-  assert.deepEqual(fs.readdirSync(dir).filter((n) => n.startsWith(".compose-lock.")), [], "restore must not leave debris");
+  assert.throws(() => contender.acquire(), /Stale compose lock/);
+  assert.equal(readLock(dir).token, "live-holder", "the replacement lock must remain at lockPath");
+  assert.deepEqual(fs.readdirSync(dir).filter((name) => name.startsWith(".compose-lock.")), [], "rejected recovery must not leave debris");
 });
 
 test("build lock release never removes a replaced lock, even from the same pid", (t) => {

@@ -116,6 +116,34 @@ test("compiled artifacts reuse verified input hits and rebuild corrupt objects",
   assert.notEqual(crypto.createHash("sha256").update(fs.readFileSync(repaired.file)).digest("hex"), "0".repeat(64));
 });
 
+test("concurrent corrupt artifact repairs atomically preserve the deterministic object", async (t) => {
+  const outputDir = path.join(fixture(t), "loaded");
+  const options = { outputDir, cacheKey: "pkg:config/repair.ts", inputKey: "d".repeat(64) };
+  const code = "export const repaired = true;";
+  const initial = await loadBundledArtifact({ ...options, build: () => code });
+  fs.writeFileSync(initial.file, "export const repaired = false;");
+
+  let arrivals = 0;
+  let release;
+  const bothReady = new Promise((resolve) => { release = resolve; });
+  const build = async () => {
+    arrivals += 1;
+    if (arrivals === 2) release();
+    await bothReady;
+    return code;
+  };
+  const repaired = await Promise.all([
+    loadBundledArtifact({ ...options, build }),
+    loadBundledArtifact({ ...options, build }),
+  ]);
+
+  assert.equal(repaired[0].file, repaired[1].file);
+  assert.equal(fs.readFileSync(repaired[0].file, "utf8"), code);
+  assert.equal((await import(pathToFileURL(repaired[0].file).href)).repaired, true);
+  const hit = await loadBundledArtifact({ ...options, build: () => { throw new Error("repaired artifact must be reusable"); } });
+  assert.equal(hit.hit, true);
+});
+
 test("concurrent compiled artifact publication leaves a complete reusable object", async (t) => {
   const outputDir = path.join(fixture(t), "loaded");
   const options = { outputDir, cacheKey: "pkg:config/site.ts", inputKey: "b".repeat(64), build: async () => "export const ready = true;" };

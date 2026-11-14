@@ -31,6 +31,7 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 - Runtime TOML Site config parsing (`smol-toml` dependency), `alnilam.config.toml` support, and the in-repo `sites/legacy-demo` path (the v1 fixture moved to `tests/fixtures/site-v1-legacy`).
 
 ### Fixed
+- **Build cache safety (Issue #145):** cleanup and GC reject dangling namespace symlinks, compiled bundle repair atomically replaces corrupt artifacts under concurrent rebuilds, and stale build locks fail closed for explicit operator recovery instead of racing automatic eviction.
 - **Optional Site Gallery (Issue #67):** album cards use the current locale's detail route, empty album lists and unmatched filters show distinct states, and photo descriptions survive normalization.
 - Article pages now render series context and previous/next links using their canonical localized routes.
 - **Pages CMS field validation (Issue #88):** post creation and edits reject non-integer or unsafe `seriesOrder` values before writing; edits also validate changed fields against the editor schema while preserving unrelated metadata.

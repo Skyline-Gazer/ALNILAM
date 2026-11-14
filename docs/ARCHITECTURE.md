@@ -26,7 +26,7 @@ scripts/compose.mjs    # non-mutating external Site builder
 ## Build algorithm
 1. Resolve and validate an absolute Site source, hash the read-only inputs.
 2. Copy config, content, assets and data into a deterministic snapshot under the managed build cache (currently keyed by Core revision and Site digest) and verify its digest against the source.
-3. Run Astro in Core with `ALNILAM_SITE_DIR` pointing at the snapshot; Content Layer reads its `content/posts` and output goes to staging. Composes serialize only while registering a per-build lock; builds with different cache keys remain concurrent. A lock is reclaimable only after its recorded process is confirmed absent.
+3. Run Astro in Core with `ALNILAM_SITE_DIR` pointing at the snapshot; Content Layer reads its `content/posts` and output goes to staging. Composes serialize only while registering a per-build lock; builds with different cache keys remain concurrent. A stale lock fails closed and requires an operator to verify its recorded PID is gone before removing it; automatic stale-lock eviction is disabled because portable filesystem renames cannot preserve exclusion across competing recoverers.
 4. Copy optional snapshot assets into the staged static output (not back into Core or Site).
 5. Hash the Site inputs again and abort on changes.
 6. Replace the final destination from staging; retain/restore the existing output if staging fails.

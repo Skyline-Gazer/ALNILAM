@@ -123,7 +123,7 @@ function assertNoSymlinksInTree(target, device) {
 function cacheCandidates(device) {
   const candidates = [];
   const v1 = path.join(cacheRoot, "v1");
-  if (fs.existsSync(v1)) {
+  if (fs.lstatSync(v1, { throwIfNoEntry: false })) {
     assertNoSymlinksInTree(v1, device);
     for (const key of fs.readdirSync(v1)) {
       if (!/^[a-f0-9]{16}$/.test(key)) throw new Error("Unexpected managed build-cache key: " + path.join(v1, key));
@@ -134,13 +134,13 @@ function cacheCandidates(device) {
   }
 
   const bangumi = path.join(cacheRoot, "bangumi");
-  if (fs.existsSync(bangumi)) {
+  if (fs.lstatSync(bangumi, { throwIfNoEntry: false })) {
     assertNoSymlinksInTree(bangumi, device);
     candidates.push({ path: bangumi, kind: "bangumi-fallback" });
   }
 
   const shirone = path.join(cacheRoot, "shirone");
-  if (fs.existsSync(shirone)) {
+  if (fs.lstatSync(shirone, { throwIfNoEntry: false })) {
     assertNoSymlinksInTree(shirone, device);
     for (const key of fs.readdirSync(shirone)) {
       if (!/^[a-f0-9]{64}$/.test(key)) throw new Error("Unexpected Shirone input key: " + path.join(shirone, key));
@@ -201,6 +201,9 @@ function markCacheUse(target) {
 
 function assertNoActiveBuilds() {
   const visit = (dir) => {
+    const dirStat = fs.lstatSync(dir);
+    if (dirStat.isSymbolicLink()) throw new Error("Refusing a symbolic link in managed cache: " + dir);
+    if (!dirStat.isDirectory()) throw new Error("Unexpected managed cache namespace: " + dir);
     for (const entry of fs.readdirSync(dir)) {
       const target = path.join(dir, entry);
       const stat = fs.lstatSync(target);
@@ -221,7 +224,7 @@ function assertNoActiveBuilds() {
   };
   for (const entry of ["v1", "bangumi", "shirone"]) {
     const target = path.join(cacheRoot, entry);
-    if (fs.existsSync(target)) visit(target);
+    if (fs.lstatSync(target, { throwIfNoEntry: false })) visit(target);
   }
 }
 
@@ -260,7 +263,7 @@ if (cleanCacheOnly) {
     assertNoActiveBuilds();
     for (const entry of ["v1", "bangumi", "shirone"]) {
       const target = path.join(cacheRoot, entry);
-      if (!fs.existsSync(target)) continue;
+      if (!fs.lstatSync(target, { throwIfNoEntry: false })) continue;
       assertNoSymlinksInTree(target, fs.statSync(cacheRoot).dev);
       rmTreeSafe(target);
     }
