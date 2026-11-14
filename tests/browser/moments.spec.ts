@@ -68,6 +68,8 @@ for (const deployment of deployments) {
       const firstTileImage = imageTiles.first().locator("img");
       await expect(firstTileImage).toHaveAttribute("width", "640");
       await expect(firstTileImage).toHaveAttribute("height", "360");
+      await firstTileImage.scrollIntoViewIfNeeded();
+      await expect.poll(() => firstTileImage.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(640);
       await imageTiles.first().click();
       const viewer = twoImageCard.locator(".moment-viewer");
       await expect(viewer).toBeVisible();
