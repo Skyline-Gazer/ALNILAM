@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { classifyVersion, fetchPackageMetadata, fetchSourceSnapshot, readDependencyInventory, reconcileWatch, summarizeAudit } from "../upstream-watch.mjs";
+import { classifyVersion, enrichDependencies, fetchPackageMetadata, fetchSourceSnapshot, readDependencyInventory, reconcileWatch, summarizeAudit } from "../upstream-watch.mjs";
 
 const registry = {
   sources: [{ id: "alpha", repository: "https://github.com/example/alpha", role: "reference", baselineRevision: "base" }],
@@ -96,6 +96,17 @@ test("npm package metadata requests publication timestamps and records latest-ve
   } });
   assert.equal(accept, "application/json");
   assert.deepEqual(result, [["sample", { latest: "1.2.0", publishedAt: "2026-10-01T00:00:00Z", metadataUpdatedAt: "2026-10-02T00:00:00Z", deprecated: null }]]);
+});
+
+test("dependency enrichment marks releases stale from their publication timestamps", () => {
+  const records = [dependency, { ...dependency, package: "recent" }];
+  const metadata = new Map([
+    ["sample", { latest: "1.1.0", publishedAt: "2025-11-13T00:00:00.000Z", deprecated: null }],
+    ["recent", { latest: "1.1.0", publishedAt: "2025-11-15T00:00:00.000Z", deprecated: null }],
+  ]);
+  const enriched = enrichDependencies(records, metadata, new Date("2026-11-14T00:00:00.000Z"));
+  assert.equal(enriched[0].staleRelease, true);
+  assert.equal(enriched[1].staleRelease, false);
 });
 
 test("watch state deduplicates unchanged source and dependency evidence while preserving analysis and integration", () => {

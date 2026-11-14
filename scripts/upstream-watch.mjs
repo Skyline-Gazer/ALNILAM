@@ -181,6 +181,23 @@ export async function fetchPackageMetadata(packageNames, { fetchFn = fetch, regi
   });
 }
 
+export function enrichDependencies(records, metadata, now = new Date()) {
+  const staleBefore = now.getTime() - STALE_RELEASE_DAYS * 24 * 60 * 60 * 1000;
+  return records.map((record) => {
+    const published = metadata.get(record.package) ?? {};
+    const candidateClass = record.workspace ? "current" : classifyVersion(record.lockedVersion, published.latest);
+    const publishedMs = published.publishedAt ? Date.parse(published.publishedAt) : NaN;
+    return {
+      ...record,
+      latest: record.workspace ? null : published.latest ?? null,
+      candidateClass,
+      publishedAt: published.publishedAt ?? null,
+      deprecated: published.deprecated ?? null,
+      staleRelease: Number.isFinite(publishedMs) && publishedMs < staleBefore,
+    };
+  });
+}
+
 function parseAuditResult(result) {
   const raw = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
   const start = raw.indexOf("{");
@@ -378,20 +395,7 @@ async function main(args) {
   const packageNames = [...new Set(dependencyScan.records.filter((record) => !record.workspace).map((record) => record.package))].sort();
   const metadata = new Map(await fetchPackageMetadata(packageNames));
   const now = new Date().toISOString();
-  const daysAgo = Date.now() - STALE_RELEASE_DAYS * 24 * 60 * 60 * 1000;
-  const dependencies = dependencyScan.records.map((record) => {
-    const published = metadata.get(record.package) ?? {};
-    const candidateClass = record.workspace ? "current" : classifyVersion(record.lockedVersion, published.latest);
-    const publishedMs = published.publishedAt ? Date.parse(published.publishedAt) : NaN;
-    return {
-      ...record,
-      latest: record.workspace ? null : published.latest ?? null,
-      candidateClass,
-      publishedAt: published.publishedAt ?? null,
-      deprecated: published.deprecated ?? null,
-      staleRelease: Number.isFinite(publishedMs) && publishedMs < daysAgo,
-    };
-  });
+  const dependencies = enrichDependencies(dependencyScan.records, metadata);
   const auditResult = spawnSync(packageCommand(), ["audit", "--json", "--registry=https://registry.npmjs.org"], {
     cwd: repoRoot, encoding: "utf8", timeout: 60_000, maxBuffer: 8 * 1024 * 1024,
   });
