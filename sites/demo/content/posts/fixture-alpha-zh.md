@@ -12,6 +12,7 @@ translationKey: "fixture-alpha"
 正文包含独有词 天琴座星图 便于断言搜索命中。
 
 这一段是填充段落，用于让每篇文章拥有稳定的正文体积。The quick brown fox jumps over the lazy dog.
+行内代码应保留连续空格：`a    b`。
 
 ## 代码块
 

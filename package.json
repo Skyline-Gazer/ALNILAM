@@ -20,6 +20,7 @@
     "lighthouse:local": "node scripts/local-browser.mjs lighthouse",
     "audit:local": "node scripts/local-browser.mjs all",
     "vercel-build": "node scripts/vercel-build.mjs",
+    "upstream:watch": "node scripts/upstream-watch.mjs",
     "verify": "pnpm test && pnpm check && pnpm build"
   },
   "devDependencies": {
