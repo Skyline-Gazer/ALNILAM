@@ -144,11 +144,13 @@ test("watch state deduplicates unchanged source and dependency evidence while pr
 });
 
 test("dependency state fingerprints include manifest and lockfile declarations", () => {
-  const inputs = { registry, snapshots: { alpha: snapshot() }, dependencyScan: scan, dependencies: [dependency], audit };
+  const drifted = { ...dependency, specifier: "^1.0.2", lockDrift: "specifier-mismatch" };
+  const inputs = { registry, snapshots: { alpha: snapshot() }, dependencyScan: scan, dependencies: [drifted], audit };
   const first = reconcileWatch({ ...inputs, state: { schemaVersion: 1, sources: {}, dependencies: {} }, now: "2026-11-14T01:00:00.000Z" });
-  const changed = reconcileWatch({ ...inputs, dependencies: [{ ...dependency, specifier: "~1.0.0", lockDrift: "specifier-mismatch" }], state: first.state, now: "2026-11-14T02:00:00.000Z" });
+  const changed = reconcileWatch({ ...inputs, dependencies: [{ ...drifted, specifier: "^2.0.0" }], state: first.state, now: "2026-11-14T02:00:00.000Z" });
   assert.equal(changed.report.dependencies.status, "changed");
-  assert.equal(changed.state.dependencies.last_seen.observation.packages[0][3], "~1.0.0");
+  assert.equal(changed.state.dependencies.last_seen.observation.packages[0][3], "^2.0.0");
+  assert.equal(changed.state.dependencies.last_seen.observation.packages[0][7], "specifier-mismatch");
 });
 
 test("pnpm audit summaries handle modern and legacy advisory formats without hiding errors", () => {
