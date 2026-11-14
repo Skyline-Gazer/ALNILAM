@@ -6,7 +6,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 
 
-const MAX_STEAL_ATTEMPTS = 10;
+const MAX_ACQUIRE_ATTEMPTS = 10;
 
 function readLock(lockPath) {
   try {
@@ -43,7 +43,7 @@ export function createBuildLock(dir, { pid = process.pid, lockName = ".compose-l
   return {
     acquire() {
       fs.mkdirSync(dir, { recursive: true });
-      for (let attempts = 0; attempts < MAX_STEAL_ATTEMPTS; attempts++) {
+      for (let attempts = 0; attempts < MAX_ACQUIRE_ATTEMPTS; attempts++) {
         const token = randomUUID();
         // A unique staging name per attempt: two acquires in the same process
         // (or a retry) must never rewrite or delete each other's staged file.
