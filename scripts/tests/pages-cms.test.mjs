@@ -252,12 +252,24 @@ test("branch preflight ignores inherited Git repository selectors", () => {
   const foreignSite = path.join(tmp, "git-foreign-site");
   copySite(site);
   copySite(foreignSite);
-  for (const [directory, branch] of [[site, "cms-poc"], [foreignSite, "main"]]) {
-    runGit(directory, "init", "--quiet", `--initial-branch=${branch}`);
-    runGit(directory, "config", "user.name", "ALNILAM CMS PoC");
-    runGit(directory, "config", "user.email", "cms-poc@example.invalid");
-    runGit(directory, "add", "--all");
-    runGit(directory, "commit", "--quiet", "-m", "Baseline Site");
+  const selectorSite = path.join(tmp, "git-environment-selector");
+  copySite(selectorSite);
+  runGit(selectorSite, "init", "--quiet", "--initial-branch=selector");
+  const previousGitDir = process.env.GIT_DIR;
+  process.env.GIT_DIR = path.join(selectorSite, ".git");
+  try {
+    for (const [directory, branch] of [[site, "cms-poc"], [foreignSite, "main"]]) {
+      runGit(directory, "init", "--quiet", `--initial-branch=${branch}`);
+      runGit(directory, "config", "user.name", "ALNILAM CMS PoC");
+      runGit(directory, "config", "user.email", "cms-poc@example.invalid");
+      runGit(directory, "add", "--all");
+      runGit(directory, "commit", "--quiet", "-m", "Baseline Site");
+    }
+    assert.equal(runGit(site, "branch", "--show-current"), "cms-poc");
+    assert.equal(runGit(foreignSite, "branch", "--show-current"), "main");
+  } finally {
+    if (previousGitDir === undefined) delete process.env.GIT_DIR;
+    else process.env.GIT_DIR = previousGitDir;
   }
 
   const post = postFile(site, "blocked-by-inherited-git-dir.md");
