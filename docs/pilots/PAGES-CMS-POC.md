@@ -34,7 +34,7 @@ Site and existing test resources.
 | --- | --- |
 | `tests/fixtures/pages-cms-site/.pages.yml` | Site-owned Pages CMS editor schema: media source, `content/posts` collection, all post frontmatter fields, `body` source field, `operations.delete: false`, `merge: true`. |
 | `tests/fixtures/pages-cms-site/` | Disposable independent Site: schema v2 config, one Markdown post and one MDX post (both with undeclared frontmatter keys), one Site asset and one post-relative image. No third-party media. |
-| `scripts/pages-cms.mjs` | Offline adapter CLI (`verify`, `create`, `edit`, `init`). Parses frontmatter as a YAML document, edits declared fields in place, re-serializes without touching the body, and generates the editor schema from the Site taxonomy. Writes are confined to the Site's `content/posts/`. No Core changes, no new dependency. |
+| `scripts/pages-cms.mjs` | Offline adapter CLI (`verify`, `create`, `edit`, `init`). It preserves undeclared frontmatter and body bytes, confines writes to the Site posts/config, and optionally checks the current Site Git branch with `--expect-branch`. |
 | `scripts/pages-cms.schema.yml` | The single schema template `init` renders (`{{CATEGORY_FIELD}}` is replaced by a select with the Site's categories, or a free-text field when the Site declares none). |
 | `scripts/tests/pages-cms.test.mjs` | Field mapping, roundtrip, dual-base compose, CMS-removal and fail-closed tests. |
 
@@ -44,6 +44,7 @@ Site and existing test resources.
 | --- | --- |
 | Independent Site `.pages.yml` example | Fixture config parses with the Pages CMS schema shape (`media`, `content`, `settings`, `actions`); collection path `content/posts`, format `yaml-frontmatter`. |
 | `scripts/pages-cms.mjs` | Offline adapter CLI: `verify` (mapping, required fields, media paths, category drift), `edit` (declared-field write-back that preserves comments, unknown keys and body bytes), `init` (generate `.pages.yml` from the Site taxonomy). No Core changes, no new dependency. |
+| Explicit local branch selection | Tests use a separate temporary Git checkout on `cms-poc`; `create`, `edit` and `init` reject a mismatched `--expect-branch` before writing. This does not inspect remote branch protection or publish a commit. |
 | Unknown frontmatter fields | `author`, `editorialNote`, nested `cmsMeta` and `mdxOnly` survive an edit with their values and a YAML comment. With `merge: false` the same edit drops all three — the exact data-loss mode the PoC guards against. |
 | Markdown / MDX content roundtrip | The post body is byte-identical before and after the edit for both `.md` and `.mdx`; MDX JSX (`data-pages-cms-mdx`) and `{1 + 1}` still render as `计算结果：2` in the composed HTML. Off-schema edit keys are rejected. |
 | Markdown and media path compatibility | `/site-assets/cms-mark.svg` resolves to `/site-assets/...` at root and `/ALNILAM/site-assets/...` under the subpath; the post-relative `./cms-local.svg` is emitted under `/_astro/` (base-prefixed on the subpath). `artifact-check.mjs` and `seo-check.mjs` pass on both builds. |
@@ -63,6 +64,11 @@ node scripts/pages-cms.mjs create --site /tmp/pages-cms-site --file new-post.md 
 node --test --test-concurrency=1 scripts/tests/pages-cms.test.mjs
 ```
 
+For a reproducible Git-checkout example, copy the fixture to a temporary path
+outside this repository and follow `tests/fixtures/pages-cms-site/README.md`.
+The optional `--expect-branch` preflight checks the local checkout only; hosted
+Pages CMS permissions, remote branch rules and PR creation remain unverified.
+
 ## Provider status
 
 | Provider | Status | Reason |
@@ -78,6 +84,7 @@ node --test --test-concurrency=1 scripts/tests/pages-cms.test.mjs
 - The adapter models a single write-back locally; concurrent edits, conflict
   handling, rollback, private test repositories and rejection of real deletes
   are not exercised. `operations.delete: false` is a configuration guard only.
+- `--expect-branch` checks the selected local branch only; it neither queries remote branch protection nor creates a commit or PR.
 - Pages CMS `select` cannot source categories dynamically. `init` generates the
   values from the Site taxonomy, and `verify` fails when a post uses a category
   the select cannot represent (`selectDrift`). Regenerate after taxonomy changes.

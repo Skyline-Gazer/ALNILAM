@@ -13,16 +13,28 @@ a user's Site, is never published, and contains no third-party media.
   `content/posts/cms-local.svg` is a post-relative image resolved into
   `/_astro/` by the image pipeline.
 
-Run the offline adapter from the repository root:
+Run the offline adapter from the repository root. This example copies the
+fixture to a separate temporary Git checkout, makes a baseline commit and then
+limits authoring commands to the explicitly selected local branch:
 
 ```sh
-node scripts/pages-cms.mjs verify --site tests/fixtures/pages-cms-site
-cp -a tests/fixtures/pages-cms-site /tmp/pages-cms-site
-node scripts/pages-cms.mjs edit \
-  --site /tmp/pages-cms-site \
-  --post cms-basics.md \
-  --set '{"title":"Edited by the PoC"}'
+tmp="$(mktemp -d)"
+site="$tmp/site"
+cp -a tests/fixtures/pages-cms-site "$site"
+git -C "$site" init --quiet --initial-branch=cms-poc
+git -C "$site" config user.name "ALNILAM CMS PoC"
+git -C "$site" config user.email cms-poc@example.invalid
+git -C "$site" add --all
+git -C "$site" commit --quiet -m "Baseline Site"
+node scripts/pages-cms.mjs verify --site "$site"
+node scripts/pages-cms.mjs edit --site "$site" --post cms-basics.md \
+  --set '{"title":"Edited by the PoC"}' --expect-branch cms-poc
+node scripts/pages-cms.mjs create --site "$site" --file branch-post.md \
+  --set '{"title":"Branch post","pubDate":"2026-11-12"}' --expect-branch cms-poc
+git -C "$site" status --short
 ```
+
+`--expect-branch` does not switch branches or inspect remote branch protection.
 
 `create` adds a post from declared fields (it requires `title` and `pubDate` and
 refuses to overwrite); `edit` writes back to the post. Every write is confined to
