@@ -468,7 +468,8 @@ function assertExpectedBranch(siteDir, expectedBranch) {
   if (typeof expectedBranch !== "string" || !expectedBranch || expectedBranch.startsWith("--")) {
     throw new Error("--expect-branch requires a branch name");
   }
-  const result = spawnSync("git", ["-C", path.resolve(siteDir), "branch", "--show-current"], { encoding: "utf8" });
+  const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")));
+  const result = spawnSync("git", ["-C", path.resolve(siteDir), "branch", "--show-current"], { encoding: "utf8", env });
   if (result.error || result.status !== 0) {
     throw new Error("--expect-branch requires --site to be inside a Git working tree");
   }

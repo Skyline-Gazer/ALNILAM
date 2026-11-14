@@ -246,6 +246,29 @@ test("write commands validate an explicitly selected independent Site branch", (
   assert.equal(fs.existsSync(path.join(initSite, CMS_CONFIG_FILENAME)), true);
 });
 
+test("branch preflight ignores inherited Git repository selectors", () => {
+  const site = path.join(tmp, "git-selected-site");
+  const foreignSite = path.join(tmp, "git-foreign-site");
+  copySite(site);
+  copySite(foreignSite);
+  for (const [directory, branch] of [[site, "cms-poc"], [foreignSite, "main"]]) {
+    runGit(directory, "init", "--quiet", `--initial-branch=${branch}`);
+    runGit(directory, "config", "user.name", "ALNILAM CMS PoC");
+    runGit(directory, "config", "user.email", "cms-poc@example.invalid");
+    runGit(directory, "add", "--all");
+    runGit(directory, "commit", "--quiet", "-m", "Baseline Site");
+  }
+
+  const post = postFile(site, "blocked-by-inherited-git-dir.md");
+  const result = run("create", [tool, "create", "--site", site, "--file", "blocked-by-inherited-git-dir.md",
+    "--set", JSON.stringify({ title: "Must stay blocked", pubDate: "2026-11-14" }), "--expect-branch", "main"], {
+    GIT_DIR: path.join(foreignSite, ".git"),
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /--expect-branch mismatch: expected main, current branch is cms-poc/);
+  assert.equal(fs.existsSync(post), false);
+});
+
 test("the CLI entry guard survives spaces and non-ASCII checkout paths", () => {
   const spaced = path.join(tmp, "pages cms 空格");
   fs.mkdirSync(path.join(spaced, "scripts"), { recursive: true });
