@@ -15,24 +15,29 @@ import MomentCard, {
 } from "@components/molecules/MomentCard.svelte";
 import PageHeader from "@components/molecules/PageHeader.svelte";
 import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
+import { i18nForLocale } from "@i18n/translation";
 import type { MomentItem } from "@utils/content-utils";
 import { initFancybox } from "@utils/fancybox-handler";
 import { onMount } from "svelte";
 
 let {
 	moments = [] as MomentItem[],
-	author = { name: "", avatar: "", url: "/about/" } as MomentAuthor,
-	title = i18n(I18nKey.moments),
-	subtitle = i18n(I18nKey.momentsBanner),
+	author = { name: "", avatar: "", url: "/" } as MomentAuthor,
+	locale,
+	title,
+	subtitle,
 }: {
 	moments?: MomentItem[];
 	author?: MomentAuthor;
-	title?: string;
-	subtitle?: string;
+	locale: string;
+	title: string;
+	subtitle: string;
 } = $props();
 
-const MOMENTS_PAGE_SIZE = 10;
+const t = (key: I18nKey) => i18nForLocale(locale, key);
+
+// Eight initial cards keep enriched feeds below the static HTML artifact budget.
+const MOMENTS_PAGE_SIZE = 8;
 
 let query = $state("");
 let selectedTag = $state("");
@@ -76,7 +81,7 @@ const visibleMoments = $derived(filtered.slice(0, shownCount));
 const hasMore = $derived(filtered.length > shownCount);
 
 function countLabel(count: number) {
-	return `${count} ${i18n(I18nKey.momentsCounts)}`;
+	return `${count} ${t(I18nKey.momentsCounts)}`;
 }
 
 /** 分类（标签）筛选：指示器展示 → 淡出 → 列表 stagger 揭幕 */
@@ -139,8 +144,8 @@ onMount(() => {
 				<TextField
 					type="search"
 					bind:value={query}
-					placeholder={i18n(I18nKey.search)}
-					label={i18n(I18nKey.search)}
+					placeholder={t(I18nKey.search)}
+					label={t(I18nKey.search)}
 					hideLabel
 					variant="outlined"
 					class="!rounded-(--shape-corner-l)"
@@ -151,7 +156,7 @@ onMount(() => {
 					<button
 						type="button"
 						class="moment-section__search-clear"
-						aria-label={i18n(I18nKey.clear)}
+						aria-label={t(I18nKey.clear)}
 						onclick={() => (query = "")}
 					>
 						<Icon icon="material-symbols:close-rounded" aria-hidden="true" />
@@ -187,7 +192,7 @@ onMount(() => {
 		{#key `${query}|${selectedTag}`}
 			<div class="moment-section__list">
 				{#each visibleMoments as moment, i (moment.id)}
-					<MomentCard {moment} {author} delay={Math.min(i, 7) * 45} />
+					<MomentCard {moment} {author} {locale} delay={Math.min(i, 7) * 45} />
 				{/each}
 			</div>
 		{/key}
@@ -196,7 +201,7 @@ onMount(() => {
 				<Button
 					variant="outlined"
 					icon="material-symbols:expand-more-rounded"
-					label={i18n(I18nKey.loadMore)}
+					label={t(I18nKey.loadMore)}
 					onclick={() => (shownCount += MOMENTS_PAGE_SIZE)}
 				/>
 			</div>
@@ -204,7 +209,7 @@ onMount(() => {
 	{:else}
 		<div class="moment-section__empty">
 			<Icon icon="material-symbols:search-off-outline-rounded" aria-hidden="true" />
-			<span>{i18n(I18nKey.momentsNoResults)}</span>
+			<span>{t(I18nKey.momentsNoResults)}</span>
 		</div>
 	{/if}
 </Card>

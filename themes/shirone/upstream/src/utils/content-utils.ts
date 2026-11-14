@@ -189,6 +189,9 @@ export async function getCategoryList(): Promise<Category[]> {
 export type MomentImage = {
 	src: string;
 	alt: string;
+	/** Original dimensions; the gallery uses a 4:3 reservation when omitted. */
+	width?: number;
+	height?: number;
 	/** Responsive list thumbnail; the original src remains the viewer/lightbox source. */
 	thumbnailSrc?: string;
 	thumbnailSrcset?: string;

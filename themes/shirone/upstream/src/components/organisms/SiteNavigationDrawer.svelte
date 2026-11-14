@@ -39,6 +39,7 @@ function localizedHref(path?: string, external = false) {
 function localizedLabel(name: string, pageKey?: string) {
 	if (!pageKey) return name;
 	if (pageKey === "albums") return t(I18nKey.albums);
+	if (pageKey === "moments") return t(I18nKey.moments);
 	if (!localizedRoute) return name;
 	const labels: Record<string, string> = {
 		home: t(I18nKey.home),

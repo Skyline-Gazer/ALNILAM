@@ -9,7 +9,7 @@ import Avatar from "@components/atoms/display/Avatar.svelte";
 import Icon from "@components/atoms/display/Icon.svelte";
 import MomentGallery from "@components/molecules/MomentGallery.svelte";
 import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
+import { i18nForLocale } from "@i18n/translation";
 import type { MomentItem } from "@utils/content-utils";
 import { formatDateToYYYYMMDDHHmm } from "@utils/date-utils";
 import { reveal } from "@utils/motion";
@@ -26,15 +26,19 @@ export type MomentAuthor = {
 let {
 	moment,
 	author,
+	locale,
 	/** stagger 入场延迟 ms（由列表传入：第 i 项 i × step） */
 	delay = 0,
 	class: className = "",
 }: {
 	moment: MomentItem;
 	author: MomentAuthor;
+	locale: string;
 	delay?: number;
 	class?: string;
 } = $props();
+
+const t = (key: I18nKey) => i18nForLocale(locale, key);
 
 const publishedAt = $derived(new Date(moment.published));
 const timeText = $derived(formatDateToYYYYMMDDHHmm(publishedAt));
@@ -66,7 +70,7 @@ const timeText = $derived(formatDateToYYYYMMDDHHmm(publishedAt));
 			{#if moment.pinned}
 				<span class="moment-card__badge moment-card__badge--pinned">
 					<Icon icon="material-symbols:keep-rounded" aria-hidden="true" />
-					{i18n(I18nKey.pinned)}
+					{t(I18nKey.pinned)}
 				</span>
 			{/if}
 		</div>
@@ -82,7 +86,7 @@ const timeText = $derived(formatDateToYYYYMMDDHHmm(publishedAt));
 	{/if}
 
 	{#if moment.images.length > 0}
-		<MomentGallery images={moment.images} />
+		<MomentGallery images={moment.images} {locale} />
 	{/if}
 
 	{#if moment.location || moment.tags.length > 0}

@@ -96,7 +96,8 @@ export function resolvePageKey(
 	if (pathname === "/bangumi" || pathname.startsWith("/bangumi/"))
 		return "bangumi";
 	if (pathname === "/friends") return "friends";
-	if (pathname === "/moments") return "moments";
+	if (pathname === "/moments" || pathname.startsWith("/moments/"))
+		return "moments";
 	if (pathname === "/anime") return "anime";
 	if (pathname === "/compass") return "compass";
 	if (pathname === "/skills") return "skills";
