@@ -56,6 +56,10 @@ for (const [name, origin] of deployments) {
 			await expect(img).toHaveAttribute("width", "640");
 			await expect(img).toHaveAttribute("height", "360");
 			await expect(img).toHaveAttribute("alt", "示例图片");
+			const spacedCode = page.locator(".markdown-content p code").filter({ hasText: "a    b" });
+			await expect(spacedCode).toHaveCount(1);
+			expect(await spacedCode.textContent()).toBe("a    b");
+			await expect(spacedCode).toHaveCSS("white-space", "break-spaces");
 
 			const article = page.locator(".markdown-content");
 			await expect(article.getByRole("link", { name: "安全外链" })).toHaveAttribute("href", "https://example.org/markdown");
