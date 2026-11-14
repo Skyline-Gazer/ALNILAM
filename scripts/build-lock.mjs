@@ -72,7 +72,11 @@ export function createBuildLock(dir, { pid = process.pid, lockName = ".compose-l
             throw new Error("Another compose is building this Site revision (build state is locked)");
           }
         } finally {
-          fs.rmSync(staged, { force: true });
+          try {
+            fs.rmSync(staged, { force: true });
+          } catch {
+            // The published hard link owns the lock; staging cleanup is best-effort.
+          }
         }
       }
       throw new Error("Another compose is building this Site revision (build state is locked)");

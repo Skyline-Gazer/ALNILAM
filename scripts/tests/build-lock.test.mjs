@@ -25,6 +25,31 @@ test("build lock is exclusive and fails closed on contention", (t) => {
   assert.equal(fs.existsSync(lockPath(dir)), false, "release must remove the holder's own lock");
 });
 
+test("published lock remains owned when staging cleanup fails", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const realRm = fs.rmSync;
+  let simulatedFailure = false;
+  t.mock.method(fs, "rmSync", (target, options) => {
+    if (typeof target === "string" && target.startsWith(`${lockPath(dir)}.staging-`)) {
+      simulatedFailure = true;
+      const error = new Error("simulated staging cleanup failure");
+      error.code = "EACCES";
+      throw error;
+    }
+    return realRm(target, options);
+  });
+
+  const holder = createBuildLock(dir, { pid: process.pid });
+  assert.doesNotThrow(() => holder.acquire());
+  assert.equal(simulatedFailure, true, "the staged hard-link cleanup failure must be exercised");
+  assert.equal(readLock(dir).pid, process.pid, "the published lock remains owned by the holder");
+  assert.throws(() => createBuildLock(dir, { pid: 2 }).acquire(), /Another compose is building this Site revision/);
+
+  holder.release();
+  assert.equal(fs.existsSync(lockPath(dir)), false, "the holder can still release its published lock");
+});
+
 test("stale lock requires explicit operator recovery", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
