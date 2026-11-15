@@ -57,7 +57,7 @@ node scripts/artifact-check.mjs dist/site     # standalone budget re-check
 
 ## Learning Loop (Pilot)
 
-The project-local [ADS Learning Loop Pilot](https://github.com/Skyline-Gazer/ALNILAM/issues/148) records concrete lessons from naturally completed development deliveries. Use it only when an Issue #148 trigger is evidenced; ordinary feature reviews, one-off fixes, speculation and transient failures are not Lessons.
+The project-local [ADS Learning Loop Pilot](https://github.com/Skyline-Gazer/ALNILAM/issues/148) records concrete lessons from naturally completed development deliveries. Use it only when an Issue #148 trigger is evidenced; ordinary feature reviews, one-off small fixes, speculation and transient failures do not qualify by themselves. A one-off fix that meets a trigger, such as correcting a false PASS, can qualify.
 
 Write a triggered Lesson in the original delivery Issue or PR thread, then add a one-line evidence link and update the observation summary in #148. Do not create a separate ledger or record a Lesson when no trigger occurred.
 
