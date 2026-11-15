@@ -681,42 +681,47 @@ test("CMS edit replaces a hardlinked output without mutating its outside name", 
     "published Site output must not share the outside inode");
 });
 
-test("CMS edit fails closed when content/posts is replaced during publication", { skip: process.platform !== "linux" }, () => {
+test("CMS edit rolls back when content/posts moves outside immediately before publication", { skip: process.platform !== "linux" }, () => {
   const site = path.join(tmp, "path-swap-write-site");
   const outside = path.join(tmp, "path-swap-write-outside");
   copySite(site);
   fs.mkdirSync(outside);
   const posts = path.join(site, POSTS_DIR);
-  const movedPosts = `${posts}.original`;
+  const movedPosts = path.join(outside, "moved-posts");
+  const previousOutput = path.join(posts, "swap-output.md");
   const outsideOutput = path.join(outside, "swap-output.md");
-  const sentinelBytes = Buffer.from("path-swap sentinel must remain unchanged\n");
-  fs.writeFileSync(outsideOutput, sentinelBytes);
-  const preload = path.join(tmp, "swap-posts-parent.cjs");
+  const previousBytes = Buffer.from("previous Site output must be restored\n");
+  const outsideBytes = Buffer.from("outside sentinel must remain unchanged\n");
+  fs.writeFileSync(previousOutput, previousBytes);
+  fs.writeFileSync(outsideOutput, outsideBytes);
+  const preload = path.join(tmp, "swap-posts-before-rename.cjs");
   fs.writeFileSync(preload, [
     'const fs = require("node:fs");',
-    'let swapped = false;',
-    'const writeFileSync = fs.writeFileSync;',
-    'fs.writeFileSync = function (file, ...args) {',
-    '  if (!swapped) {',
-    '    swapped = true;',
-    '    fs.renameSync(process.env.CMS_SWAP_PARENT, process.env.CMS_SWAP_MOVED);',
+    'let moved = false;',
+    'const renameSync = fs.renameSync;',
+    'fs.renameSync = function (source, target) {',
+    '  if (!moved && String(source).startsWith("/proc/self/fd/") && String(source).endsWith(".tmp")) {',
+    '    moved = true;',
+    '    renameSync.call(fs, process.env.CMS_SWAP_PARENT, process.env.CMS_SWAP_MOVED);',
     '    fs.symlinkSync(process.env.CMS_SWAP_OUTSIDE, process.env.CMS_SWAP_PARENT, "dir");',
     '  }',
-    '  return writeFileSync.call(fs, file, ...args);',
+    '  return renameSync.call(fs, source, target);',
     '};',
   ].join("\n"));
 
   try {
     const edited = run("edit", ["--require", preload, tool, "edit", "--site", site,
-      "--post", "cms-basics.md", "--out", path.join(posts, "swap-output.md"),
+      "--post", "cms-basics.md", "--out", previousOutput,
       "--set", JSON.stringify({ title: "Must not escape" })], {
       CMS_SWAP_PARENT: posts,
       CMS_SWAP_MOVED: movedPosts,
       CMS_SWAP_OUTSIDE: outside,
     });
-    assert.notEqual(edited.status, 0, "edit must fail once the validated posts directory changes");
+    assert.notEqual(edited.status, 0, "edit must fail once the opened posts directory moves outside the Site");
     assert.match(edited.stderr, /Site write directory changed during file publication/);
-    assert.deepEqual(fs.readFileSync(outsideOutput), sentinelBytes, "path replacement must not overwrite outside content");
+    assert.deepEqual(fs.readFileSync(outsideOutput), outsideBytes, "the replacement path's sentinel must remain unchanged");
+    assert.deepEqual(fs.readFileSync(path.join(movedPosts, "swap-output.md")), previousBytes,
+      "rollback must restore the previous output through the directory descriptor");
     assert.deepEqual(fs.readdirSync(movedPosts).filter((name) => name.startsWith(".alnilam-cms-")), []);
   } finally {
     const current = fs.lstatSync(posts, { throwIfNoEntry: false });

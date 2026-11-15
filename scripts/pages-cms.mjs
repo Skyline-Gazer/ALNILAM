@@ -253,10 +253,12 @@ function assertWriteDirectory(siteRoot, dir, expected, descriptorPath = null) {
 /**
  * Publish through a same-directory temporary file so replacing a hardlink
  * never writes through to its other names. Linux uses /proc/self/fd to keep
- * the operation attached to the validated directory across path swaps. Node
- * has no portable directory-relative rename API; other platforms revalidate
- * the parent, so a concurrent local rename after that check remains outside
- * the confinement guarantee.
+ * the operation attached to the validated directory across path swaps; other
+ * platforms revalidate the path because Node has no portable dirfd rename.
+ * On Linux, a directory descriptor does not preserve containment if a local
+ * process moves that directory, so validate after publication and roll back
+ * if it has left the Site. A move after the final check remains outside
+ * Node's guarantee.
  */
 function writeSiteFile(siteDir, file, content, { replace = true } = {}) {
   const requested = path.resolve(file);
@@ -279,6 +281,11 @@ function writeSiteFile(siteDir, file, content, { replace = true } = {}) {
   let tempPath = null;
   let tempIdentity = null;
   let tempExists = false;
+  let backupPath = null;
+  let backupExists = false;
+  let published = false;
+  let operationDirectory = null;
+  let destination = null;
   try {
     if (process.platform === "linux" && fs.existsSync("/proc/self/fd")) {
       const flags = fs.constants.O_RDONLY
@@ -293,8 +300,8 @@ function writeSiteFile(siteDir, file, content, { replace = true } = {}) {
       assertWriteDirectory(siteRoot, dir, openedDirectory, descriptorPath);
     }
 
-    const operationDirectory = descriptorPath || dir;
-    const destination = path.join(operationDirectory, path.basename(target));
+    operationDirectory = descriptorPath || dir;
+    destination = path.join(operationDirectory, path.basename(target));
     tempPath = path.join(operationDirectory, `.alnilam-cms-${randomUUID()}.tmp`);
     const mode = targetStat ? targetStat.mode & 0o7777 : 0o644;
     tempFd = fs.openSync(tempPath, "wx", 0o600);
@@ -307,19 +314,65 @@ function writeSiteFile(siteDir, file, content, { replace = true } = {}) {
 
     assertWriteDirectory(siteRoot, dir, expectedDirectory, descriptorPath);
     if (replace) {
+      if (targetStat) {
+        backupPath = path.join(operationDirectory, `.alnilam-cms-${randomUUID()}.bak`);
+        fs.linkSync(destination, backupPath);
+        backupExists = true;
+      }
       fs.renameSync(tempPath, destination);
       tempExists = false;
+      published = true;
     } else {
       fs.linkSync(tempPath, destination);
+      published = true;
       fs.unlinkSync(tempPath);
       tempExists = false;
     }
 
+    assertWriteDirectory(siteRoot, dir, expectedDirectory, descriptorPath);
     if (newDir) {
-      assertWriteDirectory(siteRoot, dir, expectedDirectory, descriptorPath);
       if (directoryFd !== null) fs.fchmodSync(directoryFd, 0o755);
       else fs.chmodSync(dir, 0o755);
+      assertWriteDirectory(siteRoot, dir, expectedDirectory, descriptorPath);
     }
+    if (backupExists) {
+      fs.unlinkSync(backupPath);
+      backupExists = false;
+    }
+  } catch (error) {
+    if (published) {
+      try {
+        const current = fs.lstatSync(destination, { throwIfNoEntry: false });
+        if (!current || !sameFileIdentity(current, tempIdentity)) {
+          throw new Error(`Site write target changed before rollback: ${target}`);
+        }
+        if (backupExists) {
+          fs.renameSync(backupPath, destination);
+          backupExists = false;
+        } else {
+          fs.unlinkSync(destination);
+        }
+        published = false;
+      } catch (rollbackError) {
+        const recovery = backupExists ? `; previous output retained at ${backupPath}` : "";
+        throw new AggregateError([error, rollbackError],
+          `Site write rollback failed: ${rollbackError.message}${recovery}`);
+      }
+    }
+    if (backupExists) {
+      try {
+        const backup = fs.lstatSync(backupPath, { throwIfNoEntry: false });
+        const current = fs.lstatSync(destination, { throwIfNoEntry: false });
+        if (backup && current && sameFileIdentity(backup, current)) {
+          fs.unlinkSync(backupPath);
+          backupExists = false;
+        }
+      } catch {}
+    }
+    if (backupExists) {
+      throw new Error(`Site write failed; previous output retained at ${backupPath}`, { cause: error });
+    }
+    throw error;
   } finally {
     if (tempFd !== null) {
       try {
