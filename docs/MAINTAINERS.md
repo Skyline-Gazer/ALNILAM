@@ -54,3 +54,21 @@ pnpm build                                    # includes artifact budgets
 node scripts/upgrade-check.mjs --old <sha>    # two-version acceptance
 node scripts/artifact-check.mjs dist/site     # standalone budget re-check
 ```
+
+## Learning Loop (Pilot)
+
+The project-local [ADS Learning Loop Pilot](https://github.com/Skyline-Gazer/ALNILAM/issues/148) records concrete lessons from naturally completed development deliveries. Use it only when an Issue #148 trigger is evidenced; ordinary feature reviews, one-off fixes, speculation and transient failures are not Lessons.
+
+Write a triggered Lesson in the original delivery Issue or PR thread, then add a one-line evidence link and update the observation summary in #148. Do not create a separate ledger or record a Lesson when no trigger occurred.
+
+Use these five fields:
+
+- **Failure:** observed failure, conditions and exact affected delivery.
+- **Root cause:** reproduced mechanism and how it was verified; describe the mechanism, not blame.
+- **Prevention:** smallest actionable regression, test, check, documentation or process change.
+- **Evidence:** Issue, PR, commit SHA, CI run, deployment ID or test-case links.
+- **Scope:** boundaries, exceptions and claims that remain unverified.
+
+After the Pilot PR merges, observe the next 3–5 naturally completed, independent deliveries. Count each delivery once. If none of its work meets a trigger, record “no qualifying trigger”; do not manufacture observations. At the end, report evidence and limitations in #148, then ask the Owner to retain, adjust or stop the Pilot.
+
+Historical examples in #148 are candidate evidence only. The Pilot observation count starts at **0** and excludes all pre-Pilot deliveries. This is documentation only: no mandatory per-PR report, CI check, bot, schedule, merge gate or ADS profile is added.

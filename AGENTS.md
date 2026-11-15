@@ -66,6 +66,8 @@ Core/Site independence, Site immutability, YAML-only v2, provenance/rollback and
 Apache-2.0/third-party notices. End each task with the exact SHA, CI run, PR, verified
 behavior and unresolved blockers.
 
+The ADS Learning Loop Pilot applies only to real triggers; follow the five-field process in [docs/MAINTAINERS.md](docs/MAINTAINERS.md#learning-loop-pilot). Historical candidates do not count as observations.
+
 ## GitHub development workflow — Owner decision 2026-11-13
 
 - Use Issue-linked pull requests to GitHub `dev`. The active ruleset requires a
