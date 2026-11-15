@@ -1,5 +1,37 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-15 · Pilot, CMS review and cache evidence
+
+This update supersedes earlier live-state values where they conflict. Historical records below remain unchanged.
+
+### GitHub source and integration
+
+- GitHub `dev` is `dc7853068ac54aefe03cc91c3c56ecc80795298b` (tree `30f537eda60f9250e52726924462c462ffd0055c`). GitHub `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8` (tree `ba61548aa2c828647e61a8a7c1b541abecb449a8`). CNB refs and the ADS pin `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` were not changed.
+- PRs #142, #143 and #144 remain merged; #140 remains closed. PR #149 merged normally at `9517fc2985599346bf0b2e5b4b68f4e9769f8c23`. Its required `verify` runs on `de57f2f21b2623e69a8557b91e22b4d67c6cf3f5` passed ([43609979215](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43609979215), [43609976756](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43609976756)); Astro compatibility passed in [43609979261](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43609979261), and post-merge `verify` passed in [43688584272](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43688584272).
+- PR #150 merged normally from source head `f238d9850fe55dfbf3ff0b456e8c24c2c3c58fec` at `dc7853068ac54aefe03cc91c3c56ecc80795298b`. Required `verify` passed on the PR head in [43692639496](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43692639496); post-merge `verify` passed on `dev` in [43698746828](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43698746828).
+- The docs-only ADS Learning Loop Pilot is active under [Issue #148](https://github.com/Skyline-Gazer/ALNILAM/issues/148), Project #17 `In Progress`. Its observation window starts after PR #150 merged: 0 independent deliveries observed, so no lesson is triggered or claimed. The activation evidence is [comment 6892505676](https://github.com/Skyline-Gazer/ALNILAM/issues/148#issuecomment-6892505676). Issue #148 remains open through the next 3–5 natural deliveries.
+- CMS Site-write-boundary work is in [PR #151](https://github.com/Skyline-Gazer/ALNILAM/pull/151) for [Issue #88](https://github.com/Skyline-Gazer/ALNILAM/issues/88). The code/test snapshot `4c5fa58172303b2f054d611683d282d951830920` passed local CMS checks (21/21, including the 2/2 targeted path cases), required `verify` runs [43695458902](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43695458902) and [43695454175](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43695454175), CodeRabbit review, and Vercel Preview Comments. The actionable CodeRabbit thread has a verified disposition. PR #151 remains open; the HANDOFF update is a documentation-only addition to that branch. Issue #88 remains In Progress for hosted CMS comparison and browser acceptance.
+
+### Vercel and deployment boundary
+
+- The existing Demo project deployment `dpl_5s65wCR39cph22uRPZLrnHjJXskC` is `READY` and attached to the existing stable Demo alias. The anonymous homepage and `/alnilam-provenance.json` returned HTTP 200; provenance reports Core revision `dc7853068ac54aefe03cc91c3c56ecc80795298b` and Site digest `527909af24317e93ea7129e89e0da952397b95ac1fdea93bd0646b29e2dfd87f`.
+- The PR #150 dev merge's separate `alnilam-production` deployment was blocked. The latest Owner-confirmed Dashboard/API state is Production Branch Tracking `main`, `paused=true`; no setting, domain, or formal Production deployment changed. The prior `dev` → Production event remains unexplained. [Issue #138](https://github.com/Skyline-Gazer/ALNILAM/issues/138) and its Project #17 item remain In Progress. First formal `main` deployment and external-domain activation still require separate Owner acceptance. The post-merge evidence is [comment 6892551312](https://github.com/Skyline-Gazer/ALNILAM/issues/138#issuecomment-6892551312).
+
+### Cache cleanup, reuse and available measurements
+
+- PR #149 delivers P0 cleanup separation and P1 managed cache reuse/lifecycle: normal Compose no longer removes Legacy paths; `--clean-cache` is confined to a verified managed root; explicit `--clean-legacy` dry-run/cleanup is separate; GC uses managed-root ownership, active-build protection, TTL and a size policy; Shirone artifacts use Core compiler-input identity, content hashes and atomic publication. These changes are on `dev` at `9517fc2` and retained by `dc785306`.
+- `ALNILAM_CACHE_DIR` is unset. The default `.cache/alnilam` is absent in the current project workspace and the active PR worktree. No real managed cache was available; no real-cache cleanup or mutation occurred. Issue #145 remains In Progress. Its current root readback and limits are [comment 6892516454](https://github.com/Skyline-Gazer/ALNILAM/issues/145#issuecomment-6892516454).
+- The reproducible isolated fixture is 6 bundle artifacts with 6 distinct SHA-256 hashes; 28,524,274 logical / 28,536,832 allocated bytes. Cache totals were 31 MiB after cold build, 33 MiB after a Site digest change, and 33 MiB after warm rebuild; times were 25.04s, 23.20s and 22.58s for 93 generated HTML pages. This one fixture does not establish a speed or storage-savings claim. The [TTL dry-run](https://github.com/Skyline-Gazer/ALNILAM/issues/145#issuecomment-6891752653) estimated 31,326,208 reclaimable allocated bytes without deletion; the 2 GiB cap was not exercised.
+- The historical 7.2 GiB cache and 246 alleged duplicate bundles, their byte identity and physical allocation, effective working set, real cache hit rate and 70% reduction target remain unverified. Do not report real-cache savings. No legacy-cache migration was exercised.
+
+### Outstanding work
+
+- Continue Issue #148 observation through 3–5 independent natural deliveries; record only triggered lessons and keep the Pilot open until the period is observed.
+- Keep PR #151 review-ready and complete the remaining Issue #88 hosted CMS comparison/browser acceptance.
+- Continue Issue #138 only within the existing boundary: preserve the public Demo alias and provenance; keep the separate Production project paused; do not deploy `main` or activate an external domain without separate Owner acceptance.
+- Do not claim completion of the historical cache baseline or physical deduplication without the real managed-cache evidence.
+
+
 ## Live-state update — 2026-11-15 · Vercel Production branch confirmation
 
 The API-configured dual-project setup did not prove runtime branch separation. The Owner has since confirmed `main` in the official Dashboard. Issue #138 remains open; its Project #17 item is `In Progress`.
