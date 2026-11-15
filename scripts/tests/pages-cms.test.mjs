@@ -608,6 +608,58 @@ test("create writes declared fields only and refuses unsafe input", () => {
   assert.equal(fs.existsSync(path.join(site, "escape.md")), false);
 });
 
+test("CMS writes refuse symlink paths below the selected Site root", () => {
+  const site = path.join(tmp, "symlink-write-site");
+  const outside = path.join(tmp, "symlink-write-outside");
+  copySite(site);
+  fs.mkdirSync(outside, { recursive: true });
+  const outsidePost = path.join(outside, "existing.md");
+  const original = fs.readFileSync(postFile(site, "cms-basics.md"));
+  fs.writeFileSync(outsidePost, original);
+  fs.symlinkSync(outside, path.join(site, POSTS_DIR, "escape-link"), process.platform === "win32" ? "junction" : "dir");
+  const fields = { title: "Escaped", pubDate: "2026-11-11", category: "guide", tags: ["CMS"] };
+
+  const created = run("create", [tool, "create", "--site", site, "--file", "escape-link/new.md", "--set", JSON.stringify(fields)]);
+  assert.notEqual(created.status, 0, "create must reject a posts symlink");
+  assert.equal(fs.existsSync(path.join(outside, "new.md")), false, "create must not write outside the Site");
+
+  const safeOutput = postFile(site, "input-symlink-output.md");
+  const editedInput = run("edit", [tool, "edit", "--site", site, "--post", "escape-link/existing.md", "--out", safeOutput, "--set", JSON.stringify({ title: "Overwrite" })]);
+  assert.notEqual(editedInput.status, 0, "edit must reject a symlinked post input");
+  assert.equal(fs.existsSync(safeOutput), false, "edit must not write output after rejecting a symlinked input");
+  assert.deepEqual(fs.readFileSync(outsidePost), original, "edit must not change an external post");
+
+  const editedOutput = run("edit", [tool, "edit", "--site", site, "--post", "cms-basics.md", "--out", path.join(site, POSTS_DIR, "escape-link/output.md"), "--set", JSON.stringify({ title: "Overwrite" })]);
+  assert.notEqual(editedOutput.status, 0, "edit must reject a symlinked output directory");
+  assert.equal(fs.existsSync(path.join(outside, "output.md")), false, "edit must not write outside the Site");
+
+  const linkedPost = path.join(site, POSTS_DIR, "dangling.md");
+  const danglingTarget = path.join(outside, "dangling.md");
+  fs.symlinkSync(danglingTarget, linkedPost, process.platform === "win32" ? "file" : undefined);
+  const linkedCreate = run("create", [tool, "create", "--site", site, "--file", "dangling.md", "--set", JSON.stringify(fields)]);
+  assert.notEqual(linkedCreate.status, 0, "create must reject a dangling file symlink");
+  assert.equal(fs.existsSync(danglingTarget), false, "create must not materialize a symlink target outside the Site");
+
+  const config = path.join(site, CMS_CONFIG_FILENAME);
+  fs.rmSync(config);
+  fs.symlinkSync(outsidePost, config, process.platform === "win32" ? "file" : undefined);
+  const initialized = run("init", [tool, "init", "--site", site, "--force"]);
+  assert.notEqual(initialized.status, 0, "init --force must reject a symlinked Site config");
+  assert.deepEqual(fs.readFileSync(outsidePost), original, "init must not overwrite an external file");
+});
+
+test("CMS writes through an explicitly selected Site-root symlink", () => {
+  const actual = path.join(tmp, "site-root-target");
+  const selected = path.join(tmp, "site-root-link");
+  copySite(actual);
+  fs.symlinkSync(actual, selected, process.platform === "win32" ? "junction" : "dir");
+  const fields = { title: "Root link", pubDate: "2026-11-11", category: "guide", tags: ["CMS"] };
+
+  const created = run("create", [tool, "create", "--site", selected, "--file", "via-root-link.md", "--set", JSON.stringify(fields)]);
+  assert.equal(created.status, 0, created.stderr);
+  assert.equal(fs.existsSync(postFile(actual, "via-root-link.md")), true);
+});
+
 test("create and edit enforce seriesOrder without partial writes", () => {
   const site = path.join(tmp, "series-order-site");
   copySite(site);
