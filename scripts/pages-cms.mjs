@@ -229,11 +229,29 @@ function isWithinDirectory(root, candidate) {
 }
 
 function sameFileIdentity(left, right) {
-  return left.dev === right.dev && left.ino === right.ino;
+  return typeof left.dev === "bigint"
+    && typeof right.dev === "bigint"
+    && typeof left.ino === "bigint"
+    && typeof right.ino === "bigint"
+    && left.dev === right.dev
+    && left.ino === right.ino;
+}
+
+function resolveRecoveryPath(backupPath, directoryPath) {
+  const filename = path.basename(backupPath);
+  try {
+    return fs.realpathSync(backupPath);
+  } catch {
+    try {
+      return path.join(fs.realpathSync(path.dirname(backupPath)), filename);
+    } catch {
+      return path.resolve(directoryPath, filename);
+    }
+  }
 }
 
 function assertWriteDirectory(siteRoot, dir, expected, descriptorPath = null) {
-  const current = fs.lstatSync(dir, { throwIfNoEntry: false });
+  const current = fs.lstatSync(dir, { throwIfNoEntry: false, bigint: true });
   if (!current || current.isSymbolicLink() || !current.isDirectory() || !sameFileIdentity(current, expected)) {
     throw new Error(`Site write directory changed during file publication: ${dir}`);
   }
@@ -241,7 +259,7 @@ function assertWriteDirectory(siteRoot, dir, expected, descriptorPath = null) {
     throw new Error(`Site write directory is outside the selected Site: ${dir}`);
   }
   if (descriptorPath) {
-    const opened = fs.statSync(descriptorPath);
+    const opened = fs.statSync(descriptorPath, { bigint: true });
     if (!opened.isDirectory()
       || !sameFileIdentity(opened, expected)
       || !isWithinDirectory(siteRoot, fs.realpathSync(descriptorPath))) {
@@ -269,7 +287,7 @@ function writeSiteFile(siteDir, file, content, { replace = true } = {}) {
   if (targetStat) fs.accessSync(target, fs.constants.W_OK);
 
   const siteRoot = fs.realpathSync(siteDir);
-  const expectedDirectory = fs.lstatSync(dir);
+  const expectedDirectory = fs.lstatSync(dir, { bigint: true });
   if (expectedDirectory.isSymbolicLink() || !expectedDirectory.isDirectory()
     || !isWithinDirectory(siteRoot, fs.realpathSync(dir))) {
     throw new Error(`Site write directory is outside the selected Site: ${dir}`);
@@ -292,7 +310,7 @@ function writeSiteFile(siteDir, file, content, { replace = true } = {}) {
         | (fs.constants.O_DIRECTORY || 0)
         | (fs.constants.O_NOFOLLOW || 0);
       directoryFd = fs.openSync(dir, flags);
-      const openedDirectory = fs.fstatSync(directoryFd);
+      const openedDirectory = fs.fstatSync(directoryFd, { bigint: true });
       if (!sameFileIdentity(openedDirectory, expectedDirectory)) {
         throw new Error(`Site write directory changed before publication: ${dir}`);
       }
@@ -308,7 +326,7 @@ function writeSiteFile(siteDir, file, content, { replace = true } = {}) {
     tempExists = true;
     fs.writeFileSync(tempFd, content);
     fs.fchmodSync(tempFd, mode);
-    tempIdentity = fs.fstatSync(tempFd);
+    tempIdentity = fs.fstatSync(tempFd, { bigint: true });
     fs.closeSync(tempFd);
     tempFd = null;
 
@@ -342,7 +360,7 @@ function writeSiteFile(siteDir, file, content, { replace = true } = {}) {
   } catch (error) {
     if (published) {
       try {
-        const current = fs.lstatSync(destination, { throwIfNoEntry: false });
+        const current = fs.lstatSync(destination, { throwIfNoEntry: false, bigint: true });
         if (!current || !sameFileIdentity(current, tempIdentity)) {
           throw new Error(`Site write target changed before rollback: ${target}`);
         }
@@ -354,15 +372,15 @@ function writeSiteFile(siteDir, file, content, { replace = true } = {}) {
         }
         published = false;
       } catch (rollbackError) {
-        const recovery = backupExists ? `; previous output retained at ${backupPath}` : "";
+        const recovery = backupExists ? `; previous output retained at ${resolveRecoveryPath(backupPath, dir)}` : "";
         throw new AggregateError([error, rollbackError],
           `Site write rollback failed: ${rollbackError.message}${recovery}`);
       }
     }
     if (backupExists) {
       try {
-        const backup = fs.lstatSync(backupPath, { throwIfNoEntry: false });
-        const current = fs.lstatSync(destination, { throwIfNoEntry: false });
+        const backup = fs.lstatSync(backupPath, { throwIfNoEntry: false, bigint: true });
+        const current = fs.lstatSync(destination, { throwIfNoEntry: false, bigint: true });
         if (backup && current && sameFileIdentity(backup, current)) {
           fs.unlinkSync(backupPath);
           backupExists = false;
@@ -370,13 +388,13 @@ function writeSiteFile(siteDir, file, content, { replace = true } = {}) {
       } catch {}
     }
     if (backupExists) {
-      throw new Error(`Site write failed; previous output retained at ${backupPath}`, { cause: error });
+      throw new Error(`Site write failed; previous output retained at ${resolveRecoveryPath(backupPath, dir)}`, { cause: error });
     }
     throw error;
   } finally {
     if (tempFd !== null) {
       try {
-        tempIdentity = fs.fstatSync(tempFd);
+        tempIdentity = fs.fstatSync(tempFd, { bigint: true });
       } catch {}
       try {
         fs.closeSync(tempFd);
@@ -384,7 +402,7 @@ function writeSiteFile(siteDir, file, content, { replace = true } = {}) {
     }
     if (tempExists && tempPath && tempIdentity) {
       try {
-        const current = fs.lstatSync(tempPath, { throwIfNoEntry: false });
+        const current = fs.lstatSync(tempPath, { throwIfNoEntry: false, bigint: true });
         if (current?.isFile() && sameFileIdentity(current, tempIdentity)) fs.unlinkSync(tempPath);
       } catch {}
     }
