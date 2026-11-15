@@ -1,8 +1,8 @@
 # ALNILAM — Current Agent Handoff
 
-## Live-state update — 2026-11-15 · Vercel Production branch mismatch
+## Live-state update — 2026-11-15 · Vercel Production branch confirmation
 
-The API-configured dual-project setup did not prove runtime branch separation. Issue #138 is reopened; its Project #17 item is `In Progress`.
+The API-configured dual-project setup did not prove runtime branch separation. The Owner has since confirmed `main` in the official Dashboard. Issue #138 remains open; its Project #17 item is `In Progress`.
 
 ### GitHub source and integration
 
@@ -12,9 +12,9 @@ The API-configured dual-project setup did not prove runtime branch separation. I
 ### Vercel runtime
 
 - Existing Demo project `xxxx` still tracks `dev`. The stable public alias returned HTTP 200 after PR #142; `/alnilam-provenance.json` reports Core revision `113ab9c7a9e6fbb38c75e808c7f94e6095244564` and Site digest `527909af24317e93ea7129e89e0da952397b95ac1fdea93bd0646b29e2dfd87f`.
-- Separate project `alnilam-production` reports API `link.productionBranch=main` and `ssoProtection=all`, but deployment `dpl_9L7gWLzfAYJtwQRwmZhBTu3LT3q9` is `READY`, `target=production`, and records Git ref `dev`, SHA `113ab9c7a9e6fbb38c75e808c7f94e6095244564`. Its aliases include `alnilam-production.vercel.app` and the generated `git-dev` alias. This automatic deployment is not Owner acceptance of a formal release.
+- Separate project `alnilam-production` reports API `link.productionBranch=main` and `ssoProtection=all`, but deployment `dpl_9L7gWLzfAYJtwQRwmZhBTu3LT3q9` is `READY`, `target=production`, and records Git ref `dev`, SHA `113ab9c7a9e6fbb38c75e808c7f94e6095244564`. Its aliases include `alnilam-production.vercel.app` and the generated `git-dev` alias. The Owner confirmed in the official Dashboard on 2026-11-15 that Production → Branch Tracking shows `main`; a scoped, read-only Vercel API readback also returned `productionBranch=main` and `paused=true`. This automatic deployment is not Owner acceptance of a formal release.
 - The project is paused (`paused=true`); the generated Production hostname returns HTTP 503. The PR #149 Preview deployment is protected and its direct URL returns HTTP 302 to Vercel SSO. There is no custom external domain.
-- The API branch field and observed deployment target disagree. Confirm or correct Production → Branch Tracking in the official Dashboard before unpausing. No Dashboard change was made in this session: the required `computer-use` command `orca-ide` is unavailable (`command not found`). Keep the project paused; the first formal `main` deployment and external-domain activation remain Owner-accepted release actions.
+- Dashboard and API now agree on `main`, but the earlier Production deployment still records `dev`. Keep the project paused; the first formal `main` deployment and external-domain activation remain separate Owner-accepted release actions.
 
 ### Issue and Project tracking
 
