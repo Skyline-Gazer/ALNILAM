@@ -659,6 +659,72 @@ test("CMS writes through an explicitly selected Site-root symlink", () => {
   assert.equal(created.status, 0, created.stderr);
   assert.equal(fs.existsSync(postFile(actual, "via-root-link.md")), true);
 });
+test("CMS edit replaces a hardlinked output without mutating its outside name", () => {
+  const site = path.join(tmp, "hardlink-write-site");
+  const outside = path.join(tmp, "hardlink-write-outside");
+  copySite(site);
+  fs.mkdirSync(outside);
+  const sentinel = path.join(outside, "sentinel.md");
+  const sentinelBytes = Buffer.from("outside sentinel must remain unchanged\n");
+  fs.writeFileSync(sentinel, sentinelBytes);
+  const output = postFile(site, "hardlink-output.md");
+  fs.linkSync(sentinel, output);
+
+  const edited = run("edit", [tool, "edit", "--site", site, "--post", "cms-basics.md",
+    "--out", output, "--set", JSON.stringify({ title: "Hardlink-safe edit" })]);
+  assert.equal(edited.status, 0, edited.stderr);
+  assert.deepEqual(fs.readFileSync(sentinel), sentinelBytes, "edit must not write through the outside hardlink");
+  assert.match(fs.readFileSync(output, "utf8"), /title:.*Hardlink-safe edit/);
+  const outsideStat = fs.statSync(sentinel);
+  const outputStat = fs.statSync(output);
+  assert.ok(outsideStat.dev !== outputStat.dev || outsideStat.ino !== outputStat.ino,
+    "published Site output must not share the outside inode");
+});
+
+test("CMS edit fails closed when content/posts is replaced during publication", { skip: process.platform !== "linux" }, () => {
+  const site = path.join(tmp, "path-swap-write-site");
+  const outside = path.join(tmp, "path-swap-write-outside");
+  copySite(site);
+  fs.mkdirSync(outside);
+  const posts = path.join(site, POSTS_DIR);
+  const movedPosts = `${posts}.original`;
+  const outsideOutput = path.join(outside, "swap-output.md");
+  const sentinelBytes = Buffer.from("path-swap sentinel must remain unchanged\n");
+  fs.writeFileSync(outsideOutput, sentinelBytes);
+  const preload = path.join(tmp, "swap-posts-parent.cjs");
+  fs.writeFileSync(preload, [
+    'const fs = require("node:fs");',
+    'let swapped = false;',
+    'const writeFileSync = fs.writeFileSync;',
+    'fs.writeFileSync = function (file, ...args) {',
+    '  if (!swapped) {',
+    '    swapped = true;',
+    '    fs.renameSync(process.env.CMS_SWAP_PARENT, process.env.CMS_SWAP_MOVED);',
+    '    fs.symlinkSync(process.env.CMS_SWAP_OUTSIDE, process.env.CMS_SWAP_PARENT, "dir");',
+    '  }',
+    '  return writeFileSync.call(fs, file, ...args);',
+    '};',
+  ].join("\n"));
+
+  try {
+    const edited = run("edit", ["--require", preload, tool, "edit", "--site", site,
+      "--post", "cms-basics.md", "--out", path.join(posts, "swap-output.md"),
+      "--set", JSON.stringify({ title: "Must not escape" })], {
+      CMS_SWAP_PARENT: posts,
+      CMS_SWAP_MOVED: movedPosts,
+      CMS_SWAP_OUTSIDE: outside,
+    });
+    assert.notEqual(edited.status, 0, "edit must fail once the validated posts directory changes");
+    assert.match(edited.stderr, /Site write directory changed during file publication/);
+    assert.deepEqual(fs.readFileSync(outsideOutput), sentinelBytes, "path replacement must not overwrite outside content");
+    assert.deepEqual(fs.readdirSync(movedPosts).filter((name) => name.startsWith(".alnilam-cms-")), []);
+  } finally {
+    const current = fs.lstatSync(posts, { throwIfNoEntry: false });
+    if (current?.isSymbolicLink()) fs.unlinkSync(posts);
+    if (fs.existsSync(movedPosts)) fs.renameSync(movedPosts, posts);
+  }
+});
+
 
 test("create and edit enforce seriesOrder without partial writes", () => {
   const site = path.join(tmp, "series-order-site");

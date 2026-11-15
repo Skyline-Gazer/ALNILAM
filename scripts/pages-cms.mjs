@@ -23,6 +23,7 @@
  * commit lands before compose; never write while compose is running because
  * the builder re-hashes the Site inputs and fails if they change.
  */
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -221,19 +222,121 @@ function resolveSiteWritePath(siteDir, file, { createParents = false } = {}) {
   return current;
 }
 
-/** Write a Site file. Only paths created here get an explicit mode, so a
- * restrictive umask cannot leave a new file read-only for the next save while
- * existing Site directories keep the owner's permission posture.
+function isWithinDirectory(root, candidate) {
+  const relative = path.relative(root, candidate);
+  return relative === ""
+    || (relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
+}
+
+function sameFileIdentity(left, right) {
+  return left.dev === right.dev && left.ino === right.ino;
+}
+
+function assertWriteDirectory(siteRoot, dir, expected, descriptorPath = null) {
+  const current = fs.lstatSync(dir, { throwIfNoEntry: false });
+  if (!current || current.isSymbolicLink() || !current.isDirectory() || !sameFileIdentity(current, expected)) {
+    throw new Error(`Site write directory changed during file publication: ${dir}`);
+  }
+  if (!isWithinDirectory(siteRoot, fs.realpathSync(dir))) {
+    throw new Error(`Site write directory is outside the selected Site: ${dir}`);
+  }
+  if (descriptorPath) {
+    const opened = fs.statSync(descriptorPath);
+    if (!opened.isDirectory()
+      || !sameFileIdentity(opened, expected)
+      || !isWithinDirectory(siteRoot, fs.realpathSync(descriptorPath))) {
+      throw new Error(`Open Site write directory moved outside the selected Site: ${dir}`);
+    }
+  }
+}
+
+/**
+ * Publish through a same-directory temporary file so replacing a hardlink
+ * never writes through to its other names. Linux uses /proc/self/fd to keep
+ * the operation attached to the validated directory across path swaps. Node
+ * has no portable directory-relative rename API; other platforms revalidate
+ * the parent, so a concurrent local rename after that check remains outside
+ * the confinement guarantee.
  */
-function writeSiteFile(siteDir, file, content) {
+function writeSiteFile(siteDir, file, content, { replace = true } = {}) {
   const requested = path.resolve(file);
   const newDir = !fs.existsSync(path.dirname(requested));
   const target = resolveSiteWritePath(siteDir, requested, { createParents: true });
   const dir = path.dirname(target);
-  const newFile = !fs.lstatSync(target, { throwIfNoEntry: false });
-  fs.writeFileSync(target, content);
-  if (newDir) fs.chmodSync(dir, 0o755);
-  if (newFile) fs.chmodSync(target, 0o644);
+  const targetStat = fs.lstatSync(target, { throwIfNoEntry: false });
+  if (targetStat) fs.accessSync(target, fs.constants.W_OK);
+
+  const siteRoot = fs.realpathSync(siteDir);
+  const expectedDirectory = fs.lstatSync(dir);
+  if (expectedDirectory.isSymbolicLink() || !expectedDirectory.isDirectory()
+    || !isWithinDirectory(siteRoot, fs.realpathSync(dir))) {
+    throw new Error(`Site write directory is outside the selected Site: ${dir}`);
+  }
+
+  let directoryFd = null;
+  let descriptorPath = null;
+  let tempFd = null;
+  let tempPath = null;
+  let tempIdentity = null;
+  let tempExists = false;
+  try {
+    if (process.platform === "linux" && fs.existsSync("/proc/self/fd")) {
+      const flags = fs.constants.O_RDONLY
+        | (fs.constants.O_DIRECTORY || 0)
+        | (fs.constants.O_NOFOLLOW || 0);
+      directoryFd = fs.openSync(dir, flags);
+      const openedDirectory = fs.fstatSync(directoryFd);
+      if (!sameFileIdentity(openedDirectory, expectedDirectory)) {
+        throw new Error(`Site write directory changed before publication: ${dir}`);
+      }
+      descriptorPath = path.join("/proc/self/fd", String(directoryFd));
+      assertWriteDirectory(siteRoot, dir, openedDirectory, descriptorPath);
+    }
+
+    const operationDirectory = descriptorPath || dir;
+    const destination = path.join(operationDirectory, path.basename(target));
+    tempPath = path.join(operationDirectory, `.alnilam-cms-${randomUUID()}.tmp`);
+    const mode = targetStat ? targetStat.mode & 0o7777 : 0o644;
+    tempFd = fs.openSync(tempPath, "wx", 0o600);
+    tempExists = true;
+    fs.writeFileSync(tempFd, content);
+    fs.fchmodSync(tempFd, mode);
+    tempIdentity = fs.fstatSync(tempFd);
+    fs.closeSync(tempFd);
+    tempFd = null;
+
+    assertWriteDirectory(siteRoot, dir, expectedDirectory, descriptorPath);
+    if (replace) {
+      fs.renameSync(tempPath, destination);
+      tempExists = false;
+    } else {
+      fs.linkSync(tempPath, destination);
+      fs.unlinkSync(tempPath);
+      tempExists = false;
+    }
+
+    if (newDir) {
+      assertWriteDirectory(siteRoot, dir, expectedDirectory, descriptorPath);
+      if (directoryFd !== null) fs.fchmodSync(directoryFd, 0o755);
+      else fs.chmodSync(dir, 0o755);
+    }
+  } finally {
+    if (tempFd !== null) {
+      try {
+        tempIdentity = fs.fstatSync(tempFd);
+      } catch {}
+      try {
+        fs.closeSync(tempFd);
+      } catch {}
+    }
+    if (tempExists && tempPath && tempIdentity) {
+      try {
+        const current = fs.lstatSync(tempPath, { throwIfNoEntry: false });
+        if (current?.isFile() && sameFileIdentity(current, tempIdentity)) fs.unlinkSync(tempPath);
+      } catch {}
+    }
+    if (directoryFd !== null) fs.closeSync(directoryFd);
+  }
 }
 
 /** Write the generated schema; refuses to replace an existing file unless forced. */
@@ -246,7 +349,7 @@ function initCmsConfig(siteDir, { force = false } = {}) {
   // Fail closed: the generated document must pass the same validator the
   // editor adapter uses before it is written.
   parseCmsConfig(generated.text, `generated ${CMS_CONFIG_FILENAME}`);
-  writeSiteFile(siteDir, path.join(siteDir, CMS_CONFIG_FILENAME), generated.text);
+  writeSiteFile(siteDir, path.join(siteDir, CMS_CONFIG_FILENAME), generated.text, { replace: force });
   return { path: target, categories: generated.categories, tags: generated.tags };
 }
 
@@ -395,7 +498,7 @@ export function createPost(siteDir, { file, fields, body = "" }) {
   const target = resolveSiteWritePath(siteDir, requested);
   if (fs.lstatSync(target, { throwIfNoEntry: false })) throw new Error(`${target} already exists; refusing to overwrite`);
   const rendered = renderNewPost(fields, { config: loadCmsConfig(siteDir), body });
-  writeSiteFile(siteDir, requested, rendered.content);
+  writeSiteFile(siteDir, requested, rendered.content, { replace: false });
   return { path: target, bytes: Buffer.byteLength(rendered.content) };
 }
 
