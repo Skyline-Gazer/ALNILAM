@@ -1,3 +1,5 @@
+# ALNILAM — Current Agent Handoff
+
 ## Live-state update — 2026-11-16 · CMS write-boundary follow-up
 
 This entry supersedes older live-state notes where they conflict. Issue #152 remains in progress; its code change is isolated in PR #153 and is not merged.
@@ -11,8 +13,6 @@ This entry supersedes older live-state notes where they conflict. Issue #152 rem
 - Earlier final-head PR Verify attempts on `422b2098c407f131924d30b1d0c8ceb33920d388` both failed the unrelated browser case `navigation-lifecycle.spec.ts` / `MPA reading lifecycle /ALNILAM 390`; the paired push Verify passed. New-head PR and push Verify runs [43735716737](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43735716737) and [43735712550](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43735712550) are still in progress at this update; do not infer a result.
 - The three actionable CodeRabbit threads on PR #153 are resolved with regression and verification evidence. A `/review` request on head `1a80ba2` returned that CodeRabbit does not re-review already reviewed commits; the code is unchanged from reviewed head `422b209`. The CodeRabbit check is successful, but no new code review was generated for the documentation-only scope restoration. Vercel Preview Comments passed. The separate `alnilam-production` context is blocked because that project is paused; no build ran and no production setting changed.
 - Issue #152 and its Project #17 item remain `In Progress`. Do not merge PR #153 or mark the Issue Done until the current required PR Verify and review status are clear.
-
-# ALNILAM — Current Agent Handoff
 
 ## Live-state update — 2026-11-15 · Pilot, CMS review and cache evidence
 
