@@ -19,6 +19,7 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 - **Comments provider/privacy contract (Issue #71):** Giscus is the single first-launch provider with stable `specific` terms (`commentId` → `translationKey` → content id), explicit `sharing`/`load`/`lang` options, third-party disclosure, provider-scoped CSP, non-blocking failure/retry fallback and idempotent provider teardown. Disabled comments still ship zero comment JS/network.
 - **P1 Shirone frontend vertical slice (candidate, #48):** local Shirone-derived M3E home/list/article/archive/tag presentation with the retained ALNILAM Core/Site contracts, Pagefind, optional-module and rollback coverage. Not released or deployed.
 - **Bangumi snapshots (Issue #70):** opt-in builds cache public collections and locally emitted covers outside the Site. Provider or cover failures reuse the matching last valid snapshot; a successful empty result replaces it. Visitors make no third-party data or cover requests.
+- **Build cache safety and reuse (Issue #145):** normal Compose never deletes project-local legacy directories; managed cleanup, explicit legacy cleanup and TTL/size GC have separate commands. Shirone's compiled bundles are shared by validated Core input fingerprint and SHA-256 artifact manifests; mutable Site state stays isolated.
 
 ### Changed
 - The demo Site includes a two-article introductory series and a published MDX example.
@@ -30,6 +31,7 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 - Runtime TOML Site config parsing (`smol-toml` dependency), `alnilam.config.toml` support, and the in-repo `sites/legacy-demo` path (the v1 fixture moved to `tests/fixtures/site-v1-legacy`).
 
 ### Fixed
+- **Build cache safety (Issue #145):** cleanup and GC reject dangling namespace symlinks, compiled bundle repair atomically replaces corrupt artifacts under concurrent rebuilds, and stale build locks fail closed for explicit operator recovery instead of racing automatic eviction.
 - **Optional Site Gallery (Issue #67):** album cards use the current locale's detail route, empty album lists and unmatched filters show distinct states, and photo descriptions survive normalization.
 - Article pages now render series context and previous/next links using their canonical localized routes.
 - **Pages CMS field validation (Issue #88):** post creation and edits reject non-integer or unsafe `seriesOrder` values before writing; edits also validate changed fields against the editor schema while preserving unrelated metadata.

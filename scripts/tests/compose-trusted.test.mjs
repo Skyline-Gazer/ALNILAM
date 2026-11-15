@@ -28,6 +28,10 @@ test("external trusted toolchain runs its own CLI from the candidate workspace",
   try {
     fs.mkdirSync(path.join(site, "content/posts"), { recursive: true });
     fs.mkdirSync(path.join(candidate, "apps/web"), { recursive: true });
+    for (const dir of ["apps/web/src", "themes/shirone/upstream/src"]) fs.mkdirSync(path.join(candidate, dir), { recursive: true });
+    for (const file of ["package.json", "pnpm-lock.yaml", "apps/web/astro.config.mjs", "themes/shirone/package.json"]) {
+      fs.writeFileSync(path.join(candidate, file), "fixture input\n");
+    }
     const candidateCwd = fs.realpathSync(path.join(candidate, "apps/web"));
     fs.writeFileSync(path.join(site, "alnilam.config.yaml"), demoConfig);
     const astro = path.join(tools, "apps/web/node_modules/astro/bin/astro.mjs");

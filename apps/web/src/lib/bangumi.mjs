@@ -77,6 +77,19 @@ export function bangumiCacheRoot() {
   return path.join(root, "bangumi");
 }
 
+function touchCacheUse() {
+  const root = bangumiCacheRoot();
+  try {
+    const stat = fs.lstatSync(root);
+    if (stat.isDirectory() && !stat.isSymbolicLink()) {
+      const now = new Date();
+      fs.utimesSync(root, now, now);
+    }
+  } catch (error) {
+    console.warn("Could not update Bangumi cache last-use time for " + root + ": " + error.message);
+  }
+}
+
 export function bangumiCoversDir() {
   return path.join(bangumiCacheRoot(), "covers");
 }
@@ -168,6 +181,7 @@ function readSnapshot(scope) {
   }
   const collections = raw.collections.map(storedItem);
   if (collections.some((item) => item === null)) return null;
+  touchCacheUse();
   return collections;
 }
 
@@ -179,6 +193,7 @@ function writeSnapshot(scope, collections) {
     collections,
   };
   writeFileAtomic(snapshotPath(scope), JSON.stringify(payload, null, 2) + "\n");
+  touchCacheUse();
 }
 
 function trustedCoverUrl(value) {

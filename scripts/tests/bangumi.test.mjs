@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { fetchBangumiCollections, loadBangumiCollections, materializeBangumiCovers } from "../../apps/web/src/lib/bangumi.mjs";
+import { bangumiCacheRoot, fetchBangumiCollections, loadBangumiCollections, materializeBangumiCovers, readBangumiSnapshot } from "../../apps/web/src/lib/bangumi.mjs";
 
 const config = { userId: "fixture-user", subjectType: "anime", limit: 10 };
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/aZkAAAAASUVORK5CYII=", "base64");
@@ -55,6 +55,17 @@ function filesUnder(dir) {
   });
 }
 
+
+test("reading a valid Bangumi snapshot refreshes its managed cache last-use time", async (t) => {
+  fixture(t);
+  respond([entry(7, 2)]);
+  await loadBangumiCollections(config);
+  const cacheRoot = bangumiCacheRoot();
+  const stale = new Date(Date.now() - 60_000);
+  fs.utimesSync(cacheRoot, stale, stale);
+  assert.equal(readBangumiSnapshot(config).length, 1);
+  assert.ok(fs.statSync(cacheRoot).mtimeMs > stale.getTime());
+});
 test("legacy fetch preserves its mapping and request contract", async (t) => {
   fixture(t);
   let request;

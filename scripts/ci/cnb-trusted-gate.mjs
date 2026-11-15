@@ -21,6 +21,7 @@ export const HARNESS_FILES = [
   'scripts/seo-check.mjs',
   'scripts/build-lock.mjs',
   'scripts/compose.mjs',
+  'scripts/shirone-input-key.mjs',
   'scripts/preview-server.mjs',
   'scripts/site-contract.mjs',
   'scripts/site-ref.mjs',

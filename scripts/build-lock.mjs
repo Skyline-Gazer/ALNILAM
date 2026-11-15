@@ -1,15 +1,12 @@
-// Advisory lock over a Core checkout's shared build state (apps/web/.astro).
-// Concurrent composes would otherwise delete and rewrite the Astro content
-// store and prerender chunks under each other. Contention fails fast; a lock
-// left by a crashed build older than `staleMs` is stolen by atomic rename with
-// content verification, so a lock recreated by a live holder is never evicted.
+// Advisory lock over a shared build-state directory. Contention fails fast.
+// Stale locks require explicit operator recovery; automatic eviction cannot
+// safely preserve exclusion with portable filesystem primitives.
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
-export const BUILD_LOCK_STALE_MS = 6 * 60 * 60 * 1000;
 
-const MAX_STEAL_ATTEMPTS = 10;
+const MAX_ACQUIRE_ATTEMPTS = 10;
 
 function readLock(lockPath) {
   try {
@@ -20,28 +17,33 @@ function readLock(lockPath) {
   }
 }
 
-function isStale(lock, staleMs) {
-  return Number.isFinite(Date.parse(lock.startedAt)) && Date.now() - Date.parse(lock.startedAt) >= staleMs;
+function processIsAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code !== "ESRCH";
+  }
+}
+
+function isStale(lock) {
+  if (!Number.isInteger(lock.pid) || lock.pid <= 0) return false;
+  return !processIsAlive(lock.pid);
 }
 
 /**
- * Returns { acquire, release } for `dir/.compose-lock`.
- * - acquire(): exclusive-create with a unique per-attempt token; on an existing
- *   fresh lock it fails closed; on a stale lock it steals via rename, but only
- *   after verifying the moved bytes are the stale ones it observed (a recreated
- *   lock is renamed back). Every steal retry is bounded so a persistently
- *   failing rename cannot spin.
- * - release(): removes the lock file only if it still holds the token this
- *   instance wrote, so a replaced lock belonging to another holder (even the
- *   same pid reused by a later acquire) is never deleted.
+ * Returns { acquire, release } for `dir/lockName` (default `.compose-lock`).
+ * acquire() exclusively creates the lock and fails closed if one already
+ * exists, including a stale lock. release() removes only its own token.
  */
-export function createBuildLock(dir, { staleMs = BUILD_LOCK_STALE_MS, pid = process.pid } = {}) {
-  const lockPath = path.join(dir, ".compose-lock");
+export function createBuildLock(dir, { pid = process.pid, lockName = ".compose-lock" } = {}) {
+  const lockPath = path.join(dir, lockName);
   let ownedToken = null;
   return {
     acquire() {
       fs.mkdirSync(dir, { recursive: true });
-      for (let attempts = 0; attempts < MAX_STEAL_ATTEMPTS; attempts++) {
+      for (let attempts = 0; attempts < MAX_ACQUIRE_ATTEMPTS; attempts++) {
         const token = randomUUID();
         // A unique staging name per attempt: two acquires in the same process
         // (or a retry) must never rewrite or delete each other's staged file.
@@ -59,45 +61,22 @@ export function createBuildLock(dir, { staleMs = BUILD_LOCK_STALE_MS, pid = proc
             if (err.code === "ENOENT") continue; // staging was removed under us; retry with a fresh name
             if (err.code !== "EEXIST") throw err;
             const observed = readLock(lockPath);
-            if (observed === null || !isStale(observed, staleMs)) {
-              throw new Error("Another compose is building this Site revision (build state is locked)");
+            if (observed === null) {
+              throw new Error("Unverifiable build lock; refusing automatic recovery: " + lockPath);
             }
-            // A unique name per attempt: renameSync would silently overwrite
-            // an existing target, which could destroy another acquire's
-            // evicted bytes instead of only moving ours.
-            const stolenPath = `${lockPath}.stealing-${pid}-${randomUUID()}`;
-            // Claim the eviction atomically: after this rename lockPath is
-            // gone and whatever lived there is only at stolenPath.
-            try {
-              fs.renameSync(lockPath, stolenPath);
-            } catch {
-              // lockPath was untouched (rename is atomic on failure); the
-              // bounded retry budget still applies, so this cannot spin.
-              continue;
+            if (isStale(observed)) {
+              throw new Error(
+                `Stale compose lock (pid ${observed.pid}); verify no ALNILAM build is active, then remove it manually: ${lockPath}`,
+              );
             }
-            // Whatever we moved must be the stale bytes we observed. A live
-            // holder may have recreated the lock between our read and the
-            // rename — the moved bytes then carry a different token.
-            const moved = readLock(stolenPath);
-            if (moved && moved.token === observed.token) {
-              fs.rmSync(stolenPath, { force: true });
-              continue;
-            }
-            // We moved bytes we cannot prove were stale: give them back.
-            for (let restore = 0; restore < MAX_STEAL_ATTEMPTS; restore++) {
-              try {
-                fs.renameSync(stolenPath, lockPath);
-                break;
-              } catch {
-                // lockPath was taken meanwhile; the evicted bytes stay
-                // recoverable at the unique stolenPath until the restore
-                // lands — never deleted, never overwritten.
-              }
-            }
-            continue;
+            throw new Error("Another compose is building this Site revision (build state is locked)");
           }
         } finally {
-          fs.rmSync(staged, { force: true });
+          try {
+            fs.rmSync(staged, { force: true });
+          } catch {
+            // The published hard link owns the lock; staging cleanup is best-effort.
+          }
         }
       }
       throw new Error("Another compose is building this Site revision (build state is locked)");
