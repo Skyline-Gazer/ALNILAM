@@ -1,3 +1,17 @@
+## Live-state update — 2026-11-16 · CMS write-boundary follow-up
+
+This entry supersedes older live-state notes where they conflict. Issue #152 remains in progress; its code change is isolated in PR #153 and is not merged.
+
+### CMS write boundary
+
+- GitHub `dev` is `2a72406f98c88004bacf5fca97ee8ff2a3cbd47a`; `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`. CNB refs remain frozen and ADS remains pinned at `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`.
+- [Issue #152](https://github.com/Skyline-Gazer/ALNILAM/issues/152) records two isolated reproductions against PR #151: writes through an in-Site hardlink changed an outside sentinel, and a deterministic directory swap between validation and write created an outside file. Neither reproduction modified a user Site.
+- [PR #153](https://github.com/Skyline-Gazer/ALNILAM/pull/153) is open to `dev` at `1a80ba2fb9c19ebb4e441fc2c6c3d8502807f894`. Its diff is limited to `scripts/pages-cms.mjs` and `scripts/tests/pages-cms.test.mjs`. The implementation publishes through same-directory temporary files, avoids truncating a hardlinked inode, checks directory identity/containment, rolls back a Linux directory move observed after publication, and retains readable recovery paths. This is not a general filesystem sandbox; a local move after the final containment check remains outside the Node API guarantee.
+- Code and regression snapshot `71a9afdb28fc19ff4caf2b288c8e77ddbbded23b` passed `node --check scripts/pages-cms.mjs`, the isolated CMS tests (24/24), and required `verify` runs [43727704232](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43727704232) and [43727699890](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43727699890). The tests cover hardlink isolation, the path swap immediately before `renameSync`, exact BigInt inode identity and failed-rollback recovery.
+- Earlier final-head PR Verify attempts on `422b2098c407f131924d30b1d0c8ceb33920d388` both failed the unrelated browser case `navigation-lifecycle.spec.ts` / `MPA reading lifecycle /ALNILAM 390`; the paired push Verify passed. New-head PR and push Verify runs [43735716737](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43735716737) and [43735712550](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43735712550) are still in progress at this update; do not infer a result.
+- The three actionable CodeRabbit threads on PR #153 are resolved with regression and verification evidence. A `/review` request on head `1a80ba2` returned that CodeRabbit does not re-review already reviewed commits; the code is unchanged from reviewed head `422b209`. The CodeRabbit check is successful, but no new code review was generated for the documentation-only scope restoration. Vercel Preview Comments passed. The separate `alnilam-production` context is blocked because that project is paused; no build ran and no production setting changed.
+- Issue #152 and its Project #17 item remain `In Progress`. Do not merge PR #153 or mark the Issue Done until the current required PR Verify and review status are clear.
+
 # ALNILAM — Current Agent Handoff
 
 ## Live-state update — 2026-11-15 · Pilot, CMS review and cache evidence
