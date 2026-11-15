@@ -187,32 +187,66 @@ ${template.replace("{{CATEGORY_FIELD}}", () => categoryField)}`;
   return { text, categories, tags };
 }
 
-/**
- * Write a Site file. Only paths created here get an explicit mode, so a
+/** Resolve a Site-owned file without following symlinks below the selected Site root. */
+function resolveSiteWritePath(siteDir, file, { createParents = false } = {}) {
+  const lexicalRoot = path.resolve(siteDir);
+  const realRoot = fs.realpathSync(lexicalRoot);
+  const requested = path.resolve(file);
+  const relative = path.relative(lexicalRoot, requested);
+  if (!relative || relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    throw new Error("Site write path must stay inside the selected Site");
+  }
+
+  const components = relative.split(path.sep);
+  let current = realRoot;
+  for (const [index, component] of components.entries()) {
+    current = path.join(current, component);
+    let stat = fs.lstatSync(current, { throwIfNoEntry: false });
+    if (stat?.isSymbolicLink()) throw new Error("Refusing a symbolic link in the Site write path: " + current);
+    const isParent = index < components.length - 1;
+    if (stat && isParent && !stat.isDirectory()) throw new Error("Site write path component is not a directory: " + current);
+    if (!stat && isParent && createParents) {
+      try {
+        fs.mkdirSync(current);
+      } catch (error) {
+        if (error.code !== "EEXIST") throw error;
+      }
+      stat = fs.lstatSync(current);
+      if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error("Site write path component is not a directory: " + current);
+    }
+  }
+
+  const stat = fs.lstatSync(current, { throwIfNoEntry: false });
+  if (stat && !stat.isFile()) throw new Error("Site write target is not a regular file: " + current);
+  return current;
+}
+
+/** Write a Site file. Only paths created here get an explicit mode, so a
  * restrictive umask cannot leave a new file read-only for the next save while
  * existing Site directories keep the owner's permission posture.
  */
-function writeSiteFile(file, content) {
-  const dir = path.dirname(file);
-  const newDir = !fs.existsSync(dir);
-  const newFile = !fs.existsSync(file);
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(file, content);
+function writeSiteFile(siteDir, file, content) {
+  const requested = path.resolve(file);
+  const newDir = !fs.existsSync(path.dirname(requested));
+  const target = resolveSiteWritePath(siteDir, requested, { createParents: true });
+  const dir = path.dirname(target);
+  const newFile = !fs.lstatSync(target, { throwIfNoEntry: false });
+  fs.writeFileSync(target, content);
   if (newDir) fs.chmodSync(dir, 0o755);
-  if (newFile) fs.chmodSync(file, 0o644);
+  if (newFile) fs.chmodSync(target, 0o644);
 }
 
 /** Write the generated schema; refuses to replace an existing file unless forced. */
 function initCmsConfig(siteDir, { force = false } = {}) {
-  const target = path.join(siteDir, CMS_CONFIG_FILENAME);
-  if (fs.existsSync(target) && !force) {
+  const target = resolveSiteWritePath(siteDir, path.join(siteDir, CMS_CONFIG_FILENAME));
+  if (fs.lstatSync(target, { throwIfNoEntry: false }) && !force) {
     throw new Error(`${target} already exists; pass --force to replace it`);
   }
   const generated = renderCmsConfig(siteDir);
   // Fail closed: the generated document must pass the same validator the
   // editor adapter uses before it is written.
   parseCmsConfig(generated.text, `generated ${CMS_CONFIG_FILENAME}`);
-  writeSiteFile(target, generated.text);
+  writeSiteFile(siteDir, path.join(siteDir, CMS_CONFIG_FILENAME), generated.text);
   return { path: target, categories: generated.categories, tags: generated.tags };
 }
 
@@ -353,14 +387,15 @@ function validateFieldValue(field, value) {
 /** Write a new post; refuses to overwrite and stays inside content/posts. */
 export function createPost(siteDir, { file, fields, body = "" }) {
   const postsRoot = path.resolve(siteDir, POSTS_DIR);
-  const target = path.resolve(postsRoot, file);
-  if (!target.startsWith(postsRoot + path.sep)) {
+  const requested = path.resolve(postsRoot, file);
+  if (!requested.startsWith(postsRoot + path.sep)) {
     throw new Error("--file must stay inside content/posts");
   }
-  if (!POST_RE.test(target)) throw new Error("--file must end in .md or .mdx");
-  if (fs.existsSync(target)) throw new Error(`${target} already exists; refusing to overwrite`);
+  if (!POST_RE.test(requested)) throw new Error("--file must end in .md or .mdx");
+  const target = resolveSiteWritePath(siteDir, requested);
+  if (fs.lstatSync(target, { throwIfNoEntry: false })) throw new Error(`${target} already exists; refusing to overwrite`);
   const rendered = renderNewPost(fields, { config: loadCmsConfig(siteDir), body });
-  writeSiteFile(target, rendered.content);
+  writeSiteFile(siteDir, requested, rendered.content);
   return { path: target, bytes: Buffer.byteLength(rendered.content) };
 }
 
@@ -505,17 +540,19 @@ function main(argv) {
     if (option(argv, "--merge", "true") !== "true") {
       throw new Error("refusing merge=false: Pages CMS would silently drop undeclared frontmatter fields");
     }
-    const post = path.resolve(siteDir, POSTS_DIR, rel);
-    if (!post.startsWith(path.resolve(siteDir, POSTS_DIR) + path.sep)) {
+    const postsRoot = path.resolve(siteDir, POSTS_DIR);
+    const requestedPost = path.resolve(postsRoot, rel);
+    if (!requestedPost.startsWith(postsRoot + path.sep)) {
       throw new Error("--post must stay inside content/posts");
     }
+    const post = resolveSiteWritePath(siteDir, requestedPost);
     const result = applyEdit(fs.readFileSync(post, "utf8"), JSON.parse(rawPatch), { config });
-    const out = path.resolve(option(argv, "--out", post));
-    const postsRoot = path.resolve(siteDir, POSTS_DIR) + path.sep;
-    if (!out.startsWith(postsRoot)) {
+    const requestedOut = path.resolve(option(argv, "--out", requestedPost));
+    if (!requestedOut.startsWith(postsRoot + path.sep)) {
       throw new Error("--out must stay inside content/posts (copy the Site to preview elsewhere)");
     }
-    writeSiteFile(out, result.content);
+    const out = resolveSiteWritePath(siteDir, requestedOut);
+    writeSiteFile(siteDir, requestedOut, result.content);
     console.log(`Edited ${rel}: changed=${result.changed.join(",")} preserved=${result.preserved.join(",") || "none"} bodyBytes=${Buffer.byteLength(result.body)} -> ${out}`);
     return;
   }
