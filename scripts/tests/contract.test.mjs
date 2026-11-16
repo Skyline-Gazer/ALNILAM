@@ -18,6 +18,7 @@ import {
 const DEMO = "sites/demo";
 const YAML_CONFIG = "alnilam.config.yaml";
 const TOML_CONFIG = "alnilam.config.toml";
+const SHARED_SHIRONE_OBJECTS_KEY = crypto.createHash("sha256").update("alnilam-shirone-shared-object-store-v1").digest("hex");
 if (!fs.existsSync(path.join(DEMO, YAML_CONFIG)) || fs.existsSync(path.join(DEMO, TOML_CONFIG))) {
   throw new Error("demo Site must declare only alnilam.config.yaml");
 }
@@ -486,8 +487,13 @@ test("build cache is version-isolated and managed cleanup preserves siblings", (
     return file;
   });
   const bundleState = () => {
-    const loaded = path.join(cache, "shirone", fs.readdirSync(path.join(cache, "shirone"))[0], "loaded");
-    return fs.readdirSync(loaded).sort().map((name) => [name, crypto.createHash("sha256").update(fs.readFileSync(path.join(loaded, name))).digest("hex")]);
+    const shirone = path.join(cache, "shirone");
+    const inputKey = fs.readdirSync(shirone).find((name) => /^[a-f0-9]{64}$/.test(name) && name !== SHARED_SHIRONE_OBJECTS_KEY);
+    const digestFiles = (dir) => fs.readdirSync(dir).sort().map((name) => [name, crypto.createHash("sha256").update(fs.readFileSync(path.join(dir, name))).digest("hex")]);
+    return {
+      manifests: digestFiles(path.join(shirone, inputKey, "loaded")),
+      objects: digestFiles(path.join(shirone, SHARED_SHIRONE_OBJECTS_KEY, "objects")),
+    };
   };
   let firstBundleState;
   const digests = [];
@@ -524,12 +530,12 @@ test("build cache is version-isolated and managed cleanup preserves siblings", (
   for (const [index, rev] of ["test-core-rev-1234", "rev-b"].entries()) {
     assert.equal(fs.existsSync(path.join(cache, "v1", keyOf(rev), digests[index], "shirone", "generated", "local-icon-collections.ts")), true);
   }
-  const shironeKeys = fs.readdirSync(path.join(cache, "shirone"));
-  assert.equal(shironeKeys.length, 1, "the same compile inputs share one bundle cache across Core revisions and Site digests");
-  assert.match(shironeKeys[0], /^[a-f0-9]{64}$/);
+  const shironeKeys = fs.readdirSync(path.join(cache, "shirone")).filter((name) => /^[a-f0-9]{64}$/.test(name) && name !== SHARED_SHIRONE_OBJECTS_KEY);
+  assert.equal(shironeKeys.length, 1, "the same compile inputs share one bundle manifest directory across Core revisions and Site digests");
   const bundles = fs.readdirSync(path.join(cache, "shirone", shironeKeys[0], "loaded"));
-  assert.ok(bundles.some((file) => file.endsWith(".mjs")), "compiled artifact files are present");
-  assert.ok(bundles.some((file) => file.endsWith(".manifest.json")), "compiled artifact manifests are present");
+  assert.ok(bundles.length > 0 && bundles.every((file) => file.endsWith(".manifest.json")), "per-input directories contain only cache manifests");
+  const objects = fs.readdirSync(path.join(cache, "shirone", SHARED_SHIRONE_OBJECTS_KEY, "objects"));
+  assert.ok(objects.some((file) => file.endsWith(".mjs")), "compiled content-addressed objects are present");
   // Cache cleanup must not touch unrelated project-local legacy directories.
   const legacyRoot = path.join(root, "legacy-repo");
   const legacyPaths = ["apps/web/.astro", "apps/web/node_modules/.astro", "apps/web/.shirones", "apps/web/src/generated", "apps/web/public/assets/moments/thumbnails"];
@@ -672,7 +678,7 @@ test("cache GC dry-run reports aged entries and preserves recent and unmanaged d
   marker(old, 30);
   marker(recent, 1);
   fs.writeFileSync(path.join(cache, "unmanaged.txt"), "preserve");
-  const env = { ...process.env, ALNILAM_CACHE_DIR: cache };
+  const env = { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CACHE_TTL_DAYS: "14", ALNILAM_CACHE_MAX_BYTES: "2147483648" };
   const dryRun = spawnSync(process.execPath, ["scripts/compose.mjs", "--gc-cache", "--dry-run"], { env, encoding: "utf8" });
   assert.equal(dryRun.status, 0, dryRun.stderr);
   const plan = JSON.parse(dryRun.stdout);
@@ -689,6 +695,72 @@ test("cache GC dry-run reports aged entries and preserves recent and unmanaged d
   assert.equal(fs.existsSync(old), false);
   assert.equal(fs.existsSync(recent), true);
   assert.equal(fs.readFileSync(path.join(cache, "unmanaged.txt"), "utf8"), "preserve");
+});
+test("cache GC preserves referenced objects and reclaims orphaned publications", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cache-gc-objects-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const cache = path.join(root, "cache");
+  const shirone = path.join(cache, "shirone");
+  const objectStore = path.join(shirone, SHARED_SHIRONE_OBJECTS_KEY, "objects");
+  fs.mkdirSync(objectStore, { recursive: true });
+  fs.writeFileSync(path.join(cache, ".alnilam-cache-owner.json"), JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n");
+
+  const inputKeys = ["a".repeat(64), "b".repeat(64)];
+  const cacheKey = "module:shared";
+  const cacheKeyHash = crypto.createHash("sha256").update(cacheKey).digest("hex").slice(0, 24);
+  const code = "export const shared = true;";
+  const artifactHash = crypto.createHash("sha256").update(code).digest("hex");
+  const sharedObject = path.join(objectStore, `${artifactHash}.mjs`);
+  fs.writeFileSync(sharedObject, code);
+  const inputRoots = inputKeys.map((inputKey) => path.join(shirone, inputKey));
+  for (const inputKey of inputKeys) {
+    const loaded = path.join(shirone, inputKey, "loaded");
+    fs.mkdirSync(loaded, { recursive: true });
+    fs.writeFileSync(path.join(loaded, `${cacheKeyHash}.manifest.json`), JSON.stringify({ schema: 2, inputKey, cacheKeyHash, artifactHash }) + "\n");
+  }
+  const marker = (dir, daysAgo) => {
+    const file = path.join(dir, ".alnilam-last-used");
+    fs.writeFileSync(file, "ALNILAM managed cache last use\n");
+    const time = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
+    fs.utimesSync(file, time, time);
+  };
+  marker(inputRoots[0], 30);
+  marker(inputRoots[1], 1);
+
+  const orphanCode = "orphan artifact";
+  const orphanHash = crypto.createHash("sha256").update(orphanCode).digest("hex");
+  const orphan = path.join(objectStore, `${orphanHash}.mjs`);
+  fs.writeFileSync(orphan, orphanCode);
+  const interrupted = path.join(objectStore, `${"c".repeat(64)}.mjs.${process.pid}.${crypto.randomUUID()}.tmp`);
+  fs.writeFileSync(interrupted, "partial publication");
+
+  const env = { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CACHE_TTL_DAYS: "14", ALNILAM_CACHE_MAX_BYTES: "2147483648" };
+  const dryRun = spawnSync(process.execPath, ["scripts/compose.mjs", "--gc-cache", "--dry-run"], { env, encoding: "utf8" });
+  assert.equal(dryRun.status, 0, dryRun.stderr);
+  const plan = JSON.parse(dryRun.stdout);
+  const target = (file) => plan.targets.find((entry) => entry.path === file);
+  assert.equal(target(inputRoots[0]).reason, "unused-ttl");
+  assert.equal(target(inputRoots[0]).action, "would-remove");
+  assert.equal(target(sharedObject).action, "keep", "a recent input manifest protects its shared artifact");
+  assert.equal(target(orphan).reason, "unreferenced");
+  assert.equal(target(orphan).action, "would-remove");
+  assert.equal(target(interrupted).reason, "interrupted-publication");
+  assert.equal(target(interrupted).action, "would-remove");
+  for (const file of [inputRoots[0], sharedObject, orphan, interrupted]) assert.equal(fs.existsSync(file), true, "dry-run must preserve every cache entry");
+
+  const collect = spawnSync(process.execPath, ["scripts/compose.mjs", "--gc-cache"], { env, encoding: "utf8" });
+  assert.equal(collect.status, 0, collect.stderr);
+  assert.equal(fs.existsSync(inputRoots[0]), false);
+  assert.equal(fs.existsSync(inputRoots[1]), true);
+  assert.equal(fs.existsSync(sharedObject), true);
+  assert.equal(fs.existsSync(orphan), false);
+  assert.equal(fs.existsSync(interrupted), false);
+
+  marker(inputRoots[1], 30);
+  const expire = spawnSync(process.execPath, ["scripts/compose.mjs", "--gc-cache"], { env, encoding: "utf8" });
+  assert.equal(expire.status, 0, expire.stderr);
+  assert.equal(fs.existsSync(inputRoots[1]), false);
+  assert.equal(fs.existsSync(sharedObject), false, "an object becomes eligible after its last input manifest expires");
 });
 
 test("cache GC enforces the configured maximum and refuses hard-linked data", (t) => {
@@ -772,7 +844,7 @@ test("two parallel composes serialize: exactly one publishes, the loser fails cl
   const site = path.join(root, "site");
   fs.cpSync(DEMO, site, { recursive: true });
   const digest = validateSiteRoot(site).digest;
-  const env = { ...process.env, ALNILAM_CORE_REV: "lockrace-core", SOURCE_DATE_EPOCH: "1700000000" };
+  const env = { ...process.env, ALNILAM_CACHE_DIR: path.join(root, "managed-cache"), ALNILAM_CORE_REV: "lockrace-core", SOURCE_DATE_EPOCH: "1700000000" };
   // Regression guard: compose must actually call buildLock.acquire() — the
   // shared apps/web/.astro state corrupts concurrent builds otherwise.
   const run = (out) =>
