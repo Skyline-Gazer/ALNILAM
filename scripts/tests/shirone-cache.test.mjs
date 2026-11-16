@@ -133,6 +133,7 @@ test("legacy input-key manifests migrate verified bundles into the object store"
   assert.equal(migrated.hit, true);
   assert.equal(migrated.file, path.join(artifactStoreDir, `${artifactHash}.mjs`));
   assert.equal((await import(migrated.url)).migrated, true);
+  assert.equal(fs.existsSync(path.join(outputDir, filename)), true, "migration leaves legacy bundle for explicit managed GC");
   const manifest = JSON.parse(fs.readFileSync(path.join(outputDir, `${cacheKeyHash}.manifest.json`), "utf8"));
   assert.deepEqual(manifest, { schema: 2, inputKey, cacheKeyHash, artifactHash });
 });
