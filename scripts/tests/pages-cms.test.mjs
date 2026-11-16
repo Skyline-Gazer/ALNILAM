@@ -659,6 +659,171 @@ test("CMS writes through an explicitly selected Site-root symlink", () => {
   assert.equal(created.status, 0, created.stderr);
   assert.equal(fs.existsSync(postFile(actual, "via-root-link.md")), true);
 });
+test("CMS edit replaces a hardlinked output without mutating its outside name", () => {
+  const site = path.join(tmp, "hardlink-write-site");
+  const outside = path.join(tmp, "hardlink-write-outside");
+  copySite(site);
+  fs.mkdirSync(outside);
+  const sentinel = path.join(outside, "sentinel.md");
+  const sentinelBytes = Buffer.from("outside sentinel must remain unchanged\n");
+  fs.writeFileSync(sentinel, sentinelBytes);
+  const output = postFile(site, "hardlink-output.md");
+  fs.linkSync(sentinel, output);
+
+  const edited = run("edit", [tool, "edit", "--site", site, "--post", "cms-basics.md",
+    "--out", output, "--set", JSON.stringify({ title: "Hardlink-safe edit" })]);
+  assert.equal(edited.status, 0, edited.stderr);
+  assert.deepEqual(fs.readFileSync(sentinel), sentinelBytes, "edit must not write through the outside hardlink");
+  assert.match(fs.readFileSync(output, "utf8"), /title:.*Hardlink-safe edit/);
+  const outsideStat = fs.statSync(sentinel);
+  const outputStat = fs.statSync(output);
+  assert.ok(outsideStat.dev !== outputStat.dev || outsideStat.ino !== outputStat.ino,
+    "published Site output must not share the outside inode");
+});
+
+test("CMS edit rolls back when content/posts moves outside immediately before publication", { skip: process.platform !== "linux" }, () => {
+  const site = path.join(tmp, "path-swap-write-site");
+  const outside = path.join(tmp, "path-swap-write-outside");
+  copySite(site);
+  fs.mkdirSync(outside);
+  const posts = path.join(site, POSTS_DIR);
+  const movedPosts = path.join(outside, "moved-posts");
+  const previousOutput = path.join(posts, "swap-output.md");
+  const outsideOutput = path.join(outside, "swap-output.md");
+  const previousBytes = Buffer.from("previous Site output must be restored\n");
+  const outsideBytes = Buffer.from("outside sentinel must remain unchanged\n");
+  fs.writeFileSync(previousOutput, previousBytes);
+  fs.writeFileSync(outsideOutput, outsideBytes);
+  const preload = path.join(tmp, "swap-posts-before-rename.cjs");
+  fs.writeFileSync(preload, [
+    'const fs = require("node:fs");',
+    'let moved = false;',
+    'const renameSync = fs.renameSync;',
+    'fs.renameSync = function (source, target) {',
+    '  if (!moved && String(source).startsWith("/proc/self/fd/") && String(source).endsWith(".tmp")) {',
+    '    moved = true;',
+    '    renameSync.call(fs, process.env.CMS_SWAP_PARENT, process.env.CMS_SWAP_MOVED);',
+    '    fs.symlinkSync(process.env.CMS_SWAP_OUTSIDE, process.env.CMS_SWAP_PARENT, "dir");',
+    '  }',
+    '  return renameSync.call(fs, source, target);',
+    '};',
+  ].join("\n"));
+
+  try {
+    const edited = run("edit", ["--require", preload, tool, "edit", "--site", site,
+      "--post", "cms-basics.md", "--out", previousOutput,
+      "--set", JSON.stringify({ title: "Must not escape" })], {
+      CMS_SWAP_PARENT: posts,
+      CMS_SWAP_MOVED: movedPosts,
+      CMS_SWAP_OUTSIDE: outside,
+    });
+    assert.notEqual(edited.status, 0, "edit must fail once the opened posts directory moves outside the Site");
+    assert.match(edited.stderr, /Site write directory changed during file publication/);
+    assert.deepEqual(fs.readFileSync(outsideOutput), outsideBytes, "the replacement path's sentinel must remain unchanged");
+    assert.deepEqual(fs.readFileSync(path.join(movedPosts, "swap-output.md")), previousBytes,
+      "rollback must restore the previous output through the directory descriptor");
+    assert.deepEqual(fs.readdirSync(movedPosts).filter((name) => name.startsWith(".alnilam-cms-")), []);
+  } finally {
+    const current = fs.lstatSync(posts, { throwIfNoEntry: false });
+    if (current?.isSymbolicLink()) fs.unlinkSync(posts);
+    if (fs.existsSync(movedPosts)) fs.renameSync(movedPosts, posts);
+  }
+});
+test("CMS rollback uses exact inode identities and reports a durable backup path", { skip: process.platform !== "linux" }, () => {
+  const site = path.join(tmp, "identity-rollback-write-site");
+  const outside = path.join(tmp, "identity-rollback-write-outside");
+  copySite(site);
+  fs.mkdirSync(outside);
+  const posts = path.join(site, POSTS_DIR);
+  const movedPosts = path.join(outside, "moved-posts");
+  const previousOutput = path.join(posts, "swap-output.md");
+  const outsideOutput = path.join(outside, "swap-output.md");
+  const previousBytes = Buffer.from("previous output must remain recoverable\n");
+  const replacementBytes = Buffer.from("concurrent replacement must not be overwritten\n");
+  const outsideBytes = Buffer.from("outside sentinel must remain unchanged\n");
+  fs.writeFileSync(previousOutput, previousBytes);
+  fs.writeFileSync(outsideOutput, outsideBytes);
+  const preload = path.join(tmp, "identity-rollback-preload.cjs");
+  fs.writeFileSync(preload, [
+    'const fs = require("node:fs");',
+    'let moved = false;',
+    'let tempFd = null;',
+    'const wrapIdentity = (stats, ino) => {',
+    '  const bigint = typeof stats.ino === "bigint";',
+    '  return new Proxy(stats, {',
+    '    get(target, key) {',
+    '      if (key === "dev") return bigint ? 1n : 1;',
+    '      if (key === "ino") return bigint ? ino : Number(ino);',
+    '      const value = Reflect.get(target, key, target);',
+    '      return typeof value === "function" ? value.bind(target) : value;',
+    '    },',
+    '  });',
+    '};',
+    'const openSync = fs.openSync;',
+    'fs.openSync = function (file, ...args) {',
+    '  const fd = openSync.call(fs, file, ...args);',
+    '  if (String(file).startsWith("/proc/self/fd/") && String(file).endsWith(".tmp")) tempFd = fd;',
+    '  return fd;',
+    '};',
+    'const fstatSync = fs.fstatSync;',
+    'fs.fstatSync = function (fd, options) {',
+    '  const stats = fstatSync.call(fs, fd, options);',
+    '  return fd === tempFd ? wrapIdentity(stats, 9007199254740992n) : stats;',
+    '};',
+    'const lstatSync = fs.lstatSync;',
+    'fs.lstatSync = function (file, options) {',
+    '  const stats = lstatSync.call(fs, file, options);',
+    '  if (moved && String(file).startsWith("/proc/self/fd/") && String(file).endsWith("/swap-output.md")) {',
+    '    return wrapIdentity(stats, 9007199254740993n);',
+    '  }',
+    '  return stats;',
+    '};',
+    'const renameSync = fs.renameSync;',
+    'fs.renameSync = function (source, target) {',
+    '  const sourcePath = String(source);',
+    '  if (!moved && sourcePath.startsWith("/proc/self/fd/") && sourcePath.endsWith(".tmp")) {',
+    '    moved = true;',
+    '    renameSync.call(fs, process.env.CMS_SWAP_PARENT, process.env.CMS_SWAP_MOVED);',
+    '    fs.symlinkSync(process.env.CMS_SWAP_OUTSIDE, process.env.CMS_SWAP_PARENT, "dir");',
+    '    const result = renameSync.call(fs, source, target);',
+    '    fs.unlinkSync(target);',
+    '    fs.writeFileSync(target, Buffer.from(process.env.CMS_REPLACEMENT_BYTES, "base64"));',
+    '    return result;',
+    '  }',
+    '  return renameSync.call(fs, source, target);',
+    '};',
+  ].join("\n"));
+  let recoveryPath = null;
+
+  try {
+    const edited = run("edit", ["--require", preload, tool, "edit", "--site", site,
+      "--post", "cms-basics.md", "--out", previousOutput,
+      "--set", JSON.stringify({ title: "Must not overwrite concurrent output" })], {
+      CMS_SWAP_PARENT: posts,
+      CMS_SWAP_MOVED: movedPosts,
+      CMS_SWAP_OUTSIDE: outside,
+      CMS_REPLACEMENT_BYTES: replacementBytes.toString("base64"),
+    });
+    assert.notEqual(edited.status, 0, "edit must fail if the destination identity changed before rollback");
+    assert.match(edited.stderr, /Site write target changed before rollback/);
+    const recovery = edited.stderr.match(/previous output retained at (.+\.bak)/);
+    assert.ok(recovery, edited.stderr);
+    recoveryPath = recovery[1];
+    assert.equal(path.isAbsolute(recoveryPath), true);
+    assert.equal(recoveryPath.startsWith("/proc/self/fd/"), false, "recovery path must survive descriptor closure");
+    assert.deepEqual(fs.readFileSync(recoveryPath), previousBytes, "the backup must remain readable at the reported path");
+    assert.deepEqual(fs.readFileSync(path.join(movedPosts, "swap-output.md")), replacementBytes,
+      "rollback must not replace a concurrently changed destination");
+    assert.deepEqual(fs.readFileSync(outsideOutput), outsideBytes);
+    assert.deepEqual(fs.readdirSync(movedPosts).filter((name) => name.endsWith(".tmp")), []);
+  } finally {
+    if (recoveryPath && fs.existsSync(recoveryPath)) fs.unlinkSync(recoveryPath);
+    const current = fs.lstatSync(posts, { throwIfNoEntry: false });
+    if (current?.isSymbolicLink()) fs.unlinkSync(posts);
+    if (fs.existsSync(movedPosts)) fs.renameSync(movedPosts, posts);
+  }
+});
+
 
 test("create and edit enforce seriesOrder without partial writes", () => {
   const site = path.join(tmp, "series-order-site");
