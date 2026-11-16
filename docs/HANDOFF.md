@@ -1,8 +1,8 @@
 # ALNILAM — Current Agent Handoff
 
-## Live-state update — 2026-11-16 · Shirone content-addressed artifacts
+## Live-state update — 2026-11-16 · Cache merge and Astro concurrency follow-up
 
-This update records the P1 cache implementation in [PR #156](https://github.com/Skyline-Gazer/ALNILAM/pull/156), based on GitHub `dev` `f3a05640e36d762a9e5bc454f04451c79771a1e2`. Issue #145 remains `In Progress`; this PR does not claim completion of the unavailable real-cache baseline.
+This update records PR #156's merge and the concurrent Astro scratch issue discovered during post-merge verification. PR #157 carries the fail-closed follow-up. Issue #145 remains `In Progress`; real-cache identity, allocation and working-set claims remain unverified.
 
 ### Cache design
 
@@ -20,12 +20,13 @@ This update records the P1 cache implementation in [PR #156](https://github.com/
 
 ### Integration and review state
 
-- GitHub `dev` remains `f3a05640e36d762a9e5bc454f04451c79771a1e2`; `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`. Frozen CNB `dev`/`main` and the ADS pin are unchanged. The temporary `fix/shirone-cas-20261116` CNB feature ref was briefly pushed by mistake and deleted immediately.
+- GitHub `dev` is `11103d3e8cc9e03f1477f9288c27934e5acc0e0e`, the normal merge commit for PR #156. GitHub `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; frozen CNB refs and ADS pin `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` are unchanged. The temporary CNB feature ref noted during the PR work was deleted immediately.
 - PRs #143, #144 and #142 are merged normally. Their required Verify and CodeRabbit checks passed; PR #142 merged at `113ab9c7a9e6fbb38c75e808c7f94e6095244564`. Issue #140 is closed and its Project #17 item is `Done`.
-- Issue #138 remains `In Progress`: the existing Demo project tracks `dev` and remains anonymously available; `alnilam-production` tracks `main` and remains paused. The earlier `dev` Production-target deployment remains unexplained. No Vercel setting, deployment, domain, GitHub `main`, release tag, or ADS pin changed during this cache work; frozen CNB `dev`/`main` remained unchanged.
-- PR #156 now heads `24d760c649b756cddbc4e5ba754be3fc1077d4f8`. The updated contract helper uses the reserved object-store key and excludes it from compiler-input key counts. Local targeted cache contract/GC tests passed 3/3 with inherited TTL=60 days and max=1 byte.
+- Issue #138 remains `In Progress`. The last recorded public Demo verification (2026-11-15) returned anonymous HTTP 200 and its project tracked `dev`. A 2026-11-16 read-only API query reconfirmed `alnilam-production` on `main`, paused, with SSO protection for all deployment URLs. The earlier `dev` Production-target deployment remains unexplained; no Vercel setting or deployment was changed during cache work.
+- PR #156 source head `f7be58be885ed808c3f158bc89426b17f762174c` merged at `11103d3e8cc9e03f1477f9288c27934e5acc0e0e`. Its schema 1 migration retains the old input-key bundle until managed GC retires that candidate; rollback may incur a cache miss when the old GC walker evicts the shared object store.
 - CodeRabbit passed on this head with no new actionable threads; its earlier GC-policy finding is fixed and resolved. Astro compatibility [43810297252](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43810297252) passed. The paired push Verify [43810291313](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43810291313) passed all steps.
-- PR Verify [43810297218](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43810297218) passed on rerun. Its first attempt was cancelled by the existing 20-minute job timeout during external Site composition. Demo Preview passed; the separate `alnilam-production` Vercel status failed while that project remained paused. PR #156 remains open for Owner acceptance.
+- PR #156 merged normally; post-merge Verify [43826386973](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43826386973) passed all steps, including Demo, nested-base, external Site isolation, browser acceptance and upgrade/rollback checks.
+- On the merge commit, the cache contract and Shirone suites passed 57/57. A simultaneous temporary Demo Compose failed when shared `apps/web/.astro` metadata referenced a snapshot used by another concurrent Compose; no real cache or Site was touched. Follow-up PR #157 at `fb4f0cccc179840d6f9fee11a3ca934b2ede6179` adds a worktree-wide Astro scratch lock. Its targeted concurrency tests passed 2/2; a sequential temporary Demo Compose generated 93 pages and passed artifact and SEO checks. PR Verify runs [43829545699](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43829545699) and [43829391891](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43829391891) are in progress; Astro compatibility [43829546278](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43829546278) and Demo Preview passed. The paused `alnilam-production` deployment check is blocked; CodeRabbit review is in progress. PR #157 remains open and unmerged.
 
 ### Local engineering footprint snapshot — 2026-11-16
 
