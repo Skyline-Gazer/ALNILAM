@@ -143,9 +143,14 @@ function cacheCandidates(device) {
   if (fs.lstatSync(shirone, { throwIfNoEntry: false })) {
     assertNoSymlinksInTree(shirone, device);
     for (const key of fs.readdirSync(shirone)) {
-      if (!/^[a-f0-9]{64}$/.test(key)) throw new Error("Unexpected Shirone input key: " + path.join(shirone, key));
       const target = path.join(shirone, key);
-      if (!fs.lstatSync(target).isDirectory()) throw new Error("Unexpected Shirone cache entry: " + target);
+      const stat = fs.lstatSync(target);
+      if (key === "objects") {
+        if (!stat.isDirectory()) throw new Error("Unexpected Shirone object store: " + target);
+        continue;
+      }
+      if (!/^[a-f0-9]{64}$/.test(key)) throw new Error("Unexpected Shirone input key: " + target);
+      if (!stat.isDirectory()) throw new Error("Unexpected Shirone cache entry: " + target);
       candidates.push({ path: target, kind: "shirone-bundle" });
     }
   }
@@ -172,6 +177,77 @@ function measureManagedTree(target, device) {
   };
   visit(target);
   return result;
+}
+function inspectShironeArtifactCache(candidates, device) {
+  const references = new Map();
+  const objects = [];
+  const inputTemporary = /^(?:[a-f0-9]{24}\.manifest\.json|[a-f0-9]{24}\.[a-f0-9]{64}\.mjs)\.\d+\.[a-f0-9-]{36}\.tmp$/;
+  const objectTemporary = /^([a-f0-9]{64})\.mjs\.\d+\.[a-f0-9-]{36}\.tmp$/;
+  const legacyArtifact = /^[a-f0-9]{24}\.[a-f0-9]{64}\.mjs$/;
+
+  for (const candidate of candidates.filter(({ kind }) => kind === "shirone-bundle")) {
+    const inputKey = path.basename(candidate.path);
+    for (const entry of fs.readdirSync(candidate.path)) {
+      if (entry !== "loaded" && entry !== ".alnilam-last-used") {
+        throw new Error("Unexpected Shirone input-cache entry: " + path.join(candidate.path, entry));
+      }
+    }
+    const loaded = path.join(candidate.path, "loaded");
+    const loadedStat = fs.lstatSync(loaded, { throwIfNoEntry: false });
+    if (!loadedStat) continue;
+    if (!loadedStat.isDirectory() || loadedStat.dev !== device) throw new Error("Unexpected Shirone bundle directory: " + loaded);
+
+    for (const entry of fs.readdirSync(loaded)) {
+      const file = path.join(loaded, entry);
+      const fileStat = fs.lstatSync(file);
+      if (!fileStat.isFile() || fileStat.dev !== device) throw new Error("Unexpected Shirone bundle file type: " + file);
+      if (inputTemporary.test(entry)) continue;
+      const manifestMatch = /^([a-f0-9]{24})\.manifest\.json$/.exec(entry);
+      if (manifestMatch) {
+        let record;
+        try { record = JSON.parse(fs.readFileSync(file, "utf8")); } catch { throw new Error("Unverifiable Shirone bundle manifest: " + file); }
+        if (record?.schema === 1) {
+          const parts = typeof record.file === "string" ? record.file.split(".") : [];
+          if (record.inputKey !== inputKey || !legacyArtifact.test(record.file ?? "") || parts[0] !== manifestMatch[1] || record.artifactHash !== parts[1]) {
+            throw new Error("Invalid legacy Shirone bundle manifest: " + file);
+          }
+          continue;
+        }
+        if (record?.schema !== 2 || record.inputKey !== inputKey || record.cacheKeyHash !== manifestMatch[1] || !/^[a-f0-9]{64}$/.test(record.artifactHash ?? "")) {
+          throw new Error("Invalid Shirone bundle manifest: " + file);
+        }
+        if (!references.has(record.artifactHash)) references.set(record.artifactHash, new Set());
+        references.get(record.artifactHash).add(candidate.path);
+        continue;
+      }
+      if (legacyArtifact.test(entry)) continue;
+      throw new Error("Unexpected Shirone bundle cache entry: " + file);
+    }
+  }
+
+  const objectStore = path.join(cacheRoot, "shirone", "objects");
+  const storeStat = fs.lstatSync(objectStore, { throwIfNoEntry: false });
+  if (storeStat) {
+    if (!storeStat.isDirectory() || storeStat.dev !== device) throw new Error("Unexpected Shirone object store: " + objectStore);
+    for (const entry of fs.readdirSync(objectStore)) {
+      const file = path.join(objectStore, entry);
+      const stat = fs.lstatSync(file);
+      if (!stat.isFile() || stat.dev !== device) throw new Error("Unexpected Shirone object file type: " + file);
+      const artifactMatch = /^([a-f0-9]{64})\.mjs$/.exec(entry);
+      const temporaryMatch = objectTemporary.exec(entry);
+      if (!artifactMatch && !temporaryMatch) throw new Error("Unexpected Shirone object-store entry: " + file);
+      objects.push({
+        path: file,
+        kind: artifactMatch ? "shirone-artifact" : "shirone-temporary",
+        artifactHash: artifactMatch?.[1] ?? null,
+        files: 1,
+        logicalBytes: stat.size,
+        allocatedBytes: (stat.blocks ?? 0) * 512,
+        lastUsed: stat.mtimeMs,
+      });
+    }
+  }
+  return { references, objects };
 }
 
 function cacheLastUsed(target) {
@@ -286,22 +362,37 @@ if (gcCacheOnly) {
     assertNoActiveBuilds();
     const device = fs.statSync(cacheRoot).dev;
     const now = Date.now();
-    const candidates = cacheCandidates(device).map((candidate) => ({
+    const entries = cacheCandidates(device);
+    const artifactCache = inspectShironeArtifactCache(entries, device);
+    const candidates = entries.map((candidate) => ({
       ...candidate,
       ...measureManagedTree(candidate.path, device),
       lastUsed: cacheLastUsed(candidate.path),
     }));
-    const totalBytes = candidates.reduce((sum, candidate) => sum + candidate.allocatedBytes, 0);
+    const totalBytes = candidates.reduce((sum, candidate) => sum + candidate.allocatedBytes, 0)
+      + artifactCache.objects.reduce((sum, object) => sum + object.allocatedBytes, 0);
     const selected = new Map();
     for (const candidate of candidates) {
       if (now - candidate.lastUsed >= CACHE_UNUSED_TTL_MS) selected.set(candidate.path, "unused-ttl");
     }
-    let remainingBytes = totalBytes - candidates.reduce((sum, candidate) => selected.has(candidate.path) ? sum + candidate.allocatedBytes : sum, 0);
+    const estimate = () => {
+      const retainedHashes = new Set();
+      for (const [artifactHash, inputRoots] of artifactCache.references) {
+        if ([...inputRoots].some((inputRoot) => !selected.has(inputRoot))) retainedHashes.add(artifactHash);
+      }
+      const removableObjects = artifactCache.objects.filter((object) =>
+        object.kind === "shirone-temporary" || !retainedHashes.has(object.artifactHash),
+      );
+      const freedBytes = candidates.reduce((sum, candidate) => selected.has(candidate.path) ? sum + candidate.allocatedBytes : sum, 0)
+        + removableObjects.reduce((sum, object) => sum + object.allocatedBytes, 0);
+      return { removableObjects, freedBytes, remainingBytes: totalBytes - freedBytes };
+    };
+    let plan = estimate();
     for (const candidate of [...candidates].sort((left, right) => left.lastUsed - right.lastUsed)) {
-      if (remainingBytes <= CACHE_MAX_BYTES) break;
+      if (plan.remainingBytes <= CACHE_MAX_BYTES) break;
       if (selected.has(candidate.path)) continue;
       selected.set(candidate.path, "maximum-size");
-      remainingBytes -= candidate.allocatedBytes;
+      plan = estimate();
     }
     const planned = candidates.map((candidate) => ({
       path: candidate.path,
@@ -314,19 +405,42 @@ if (gcCacheOnly) {
       action: selected.has(candidate.path) ? (dryRun ? "would-remove" : "remove") : "keep",
       reason: selected.get(candidate.path) ?? null,
     }));
-    const estimatedFreedBytes = candidates.reduce((sum, candidate) => selected.has(candidate.path) ? sum + candidate.allocatedBytes : sum, 0);
+    const objectPlans = artifactCache.objects.map((object) => {
+      const removing = plan.removableObjects.includes(object);
+      return {
+        path: object.path,
+        type: "file",
+        kind: object.kind,
+        files: object.files,
+        logicalBytes: object.logicalBytes,
+        allocatedBytes: object.allocatedBytes,
+        lastUsed: new Date(object.lastUsed).toISOString(),
+        action: removing ? (dryRun ? "would-remove" : "remove") : "keep",
+        reason: removing ? (object.kind === "shirone-temporary" ? "interrupted-publication" : "unreferenced") : "manifest-reference",
+      };
+    });
     console.log(JSON.stringify({
       mode: dryRun ? "dry-run" : "garbage-collection",
       policy: { unusedTtlDays: CACHE_UNUSED_TTL_MS / (24 * 60 * 60 * 1000), maximumBytes: CACHE_MAX_BYTES },
       currentAllocatedBytes: totalBytes,
-      estimatedFreedBytes,
-      remainingAllocatedBytes: Math.max(0, totalBytes - estimatedFreedBytes),
-      targets: planned,
+      estimatedFreedBytes: plan.freedBytes,
+      remainingAllocatedBytes: Math.max(0, plan.remainingBytes),
+      targets: [...planned, ...objectPlans],
     }, null, 2));
-    if (!dryRun) for (const candidate of candidates) {
-      if (!selected.has(candidate.path)) continue;
-      assertNoSymlinksInTree(candidate.path, device);
-      rmTreeSafe(candidate.path);
+    if (!dryRun) {
+      for (const candidate of candidates) {
+        if (!selected.has(candidate.path)) continue;
+        assertNoSymlinksInTree(candidate.path, device);
+        rmTreeSafe(candidate.path);
+      }
+      const remaining = inspectShironeArtifactCache(cacheCandidates(device), device);
+      const retainedHashes = new Set(remaining.references.keys());
+      for (const object of remaining.objects) {
+        if (object.kind === "shirone-temporary" || !retainedHashes.has(object.artifactHash)) {
+          assertNoSymlinkPath(object.path);
+          rmTreeSafe(object.path);
+        }
+      }
     }
   } finally {
     operationLock.release();
@@ -459,6 +573,7 @@ try {
         ALNILAM_ASTRO_CACHE: path.join(buildDir, "astro"),
         ALNILAM_SHIRONE_CACHE: path.join(buildDir, "shirone"),
         ALNILAM_SHIRONE_BUNDLE_CACHE: path.join(shironeCacheDir, "loaded"),
+        ALNILAM_SHIRONE_ARTIFACT_STORE: path.join(cacheRoot, "shirone", "objects"),
         ALNILAM_SHIRONE_INPUT_KEY: shironeInputKey,
       },
     },

@@ -37,10 +37,12 @@ The Site snapshot and Astro content/image state are keyed by Core revision and S
 digest; Vite's dependency cache is keyed by Core revision. Bangumi snapshots are scoped by
 user ID, subject type and limit. Covers are emitted into staged output, not the Site.
 Shirone's Site-independent compiled modules use a fingerprint of Core source,
-dependency lock/configuration, Node version and target platform. Their content-hashed
-bundles are shared across Site digests and Core revisions only when that fingerprint
-matches; a manifest and SHA-256 check verify every reuse. Shirone's mutable generated
-state remains under the Core-revision/Site-digest build directory.
+dependency lock/configuration, Node version and target platform. Per-input manifests
+avoid recompiling on a matching input hit; immutable objects under
+`shirone/objects/<sha256>.mjs` deduplicate identical bytes across input fingerprints.
+Each reuse verifies SHA-256, publication is atomic, and the import URL preserves
+distinct module identities. Shirone's mutable generated state remains under the
+Core-revision/Site-digest build directory.
 
 Normal builds never remove project-local generated or legacy directories.
 `--clean-cache` verifies the root marker, acquires the cache-operation lock, rejects
@@ -51,9 +53,11 @@ last successful use and planned action. `--gc-cache` applies a 14-day unused TTL
 2 GiB allocated-size limit, evicting oldest candidates first; `ALNILAM_CACHE_TTL_DAYS`
 and `ALNILAM_CACHE_MAX_BYTES` override those defaults. GC serializes with build admission,
 rejects active builds and fails closed on symlinks, hard links, unexpected entries or
-filesystem boundaries. Use `--clean-legacy --dry-run` to inspect allowlisted project
-paths; explicit `--clean-legacy` removes only empty allowlisted directories, leaving
-content without a verified ownership manifest untouched.
+filesystem boundaries. A content-addressed Shirone object remains while any retained
+input manifest references it; orphaned objects and interrupted publications are reclaimed.
+Use `--clean-legacy --dry-run` to inspect allowlisted project paths; explicit
+`--clean-legacy` removes only empty allowlisted directories, leaving content without a
+verified ownership manifest untouched.
 
 The staged output also carries `alnilam-provenance.json`: the Core revision, the Site
 ref (`ALNILAM_SITE_REF`, or the Site's own Git `HEAD` when the Site directory is its

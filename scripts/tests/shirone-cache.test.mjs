@@ -4,7 +4,6 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { pathToFileURL } from "node:url";
 import { loadBundledArtifact } from "../../themes/shirone/upstream/src/integration/resolve/bundle-cache.mjs";
 import { shironeBuildInputKey } from "../shirone-input-key.mjs";
 
@@ -71,54 +70,76 @@ test("Shirone input identity refuses symlinked compiler inputs", (t) => {
   assert.throws(() => shironeBuildInputKey(root), /symlink in Shirone build inputs/);
 });
 
-test("compiled artifacts reuse verified input hits and rebuild corrupt objects", async (t) => {
-  const outputDir = path.join(fixture(t), "loaded");
-  const inputKey = "a".repeat(64);
+test("different input keys share verified content without sharing module instances", async (t) => {
+  const root = fixture(t);
+  const artifactStoreDir = path.join(root, "objects");
+  const inputA = { outputDir: path.join(root, "input-a", "loaded"), artifactStoreDir, cacheKey: "config:site", inputKey: "a".repeat(64) };
+  const inputB = { outputDir: path.join(root, "input-b", "loaded"), artifactStoreDir, cacheKey: "config:site", inputKey: "b".repeat(64) };
   let builds = 0;
   const build = () => {
     builds += 1;
-    return `export const value = ${builds};`;
+    return "export const value = { count: 1 };";
   };
-  const first = await loadBundledArtifact({ outputDir, cacheKey: "config:site", inputKey, build });
+
+  const first = await loadBundledArtifact({ ...inputA, build });
+  const firstModule = await import(first.url);
+  const second = await loadBundledArtifact({ ...inputB, build });
+  const secondModule = await import(second.url);
   assert.equal(first.hit, false);
-  const firstModule = await import(pathToFileURL(first.file).href);
-  assert.equal(firstModule.value, 1);
-  const hit = await loadBundledArtifact({
-    outputDir,
-    cacheKey: "config:site",
-    inputKey,
-    build: () => { throw new Error("input hit must not compile again"); },
-  });
+  assert.equal(second.hit, false, "a new input fingerprint still compiles independently");
+  assert.equal(first.file, second.file, "identical bytes resolve to one immutable object");
+  assert.notEqual(first.url, second.url, "logical module identities remain distinct");
+  assert.notStrictEqual(firstModule, secondModule);
+  assert.notStrictEqual(firstModule.value, secondModule.value);
+  assert.equal(fs.readdirSync(artifactStoreDir).filter((name) => name.endsWith(".mjs")).length, 1);
+
+  const hit = await loadBundledArtifact({ ...inputB, build: () => { throw new Error("matching input must reuse its manifest"); } });
   assert.equal(hit.hit, true);
-  assert.equal(hit.file, first.file);
-  assert.equal(builds, 1);
-  const changedInput = await loadBundledArtifact({
-    outputDir,
-    cacheKey: "config:site",
-    inputKey: "c".repeat(64),
-    build,
-  });
-  assert.equal(changedInput.hit, false, "a different compiler input fingerprint must rebuild");
-  assert.equal((await import(pathToFileURL(changedInput.file).href)).value, 2);
-  const changedInputHit = await loadBundledArtifact({
-    outputDir,
-    cacheKey: "config:site",
-    inputKey: "c".repeat(64),
-    build: () => { throw new Error("matching compiler input must reuse its artifact"); },
-  });
-  assert.equal(changedInputHit.hit, true);
+  assert.equal(hit.url, second.url);
   assert.equal(builds, 2);
 
-  fs.writeFileSync(changedInput.file, "export const value = 99;");
-  const repaired = await loadBundledArtifact({ outputDir, cacheKey: "config:site", inputKey: "c".repeat(64), build });
-  assert.equal(repaired.hit, false);
-  assert.equal((await import(pathToFileURL(repaired.file).href)).value, 3);
-  assert.notEqual(crypto.createHash("sha256").update(fs.readFileSync(repaired.file)).digest("hex"), "0".repeat(64));
+  fs.writeFileSync(first.file, "export const value = { count: 99 };");
+  const repaired = await loadBundledArtifact({ ...inputA, build });
+  assert.equal(repaired.hit, false, "a corrupt shared object must be rebuilt");
+  assert.equal(repaired.file, first.file, "repair republishes the expected content address");
+  assert.equal(fs.readFileSync(repaired.file, "utf8"), "export const value = { count: 1 };");
+  assert.equal((await import(repaired.url)).value.count, 1);
+  const otherHit = await loadBundledArtifact({ ...inputB, build: () => { throw new Error("repaired shared object must be reusable"); } });
+  assert.equal(otherHit.hit, true);
+  assert.equal(builds, 3);
+});
+
+test("legacy input-key manifests migrate verified bundles into the object store", async (t) => {
+  const root = fixture(t);
+  const outputDir = path.join(root, "input", "loaded");
+  const artifactStoreDir = path.join(root, "objects");
+  const inputKey = "c".repeat(64);
+  const cacheKey = "pkg:config/legacy.ts";
+  const cacheKeyHash = crypto.createHash("sha256").update(cacheKey).digest("hex").slice(0, 24);
+  const code = "export const migrated = true;";
+  const artifactHash = crypto.createHash("sha256").update(code).digest("hex");
+  const filename = `${cacheKeyHash}.${artifactHash}.mjs`;
+  fs.mkdirSync(outputDir, { recursive: true });
+  fs.writeFileSync(path.join(outputDir, filename), code);
+  fs.writeFileSync(path.join(outputDir, `${cacheKeyHash}.manifest.json`), JSON.stringify({ schema: 1, inputKey, file: filename, artifactHash }) + "\n");
+
+  const migrated = await loadBundledArtifact({
+    outputDir,
+    artifactStoreDir,
+    cacheKey,
+    inputKey,
+    build: () => { throw new Error("a verified legacy object must migrate without rebuilding"); },
+  });
+  assert.equal(migrated.hit, true);
+  assert.equal(migrated.file, path.join(artifactStoreDir, `${artifactHash}.mjs`));
+  assert.equal((await import(migrated.url)).migrated, true);
+  const manifest = JSON.parse(fs.readFileSync(path.join(outputDir, `${cacheKeyHash}.manifest.json`), "utf8"));
+  assert.deepEqual(manifest, { schema: 2, inputKey, cacheKeyHash, artifactHash });
 });
 
 test("concurrent corrupt artifact repairs atomically preserve the deterministic object", async (t) => {
-  const outputDir = path.join(fixture(t), "loaded");
-  const options = { outputDir, cacheKey: "pkg:config/repair.ts", inputKey: "d".repeat(64) };
+  const root = fixture(t);
+  const options = { outputDir: path.join(root, "loaded"), artifactStoreDir: path.join(root, "objects"), cacheKey: "pkg:config/repair.ts", inputKey: "d".repeat(64) };
   const code = "export const repaired = true;";
   const initial = await loadBundledArtifact({ ...options, build: () => code });
   fs.writeFileSync(initial.file, "export const repaired = false;");
@@ -139,20 +160,39 @@ test("concurrent corrupt artifact repairs atomically preserve the deterministic 
 
   assert.equal(repaired[0].file, repaired[1].file);
   assert.equal(fs.readFileSync(repaired[0].file, "utf8"), code);
-  assert.equal((await import(pathToFileURL(repaired[0].file).href)).repaired, true);
+  assert.equal((await import(repaired[0].url)).repaired, true);
   const hit = await loadBundledArtifact({ ...options, build: () => { throw new Error("repaired artifact must be reusable"); } });
   assert.equal(hit.hit, true);
 });
 
-test("concurrent compiled artifact publication leaves a complete reusable object", async (t) => {
-  const outputDir = path.join(fixture(t), "loaded");
-  const options = { outputDir, cacheKey: "pkg:config/site.ts", inputKey: "b".repeat(64), build: async () => "export const ready = true;" };
+test("concurrent input keys publish one complete shared object", async (t) => {
+  const root = fixture(t);
+  const artifactStoreDir = path.join(root, "objects");
+  const code = "export const ready = true;";
+  let arrivals = 0;
+  let release;
+  const bothReady = new Promise((resolve) => { release = resolve; });
+  const build = async () => {
+    arrivals += 1;
+    if (arrivals === 2) release();
+    await bothReady;
+    return code;
+  };
   const results = await Promise.all([
-    loadBundledArtifact(options),
-    loadBundledArtifact(options),
+    loadBundledArtifact({ outputDir: path.join(root, "input-a", "loaded"), artifactStoreDir, cacheKey: "pkg:config/site.ts", inputKey: "e".repeat(64), build }),
+    loadBundledArtifact({ outputDir: path.join(root, "input-b", "loaded"), artifactStoreDir, cacheKey: "pkg:config/site.ts", inputKey: "f".repeat(64), build }),
   ]);
   assert.equal(results[0].file, results[1].file);
-  assert.equal((await import(pathToFileURL(results[0].file).href)).ready, true);
-  const next = await loadBundledArtifact({ ...options, build: () => { throw new Error("published artifact must be reusable"); } });
+  assert.notEqual(results[0].url, results[1].url);
+  assert.equal((await import(results[0].url)).ready, true);
+  assert.equal((await import(results[1].url)).ready, true);
+  assert.equal(fs.readdirSync(artifactStoreDir).filter((name) => name.endsWith(".mjs")).length, 1);
+  const next = await loadBundledArtifact({
+    outputDir: path.join(root, "input-a", "loaded"),
+    artifactStoreDir,
+    cacheKey: "pkg:config/site.ts",
+    inputKey: "e".repeat(64),
+    build: () => { throw new Error("published artifact must be reusable"); },
+  });
   assert.equal(next.hit, true);
 });

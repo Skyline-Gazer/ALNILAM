@@ -103,9 +103,11 @@ Derived build state lives under `<repo>/.cache/alnilam` by default, overridable 
 ALNILAM creates that marker only when no managed `v1`, `bangumi` or `shirone` namespace
 exists; unmarked cache namespaces fail closed. Unrelated sibling files are preserved.
 The Site snapshot and Astro content/image state are keyed by Core revision and Site
-digest; Vite's dependency cache is keyed by Core revision. Shirone's compiled bundles
-are shared by a Core input fingerprint and verified by SHA-256. Bangumi snapshots are
-scoped by user ID, subject type and limit. Keep the cache outside your Site.
+digest; Vite's dependency cache is keyed by Core revision. Shirone's compiled bundle
+manifests are keyed by Core compiler inputs, while immutable SHA-256 objects are shared
+across inputs when their output bytes match. GC preserves objects referenced by retained
+manifests. Bangumi snapshots are scoped by user ID, subject type and limit. Keep the
+cache outside your Site.
 
 Normal Compose never recursively deletes project-local legacy directories.
 `node scripts/compose.mjs --clean-cache` removes only the verified managed cache,

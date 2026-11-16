@@ -245,25 +245,27 @@ export async function loadModuleFile(
   const output = outputDir(paths);
   const bundleCacheDir = process.env.ALNILAM_SHIRONE_BUNDLE_CACHE || output;
   const inputKey = process.env.ALNILAM_SHIRONE_INPUT_KEY;
-  let file: string;
+  let moduleUrl: string;
   if (inputKey) {
     const artifact = await loadBundledArtifact({
       outputDir: bundleCacheDir,
+      artifactStoreDir: process.env.ALNILAM_SHIRONE_ARTIFACT_STORE,
       cacheKey,
       inputKey,
       build: buildBundle,
     });
-    file = artifact.file;
+    moduleUrl = artifact.url;
   } else {
     const code = await buildBundle();
     const hash = createHash("sha1").update(code).digest("hex").slice(0, 12);
     const prefix = `${sanitise(cacheKey)}.`;
-    file = join(output, `${prefix}${hash}.mjs`);
+    const file = join(output, `${prefix}${hash}.mjs`);
     if (!existsSync(file)) writeFileSync(file, code, "utf8");
     pruneStaleBundles(paths, prefix, file);
+    moduleUrl = pathToFileURL(file).href;
   }
 
-  const module = (await import(pathToFileURL(file).href)) as LoadedModule;
+  const module = (await import(moduleUrl)) as LoadedModule;
   cache.set(cacheKey, module);
   return module;
 }
