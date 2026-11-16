@@ -18,6 +18,7 @@ import {
 const DEMO = "sites/demo";
 const YAML_CONFIG = "alnilam.config.yaml";
 const TOML_CONFIG = "alnilam.config.toml";
+const SHARED_SHIRONE_OBJECTS_KEY = crypto.createHash("sha256").update("alnilam-shirone-shared-object-store-v1").digest("hex");
 if (!fs.existsSync(path.join(DEMO, YAML_CONFIG)) || fs.existsSync(path.join(DEMO, TOML_CONFIG))) {
   throw new Error("demo Site must declare only alnilam.config.yaml");
 }
@@ -487,11 +488,11 @@ test("build cache is version-isolated and managed cleanup preserves siblings", (
   });
   const bundleState = () => {
     const shirone = path.join(cache, "shirone");
-    const inputKey = fs.readdirSync(shirone).find((name) => /^[a-f0-9]{64}$/.test(name));
+    const inputKey = fs.readdirSync(shirone).find((name) => /^[a-f0-9]{64}$/.test(name) && name !== SHARED_SHIRONE_OBJECTS_KEY);
     const digestFiles = (dir) => fs.readdirSync(dir).sort().map((name) => [name, crypto.createHash("sha256").update(fs.readFileSync(path.join(dir, name))).digest("hex")]);
     return {
       manifests: digestFiles(path.join(shirone, inputKey, "loaded")),
-      objects: digestFiles(path.join(shirone, "objects")),
+      objects: digestFiles(path.join(shirone, SHARED_SHIRONE_OBJECTS_KEY, "objects")),
     };
   };
   let firstBundleState;
@@ -529,11 +530,11 @@ test("build cache is version-isolated and managed cleanup preserves siblings", (
   for (const [index, rev] of ["test-core-rev-1234", "rev-b"].entries()) {
     assert.equal(fs.existsSync(path.join(cache, "v1", keyOf(rev), digests[index], "shirone", "generated", "local-icon-collections.ts")), true);
   }
-  const shironeKeys = fs.readdirSync(path.join(cache, "shirone")).filter((name) => /^[a-f0-9]{64}$/.test(name));
+  const shironeKeys = fs.readdirSync(path.join(cache, "shirone")).filter((name) => /^[a-f0-9]{64}$/.test(name) && name !== SHARED_SHIRONE_OBJECTS_KEY);
   assert.equal(shironeKeys.length, 1, "the same compile inputs share one bundle manifest directory across Core revisions and Site digests");
   const bundles = fs.readdirSync(path.join(cache, "shirone", shironeKeys[0], "loaded"));
   assert.ok(bundles.length > 0 && bundles.every((file) => file.endsWith(".manifest.json")), "per-input directories contain only cache manifests");
-  const objects = fs.readdirSync(path.join(cache, "shirone", "objects"));
+  const objects = fs.readdirSync(path.join(cache, "shirone", SHARED_SHIRONE_OBJECTS_KEY, "objects"));
   assert.ok(objects.some((file) => file.endsWith(".mjs")), "compiled content-addressed objects are present");
   // Cache cleanup must not touch unrelated project-local legacy directories.
   const legacyRoot = path.join(root, "legacy-repo");
@@ -700,8 +701,7 @@ test("cache GC preserves referenced objects and reclaims orphaned publications",
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const cache = path.join(root, "cache");
   const shirone = path.join(cache, "shirone");
-  const sharedStoreKey = crypto.createHash("sha256").update("alnilam-shirone-shared-object-store-v1").digest("hex");
-  const objectStore = path.join(shirone, sharedStoreKey, "objects");
+  const objectStore = path.join(shirone, SHARED_SHIRONE_OBJECTS_KEY, "objects");
   fs.mkdirSync(objectStore, { recursive: true });
   fs.writeFileSync(path.join(cache, ".alnilam-cache-owner.json"), JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n");
 
