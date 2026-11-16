@@ -497,6 +497,7 @@ const stage = fs.mkdtempSync(path.join(path.dirname(destination), ".alnilam-buil
 const bangumiAssetStage = stage + "-bangumi-assets";
 const backup = destination + ".alnilam-backup-" + process.pid;
 let published = false;
+let astroBuildLock;
 let cacheLock;
 try {
   const coreRev = resolveCoreRevision(repoRoot);
@@ -566,6 +567,11 @@ try {
       ? new Date(Number(process.env.SOURCE_DATE_EPOCH) * 1000).toISOString()
       : new Date().toISOString(),
   };
+  astroBuildLock = createBuildLock(path.join(repoRoot, "apps/web"), {
+    lockName: ".alnilam-compose-astro-build.lock",
+    description: "the shared Astro root",
+  });
+  astroBuildLock.acquire();
   const result = spawnSync(
     externalToolchain ? process.execPath : pnpm,
     externalToolchain
@@ -651,6 +657,7 @@ try {
 } finally {
   if (fs.existsSync(bangumiAssetStage)) fs.rmSync(bangumiAssetStage, { recursive: true, force: true });
   if (!published && fs.existsSync(stage)) fs.rmSync(stage, { recursive: true, force: true });
+  if (astroBuildLock) astroBuildLock.release();
   if (typeof cacheLock !== "undefined") cacheLock.release();
 }
 

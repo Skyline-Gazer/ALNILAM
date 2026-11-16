@@ -37,7 +37,7 @@ function isStale(lock) {
  * acquire() exclusively creates the lock and fails closed if one already
  * exists, including a stale lock. release() removes only its own token.
  */
-export function createBuildLock(dir, { pid = process.pid, lockName = ".compose-lock" } = {}) {
+export function createBuildLock(dir, { pid = process.pid, lockName = ".compose-lock", description = "this Site revision" } = {}) {
   const lockPath = path.join(dir, lockName);
   let ownedToken = null;
   return {
@@ -69,7 +69,7 @@ export function createBuildLock(dir, { pid = process.pid, lockName = ".compose-l
                 `Stale compose lock (pid ${observed.pid}); verify no ALNILAM build is active, then remove it manually: ${lockPath}`,
               );
             }
-            throw new Error("Another compose is building this Site revision (build state is locked)");
+            throw new Error(`Another compose is building ${description} (build state is locked)`);
           }
         } finally {
           try {
@@ -79,7 +79,7 @@ export function createBuildLock(dir, { pid = process.pid, lockName = ".compose-l
           }
         }
       }
-      throw new Error("Another compose is building this Site revision (build state is locked)");
+      throw new Error(`Another compose is building ${description} (build state is locked)`);
     },
     release() {
       if (ownedToken === null) return;
