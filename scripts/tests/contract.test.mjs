@@ -5,6 +5,7 @@ import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
+import { createBuildLock } from "../build-lock.mjs";
 import { normalizeSiteConfig, parseSiteConfigDocument } from "../../packages/core/src/index.mjs";
 import { assertExternalOutput, validateSiteRoot } from "../site-contract.mjs";
 import {
@@ -845,8 +846,8 @@ test("two parallel composes serialize: exactly one publishes, the loser fails cl
   fs.cpSync(DEMO, site, { recursive: true });
   const digest = validateSiteRoot(site).digest;
   const env = { ...process.env, ALNILAM_CACHE_DIR: path.join(root, "managed-cache"), ALNILAM_CORE_REV: "lockrace-core", SOURCE_DATE_EPOCH: "1700000000" };
-  // Regression guard: compose must actually call buildLock.acquire() — the
-  // shared apps/web/.astro state corrupts concurrent builds otherwise.
+  // Parallel first use races cache-marker publication; only one process may
+  // then acquire the shared Astro build state and publish.
   const run = (out) =>
     new Promise((resolve) => {
       const child = spawn(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, out)], { env });
@@ -860,9 +861,76 @@ test("two parallel composes serialize: exactly one publishes, the loser fails cl
   const losers = results.filter((r) => r.status !== 0);
   assert.equal(winners.length, 1, "exactly one compose may hold the build state: " + results.map((r) => r.out + "=" + r.status + "\n" + r.text.slice(-2500)).join("\n"));
   assert.equal(losers.length, 1);
+  assert.equal(
+    fs.readFileSync(path.join(env.ALNILAM_CACHE_DIR, ".alnilam-cache-owner.json"), "utf8"),
+    JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n",
+    "parallel first use must publish a complete cache owner marker",
+  );
+  assert.equal(
+    fs.readdirSync(env.ALNILAM_CACHE_DIR).some((entry) => entry.startsWith(".alnilam-cache-owner.json.staging-")),
+    false,
+    "marker staging files must be removed after initialization",
+  );
   assert.match(losers[0].text, /Another compose is building this Site revision/);
   assert.equal(fs.existsSync(path.join(root, losers[0].out)), false, "the blocked compose must not publish");
   assert.equal(validateSiteRoot(site).digest, digest);
+});
+
+test("different Site and cache roots fail closed while the shared Astro root is locked", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-astro-lock-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const siteA = path.join(root, "site-a");
+  const siteB = path.join(root, "site-b");
+  fs.cpSync(DEMO, siteA, { recursive: true });
+  fs.cpSync(DEMO, siteB, { recursive: true });
+  const configPath = path.join(siteB, YAML_CONFIG);
+  const originalConfig = fs.readFileSync(configPath, "utf8");
+  const changedConfig = originalConfig.replace("  title: ALNILAM\n", "  title: Parallel Site B\n");
+  assert.notEqual(changedConfig, originalConfig);
+  fs.writeFileSync(configPath, changedConfig);
+  const digestA = validateSiteRoot(siteA).digest;
+  assert.notEqual(validateSiteRoot(siteB).digest, digestA, "the Sites must use distinct per-Site cache locks");
+
+  const repoRoot = process.cwd();
+  const lockDirectory = path.join(repoRoot, "apps/web");
+  const lockPath = path.join(lockDirectory, ".alnilam-compose-astro-build.lock");
+  assert.equal(fs.existsSync(lockPath), false, "the shared Astro root must be idle before the test");
+  const commonEnv = {
+    ...process.env,
+    ALNILAM_REPO_ROOT: repoRoot,
+    ALNILAM_CORE_REV: "astro-root-lock-test",
+    SOURCE_DATE_EPOCH: "1700000000",
+  };
+  const lock = createBuildLock(lockDirectory, {
+    lockName: ".alnilam-compose-astro-build.lock",
+    description: "the shared Astro root",
+  });
+  lock.acquire();
+  try {
+    const outB = path.join(root, "out-b");
+    const blocked = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", siteB, "--out", outB], {
+      cwd: repoRoot,
+      env: { ...commonEnv, ALNILAM_CACHE_DIR: path.join(root, "cache-b") },
+      encoding: "utf8",
+    });
+    assert.notEqual(blocked.status, 0, "a different Site and cache root must not enter the shared Astro scratch");
+    assert.match(blocked.stderr, /Another compose is building the shared Astro root/);
+    assert.equal(fs.existsSync(outB), false, "a blocked Site must not publish output");
+    assert.equal(fs.existsSync(lockPath), true, "the contender must leave the active holder's lock untouched");
+  } finally {
+    lock.release();
+  }
+
+  const outA = path.join(root, "out-a");
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", siteA, "--out", outA], {
+    cwd: repoRoot,
+    env: { ...commonEnv, ALNILAM_CACHE_DIR: path.join(root, "cache-a") },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, "Compose should acquire and release the shared lock after contention: " + result.stderr.slice(-2500));
+  const provenance = JSON.parse(fs.readFileSync(path.join(outA, "alnilam-provenance.json"), "utf8"));
+  assert.equal(provenance.site.digest, digestA);
+  assert.equal(fs.existsSync(lockPath), false, "Compose must release its Astro scratch lock after success");
 });
 
 test("symlinks in Site inputs are rejected", (t) => {

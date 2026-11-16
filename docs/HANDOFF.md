@@ -1,5 +1,14 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-16 · Post-merge concurrency regression
+
+PR #155 merged normally at `753b9c263e6c2b07fb085ef40e89d6d3d667007c`; GitHub `dev` is at this SHA. Its head Verify passed in [43843162056](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43843162056). Post-merge Verify [43845984542](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43845984542) failed in the existing `two parallel composes serialize` contract test: concurrent first-use cache initialization raced to create `.alnilam-cache-owner.json`, and one process exited on `EEXIST` before the build lock. The test used an isolated `/tmp` cache; no Site or real cache was touched.
+
+- PR #157 contains owner-marker fixes `3d97fd2f552afa7df10885f9d60235ccdfe3117b` and `a77b1362275ddab6e8b5ebded04fc0a4f1d82c4e`: marker content is written to a unique staging file and atomically published with no-replace `fs.linkSync`; on `EEXIST`, the existing regular file must contain exact owner data. Staging cleanup is attempted, and unmarked roots with managed namespace content still fail closed.
+- On head `a77b1362275ddab6e8b5ebded04fc0a4f1d82c4e`, `node --check scripts/compose.mjs`, `node --check scripts/tests/contract.test.mjs`, and the targeted `two parallel composes serialize` regression passed; the test verifies exact marker content and staging-file cleanup. `python3 scripts/tests/docs_test.py` passed 2/2. Updated-head GitHub Verify is pending; PR #157 remains open and unmerged for Owner acceptance.
+- Issue #145 and its Project #17 item remain `In Progress`; the historical 7.2 GiB cache and 246-bundle identities/physical savings remain unverified.
+- A mistaken push via the temporary worktree's `origin` created CNB branch `docs/handoff-current-state-20261116` at `82442eaf59ad0a90bf16e1fe2be6f99d717e631c`. Frozen CNB `dev` and `main` remain at their pinned SHAs; no later update or deletion of that branch was made.
+
 ## Live-state update — 2026-11-16 · Cache merge and Astro concurrency follow-up
 
 This update records PR #156's merge and the concurrent Astro scratch issue discovered during post-merge verification. PR #157 carries the fail-closed follow-up. Issue #145 remains `In Progress`; real-cache identity, allocation and working-set claims remain unverified.
@@ -20,7 +29,7 @@ This update records PR #156's merge and the concurrent Astro scratch issue disco
 
 ### Integration and review state
 
-- PR #156's normal merge commit set GitHub `dev` to `11103d3e8cc9e03f1477f9288c27934e5acc0e0e`; this Handoff/Roadmap refresh is proposed separately in PR #155. GitHub `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; frozen CNB refs and ADS pin `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` are unchanged. The temporary CNB feature ref noted during the PR work was deleted immediately.
+- PR #156's normal merge commit set GitHub `dev` to `11103d3e8cc9e03f1477f9288c27934e5acc0e0e`; this Handoff/Roadmap refresh was proposed separately in PR #155. GitHub `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; frozen CNB `dev`/`main` and ADS pin `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` remain unchanged. An earlier note reported a temporary CNB ref deleted during PR work; a later mistaken push created `docs/handoff-current-state-20261116` at `82442eaf59ad0a90bf16e1fe2be6f99d717e631c`, and a read-only `git ls-remote` on 2026-11-16 confirmed it remains present.
 - PRs #143, #144 and #142 are merged normally. Their required Verify and CodeRabbit checks passed; PR #142 merged at `113ab9c7a9e6fbb38c75e808c7f94e6095244564`. Issue #140 is closed and its Project #17 item is `Done`.
 - Issue #138 remains `In Progress`. The latest stable-Demo HTTP 200/provenance check is from 2026-11-16 03:13 on the pre-PR #156 `dev` SHA `f3a05640e36d762a9e5bc454f04451c79771a1e2` ([Issue #138 comment](https://github.com/Skyline-Gazer/ALNILAM/issues/138#issuecomment-6906247392)); no stable-alias check after PR #156's merge is recorded. The 08:52 Dashboard/API readback confirms the existing Demo tracks `dev` and is not paused; `alnilam-production` tracks `main`, is paused, and uses SSO protection. PRs #155 and #157 passed their Demo Preview checks; their Production-project statuses were blocked/failed while paused. The earlier `dev` Production-target deployment remains unexplained. No Vercel setting or deployment was changed.
 - PR #156 source head `f7be58be885ed808c3f158bc89426b17f762174c` merged at `11103d3e8cc9e03f1477f9288c27934e5acc0e0e`. Its schema 1 migration retains the old input-key bundle until managed GC retires that candidate; rollback may incur a cache miss when the old GC walker evicts the shared object store.

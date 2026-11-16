@@ -74,16 +74,43 @@ function ensureManagedCacheRoot(create = false) {
   if (!stat) return false;
   if (!stat.isDirectory()) throw new Error("Managed cache root is not a directory: " + cacheRoot);
   const marker = path.join(cacheRoot, cacheOwnerFile);
+  const validateMarker = (current = fs.lstatSync(marker, { throwIfNoEntry: false })) => {
+    if (!current) throw new Error("Cache root has no ALNILAM ownership marker: " + cacheRoot);
+    if (current.isSymbolicLink() || !current.isFile() || fs.readFileSync(marker, "utf8") !== cacheOwner) {
+      throw new Error("Cache root ownership marker is invalid: " + marker);
+    }
+  };
   const markerStat = fs.lstatSync(marker, { throwIfNoEntry: false });
   if (!markerStat && create) {
     const entries = fs.readdirSync(cacheRoot);
     const managedEntries = entries.filter((entry) => ["v1", "bangumi", "shirone"].includes(entry));
-    if (managedEntries.length > 0) throw new Error("Refusing an unmarked cache root containing managed namespace directories: " + cacheRoot);
-    fs.writeFileSync(marker, cacheOwner, { flag: "wx" });
+    if (managedEntries.length > 0) {
+      const racedMarkerStat = fs.lstatSync(marker, { throwIfNoEntry: false });
+      if (!racedMarkerStat) throw new Error("Refusing an unmarked cache root containing managed namespace directories: " + cacheRoot);
+      validateMarker(racedMarkerStat);
+    } else {
+      const staged = `${marker}.staging-${process.pid}-${crypto.randomUUID()}`;
+      try {
+        fs.writeFileSync(staged, cacheOwner, { flag: "wx" });
+        try {
+          // link publishes the complete file atomically and never replaces an existing marker.
+          fs.linkSync(staged, marker);
+        } catch (error) {
+          if (error?.code !== "EEXIST") throw error;
+          validateMarker();
+        }
+      } finally {
+        try {
+          fs.rmSync(staged, { force: true });
+        } catch {
+          // A published marker remains valid even if staging cleanup fails.
+        }
+      }
+    }
   } else if (!markerStat) {
     throw new Error("Cache root has no ALNILAM ownership marker: " + cacheRoot);
-  } else if (markerStat.isSymbolicLink() || !markerStat.isFile() || fs.readFileSync(marker, "utf8") !== cacheOwner) {
-    throw new Error("Cache root ownership marker is invalid: " + marker);
+  } else {
+    validateMarker(markerStat);
   }
   return true;
 }
@@ -497,6 +524,7 @@ const stage = fs.mkdtempSync(path.join(path.dirname(destination), ".alnilam-buil
 const bangumiAssetStage = stage + "-bangumi-assets";
 const backup = destination + ".alnilam-backup-" + process.pid;
 let published = false;
+let astroBuildLock;
 let cacheLock;
 try {
   const coreRev = resolveCoreRevision(repoRoot);
@@ -566,6 +594,11 @@ try {
       ? new Date(Number(process.env.SOURCE_DATE_EPOCH) * 1000).toISOString()
       : new Date().toISOString(),
   };
+  astroBuildLock = createBuildLock(path.join(repoRoot, "apps/web"), {
+    lockName: ".alnilam-compose-astro-build.lock",
+    description: "the shared Astro root",
+  });
+  astroBuildLock.acquire();
   const result = spawnSync(
     externalToolchain ? process.execPath : pnpm,
     externalToolchain
@@ -649,8 +682,18 @@ try {
   console.log("Core revision: " + provenance.core.revision);
   console.log("Provenance: alnilam-provenance.json");
 } finally {
-  if (fs.existsSync(bangumiAssetStage)) fs.rmSync(bangumiAssetStage, { recursive: true, force: true });
-  if (!published && fs.existsSync(stage)) fs.rmSync(stage, { recursive: true, force: true });
-  if (typeof cacheLock !== "undefined") cacheLock.release();
+  try {
+    if (fs.existsSync(bangumiAssetStage)) fs.rmSync(bangumiAssetStage, { recursive: true, force: true });
+  } finally {
+    try {
+      if (!published && fs.existsSync(stage)) fs.rmSync(stage, { recursive: true, force: true });
+    } finally {
+      try {
+        if (astroBuildLock) astroBuildLock.release();
+      } finally {
+        if (typeof cacheLock !== "undefined") cacheLock.release();
+      }
+    }
+  }
 }
 
