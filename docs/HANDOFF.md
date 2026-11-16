@@ -1,5 +1,29 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-16 · Shirone content-addressed artifacts
+
+This update records the P1 cache implementation in [PR #156](https://github.com/Skyline-Gazer/ALNILAM/pull/156), based on GitHub `dev` `f3a05640e36d762a9e5bc454f04451c79771a1e2`. Issue #145 remains `In Progress`; this PR does not claim completion of the unavailable real-cache baseline.
+
+### Cache design
+
+- Input manifests remain keyed by the Core compiler-input fingerprint, so a matching input hit avoids compilation. Compiled module bytes publish atomically to `shirone/objects/<sha256>.mjs`; identical output from different input fingerprints shares one verified immutable object. Import URLs retain input/cache identity so ESM module instances remain separate.
+- GC dry-run accounts for object references from retained manifests, protects referenced objects, and reports orphan objects and interrupted publications. Existing 14-day / 2 GiB policy remains unchanged and is not calibrated to a measured real working set.
+- Mutable Site state remains keyed by Core revision and Site digest. No build writes to Site source.
+
+### Local verification and isolated benchmark
+
+- `pnpm test` exited 0. Added regression coverage for cross-input object sharing with distinct module instances, legacy manifest migration, concurrent publication, corrupt-object repair, dry-run, and referenced-object GC.
+- `pnpm check` completed with 0 Astro diagnostics. `pnpm build` generated 93 pages; Pagefind, artifact-check, and SEO checks passed. The contract suite covers external Site, root and `/ALNILAM/` output.
+- A same-input Demo workload was run in fresh isolated caches on `dev` baseline `f3a0564` and the PR implementation. Both runs generated 93 pages and had six unique bundle hashes with no duplicate bundle bytes. Cold/warm total times were 25.48 / 23.66 seconds before and 25.25 / 23.37 seconds after. Bundle logical / allocated bytes were 28,524,289 / 28,536,832 before and 28,524,282 / 28,536,832 after. Cold whole-cache logical / allocated bytes were 31,217,389 / 31,580,160 before and 31,213,823 / 31,571,968 after. This fixture demonstrates no storage savings; timings are single samples and do not establish a speed gain.
+- `ALNILAM_CACHE_DIR` is unset and `.cache/alnilam` is absent from the current project workspace. The historical 7.2 GiB cache and 246-bundle estimate, artifact identity, reflink relationships, effective working set, and real-cache savings remain unverified. No real cache was cleaned or mutated.
+
+### Integration and review state
+
+- GitHub `dev` remains `f3a05640e36d762a9e5bc454f04451c79771a1e2`; `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`. Frozen CNB `dev`/`main` and the ADS pin are unchanged. The temporary `fix/shirone-cas-20261116` CNB feature ref was briefly pushed by mistake and deleted immediately.
+- PRs #143, #144 and #142 are merged normally. Their required Verify and CodeRabbit checks passed; PR #142 merged at `113ab9c7a9e6fbb38c75e808c7f94e6095244564`. Issue #140 is closed and its Project #17 item is `Done`.
+- Issue #138 remains `In Progress`: the existing Demo project tracks `dev` and remains anonymously available; `alnilam-production` tracks `main` and remains paused. The earlier `dev` Production-target deployment remains unexplained. No Vercel setting, deployment, domain, GitHub `main`, release tag, or ADS pin changed during this cache work; frozen CNB `dev`/`main` remained unchanged.
+- PR #156 head is `3cba22d5dc5c511576188708c25e8a60240e190f`. Local checks passed; GitHub Verify and CodeRabbit are pending, compatibility passed, the Demo Vercel Preview passed, and the paused Production project's Vercel check failed. The cache PR remains open for review and Owner acceptance.
+
 ## Live-state update — 2026-11-16 · CMS write-boundary final acceptance
 
 This entry supersedes older live-state notes where they conflict. PR #153 and the Handoff-only PR #154 are merged into GitHub `dev`. The final post-merge Verify passed; Issue #152 is closed and its Project #17 item is Done.
