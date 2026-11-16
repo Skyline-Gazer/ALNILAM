@@ -60,6 +60,7 @@ for (const deployment of deployments) {
         page.locator('a[href*="no-cover"] .album-card__cover-fallback'),
       ).toBeVisible();
       await albumLink.click();
+      await page.waitForLoadState("networkidle");
 
       const photoButtons = page.locator(".album-gallery__item");
       await expect(photoButtons).toHaveCount(3);
