@@ -12,7 +12,8 @@ function readLock(lockPath) {
   try {
     const parsed = JSON.parse(fs.readFileSync(lockPath, "utf8"));
     return typeof parsed?.pid === "number" && typeof parsed?.startedAt === "string" ? parsed : null;
-  } catch {
+  } catch (error) {
+    if (error?.code === "ENOENT") return undefined;
     return null;
   }
 }
@@ -61,6 +62,7 @@ export function createBuildLock(dir, { pid = process.pid, lockName = ".compose-l
             if (err.code === "ENOENT") continue; // staging was removed under us; retry with a fresh name
             if (err.code !== "EEXIST") throw err;
             const observed = readLock(lockPath);
+            if (observed === undefined) continue; // the holder released after our EEXIST result
             if (observed === null) {
               throw new Error("Unverifiable build lock; refusing automatic recovery: " + lockPath);
             }
