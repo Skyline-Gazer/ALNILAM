@@ -39,6 +39,9 @@ if (dryRun && !cleanLegacyOnly && !gcCacheOnly) throw new Error("--dry-run is su
 const cacheRoot = path.resolve(process.env.ALNILAM_CACHE_DIR || path.join(repoRoot, ".cache", "alnilam"));
 const cacheOwnerFile = ".alnilam-cache-owner.json";
 const cacheOwner = JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n";
+// Older GC walkers accept only input-key-shaped children under shirone/.
+// Keep the shared store under a reserved valid key so downgrades can still collect the cache.
+const SHARED_SHIRONE_OBJECTS_KEY = crypto.createHash("sha256").update("alnilam-shirone-shared-object-store-v1").digest("hex");
 const CACHE_UNUSED_TTL_DAYS = Number(process.env.ALNILAM_CACHE_TTL_DAYS ?? 14);
 const CACHE_UNUSED_TTL_MS = CACHE_UNUSED_TTL_DAYS * 24 * 60 * 60 * 1000;
 const CACHE_MAX_BYTES = Number(process.env.ALNILAM_CACHE_MAX_BYTES ?? 2 * 1024 ** 3);
@@ -143,14 +146,11 @@ function cacheCandidates(device) {
   if (fs.lstatSync(shirone, { throwIfNoEntry: false })) {
     assertNoSymlinksInTree(shirone, device);
     for (const key of fs.readdirSync(shirone)) {
+      if (!/^[a-f0-9]{64}$/.test(key)) throw new Error("Unexpected Shirone input key: " + path.join(shirone, key));
       const target = path.join(shirone, key);
       const stat = fs.lstatSync(target);
-      if (key === "objects") {
-        if (!stat.isDirectory()) throw new Error("Unexpected Shirone object store: " + target);
-        continue;
-      }
-      if (!/^[a-f0-9]{64}$/.test(key)) throw new Error("Unexpected Shirone input key: " + target);
       if (!stat.isDirectory()) throw new Error("Unexpected Shirone cache entry: " + target);
+      if (key === SHARED_SHIRONE_OBJECTS_KEY) continue;
       candidates.push({ path: target, kind: "shirone-bundle" });
     }
   }
@@ -225,7 +225,17 @@ function inspectShironeArtifactCache(candidates, device) {
     }
   }
 
-  const objectStore = path.join(cacheRoot, "shirone", "objects");
+  const sharedStoreRoot = path.join(cacheRoot, "shirone", SHARED_SHIRONE_OBJECTS_KEY);
+  const sharedRootStat = fs.lstatSync(sharedStoreRoot, { throwIfNoEntry: false });
+  if (sharedRootStat) {
+    if (!sharedRootStat.isDirectory() || sharedRootStat.dev !== device) throw new Error("Unexpected Shirone shared store: " + sharedStoreRoot);
+    for (const entry of fs.readdirSync(sharedStoreRoot)) {
+      if (entry !== ".alnilam-last-used" && entry !== "objects") {
+        throw new Error("Unexpected Shirone shared-store entry: " + path.join(sharedStoreRoot, entry));
+      }
+    }
+  }
+  const objectStore = path.join(sharedStoreRoot, "objects");
   const storeStat = fs.lstatSync(objectStore, { throwIfNoEntry: false });
   if (storeStat) {
     if (!storeStat.isDirectory() || storeStat.dev !== device) throw new Error("Unexpected Shirone object store: " + objectStore);
@@ -494,8 +504,13 @@ try {
   // tags, hostile strings, Windows reserved names) a safe single path segment.
   const revKey = crypto.createHash("sha256").update(coreRev).digest("hex").slice(0, 16);
   const shironeInputKey = shironeBuildInputKey(repoRoot);
-  const shironeCacheDir = path.join(cacheRoot, "shirone", shironeInputKey);
-  if (!isWithin(shironeCacheDir, path.join(cacheRoot, "shirone"))) throw new Error("Shirone cache path escaped the managed cache root");
+  if (shironeInputKey === SHARED_SHIRONE_OBJECTS_KEY) throw new Error("Shirone input key collides with the reserved shared object-store key");
+  const shironeRoot = path.join(cacheRoot, "shirone");
+  const shironeCacheDir = path.join(shironeRoot, shironeInputKey);
+  const shironeArtifactStoreRoot = path.join(shironeRoot, SHARED_SHIRONE_OBJECTS_KEY);
+  const shironeArtifactStoreDir = path.join(shironeArtifactStoreRoot, "objects");
+  if (!isWithin(shironeCacheDir, shironeRoot)) throw new Error("Shirone cache path escaped the managed cache root");
+  if (!isWithin(shironeArtifactStoreDir, shironeRoot)) throw new Error("Shirone object-store path escaped the managed cache root");
   const cacheRootV1 = path.join(cacheRoot, "v1");
   const buildDir = path.join(cacheRootV1, revKey, before);
   if (!isWithin(buildDir, cacheRootV1)) throw new Error("Build cache path escaped the cache root: " + buildDir);
@@ -573,7 +588,7 @@ try {
         ALNILAM_ASTRO_CACHE: path.join(buildDir, "astro"),
         ALNILAM_SHIRONE_CACHE: path.join(buildDir, "shirone"),
         ALNILAM_SHIRONE_BUNDLE_CACHE: path.join(shironeCacheDir, "loaded"),
-        ALNILAM_SHIRONE_ARTIFACT_STORE: path.join(cacheRoot, "shirone", "objects"),
+        ALNILAM_SHIRONE_ARTIFACT_STORE: shironeArtifactStoreDir,
         ALNILAM_SHIRONE_INPUT_KEY: shironeInputKey,
       },
     },
@@ -621,7 +636,7 @@ try {
     throw err;
   }
   if (existed) fs.rmSync(backup, { recursive: true });
-  for (const target of [path.join(cacheRootV1, revKey), shironeCacheDir]) {
+  for (const target of [path.join(cacheRootV1, revKey), shironeCacheDir, shironeArtifactStoreRoot]) {
     if (!fs.existsSync(target)) continue;
     try {
       markCacheUse(target);

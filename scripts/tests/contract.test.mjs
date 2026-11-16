@@ -677,7 +677,7 @@ test("cache GC dry-run reports aged entries and preserves recent and unmanaged d
   marker(old, 30);
   marker(recent, 1);
   fs.writeFileSync(path.join(cache, "unmanaged.txt"), "preserve");
-  const env = { ...process.env, ALNILAM_CACHE_DIR: cache };
+  const env = { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CACHE_TTL_DAYS: "14", ALNILAM_CACHE_MAX_BYTES: "2147483648" };
   const dryRun = spawnSync(process.execPath, ["scripts/compose.mjs", "--gc-cache", "--dry-run"], { env, encoding: "utf8" });
   assert.equal(dryRun.status, 0, dryRun.stderr);
   const plan = JSON.parse(dryRun.stdout);
@@ -700,7 +700,8 @@ test("cache GC preserves referenced objects and reclaims orphaned publications",
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const cache = path.join(root, "cache");
   const shirone = path.join(cache, "shirone");
-  const objectStore = path.join(shirone, "objects");
+  const sharedStoreKey = crypto.createHash("sha256").update("alnilam-shirone-shared-object-store-v1").digest("hex");
+  const objectStore = path.join(shirone, sharedStoreKey, "objects");
   fs.mkdirSync(objectStore, { recursive: true });
   fs.writeFileSync(path.join(cache, ".alnilam-cache-owner.json"), JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n");
 
@@ -733,7 +734,7 @@ test("cache GC preserves referenced objects and reclaims orphaned publications",
   const interrupted = path.join(objectStore, `${"c".repeat(64)}.mjs.${process.pid}.${crypto.randomUUID()}.tmp`);
   fs.writeFileSync(interrupted, "partial publication");
 
-  const env = { ...process.env, ALNILAM_CACHE_DIR: cache };
+  const env = { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CACHE_TTL_DAYS: "14", ALNILAM_CACHE_MAX_BYTES: "2147483648" };
   const dryRun = spawnSync(process.execPath, ["scripts/compose.mjs", "--gc-cache", "--dry-run"], { env, encoding: "utf8" });
   assert.equal(dryRun.status, 0, dryRun.stderr);
   const plan = JSON.parse(dryRun.stdout);

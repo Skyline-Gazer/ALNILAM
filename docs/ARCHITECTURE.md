@@ -38,8 +38,10 @@ digest; Vite's dependency cache is keyed by Core revision. Bangumi snapshots are
 user ID, subject type and limit. Covers are emitted into staged output, not the Site.
 Shirone's Site-independent compiled modules use a fingerprint of Core source,
 dependency lock/configuration, Node version and target platform. Per-input manifests
-avoid recompiling on a matching input hit; immutable objects under
-`shirone/objects/<sha256>.mjs` deduplicate identical bytes across input fingerprints.
+avoid recompiling on a matching input hit; immutable objects under the reserved,
+input-key-shaped `shirone/<store-key>/objects/<sha256>.mjs` path deduplicate identical
+bytes across input fingerprints. The key shape preserves cache traversal by older
+GC versions during rollback.
 Each reuse verifies SHA-256, publication is atomic, and the import URL preserves
 distinct module identities. Shirone's mutable generated state remains under the
 Core-revision/Site-digest build directory.
