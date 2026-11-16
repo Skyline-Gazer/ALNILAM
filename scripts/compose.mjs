@@ -74,16 +74,32 @@ function ensureManagedCacheRoot(create = false) {
   if (!stat) return false;
   if (!stat.isDirectory()) throw new Error("Managed cache root is not a directory: " + cacheRoot);
   const marker = path.join(cacheRoot, cacheOwnerFile);
+  const validateMarker = (current = fs.lstatSync(marker, { throwIfNoEntry: false })) => {
+    if (!current) throw new Error("Cache root has no ALNILAM ownership marker: " + cacheRoot);
+    if (current.isSymbolicLink() || !current.isFile() || fs.readFileSync(marker, "utf8") !== cacheOwner) {
+      throw new Error("Cache root ownership marker is invalid: " + marker);
+    }
+  };
   const markerStat = fs.lstatSync(marker, { throwIfNoEntry: false });
   if (!markerStat && create) {
     const entries = fs.readdirSync(cacheRoot);
     const managedEntries = entries.filter((entry) => ["v1", "bangumi", "shirone"].includes(entry));
-    if (managedEntries.length > 0) throw new Error("Refusing an unmarked cache root containing managed namespace directories: " + cacheRoot);
-    fs.writeFileSync(marker, cacheOwner, { flag: "wx" });
+    if (managedEntries.length > 0) {
+      const racedMarkerStat = fs.lstatSync(marker, { throwIfNoEntry: false });
+      if (!racedMarkerStat) throw new Error("Refusing an unmarked cache root containing managed namespace directories: " + cacheRoot);
+      validateMarker(racedMarkerStat);
+    } else {
+      try {
+        fs.writeFileSync(marker, cacheOwner, { flag: "wx" });
+      } catch (error) {
+        if (error?.code !== "EEXIST") throw error;
+        validateMarker();
+      }
+    }
   } else if (!markerStat) {
     throw new Error("Cache root has no ALNILAM ownership marker: " + cacheRoot);
-  } else if (markerStat.isSymbolicLink() || !markerStat.isFile() || fs.readFileSync(marker, "utf8") !== cacheOwner) {
-    throw new Error("Cache root ownership marker is invalid: " + marker);
+  } else {
+    validateMarker(markerStat);
   }
   return true;
 }

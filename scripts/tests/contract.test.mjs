@@ -846,8 +846,8 @@ test("two parallel composes serialize: exactly one publishes, the loser fails cl
   fs.cpSync(DEMO, site, { recursive: true });
   const digest = validateSiteRoot(site).digest;
   const env = { ...process.env, ALNILAM_CACHE_DIR: path.join(root, "managed-cache"), ALNILAM_CORE_REV: "lockrace-core", SOURCE_DATE_EPOCH: "1700000000" };
-  // Regression guard: compose must actually call buildLock.acquire() — the
-  // shared apps/web/.astro state corrupts concurrent builds otherwise.
+  // Parallel first use races cache-marker publication; only one process may
+  // then acquire the shared Astro build state and publish.
   const run = (out) =>
     new Promise((resolve) => {
       const child = spawn(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, out)], { env });
