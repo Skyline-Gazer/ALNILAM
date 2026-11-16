@@ -247,9 +247,13 @@ export async function loadModuleFile(
   const inputKey = process.env.ALNILAM_SHIRONE_INPUT_KEY;
   let moduleUrl: string;
   if (inputKey) {
+    const artifactStoreDir = process.env.ALNILAM_SHIRONE_ARTIFACT_STORE;
+    if (!artifactStoreDir) {
+      throw new Error("[shirones] ALNILAM_SHIRONE_ARTIFACT_STORE must be set when ALNILAM_SHIRONE_INPUT_KEY is set");
+    }
     const artifact = await loadBundledArtifact({
       outputDir: bundleCacheDir,
-      artifactStoreDir: process.env.ALNILAM_SHIRONE_ARTIFACT_STORE,
+      artifactStoreDir,
       cacheKey,
       inputKey,
       build: buildBundle,
