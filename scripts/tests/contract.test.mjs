@@ -861,6 +861,16 @@ test("two parallel composes serialize: exactly one publishes, the loser fails cl
   const losers = results.filter((r) => r.status !== 0);
   assert.equal(winners.length, 1, "exactly one compose may hold the build state: " + results.map((r) => r.out + "=" + r.status + "\n" + r.text.slice(-2500)).join("\n"));
   assert.equal(losers.length, 1);
+  assert.equal(
+    fs.readFileSync(path.join(env.ALNILAM_CACHE_DIR, ".alnilam-cache-owner.json"), "utf8"),
+    JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n",
+    "parallel first use must publish a complete cache owner marker",
+  );
+  assert.equal(
+    fs.readdirSync(env.ALNILAM_CACHE_DIR).some((entry) => entry.startsWith(".alnilam-cache-owner.json.staging-")),
+    false,
+    "marker staging files must be removed after initialization",
+  );
   assert.match(losers[0].text, /Another compose is building this Site revision/);
   assert.equal(fs.existsSync(path.join(root, losers[0].out)), false, "the blocked compose must not publish");
   assert.equal(validateSiteRoot(site).digest, digest);

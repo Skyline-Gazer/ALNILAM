@@ -89,11 +89,22 @@ function ensureManagedCacheRoot(create = false) {
       if (!racedMarkerStat) throw new Error("Refusing an unmarked cache root containing managed namespace directories: " + cacheRoot);
       validateMarker(racedMarkerStat);
     } else {
+      const staged = `${marker}.staging-${process.pid}-${crypto.randomUUID()}`;
       try {
-        fs.writeFileSync(marker, cacheOwner, { flag: "wx" });
-      } catch (error) {
-        if (error?.code !== "EEXIST") throw error;
-        validateMarker();
+        fs.writeFileSync(staged, cacheOwner, { flag: "wx" });
+        try {
+          // link publishes the complete file atomically and never replaces an existing marker.
+          fs.linkSync(staged, marker);
+        } catch (error) {
+          if (error?.code !== "EEXIST") throw error;
+          validateMarker();
+        }
+      } finally {
+        try {
+          fs.rmSync(staged, { force: true });
+        } catch {
+          // A published marker remains valid even if staging cleanup fails.
+        }
       }
     }
   } else if (!markerStat) {
