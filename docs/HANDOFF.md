@@ -47,6 +47,7 @@ This update records PR #156's merge and the concurrent Astro scratch issue disco
 - A disposable Compose build from PR #156's Demo tree generated 93 HTML pages / 438 files: 11,162,107 logical and 12,222,464 allocated bytes. Client assets: JavaScript 4,690,402 / 5,128,192 bytes; CSS 648,075 / 839,680; fonts 1,072,948 / 1,196,032; images 266,239 / 274,432. This candidate build is a workspace baseline, not a historical-production comparison.
 
 ## Live-state update — 2026-11-16 · CMS write-boundary final acceptance
+
 This entry supersedes older live-state notes where they conflict. PR #153 and the Handoff-only PR #154 are merged into GitHub `dev`. The final post-merge Verify passed; Issue #152 is closed and its Project #17 item is Done.
 
 ### CMS write boundary
