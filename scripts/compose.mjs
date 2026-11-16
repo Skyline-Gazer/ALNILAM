@@ -655,9 +655,18 @@ try {
   console.log("Core revision: " + provenance.core.revision);
   console.log("Provenance: alnilam-provenance.json");
 } finally {
-  if (fs.existsSync(bangumiAssetStage)) fs.rmSync(bangumiAssetStage, { recursive: true, force: true });
-  if (!published && fs.existsSync(stage)) fs.rmSync(stage, { recursive: true, force: true });
-  if (astroBuildLock) astroBuildLock.release();
-  if (typeof cacheLock !== "undefined") cacheLock.release();
+  try {
+    if (fs.existsSync(bangumiAssetStage)) fs.rmSync(bangumiAssetStage, { recursive: true, force: true });
+  } finally {
+    try {
+      if (!published && fs.existsSync(stage)) fs.rmSync(stage, { recursive: true, force: true });
+    } finally {
+      try {
+        if (astroBuildLock) astroBuildLock.release();
+      } finally {
+        if (typeof cacheLock !== "undefined") cacheLock.release();
+      }
+    }
+  }
 }
 
