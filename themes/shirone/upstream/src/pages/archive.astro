@@ -10,10 +10,12 @@ const {
 	sortedPosts,
 	lang,
 	alternates,
+	feedUrl,
 } = Astro.props as {
 	sortedPosts?: Awaited<ReturnType<typeof getSortedPostsList>>;
 	lang?: string;
 	alternates?: Array<{ lang: string; href: string }>;
+	feedUrl?: string | null;
 };
 const t = lang ? (key: I18nKey) => getTranslation(lang.replace("-", "_"))[key] : i18n;
 const sortedPostsList = sortedPosts ?? (await getSortedPostsList());
@@ -30,7 +32,7 @@ const archivePosts = sortedPostsList.map(({ slug, url, data }) => ({
 const archiveSummary = `${sortedPostsList.length} ${t(I18nKey.postsCount)}`;
 ---
 
-<MainGridLayout title={t(I18nKey.archive)} description={archiveSummary} page="archive" lang={lang} alternates={alternates}>
+<MainGridLayout title={t(I18nKey.archive)} description={archiveSummary} page="archive" lang={lang} alternates={alternates} feedUrl={feedUrl}>
     <PageHeader title={t(I18nKey.archive)} subtitle={archiveSummary} />
     <ArchivePanel sortedPosts={archivePosts} locale={lang} client:visible></ArchivePanel>
 </MainGridLayout>

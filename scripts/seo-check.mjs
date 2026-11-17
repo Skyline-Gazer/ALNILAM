@@ -136,6 +136,15 @@ walk(outDir, ".html", (file) => {
 });
 const pageByUrl = new Map(pages.map((page) => [norm(page.url), page]));
 
+function unlocalizedPagePath(relative) {
+  return relative.replace(/^\/?[a-z]{2,3}(?:-[A-Za-z0-9]+)*\//, "");
+}
+
+function isPostRoute(relative) {
+  const unlocalized = unlocalizedPagePath(relative);
+  return unlocalized.startsWith("posts/") && !/^posts\/(?:\d+\/)?index\.html$/.test(unlocalized);
+}
+
 // 1. Internal links and asset references resolve to real output files.
 let linkCount = 0;
 for (const page of pages) {
@@ -223,8 +232,8 @@ for (const page of pages) {
   const types = jsonLdTypes(page.head.jsonLd);
   // Strip a leading BCP-47 locale segment (the Core's validated `lang`
   // syntax: 2-3 language letters, optional region/script subtags).
-  const unlocalized = page.relative.replace(/^\/?[a-z]{2,3}(?:-[A-Za-z0-9]+)*\//, "");
-  const isPost = selfCanonical.has(ownUrl) && unlocalized.startsWith("posts/") && !/^posts\/(?:\d+\/)?index\.html$/.test(unlocalized);
+  const unlocalized = unlocalizedPagePath(page.relative);
+  const isPost = selfCanonical.has(ownUrl) && isPostRoute(page.relative);
   if (unlocalized === "index.html") {
     if (!types.includes("WebSite")) fail(`${page.relative}: WebSite JSON-LD missing`);
   }
@@ -254,10 +263,22 @@ walk(outDir, ".xml", (file) => {
   if (path.basename(file) === "rss.xml") feeds.push(file);
 });
 if (feeds.length === 0) fail("no rss.xml feed found");
+const defaultFeedFile = path.join(outDir, "rss.xml");
+const localizedFeedLanguages = new Set();
+let defaultFeedLanguage = null;
+
+const publishedPostLanguages = new Set();
+for (const page of pages) {
+  if (!selfCanonical.has(norm(page.url)) || !isPostRoute(page.relative)) continue;
+  const language = /<html[^>]*\blang="([^"]+)"/i.exec(fs.readFileSync(page.file, "utf8"))?.[1];
+  if (language) publishedPostLanguages.add(language);
+}
 for (const file of feeds) {
   const relative = path.relative(outDir, file).replace(/\\/g, "/");
   const xml = fs.readFileSync(file, "utf8");
   const channelLanguage = /<channel>[\s\S]*?<language>([^<]+)<\/language>/.exec(xml)?.[1];
+  if (relative === "rss.xml") defaultFeedLanguage = channelLanguage;
+  else if (channelLanguage) localizedFeedLanguages.add(channelLanguage);
   const self = /<atom:link\b[^>]*\bhref="([^"]+)"[^>]*\brel="self"/.exec(xml)?.[1];
   const expectedSelf = new URL(relative, originHref).href;
   if (!self) fail(`${relative}: missing atom:link rel=self`);
@@ -282,7 +303,18 @@ for (const tag of homepageAlternateFeeds) {
   if (!existsForUrl(href)) fail(`index.html: RSS discovery target missing: ${href}`);
 }
 for (const page of pages) {
+  const htmlLang = /<html[^>]*\blang="([^"]+)"/i.exec(fs.readFileSync(page.file, "utf8"))?.[1];
+  if (!htmlLang) {
+    fail(`${page.relative}: <html lang> missing`);
+    continue;
+  }
   const feedLink = page.head.alternates.find((alternate) => alternate.feed);
+  const hasLocaleFeed = htmlLang === defaultFeedLanguage || localizedFeedLanguages.has(htmlLang);
+  const hasPublishedPosts = publishedPostLanguages.has(htmlLang);
+  if (!hasLocaleFeed && !hasPublishedPosts) {
+    if (feedLink) fail(`${page.relative}: RSS discovery link exists without a published locale feed`);
+    continue;
+  }
   if (!feedLink) {
     fail(`${page.relative}: missing RSS discovery link`);
     continue;
@@ -291,11 +323,9 @@ for (const page of pages) {
     fail(`${page.relative}: RSS discovery target missing: ${feedLink.href}`);
     continue;
   }
-  const htmlLang = /<html[^>]*\blang="([^"]+)"/i.exec(fs.readFileSync(page.file, "utf8"))?.[1];
   const feedFile = fileForUrl(feedLink.href);
   const feedLang = /<language>([^<]+)<\/language>/.exec(fs.readFileSync(feedFile, "utf8"))?.[1];
-  if (!htmlLang) fail(`${page.relative}: <html lang> missing`);
-  else if (feedLang !== htmlLang) {
+  if (feedLang !== htmlLang) {
     fail(`${page.relative}: discovered feed language ${feedLang} != page language ${htmlLang}`);
   }
 }

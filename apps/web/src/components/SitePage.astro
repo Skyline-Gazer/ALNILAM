@@ -14,9 +14,10 @@ interface Props {
   lang: string;
   canonical: string;
   alternates?: Array<{ lang: string; href: string }>;
+  feedUrl?: string | null;
 }
 
-const { page, lang, canonical, alternates } = Astro.props;
+const { page, lang, canonical, alternates, feedUrl } = Astro.props;
 const hasArticleMetadata = Boolean(
   page.data.pubDate || page.data.updatedDate || page.data.category || page.data.tags.length,
 );
@@ -37,6 +38,7 @@ const markdownMathStylesheetAssets = getMarkdownMathStylesheetAssets(
   lang={lang}
   canonical={canonical}
   alternates={alternates}
+  feedUrl={feedUrl}
 >
   <Fragment slot="head">
     {markdownMathStylesheetAssets.map(({ pack, href }) => <link rel="stylesheet" data-swup-optional={pack} href={href} />)}

@@ -77,6 +77,61 @@ content:
         options:
           format: markdown
 
+  - name: pages
+    label: Static pages
+    type: collection
+    path: content/pages
+    format: yaml-frontmatter
+    subfolders: true
+    filename: "{primary}.md"
+    exclude: ["README.md"]
+    operations:
+      delete: false
+    view:
+      primary: title
+      sort: title
+      order: asc
+    fields:
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: description
+        label: Description
+        type: text
+      - name: pubDate
+        label: Publication date
+        type: date
+      - name: updatedDate
+        label: Updated date
+        type: date
+      - name: cover
+        label: Cover image
+        type: image
+      - name: category
+        label: Page category metadata
+        type: string
+      - name: tags
+        label: Page tag metadata
+        type: string
+        list: true
+      - name: draft
+        label: Draft
+        type: boolean
+      - name: lang
+        label: Language
+        type: string
+        pattern: "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$"
+      - name: translationKey
+        label: Translation key
+        type: string
+      # MDX is edited as source so JSX and expressions remain intact.
+      - name: body
+        label: Body (Markdown / MDX source)
+        type: code
+        options:
+          format: mdx
+
 settings:
   content:
     merge: true

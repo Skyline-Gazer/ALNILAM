@@ -6,15 +6,14 @@ import Pagination from "@alnilam/theme-shirone/Pagination.astro";
 import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
 import { POSTS_PAGE_SIZE } from "../../lib/pagination.mjs";
 import { comparePosts } from "../../lib/taxonomy";
-import { canonicalUrl, postLang, routeAlternates } from "../../lib/i18n.mjs";
+import { activeContentLocales, canonicalUrl, routeAlternates } from "../../lib/i18n.mjs";
 import { loadSite } from "../../lib/site-source.mjs";
 import type { GetStaticPaths } from "astro";
 export const getStaticPaths = (async ({paginate}) => {
   const { config } = loadSite();
   const posts = (await getCollection("posts", ({data}) => !data.draft)).sort(comparePosts);
-  const activeLocales = config.locales.filter((locale) =>
-    posts.some((post) => postLang(post, config.site.locale) === locale),
-  );
+  const pages = await getCollection("pages", ({data}) => !data.draft);
+  const activeLocales = activeContentLocales(posts, pages, config.site.locale, config.locales);
   return paginate(posts, {pageSize: POSTS_PAGE_SIZE, props: {activeLocales}});
 }) satisfies GetStaticPaths;
 const {page, activeLocales} = Astro.props;
