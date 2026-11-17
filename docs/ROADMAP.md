@@ -34,7 +34,7 @@ The following is **execution order and scope**, not blanket authorization for ev
 
 [#89 WordPress/Ghost](https://github.com/Skyline-Gazer/ALNILAM/issues/89) remains an optional post-launch source adapter candidate, not a default requirement; #83 experimental Astro acceleration remains upstream-stability gated.
 
-**[#160 Site-owned static Markdown pages](https://github.com/Skyline-Gazer/ALNILAM/issues/160)** is In Progress in Project #17. PR [#161](https://github.com/Skyline-Gazer/ALNILAM/pull/161) targets GitHub `dev`; its implementation is in commit `a4071f96224d6e248f27b5ba14a539ac3ea3ce3e`. It adds optional `content/pages/` Markdown/MDX routes with localization, draft exclusion, translation alternates and page metadata while keeping Site schema v2 and post archives, taxonomies and feeds separate.
+**[#160 Site-owned static Markdown pages](https://github.com/Skyline-Gazer/ALNILAM/issues/160)** remains `In Progress` in Project #17 and is cross-referenced by [PR #161](https://github.com/Skyline-Gazer/ALNILAM/pull/161), targeting GitHub `dev` at head `bdc1e86803376ebb64cf1dc4fa9fd98461373267`. Required Verify [44059387993](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44059387993) passed on attempt 2; same-head push Verify, Astro compatibility, and CodeRabbit also passed, with all three actionable review threads resolved. PR #161 remains open and unmerged. Its non-required `alnilam-production` Vercel status is blocked; keep the Issue in Progress until the PR is merged. See [HANDOFF](HANDOFF.md) for test and deployment evidence.
 
 ### Long-running maintenance lane (starts independently; never closes with one release)
 
