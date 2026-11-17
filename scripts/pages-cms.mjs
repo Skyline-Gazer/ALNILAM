@@ -697,7 +697,8 @@ export function verifySite(siteDir) {
           file: rel,
           keys,
           format: path.extname(rel),
-          missingRequired: ["title"].filter((key) => !(key in data)),
+          missingRequired: ["title"].filter((key) =>
+            !(key in data) || typeof data[key] !== "string" || !data[key].trim()),
           unknown: keys.filter((key) => !pageDeclared.includes(key)),
           bodyBytes: Buffer.byteLength(body),
           lang: typeof data.lang === "string" ? data.lang : "",

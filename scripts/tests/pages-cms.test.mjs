@@ -106,6 +106,24 @@ function writeBodyFile(name, content) {
 
 before(() => {
   copySite(siteWithCms);
+
+  const englishPost = path.join(siteWithCms, POSTS_DIR, "en", "cms-english.md");
+  fs.mkdirSync(path.dirname(englishPost), { recursive: true });
+  fs.writeFileSync(englishPost, [
+    "---",
+    'title: "English CMS article"',
+    "description: Localized feed regression fixture.",
+    "pubDate: 2026-11-12",
+    "category: guide",
+    "tags: [CMS]",
+    'lang: "en"',
+    'translationKey: "cms-english-post"',
+    "draft: false",
+    "---",
+    "",
+    "A published English article.",
+    "",
+  ].join("\n"));
   const config = loadCmsConfig(siteWithCms);
   recordEdit(siteWithCms, POSTS_DIR, "cms-basics.md", { title: EDITED_MD_TITLE, tags: ["CMS", "edited"] });
   recordEdit(siteWithCms, POSTS_DIR, "cms-mdx.mdx", { title: EDITED_MDX_TITLE });
@@ -214,6 +232,21 @@ test("verify honors collection excludes before parsing files", () => {
   const report = JSON.parse(verify.stdout);
   assert.equal(report.posts.some((post) => post.file === "README.md"), false);
   assert.equal(report.pages.some((page) => page.file === "README.md"), false);
+});
+
+test("verify requires a non-empty string title for each page", () => {
+  for (const [name, value] of [["null", "null"], ["number", "42"], ["empty", '""'], ["whitespace", '"   "']]) {
+    const site = path.join(tmp, `invalid-page-title-${name}`);
+    copySite(site);
+    const pageFile = path.join(site, PAGES_DIR, "about.md");
+    const page = fs.readFileSync(pageFile, "utf8");
+    fs.writeFileSync(pageFile, page.replace(/^title:.*$/m, `title: ${value}`));
+    const verify = run("verify", [tool, "verify", "--site", site, "--json"]);
+    assert.equal(verify.status, 1, `${name} title must fail verification`);
+    const report = JSON.parse(verify.stdout);
+    assert.equal(report.ok, false, `${name} title must not report success`);
+    assert.deepEqual(report.pages.find((item) => item.file === "about.md").missingRequired, ["title"]);
+  }
 });
 
 test("the offline adapter CLI verifies mapping, preserved keys and media paths", () => {
@@ -503,14 +536,14 @@ test("composed builds at root and /ALNILAM/ render the edited content and media"
       "x-default": pageUrl,
     }, `${build.name}: translated page hreflang links are wrong`);
     assert.ok(fs.existsSync(path.join(build.out, "en/pages/about/index.html")), `${build.name}: English page route is missing`);
-    assert.ok(fs.existsSync(path.join(build.out, "ja/pages/about/index.html")), `${build.name}: Japanese page route is missing`);
+    assert.ok(fs.existsSync(path.join(build.out, "en/posts/cms-english/index.html")), `${build.name}: published English post route is missing`);
 
     for (const locale of ["en", "ja"]) {
       const localeOutput = path.join(build.out, locale);
       for (const route of ["index.html", "posts/index.html", "categories/index.html", "archives/index.html", "tags/index.html"]) {
-        assert.ok(fs.existsSync(path.join(localeOutput, route)), `${build.name}: page-only locale route /${locale}/${route} is missing`);
+        assert.ok(fs.existsSync(path.join(localeOutput, route)), `${build.name}: localized route /${locale}/${route} is missing`);
       }
-      assert.equal(fs.existsSync(path.join(localeOutput, "rss.xml")), false, `${build.name}: page-only locale must not publish an empty RSS feed`);
+      assert.equal(fs.existsSync(path.join(localeOutput, "rss.xml")), locale === "en", `${build.name}: ${locale} feed presence does not match published posts`);
     }
     assert.ok(fs.existsSync(path.join(build.out, "pages/guides/authoring/index.html")), `${build.name}: nested page slug is missing`);
     assert.equal(fs.existsSync(path.join(build.out, "pages/draft/hidden/index.html")), false, `${build.name}: draft page was published`);
@@ -523,7 +556,7 @@ test("composed builds at root and /ALNILAM/ render the edited content and media"
     assert.ok(japanese.includes('data-pages-cms-mdx="source-roundtrip"'), `${build.name}: Japanese MDX was corrupted`);
     const englishFeedLink = [...english.matchAll(/<link\b[^>]*>/g)].map(([tag]) => tag).find((tag) => /type="application\/rss\+xml"/.test(tag));
     const japaneseFeedLink = [...japanese.matchAll(/<link\b[^>]*>/g)].map(([tag]) => tag).find((tag) => /type="application\/rss\+xml"/.test(tag));
-    assert.equal(englishFeedLink, undefined, `${build.name}: page-only English page must not advertise a missing RSS feed`);
+    assert.ok(englishFeedLink, `${build.name}: English pages with published posts must advertise RSS`);
     assert.equal(japaneseFeedLink, undefined, `${build.name}: page-only Japanese page must not advertise a missing RSS feed`);
     const categories = fs.readFileSync(path.join(build.out, "categories/index.html"), "utf8");
     const tags = fs.readFileSync(path.join(build.out, "tags/index.html"), "utf8");
@@ -542,6 +575,23 @@ test("composed builds at root and /ALNILAM/ render the edited content and media"
     assert.ok(sitemap.includes(`https://pages-cms.example.com${prefix}/pages/about/`), `${build.name}: page is missing from sitemap`);
     assert.ok(!sitemap.includes("/pages/draft/hidden/"), `${build.name}: draft page leaked into sitemap`);
   }
+});
+
+test("seo-check requires RSS discovery when a locale still has published posts", () => {
+  const rootBuild = builds.find((build) => build.name === "root");
+  const out = path.join(tmp, "missing-english-feed");
+  fs.cpSync(rootBuild.out, out, { recursive: true });
+  fs.rmSync(path.join(out, "en/rss.xml"));
+  const englishDir = path.join(out, "en");
+  for (const rel of fs.readdirSync(englishDir, { recursive: true })) {
+    if (!rel.endsWith(".html")) continue;
+    const file = path.join(englishDir, rel);
+    const html = fs.readFileSync(file, "utf8");
+    fs.writeFileSync(file, html.replace(/<link\b(?=[^>]*\btype="application\/rss\+xml")[^>]*>\s*/gi, ""));
+  }
+  const result = run("seo-missing-locale-feed", [path.join(root, "scripts/seo-check.mjs"), out]);
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /missing RSS discovery link/);
 });
 
 test("compose preserves every Site file across root and nested builds", () => {
