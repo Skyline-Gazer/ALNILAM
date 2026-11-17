@@ -2,10 +2,10 @@
 import { getCollection } from "astro:content";
 import NativeTags from "@alnilam/theme-shirone/Tags.astro";
 import {
+  activeContentLocales,
   canonicalUrl,
   filterPostsByLocale,
   localeRoutePath,
-  postLang,
   routeAlternates,
   withBase,
 } from "../../../lib/i18n.mjs";
@@ -16,10 +16,9 @@ export async function getStaticPaths() {
   const { root, config } = loadSite();
   const taxonomy = loadSiteTaxonomy(root, config);
   const posts = await getCollection("posts", ({ data }) => !data.draft);
+  const pages = await getCollection("pages", ({ data }) => !data.draft);
 
-  const activeLocales = config.locales.filter((locale) =>
-    locale === config.site.locale || posts.some((post) => postLang(post, config.site.locale) === locale),
-  );
+  const activeLocales = activeContentLocales(posts, pages, config.site.locale, config.locales);
 
   return activeLocales
     .filter((locale) => locale !== config.site.locale)
@@ -44,16 +43,16 @@ export async function getStaticPaths() {
         }));
       return {
         params: { lang: locale },
-        props: { locale, tags, activeLocales },
+        props: { locale, tags, activeLocales, feedUrl: localePosts.length > 0 ? undefined : null },
       };
     });
 }
 
-const { locale, tags, activeLocales } = Astro.props;
+const { locale, tags, activeLocales, feedUrl } = Astro.props;
 const { config } = loadSite();
 const alts = routeAlternates(activeLocales, config.site.locale, config.locales, "tags");
 const alternates = alts
   ? [...alts].map(([lang, path]) => ({ lang, href: canonicalUrl(path, config.site.url) }))
   : undefined;
 ---
-<NativeTags lang={locale} tags={tags} alternates={alternates} />
+<NativeTags lang={locale} tags={tags} alternates={alternates} feedUrl={feedUrl} />

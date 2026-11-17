@@ -18,10 +18,12 @@ const {
 	tags: propTags,
 	lang,
 	alternates,
+	feedUrl,
 } = Astro.props as {
 	tags?: Array<{ name: string; count: number; url: string }>;
 	lang?: string;
 	alternates?: Array<{ lang: string; href: string }>;
+	feedUrl?: string | null;
 };
 const t = lang ? (key: I18nKey) => getTranslation(lang.replace("-", "_"))[key] : i18n;
 const tags = propTags ?? (await getTagList());
@@ -29,7 +31,7 @@ const totalPosts = tags.reduce((sum, tag) => sum + tag.count, 0);
 const tagSummary = `${tags.length} ${t(I18nKey.tagsCount)} · ${totalPosts} ${t(I18nKey.postsCount)}`;
 ---
 
-<MainGridLayout title={t(I18nKey.tags)} description={tagSummary} page="tags" lang={lang} alternates={alternates}>
+<MainGridLayout title={t(I18nKey.tags)} description={tagSummary} page="tags" lang={lang} alternates={alternates} feedUrl={feedUrl}>
 	<Card color="var(--card-bg)" radius="l" class="tag-index px-8 py-6">
 		<PageHeader
 			icon="material-symbols:tag-rounded"

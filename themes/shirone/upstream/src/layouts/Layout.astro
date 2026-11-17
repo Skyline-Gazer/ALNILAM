@@ -56,8 +56,8 @@ interface Props {
 	alternates?: Array<{ lang: string; href: string }>;
 	/** Keep compatibility routes crawlable but out of the index. */
 	noindex?: boolean;
-	/** Absolute RSS URL for this page's locale. */
-	feedUrl?: string;
+	/** Absolute RSS URL override; null suppresses discovery for locales without posts. */
+	feedUrl?: string | null;
 }
 
 let {
@@ -115,13 +115,14 @@ const absoluteOgImage = socialImage
 	? toAbsoluteUrl(socialImage, canonicalUrl)
 	: "";
 const pageLocale = (lang || siteConfig.lang).replace("_", "-");
-// The Site serves one feed per enabled locale: default at /rss.xml, others
-// under their locale prefix. Pages without a locale keep the default feed.
-const resolvedFeedUrl = feedUrl
-	? new URL(feedUrl, Astro.site ?? Astro.url)
-	: siteConfig.lang && pageLocale !== siteConfig.lang.replace("_", "-")
-		? new URL(`${pageLocale}/rss.xml`, Astro.site ?? Astro.url)
-		: new URL("rss.xml", Astro.site ?? Astro.url);
+// Locales with posts have their own feed; page-only locales omit feed discovery.
+const resolvedFeedUrl = feedUrl === null
+	? null
+	: feedUrl
+		? new URL(feedUrl, Astro.site ?? Astro.url)
+		: siteConfig.lang && pageLocale !== siteConfig.lang.replace("_", "-")
+			? new URL(`${pageLocale}/rss.xml`, Astro.site ?? Astro.url)
+			: new URL("rss.xml", Astro.site ?? Astro.url);
 
 const configHue = siteConfig.themeColor.hue;
 const lightTheme =
@@ -234,7 +235,7 @@ const defaultSchemeStyle =
 		</script>
 
 		<slot name="head"></slot>
-		<link rel="alternate" type="application/rss+xml" title={siteConfig.title} href={resolvedFeedUrl}/>
+		{resolvedFeedUrl && <link rel="alternate" type="application/rss+xml" title={siteConfig.title} href={resolvedFeedUrl}/>}
 	</head>
 	<body
 		class="min-h-screen transition"

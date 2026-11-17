@@ -2,11 +2,10 @@
 /**
  * Offline Pages CMS authoring adapter (GitHub Issue #88 PoC).
  *
- * This is a standalone verification tool, not a Core runtime service and not a
- * Site data authority. It models the one write a Git-based editor performs on a
- * post: replace a few declared frontmatter fields while leaving the Markdown /
- * MDX body and every undeclared frontmatter key intact. The Site-owned editor
- * schema is `.pages.yml`; Core's compose pipeline never reads that file.
+ * Site-owned collections are the content authority. The offline adapter
+ * models editor field updates while keeping every undeclared frontmatter key
+ * and the Markdown / MDX body intact. The Site-owned schema is `.pages.yml`;
+ * Core's compose pipeline never reads that file.
  *
  * Usage:
  *   node scripts/pages-cms.mjs verify --site <site-dir> [--json]
@@ -39,7 +38,8 @@ const { parseDocument, Document, isMap } = require("yaml");
 
 export const CMS_CONFIG_FILENAME = ".pages.yml";
 export const POSTS_DIR = "content/posts";
-/** The two frontmatter fields Core's content schema requires. */
+export const PAGES_DIR = "content/pages";
+/** The two frontmatter fields Core's post schema requires. */
 export const REQUIRED_FIELDS = ["title", "pubDate"];
 const KNOWN_CONFIG_KEYS = new Set(["media", "content", "components", "settings", "actions"]);
 const POST_RE = /\.(md|mdx)$/;
@@ -62,9 +62,26 @@ function parseYaml(raw, label) {
   return { doc, data };
 }
 
-/** The single posts collection entry; all callers must agree on this match. */
+function collectionForPath(config, collectionPath) {
+  return (config.content || []).find((entry) => entry?.type === "collection" && entry.path === collectionPath);
+}
+
+/** The CLI's write commands currently select the posts collection explicitly. */
 function postsCollection(config) {
-  return (config.content || []).find((entry) => entry?.type === "collection" && entry.path === POSTS_DIR);
+  return collectionForPath(config, POSTS_DIR);
+}
+
+function fieldsForCollection(config, collectionPath) {
+  const fields = collectionForPath(config, collectionPath)?.fields || [];
+  for (const field of fields) {
+    // Pages CMS fields use either `type` or a reusable `component`.
+    const typed = typeof field?.type === "string" && field.type
+      || typeof field?.component === "string" && field.component;
+    if (typeof field?.name !== "string" || !typed) {
+      throw new Error(`${CMS_CONFIG_FILENAME}: every ${collectionPath} field needs name and a type or component`);
+    }
+  }
+  return fields;
 }
 
 /** Validate a `.pages.yml` document; shared by load and generated-config checks. */
@@ -82,6 +99,8 @@ function parseCmsConfig(text, label = CMS_CONFIG_FILENAME) {
     throw new Error(`${label}: settings.content.merge must be true to preserve unknown frontmatter fields`);
   }
   if (!postsCollection(data)) throw new Error(`${label}: missing ${POSTS_DIR} collection`);
+  fieldsForCollection(data, POSTS_DIR);
+  if (collectionForPath(data, PAGES_DIR)) fieldsForCollection(data, PAGES_DIR);
   return data;
 }
 
@@ -93,18 +112,9 @@ export function loadCmsConfig(siteDir) {
   return parseCmsConfig(fs.readFileSync(file, "utf8"));
 }
 
-/** Field definitions declared for the posts collection, excluding `body`. */
+/** Field definitions declared for the explicitly selected posts collection. */
 export function postsFields(config) {
-  const fields = postsCollection(config)?.fields || [];
-  for (const field of fields) {
-    // Pages CMS fields use either `type` or a reusable `component`.
-    const typed = typeof field?.type === "string" && field.type
-      || typeof field?.component === "string" && field.component;
-    if (typeof field?.name !== "string" || !typed) {
-      throw new Error(`${CMS_CONFIG_FILENAME}: every posts field needs name and a type or component`);
-    }
-  }
-  return fields;
+  return fieldsForCollection(config, POSTS_DIR);
 }
 
 export function declaredFieldNames(config) {
@@ -449,15 +459,18 @@ export function splitPost(raw, label = "post") {
  *                fields. Exposed solely so tests can demonstrate the data loss;
  *                the CLI refuses it as a write mode.
  */
-export function applyEdit(raw, patch, { config, merge = true } = {}) {
+export function applyEdit(raw, patch, { fields, merge = true } = {}) {
+  if (!Array.isArray(fields)) {
+    throw new Error("applyEdit requires fields from an explicitly selected CMS collection");
+  }
   if (!patch || typeof patch !== "object" || Array.isArray(patch)) {
     throw new Error("--set must be a JSON object of frontmatter fields");
   }
-  const declared = postsFields(config).filter((field) => field.name !== "body");
+  const declared = fields.filter((field) => field.name !== "body");
   for (const [key, value] of Object.entries(patch)) {
     const field = declared.find((item) => item.name === key);
     if (!field) {
-      throw new Error(`off-schema edit rejected: ${JSON.stringify(key)} is not a declared posts field`);
+      throw new Error(`off-schema edit rejected: ${JSON.stringify(key)} is not a declared collection field`);
     }
     validateFieldValue(field, value);
   }
@@ -583,8 +596,8 @@ function walk(dir, base = dir) {
   return out.sort();
 }
 
-function mediaTargets(raw, postFile, siteDir) {
-  const { data, body } = splitPost(raw, postFile);
+function mediaTargets(raw, contentFile, siteDir, collectionRoot = POSTS_DIR) {
+  const { data, body } = splitPost(raw, contentFile);
   const sources = [];
   if (typeof data.cover === "string") sources.push({ field: "cover", src: data.cover });
   for (const match of body.matchAll(/!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) {
@@ -596,32 +609,28 @@ function mediaTargets(raw, postFile, siteDir) {
     }
     const clean = src.split(/[?#]/, 1)[0];
     if (clean.startsWith("/") && !clean.startsWith("/site-assets/")) {
-      // Core only maps /site-assets/... and post-relative images; other
-      // root-relative paths have no Site-owned backing file.
       return { field, src, kind: "root-relative-unmapped", exists: false };
     }
     const assetsRoot = path.resolve(siteDir, "assets");
-    const postsRoot = path.resolve(siteDir, POSTS_DIR);
+    const contentRoot = path.resolve(siteDir, collectionRoot);
     const siteAsset = clean.startsWith("/site-assets/");
     const absolute = siteAsset
       ? path.join(assetsRoot, clean.slice("/site-assets/".length))
-      : path.resolve(path.dirname(postFile), clean);
-    // Each reference form has exactly one allowed root: /site-assets/... must
-    // stay in assets/, post-relative images must stay in the posts tree.
-    // Anything else (config, data, a sibling Site) is not a media path.
-    const root = siteAsset ? assetsRoot : postsRoot;
+      : path.resolve(path.dirname(contentFile), clean);
+    // Site assets and collection-relative images each have a single allowed root.
+    const root = siteAsset ? assetsRoot : contentRoot;
     const inRoot = absolute === root || absolute.startsWith(root + path.sep);
     if (!inRoot) return { field, src, kind: "outside-media-roots", exists: false };
     return {
       field,
       src,
-      kind: siteAsset ? "site-assets" : "post-relative",
+      kind: siteAsset ? "site-assets" : collectionRoot === POSTS_DIR ? "post-relative" : "page-relative",
       exists: fs.existsSync(absolute),
     };
   });
 }
 
-/** Offline compatibility report for a Site with a `.pages.yml`. */
+/** Offline compatibility report for the selected Site's posts and page collections. */
 export function verifySite(siteDir) {
   const config = loadCmsConfig(siteDir);
   const declared = declaredFieldNames(config);
@@ -642,7 +651,7 @@ export function verifySite(siteDir) {
       unknown: keys.filter((key) => !declared.includes(key)),
       bodyBytes: Buffer.byteLength(body),
       category: typeof data.category === "string" ? data.category : "",
-      media: mediaTargets(raw, abs, siteDir),
+      media: mediaTargets(raw, abs, siteDir, POSTS_DIR),
     };
   });
   // A post using a category the editor's select cannot represent is a drift
@@ -653,18 +662,56 @@ export function verifySite(siteDir) {
     .filter(Boolean);
   const usedCategories = [...new Set(posts.map((post) => post.category).filter(Boolean))];
   const selectDrift = selectValues.length ? usedCategories.filter((category) => !selectValues.includes(category)) : [];
+
+  const pagesCollection = collectionForPath(config, PAGES_DIR);
+  const pageFields = pagesCollection ? fieldsForCollection(config, PAGES_DIR) : [];
+  const pageDeclared = pageFields.filter((field) => field.name !== "body").map((field) => field.name);
+  const pagesDir = path.join(siteDir, PAGES_DIR);
+  if (pagesCollection && fs.existsSync(pagesDir) && !fs.statSync(pagesDir).isDirectory()) {
+    throw new Error(`${CMS_CONFIG_FILENAME} declares ${PAGES_DIR}, but ${pagesDir} is not a directory`);
+  }
+  const pages = pagesCollection && fs.existsSync(pagesDir)
+    ? walk(pagesDir).filter((rel) => POST_RE.test(rel)).map((rel) => {
+        const abs = path.join(pagesDir, rel);
+        const raw = fs.readFileSync(abs, "utf8");
+        const { data, body } = splitPost(raw, rel);
+        const keys = Object.keys(data);
+        return {
+          file: rel,
+          keys,
+          format: path.extname(rel),
+          missingRequired: ["title"].filter((key) => !(key in data)),
+          unknown: keys.filter((key) => !pageDeclared.includes(key)),
+          bodyBytes: Buffer.byteLength(body),
+          lang: typeof data.lang === "string" ? data.lang : "",
+          draft: data.draft === true,
+          category: typeof data.category === "string" ? data.category : "",
+          tags: Array.isArray(data.tags) ? data.tags : [],
+          translationKey: typeof data.translationKey === "string" ? data.translationKey : "",
+          media: mediaTargets(raw, abs, siteDir, PAGES_DIR),
+        };
+      })
+    : [];
+  const postsDeleteDisabled = postsCollection(config)?.operations?.delete === false;
+  const pagesDeleteDisabled = !pagesCollection || pagesCollection.operations?.delete === false;
   return {
     config: CMS_CONFIG_FILENAME,
     merge: config.settings.content.merge,
-    deleteDisabled: postsCollection(config)?.operations?.delete === false,
+    deleteDisabled: postsDeleteDisabled && pagesDeleteDisabled,
+    postsDeleteDisabled,
+    pagesDeleteDisabled,
     declared,
+    pageDeclared,
     selectValues,
     selectDrift,
     posts,
+    pages,
     ok: posts.length > 0
       && selectDrift.length === 0
       && posts.every((post) => post.missingRequired.length === 0)
-      && posts.every((post) => post.media.every((media) => media.exists)),
+      && posts.every((post) => post.media.every((media) => media.exists))
+      && pages.every((page) => page.missingRequired.length === 0)
+      && pages.every((page) => page.media.every((media) => media.exists)),
   };
 }
 
@@ -700,7 +747,9 @@ function main(argv) {
     console.log(argv.includes("--json") ? JSON.stringify(report, null, 2) : [
       `Pages CMS PoC: ${report.config} (merge=${report.merge}, deleteDisabled=${report.deleteDisabled})`,
       `Declared post fields: ${report.declared.join(", ")}`,
+      `Declared page fields: ${report.pageDeclared.join(", ") || "none"}`,
       ...report.posts.map((post) => `${post.file}: ${post.keys.length} keys, ${post.unknown.length} off-schema preserved, ${post.bodyBytes} body bytes, ${post.media.length} media refs${post.missingRequired.length ? `, MISSING ${post.missingRequired.join(",")}` : ""}`),
+      ...report.pages.map((page) => `${page.file}: ${page.keys.length} keys, ${page.unknown.length} off-schema preserved, ${page.bodyBytes} body bytes, ${page.media.length} media refs${page.missingRequired.length ? `, MISSING ${page.missingRequired.join(",")}` : ""}`),
       report.ok ? "PASS: field mapping, required fields and media paths" : "FAIL: inspect the report",
     ].join("\n"));
     process.exitCode = report.ok ? 0 : 1;
@@ -720,7 +769,7 @@ function main(argv) {
       throw new Error("--post must stay inside content/posts");
     }
     const post = resolveSiteWritePath(siteDir, requestedPost);
-    const result = applyEdit(fs.readFileSync(post, "utf8"), JSON.parse(rawPatch), { config });
+    const result = applyEdit(fs.readFileSync(post, "utf8"), JSON.parse(rawPatch), { fields: postsFields(config) });
     const requestedOut = path.resolve(option(argv, "--out", requestedPost));
     if (!requestedOut.startsWith(postsRoot + path.sep)) {
       throw new Error("--out must stay inside content/posts (copy the Site to preview elsewhere)");

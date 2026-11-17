@@ -13,6 +13,7 @@ interface Props {
   lang: string;
   pagePath: string;
   alternatePaths: Array<{ lang: string; path: string }> | null;
+  feedUrl?: string | null;
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
@@ -22,6 +23,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
     defaultLocale: config.site.locale,
     locales: config.locales,
   });
+  const posts = await getCollection("posts", ({ data }) => !data.draft);
   return routes
     .filter((route) => route.locale !== config.site.locale)
     .map((route) => ({
@@ -31,11 +33,12 @@ export const getStaticPaths: GetStaticPaths = async () => {
         lang: route.locale,
         pagePath: route.path,
         alternatePaths: route.alternates,
+        feedUrl: posts.some((post) => (post.data.lang || config.site.locale) === route.locale) ? undefined : null,
       },
     }));
 };
 
-const { page, lang, pagePath, alternatePaths } = Astro.props;
+const { page, lang, pagePath, alternatePaths, feedUrl } = Astro.props;
 const { config } = loadSite();
 const canonical = canonicalUrl(pagePath, config.site.url);
 const alternates = alternatePaths?.map(({ lang: alternateLang, path }) => ({
@@ -43,4 +46,4 @@ const alternates = alternatePaths?.map(({ lang: alternateLang, path }) => ({
   href: canonicalUrl(path, config.site.url),
 }));
 ---
-<SitePage {page} {lang} {canonical} {alternates} />
+<SitePage {page} {lang} {canonical} {alternates} {feedUrl} />

@@ -125,6 +125,24 @@ export function filterPostsByLocale(posts, locale, defaultLocale) {
 }
 
 /**
+ * Locales with public content. A translated static page activates the normal
+ * locale landing and listing routes even when that locale has no posts yet.
+ * @returns {string[]}
+ */
+export function activeContentLocales(posts, pages, defaultLocale, enabledLocales) {
+  const enabled = new Set(enabledLocales);
+  const active = new Set([defaultLocale]);
+  for (const entries of [posts, pages]) {
+    for (const entry of entries) {
+      if (entry.data.draft) continue;
+      const locale = entry.data.lang || defaultLocale;
+      if (enabled.has(locale)) active.add(locale);
+    }
+  }
+  return enabledLocales.filter((locale) => active.has(locale));
+}
+
+/**
  * Reciprocal hreflang alternates across locales that actually publish a given
  * logical route segment (e.g. `""`, `"posts"`, `"categories/guide"`).
  * Returns null when fewer than 2 locales publish the route.

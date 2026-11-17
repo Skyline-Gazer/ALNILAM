@@ -2,10 +2,10 @@
 import { getCollection } from "astro:content";
 import NativeCategories from "@alnilam/theme-shirone/Categories.astro";
 import {
+  activeContentLocales,
   canonicalUrl,
   filterPostsByLocale,
   localeRoutePath,
-  postLang,
   routeAlternates,
   withBase,
 } from "../../../lib/i18n.mjs";
@@ -18,10 +18,9 @@ export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
   const series = await getCollection("series");
   const seriesCategories = new Map(series.map((entry) => [entry.id, entry.data.defaultCategory]));
+  const pages = await getCollection("pages", ({ data }) => !data.draft);
 
-  const activeLocales = config.locales.filter((locale) =>
-    locale === config.site.locale || posts.some((post) => postLang(post, config.site.locale) === locale),
-  );
+  const activeLocales = activeContentLocales(posts, pages, config.site.locale, config.locales);
 
   return activeLocales
     .filter((locale) => locale !== config.site.locale)
@@ -42,16 +41,16 @@ export async function getStaticPaths() {
         }));
       return {
         params: { lang: locale },
-        props: { locale, categories, activeLocales },
+        props: { locale, categories, activeLocales, feedUrl: localePosts.length > 0 ? undefined : null },
       };
     });
 }
 
-const { locale, categories, activeLocales } = Astro.props;
+const { locale, categories, activeLocales, feedUrl } = Astro.props;
 const { config } = loadSite();
 const alts = routeAlternates(activeLocales, config.site.locale, config.locales, "categories");
 const alternates = alts
   ? [...alts].map(([lang, path]) => ({ lang, href: canonicalUrl(path, config.site.url) }))
   : undefined;
 ---
-<NativeCategories lang={locale} categories={categories} alternates={alternates} />
+<NativeCategories lang={locale} categories={categories} alternates={alternates} feedUrl={feedUrl} />

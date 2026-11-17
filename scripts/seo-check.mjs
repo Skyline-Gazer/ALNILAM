@@ -254,10 +254,15 @@ walk(outDir, ".xml", (file) => {
   if (path.basename(file) === "rss.xml") feeds.push(file);
 });
 if (feeds.length === 0) fail("no rss.xml feed found");
+const defaultFeedFile = path.join(outDir, "rss.xml");
+const localizedFeedLanguages = new Set();
+let defaultFeedLanguage = null;
 for (const file of feeds) {
   const relative = path.relative(outDir, file).replace(/\\/g, "/");
   const xml = fs.readFileSync(file, "utf8");
   const channelLanguage = /<channel>[\s\S]*?<language>([^<]+)<\/language>/.exec(xml)?.[1];
+  if (relative === "rss.xml") defaultFeedLanguage = channelLanguage;
+  else if (channelLanguage) localizedFeedLanguages.add(channelLanguage);
   const self = /<atom:link\b[^>]*\bhref="([^"]+)"[^>]*\brel="self"/.exec(xml)?.[1];
   const expectedSelf = new URL(relative, originHref).href;
   if (!self) fail(`${relative}: missing atom:link rel=self`);
@@ -282,7 +287,17 @@ for (const tag of homepageAlternateFeeds) {
   if (!existsForUrl(href)) fail(`index.html: RSS discovery target missing: ${href}`);
 }
 for (const page of pages) {
+  const htmlLang = /<html[^>]*\blang="([^"]+)"/i.exec(fs.readFileSync(page.file, "utf8"))?.[1];
+  if (!htmlLang) {
+    fail(`${page.relative}: <html lang> missing`);
+    continue;
+  }
   const feedLink = page.head.alternates.find((alternate) => alternate.feed);
+  const hasLocaleFeed = htmlLang === defaultFeedLanguage || localizedFeedLanguages.has(htmlLang);
+  if (!hasLocaleFeed) {
+    if (feedLink) fail(`${page.relative}: RSS discovery link exists without a published locale feed`);
+    continue;
+  }
   if (!feedLink) {
     fail(`${page.relative}: missing RSS discovery link`);
     continue;
@@ -291,11 +306,9 @@ for (const page of pages) {
     fail(`${page.relative}: RSS discovery target missing: ${feedLink.href}`);
     continue;
   }
-  const htmlLang = /<html[^>]*\blang="([^"]+)"/i.exec(fs.readFileSync(page.file, "utf8"))?.[1];
   const feedFile = fileForUrl(feedLink.href);
   const feedLang = /<language>([^<]+)<\/language>/.exec(fs.readFileSync(feedFile, "utf8"))?.[1];
-  if (!htmlLang) fail(`${page.relative}: <html lang> missing`);
-  else if (feedLang !== htmlLang) {
+  if (feedLang !== htmlLang) {
     fail(`${page.relative}: discovered feed language ${feedLang} != page language ${htmlLang}`);
   }
 }
