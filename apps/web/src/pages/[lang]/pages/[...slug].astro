@@ -1,0 +1,46 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import type { GetStaticPaths } from "astro";
+import fs from "node:fs";
+import path from "node:path";
+import SitePage from "../../../components/SitePage.astro";
+import { canonicalUrl } from "../../../lib/i18n.mjs";
+import { buildSitePageRoutes } from "../../../lib/site-pages.mjs";
+import { loadSite } from "../../../lib/site-source.mjs";
+
+interface Props {
+  page: CollectionEntry<"pages">;
+  lang: string;
+  pagePath: string;
+  alternatePaths: Array<{ lang: string; path: string }> | null;
+}
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const { root, config } = loadSite();
+  if (!fs.existsSync(path.join(root, "content/pages"))) return [];
+  const routes = buildSitePageRoutes(await getCollection("pages"), {
+    defaultLocale: config.site.locale,
+    locales: config.locales,
+  });
+  return routes
+    .filter((route) => route.locale !== config.site.locale)
+    .map((route) => ({
+      params: { lang: route.locale, slug: route.slug },
+      props: {
+        page: route.entry,
+        lang: route.locale,
+        pagePath: route.path,
+        alternatePaths: route.alternates,
+      },
+    }));
+};
+
+const { page, lang, pagePath, alternatePaths } = Astro.props;
+const { config } = loadSite();
+const canonical = canonicalUrl(pagePath, config.site.url);
+const alternates = alternatePaths?.map(({ lang: alternateLang, path }) => ({
+  lang: alternateLang,
+  href: canonicalUrl(path, config.site.url),
+}));
+---
+<SitePage {page} {lang} {canonical} {alternates} />
