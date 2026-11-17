@@ -12,6 +12,7 @@ const taxonomy = loadSiteTaxonomy(root, config);
 const base = new URL(config.site.url).pathname.replace(/\/$/, "");
 const seriesDir = path.join(root, "content/series");
 const momentsDir = path.join(root, "content/moments");
+const pagesDir = path.join(root, "content/pages");
 
 function resolveCover(cover: string | undefined, basePath: string): string {
   if (!cover) return "";
@@ -108,6 +109,32 @@ const moments = defineCollection({
     draft: z.boolean().default(false),
   }),
 });
-const emptyCollection = () => defineCollection({loader: async () => [], schema: z.object({title: z.string().default('')})});
-export const collections = { posts, series, moments, spec: emptyCollection() };
+const pages = defineCollection({
+  loader: fs.existsSync(pagesDir)
+    ? glob({
+        pattern: "**/*.{md,mdx}",
+        base: pagesDir,
+        generateId: ({ entry }) => entry.replace(/\\/g, "/").replace(/\.(?:md|mdx)$/i, ""),
+      })
+    : async () => [],
+  schema: z.object({
+    title: z.string().min(1),
+    description: z.string().default(""),
+    pubDate: z.coerce.date().optional(),
+    updatedDate: z.coerce.date().optional(),
+    cover: z.string().optional(),
+    category: z.string().default(""),
+    tags: z.array(z.string()).default([]),
+    draft: z.boolean().default(false),
+    lang: z.string().regex(/^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$/, "must be a BCP-47 tag").optional(),
+    translationKey: z.string().min(1).optional(),
+  }).transform((data) => ({
+    ...data,
+    published: data.pubDate,
+    updated: data.updatedDate,
+    image: resolveCover(data.cover, base),
+  })),
+});
+const emptyCollection = (schema = z.object({title: z.string().default('')})) => defineCollection({loader: async () => [], schema});
+export const collections = { posts, series, pages, moments, spec: emptyCollection() };
 

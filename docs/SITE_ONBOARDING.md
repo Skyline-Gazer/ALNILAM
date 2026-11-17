@@ -10,6 +10,7 @@ it out — you pin the Site revision yourself.
 yoursite/
 ├── alnilam.config.yaml      # required — site configuration
 ├── content/posts/           # required — Markdown/MDX posts
+├── content/pages/           # optional — Site-authored Markdown/MDX pages
 ├── assets/                  # optional — copied verbatim to /site-assets/ in output
 └── data/                     # optional — Site data such as taxonomy.yaml and albums.yaml
 ```
@@ -72,6 +73,30 @@ tags are Site-owned catalogs; tag pages also use post frontmatter.
 no HTML article and no LLM Markdown view, and does not appear in indexes,
 feeds, sitemaps or listings. Do not put secrets or confidential material in a
 Site relying on `noindex`.
+
+### Static pages
+
+Add optional Site-authored pages under `content/pages/` as `.md` or `.mdx` files.
+Each page requires `title`; optional fields are `description`, `pubDate`,
+`updatedDate`, `cover`, `category`, `tags`, `draft`, `lang` and
+`translationKey`. Dates, cover images and article metadata follow the post
+frontmatter rules; page categories and tags do not create taxonomy entries. The
+body uses the same Shirone Markdown rendering as posts.
+
+The file path is the stable slug without its extension. For example,
+`content/pages/about.md` is served at `/pages/about/`, while
+`content/pages/guide/start.md` is served at `/pages/guide/start/`. A page in a
+non-default locale uses `content/pages/<lang>/...` and a matching `lang` value;
+`content/pages/en/about.md` becomes `/en/pages/about/`. Default-locale pages keep
+the unprefixed route. All links and canonicals include the configured deployment
+base on subpath hosts.
+
+`draft: true` pages emit no route or sitemap entry. Pages sharing a
+`translationKey` receive `hreflang` links only for the published translations
+that exist; `x-default` is emitted only when the group includes the default
+locale. There is no automatic page index or navigation link. Link to a page from
+other content using its published URL; root-relative links must include the
+configured deployment base on subpath hosts.
 
 
 ### Images policy
