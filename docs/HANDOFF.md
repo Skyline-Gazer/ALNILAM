@@ -1,5 +1,37 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-17 · Delivery receipts and Vercel alias exposure
+
+This entry supersedes earlier live-state notes where they conflict. It records the current deployment response and authorization boundary; older sections remain historical evidence.
+
+### GitHub refs and delivered user-facing work
+
+- GitHub `dev` is `14e15361e981f76429a4b31ba013030925f39937`; `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`. CNB refs and ADS pin remain unchanged.
+- PR #142 merged at `113ab9c7a9e6fbb38c75e808c7f94e6095244564`; its required Verify [43600593600](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43600593600) and CodeRabbit review [132489573639](https://github.com/Skyline-Gazer/ALNILAM/runs/132489573639) passed. Issue #140 closed after that review proved the `dev` auto-review configuration. PR #143 merged at `8d96d0a205bf82a4d4afd489e00fb4ca57823253` with Verify [43580970549](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43580970549) passed; PR #144 merged at `fb2010d755bc2ee96557547607d2e69b8e973b52` with Verify [43580095662](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43580095662) passed. Their Demo Vercel Preview checks passed. PR #142's merge created the historical `dev` Production deployment tracked under #138.
+- The Owner-authorized Moments improvement shipped through PR #135, merged at `0cb38eac917ef24b44a084385eeeed7f6edf49dc`. Required PR and push Verify runs [43556448368](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43556448368) and [43556443609](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43556443609), Astro compatibility [43556448394](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43556448394), and post-merge Verify [43561314487](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43561314487) passed. The 2026-11-14 Demo browser check verified 12 published `/moments/` entries after Load more, excluded the draft, exercised text search and the `life` tag, and advanced/closed the two-image viewer. Issue #68 and Project #17 remain In Progress for formal Owner product acceptance.
+
+### Cache delivery and limits
+
+- P0 cleanup safety is merged in PR #149 (`9517fc2985599346bf0b2e5b4b68f4e9769f8c23`): normal Compose does not run Legacy cleanup; managed cleanup is root/ownership bounded; Legacy cleanup is explicit; temporary fixtures cover preservation and deletion boundaries.
+- The input-keyed immutable Shirone store is merged in PR #156 (`11103d3e8cc9e03f1477f9288c27934e5acc0e0e`), with Astro scratch concurrency/owner-marker protection in PR #157, merged at the current `dev` SHA. Post-merge Verify [43867996657](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43867996657) passed 310/310 contract tests and the browser, external-Site isolation, output, rollback, and ADS-pin steps. PR #158 remains open at `3b97fcc1be692d5c9cad467034e51fd916a740e0`; PR Verify [43885905649](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43885905649) and push Verify [43885886876](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43885886876) passed. CodeRabbit passed with no unresolved actionable thread; the PR remains for Owner acceptance.
+- The 2026-11-16 isolated scratch comparison recorded six unique bundle hashes and zero duplicate bundle bytes in both versions:
+
+| Metric | Before | After |
+| --- | ---: | ---: |
+| Cold / warm time | 25.48s / 23.66s | 25.25s / 23.37s |
+| Six-bundle logical / allocated bytes | 28,524,289 / 28,536,832 | 28,524,282 / 28,536,832 |
+| Whole scratch cache logical / allocated bytes | 31,217,389 / 31,580,160 | 31,213,823 / 31,571,968 |
+
+  This single fixture shows no physical bundle-space savings or established speed gain. The historical 7.2 GiB / 246-bundle cache is unavailable; its hashes, allocation, deduplication, and the 70% target remain unverified. The 14-day / 2 GiB GC defaults are uncalibrated; the 2 GiB cap was not exercised. No real cache or Site was cleaned or modified. See [Issue #145 benchmark evidence](https://github.com/Skyline-Gazer/ALNILAM/issues/145#issuecomment-6920545862).
+
+### Vercel topology and current exposure
+
+- Existing public Demo project `xxxx` remains on GitHub `dev`. The stable Demo alias returned HTTP 200 anonymously; provenance reports Core `14e15361e981f76429a4b31ba013030925f39937` and Site digest `527909af24317e93ea7129e89e0da952397b95ac1fdea93bd0646b29e2dfd87f`. No Demo project setting or alias was changed.
+- Separate project `alnilam-production-next` (`prj_4X4tncQrv0VFoCo8UFi01jEqOgpi`) is linked to `Skyline-Gazer/ALNILAM`, reports `productionBranch=main`, and sets `ssoProtection.deploymentType=prod_deployment_urls_and_all_previews`. Vercel reports `gitProviderOptions.createDeployments=disabled` and `paused=null`; automatic Git/PR deployment routing is therefore not enabled in this project.
+- A manual `target=production` deployment, `dpl_9FFgYBAbQx2Ttkmb3ktruup8ftMb`, serves the `main` revision `285a62cecd87f8f20276c7cc989537a391f488c8`. Its stable project alias `https://alnilam-production-next.vercel.app/` returned anonymous HTTP 200 and the ALNILAM homepage; its public provenance reports Site digest `7e7500946378db5173f52294bf9662744ce40086a526d7cb40c0a3bf4f8a9db5`. The unique deployment URL returned HTTP 302, so the two URLs have different observed access behavior despite the project SSO setting. No separate Owner acceptance for this Production deployment is recorded; it is not a formal release.
+- Manual dev Preview `dpl_4QvHia8eLgp2kksBNUFJAwn3LqXD` is READY for Core `14e15361e981f76429a4b31ba013030925f39937`; its unique URL returned anonymous HTTP 302. PR #159's Vercel Preview passed in the existing `xxxx` Demo project. The new Production project has not verified automatic PR Preview routing because Git deployments are disabled.
+- `vercel project pause alnilam-production-next --scope martyjstogner-2766s-projects` was refused non-interactively with `interactive_confirmation_required`; no pause occurred. Removing the public alias prompted for confirmation and was stopped before any response; no alias was removed. The stable Production alias remains publicly accessible. Keep #138 In Progress until the alias is contained and protected Production / Preview routing is verified. Any further Production deployment or external-domain activation remains Owner-gated.
+
 ## Live-state update — 2026-11-16 · Cache and deployment acceptance status
 
 This entry supersedes the older live-state notes below where they conflict. Historical sections retain the evidence and status observed at their own dates.
