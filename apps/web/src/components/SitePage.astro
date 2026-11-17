@@ -4,7 +4,10 @@ import Card from "@alnilam/theme-shirone/Card.svelte";
 import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
 import Markdown from "@alnilam/theme-shirone/Markdown.astro";
 import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
-import { getMarkdownStylesheetAssets } from "@alnilam/theme-shirone/markdown-assets";
+import {
+  getMarkdownMathStylesheetAssets,
+  getMarkdownStylesheetAssets,
+} from "@alnilam/theme-shirone/markdown-assets";
 
 interface Props {
   page: CollectionEntry<"pages">;
@@ -21,6 +24,9 @@ const { Content, remarkPluginFrontmatter } = await render(page);
 const markdownStylesheetAssets = await getMarkdownStylesheetAssets(
   remarkPluginFrontmatter.markdownSyntaxes,
 );
+const markdownMathStylesheetAssets = getMarkdownMathStylesheetAssets(
+  remarkPluginFrontmatter.markdownSyntaxes,
+);
 ---
 <MainGridLayout
   title={page.data.title}
@@ -33,6 +39,7 @@ const markdownStylesheetAssets = await getMarkdownStylesheetAssets(
   alternates={alternates}
 >
   <Fragment slot="head">
+    {markdownMathStylesheetAssets.map(({ pack, href }) => <link rel="stylesheet" data-swup-optional={pack} href={href} />)}
     {markdownStylesheetAssets.map(({ pack, href }) => <link rel="stylesheet" data-swup-optional={pack} href={href} />)}
     {page.data.pubDate && <meta property="article:published_time" content={page.data.pubDate.toISOString()} />}
     {page.data.updatedDate && <meta property="article:modified_time" content={page.data.updatedDate.toISOString()} />}

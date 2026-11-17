@@ -163,16 +163,19 @@ test("Site pages render Markdown, canonical URLs, real translations, and sitemap
     "zh-CN": "https://content-model.example.com/pages/about/",
     en: "https://content-model.example.com/en/pages/about/",
     ja: "https://content-model.example.com/ja/pages/about/",
+    "zh-TW": "https://content-model.example.com/zh-TW/pages/about/",
   };
   const routes = {
     "zh-CN": "pages/about/index.html",
     en: "en/pages/about/index.html",
     ja: "ja/pages/about/index.html",
+    "zh-TW": "zh-TW/pages/about/index.html",
   };
   const bodies = {
     "zh-CN": "This is the default-locale Site page body.",
     en: "This is the English Site page body.",
     ja: "This is the Japanese Site page body.",
+    "zh-TW": "This is the Traditional Chinese Site page body.",
   };
 
   for (const [locale, rel] of Object.entries(routes)) {
@@ -208,6 +211,25 @@ test("Site pages render Markdown, canonical URLs, real translations, and sitemap
   for (const href of Object.values(expected)) assert.ok(sitemap.includes(href), `sitemap must include ${href}`);
   assert.ok(sitemap.includes(`hreflang="x-default" href="${expected["zh-CN"]}"`));
   assert.ok(!sitemap.includes("draft-preview"), "draft pages must stay out of the sitemap");
+});
+
+test("Site pages with math link the KaTeX stylesheet", () => {
+  const { out } = ctx;
+  const html = read(out, "en/pages/math/index.html");
+  assert.match(html, /class="katex(?:\s|")/, "page body must render KaTeX markup");
+
+  const mathStylesheets = [...html.matchAll(
+    /<link rel="stylesheet" data-swup-optional="math" href="([^"]+)"\s*\/?>/g,
+  )].map(([, href]) => href);
+  const stylesheetContents = mathStylesheets.map((href) => {
+    const relativePath = new URL(href, "https://content-model.example.com").pathname.replace(/^\/+/, "");
+    const file = path.join(out, relativePath);
+    return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+  });
+  assert.ok(
+    stylesheetContents.some((stylesheet) => stylesheet.includes("KaTeX_Main")),
+    "page head must load KaTeX's stylesheet asset",
+  );
 });
 
 

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildSitePageRoutes } from "../../apps/web/src/lib/site-pages.mjs";
 
-const options = { defaultLocale: "zh-CN", locales: ["zh-CN", "en", "ja"] };
+const options = { defaultLocale: "zh-CN", locales: ["zh-CN", "en", "ja", "zh-TW"] };
 const entry = (id, data = {}) => ({ id, data: { title: id, ...data } });
 
 test("page routes preserve nested slugs, strip matching locale directories, and omit drafts", () => {
@@ -10,6 +10,7 @@ test("page routes preserve nested slugs, strip matching locale directories, and 
     entry("about", { lang: "zh-CN", translationKey: "about" }),
     entry("en/guide/getting-started", { lang: "en", translationKey: "getting-started" }),
     entry("ja/guide/getting-started", { lang: "ja", translationKey: "getting-started" }),
+    entry("zh-TW/about", { lang: "zh-TW", translationKey: "about" }),
     entry("en/draft", { lang: "en", draft: true }),
   ], options);
 
@@ -17,6 +18,7 @@ test("page routes preserve nested slugs, strip matching locale directories, and 
     { locale: "zh-CN", slug: "about", path: "/pages/about/" },
     { locale: "en", slug: "guide/getting-started", path: "/en/pages/guide/getting-started/" },
     { locale: "ja", slug: "guide/getting-started", path: "/ja/pages/guide/getting-started/" },
+    { locale: "zh-TW", slug: "about", path: "/zh-TW/pages/about/" },
   ]);
   assert.deepEqual(routes[1].alternates, [
     { lang: "en", path: "/en/pages/guide/getting-started/" },

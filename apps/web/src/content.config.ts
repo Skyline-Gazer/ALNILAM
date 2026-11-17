@@ -110,7 +110,13 @@ const moments = defineCollection({
   }),
 });
 const pages = defineCollection({
-  loader: fs.existsSync(pagesDir) ? glob({ pattern: "**/*.{md,mdx}", base: pagesDir }) : async () => [],
+  loader: fs.existsSync(pagesDir)
+    ? glob({
+        pattern: "**/*.{md,mdx}",
+        base: pagesDir,
+        generateId: ({ entry }) => entry.replace(/\\/g, "/").replace(/\.(?:md|mdx)$/i, ""),
+      })
+    : async () => [],
   schema: z.object({
     title: z.string().min(1),
     description: z.string().default(""),

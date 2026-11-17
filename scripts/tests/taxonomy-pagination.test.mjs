@@ -110,7 +110,7 @@ test("Site page canonical and alternate URLs include the root or nested deployme
       ja: "ja/pages/about/index.html",
     })) {
       const html = fs.readFileSync(path.join(out, rel), "utf8");
-      assert.ok(html.includes(`href="https://content-model.example.com${expected[locale]}"`), `${base}${rel} canonical`);
+      assert.ok(html.includes(`<link rel="canonical" href="https://content-model.example.com${expected[locale]}">`), `${base}${rel} canonical`);
       for (const [alternateLocale, href] of Object.entries(expected)) {
         assert.ok(html.includes(`hreflang="${alternateLocale}" href="https://content-model.example.com${href}"`), `${base}${rel} alternate ${alternateLocale}`);
       }
