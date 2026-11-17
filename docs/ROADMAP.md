@@ -34,7 +34,7 @@ The following is **execution order and scope**, not blanket authorization for ev
 
 [#89 WordPress/Ghost](https://github.com/Skyline-Gazer/ALNILAM/issues/89) remains an optional post-launch source adapter candidate, not a default requirement; #83 experimental Astro acceleration remains upstream-stability gated.
 
-**[#160 Site-owned static Markdown pages](https://github.com/Skyline-Gazer/ALNILAM/issues/160)** remains `In Progress` in Project #17 and is cross-referenced by [PR #161](https://github.com/Skyline-Gazer/ALNILAM/pull/161), targeting GitHub `dev`. It adds optional `content/pages/` Markdown/MDX routes with localization, draft exclusion, translation alternates, and page metadata while keeping Site schema v2 and post archives, taxonomies, and feeds separate. Use the live PR page for its current head SHA and check status; prior-revision evidence is recorded with its SHA in [HANDOFF](HANDOFF.md). The PR remains open, so keep #160 In Progress until merge.
+**[#160 Site-owned static Markdown pages](https://github.com/Skyline-Gazer/ALNILAM/issues/160)** remains `In Progress` in Project #17. PR #161 added optional `content/pages/` Markdown/MDX routes with localization, draft exclusion, translation alternates, and page metadata while keeping Site schema v2 and post archives, taxonomies, and feeds separate; it merged normally at `e8093e132caf3b4296102243aa718e8f20859a4a`. Follow-up [PR #162](https://github.com/Skyline-Gazer/ALNILAM/pull/162) extends the Pages CMS PoC to static pages and declares `Closes #160`. Keep #160 In Progress until #162 passes required Verify and merges; current head and check evidence are in [HANDOFF](HANDOFF.md).
 
 ### Long-running maintenance lane (starts independently; never closes with one release)
 
