@@ -6,7 +6,7 @@ This entry supersedes earlier live-state notes where they conflict. It records t
 
 ### GitHub refs and delivered user-facing work
 
-- GitHub `dev` is `14e15361e981f76429a4b31ba013030925f39937`; `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`. CNB refs and ADS pin remain unchanged.
+- GitHub `dev` is `7501a0c91f39294e84f4f8b6396edb79679f2a05`; PR #159 merged normally at this SHA and its required Verify [44018718834](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44018718834) passed. `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`. CNB refs and ADS pin remain unchanged.
 - PR #142 merged at `113ab9c7a9e6fbb38c75e808c7f94e6095244564`; its required Verify [43600593600](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43600593600) and CodeRabbit review [132489573639](https://github.com/Skyline-Gazer/ALNILAM/runs/132489573639) passed. Issue #140 closed after that review proved the `dev` auto-review configuration. PR #143 merged at `8d96d0a205bf82a4d4afd489e00fb4ca57823253` with Verify [43580970549](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43580970549) passed; PR #144 merged at `fb2010d755bc2ee96557547607d2e69b8e973b52` with Verify [43580095662](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43580095662) passed. Their Demo Vercel Preview checks passed. PR #142's merge created the historical `dev` Production deployment tracked under #138.
 - The Owner-authorized Moments improvement shipped through PR #135, merged at `0cb38eac917ef24b44a084385eeeed7f6edf49dc`. Required PR and push Verify runs [43556448368](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43556448368) and [43556443609](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43556443609), Astro compatibility [43556448394](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43556448394), and post-merge Verify [43561314487](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43561314487) passed. The 2026-11-14 Demo browser check verified 12 published `/moments/` entries after Load more, excluded the draft, exercised text search and the `life` tag, and advanced/closed the two-image viewer. Issue #68 and Project #17 remain In Progress for formal Owner product acceptance.
 
@@ -31,6 +31,16 @@ This entry supersedes earlier live-state notes where they conflict. It records t
 - Manual `target=production` deployment `dpl_9FFgYBAbQx2Ttkmb3ktruup8ftMb` remains READY for `main` SHA `285a62cecd87f8f20276c7cc989537a391f488c8`; before alias removal, its public provenance reported Site digest `7e7500946378db5173f52294bf9662744ce40086a526d7cb40c0a3bf4f8a9db5`. No separate Owner acceptance for the first formal Production deployment is recorded; this is not a formal release.
 - Manual dev Preview `dpl_4QvHia8eLgp2kksBNUFJAwn3LqXD` is READY for Core `14e15361e981f76429a4b31ba013030925f39937`; its unique URL returned HTTP 302.
 - `vercel project pause alnilam-production-next --scope martyjstogner-2766s-projects` was refused non-interactively; the project remains unpaused. The Owner selected removal of `alnilam-production-next.vercel.app` and `alnilam-production-next-martyjstogner-2766s-projects.vercel.app`; both now return anonymous HTTP 404. Unique Production and Preview URLs return SSO HTTP 302; the existing Demo remains HTTP 200. Keep #138 In Progress; first formal Production release and external-domain activation remain Owner-gated.
+
+### PR #159 receipt
+
+- PR #159 changed only `docs/HANDOFF.md` and `docs/ROADMAP.md`, then merged normally at `7501a0c91f39294e84f4f8b6396edb79679f2a05`. Required Verify passed; CodeRabbit was skipped as advisory. The non-required `alnilam-production` Vercel check reported `Deployment was blocked`; Preview Comments, `alnilam-production-next`, and the existing Demo Vercel check passed.
+
+### Site-authored static pages
+
+- [Issue #160](https://github.com/Skyline-Gazer/ALNILAM/issues/160) remains open and In Progress in Project #17. [PR #161](https://github.com/Skyline-Gazer/ALNILAM/pull/161) targets GitHub `dev` from code head `23bf06d235183ebcafae82c4cbc7f2f1a5b77274`.
+- On that code head, serial focused contract tests passed 16/16; `pnpm check` reported 0 diagnostics; isolated `pnpm build` generated 93 Demo pages and passed artifact and SEO checks. The external-Site fixture verified root and `/ALNILAM/` routes, metadata, provenance, draft exclusion, and unchanged Site digest/files. No Site schema version, `main`, CNB, ADS pin, deployment setting, or production artifact changed.
+- PR Verify [44052118775](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44052118775), paired push Verify [44051479861](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44051479861), Astro compatibility [44052118679](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44052118679), and CodeRabbit were in progress when this entry was written; check the live PR before treating the review as complete.
 
 ## Live-state update — 2026-11-16 · Cache and deployment acceptance status
 

@@ -34,6 +34,8 @@ The following is **execution order and scope**, not blanket authorization for ev
 
 [#89 WordPress/Ghost](https://github.com/Skyline-Gazer/ALNILAM/issues/89) remains an optional post-launch source adapter candidate, not a default requirement; #83 experimental Astro acceleration remains upstream-stability gated.
 
+**[#160 Site-owned static Markdown pages](https://github.com/Skyline-Gazer/ALNILAM/issues/160)** is In Progress in Project #17. PR [#161](https://github.com/Skyline-Gazer/ALNILAM/pull/161) targets GitHub `dev` from head `23bf06d235183ebcafae82c4cbc7f2f1a5b77274`; it adds optional `content/pages/` Markdown/MDX routes with localization, draft exclusion, translation alternates and page metadata while keeping Site schema v2 and post archives, taxonomies and feeds separate.
+
 ### Long-running maintenance lane (starts independently; never closes with one release)
 
 **[#137 Upstream Watch & Selective Sync](https://github.com/Skyline-Gazer/ALNILAM/issues/137)** is **MANUAL_READY** through `scripts/upstream-watch.mjs` and `docs/upstream-watch/`. It records four-source heads/releases/tags/recent Issues, direct locked dependency candidates, all-lock advisories, and separate `last_seen`, `last_analyzed`, `last_integrated` plus decision records. Weekly/monthly/quarterly reviews remain manual; there is no schedule. Upstream fixes are adapted only for a reproducible ALNILAM defect or measured benefit and still require normal tests/review; major/breaking/UI/features remain Owner decisions.
