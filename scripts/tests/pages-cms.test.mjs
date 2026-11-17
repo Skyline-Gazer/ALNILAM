@@ -204,6 +204,18 @@ test(".pages.yml maps the frontmatter contract of existing articles", () => {
   }
 });
 
+test("verify honors collection excludes before parsing files", () => {
+  const site = path.join(tmp, "excluded-readme-site");
+  copySite(site);
+  fs.writeFileSync(path.join(site, POSTS_DIR, "README.md"), "# Post editor notes\n");
+  fs.writeFileSync(path.join(site, PAGES_DIR, "README.md"), "# Page editor notes\n");
+  const verify = run("verify", [tool, "verify", "--site", site, "--json"]);
+  assert.equal(verify.status, 0, verify.stderr);
+  const report = JSON.parse(verify.stdout);
+  assert.equal(report.posts.some((post) => post.file === "README.md"), false);
+  assert.equal(report.pages.some((page) => page.file === "README.md"), false);
+});
+
 test("the offline adapter CLI verifies mapping, preserved keys and media paths", () => {
   const verify = run("verify", [tool, "verify", "--site", fixture, "--json"]);
   assert.equal(verify.status, 0, verify.stderr);

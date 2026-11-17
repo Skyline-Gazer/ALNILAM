@@ -596,6 +596,22 @@ function walk(dir, base = dir) {
   return out.sort();
 }
 
+function isExcludedCollectionFile(relative, collection) {
+  const patterns = Array.isArray(collection?.exclude) ? collection.exclude : [];
+  const normalized = relative.replaceAll("\\", "/");
+  const basename = path.posix.basename(normalized);
+  return patterns.some((pattern) => {
+    if (typeof pattern !== "string" || !pattern) return false;
+    const glob = pattern.replaceAll("\\", "/");
+    return path.posix.matchesGlob(normalized, glob) || path.posix.matchesGlob(basename, glob);
+  });
+}
+
+function collectionFiles(dir, collection) {
+  return walk(dir).filter((relative) =>
+    POST_RE.test(relative) && !isExcludedCollectionFile(relative, collection));
+}
+
 function mediaTargets(raw, contentFile, siteDir, collectionRoot = POSTS_DIR) {
   const { data, body } = splitPost(raw, contentFile);
   const sources = [];
@@ -638,7 +654,8 @@ export function verifySite(siteDir) {
   if (!fs.existsSync(postsDir) || !fs.statSync(postsDir).isDirectory()) {
     throw new Error(`${CMS_CONFIG_FILENAME} declares ${POSTS_DIR}, but ${postsDir} is missing or not a directory`);
   }
-  const posts = walk(postsDir).filter((rel) => POST_RE.test(rel)).map((rel) => {
+  const postCollection = postsCollection(config);
+  const posts = collectionFiles(postsDir, postCollection).map((rel) => {
     const abs = path.join(postsDir, rel);
     const raw = fs.readFileSync(abs, "utf8");
     const { data, body } = splitPost(raw, rel);
@@ -671,7 +688,7 @@ export function verifySite(siteDir) {
     throw new Error(`${CMS_CONFIG_FILENAME} declares ${PAGES_DIR}, but ${pagesDir} is not a directory`);
   }
   const pages = pagesCollection && fs.existsSync(pagesDir)
-    ? walk(pagesDir).filter((rel) => POST_RE.test(rel)).map((rel) => {
+    ? collectionFiles(pagesDir, pagesCollection).map((rel) => {
         const abs = path.join(pagesDir, rel);
         const raw = fs.readFileSync(abs, "utf8");
         const { data, body } = splitPost(raw, rel);
@@ -692,7 +709,7 @@ export function verifySite(siteDir) {
         };
       })
     : [];
-  const postsDeleteDisabled = postsCollection(config)?.operations?.delete === false;
+  const postsDeleteDisabled = postCollection?.operations?.delete === false;
   const pagesDeleteDisabled = !pagesCollection || pagesCollection.operations?.delete === false;
   return {
     config: CMS_CONFIG_FILENAME,
