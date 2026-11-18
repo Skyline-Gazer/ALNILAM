@@ -13,11 +13,15 @@ const median = (values) => {
 function reportMetrics(report) {
   const audits = report.audits ?? {};
   const network = audits["network-requests"]?.details?.items ?? [];
-  const resources = audits["resource-summary"]?.details?.items ?? [];
+  const resourceItems = audits["resource-summary"]?.details?.items;
+  const resources = Array.isArray(resourceItems) ? resourceItems : [];
   const requestCount = network.length || resources.reduce((total, item) => total + (item.requestCount ?? 0), 0);
-  const bytes = (types) => resources
-    .filter((item) => types.includes(String(item.resourceType).toLowerCase()))
-    .reduce((total, item) => total + (item.transferSize ?? 0), 0);
+  const bytes = (types) => {
+    if (!Array.isArray(resourceItems)) return null;
+    return resources
+      .filter((item) => types.includes(String(item.resourceType).toLowerCase()))
+      .reduce((total, item) => total + (item.transferSize ?? 0), 0);
+  };
   return {
     cls: numeric(audits["cumulative-layout-shift"]?.numericValue),
     lcpMs: numeric(audits["largest-contentful-paint"]?.numericValue),
