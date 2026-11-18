@@ -19,7 +19,7 @@ This update supersedes the 2026-11-18 #74 lab note below. PR #164 remains open a
 
 - Project #17 readback: #72, #73, #75 and #76 Done; #74 and #81 In Progress; #166 Todo; #42 In Progress. #94 and #138 remain separate In Progress tracks.
 - GitHub `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; CNB `dev` remains frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; ADS remains pinned at `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`.
-- PR #164 has not been merged. No `main`, CNB, Production, tag or ADS-pin change was made.
+- PR #164 has not been merged. GitHub `main` and CNB `dev`/`main` were not changed. A transient CNB feature branch created by an accidental push was deleted; read-only CNB build history reports zero builds for it. No Production, tag or ADS-pin change was made.
 
 
 ## Live-state update — 2026-11-18 · Static-page acceptance and deployment boundaries
