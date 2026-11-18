@@ -102,3 +102,19 @@ for (const origin of origins) {
     },
   );
 }
+
+for (const origin of origins) {
+  test(
+    `tag link names include visible tag and count at ${new URL(origin).pathname || "/"}`,
+    async ({ page }) => {
+      const response = await page.goto(origin + "/tags/", { waitUntil: "networkidle" });
+      expect(response?.status()).toBe(200);
+      const chips = page.locator("a.tag-index__chip");
+      expect(await chips.count()).toBeGreaterThan(0);
+      for (const chip of await chips.all()) {
+        const visibleLabel = (await chip.innerText()).replace(/\s+/g, " ").trim();
+        await expect(chip).toHaveAccessibleName(new RegExp(escapeRegex(visibleLabel)));
+      }
+    },
+  );
+}
