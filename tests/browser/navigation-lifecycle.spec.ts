@@ -104,6 +104,9 @@ for (const origin of ["http://127.0.0.1:4323", "http://127.0.0.1:4324/ALNILAM"])
             await page.locator('#main-navigation').getByRole("link", { name: "文章" }).click();
           }
           await expect(page.locator("#post-list")).toBeVisible();
+          if (width === 390) {
+            await expect(page.locator("#top-row")).not.toHaveAttribute("inert", "");
+          }
           if (round === 0) {
             const image = page.locator('.m3-blog-postcard img[loading="lazy"]').first();
             await image.scrollIntoViewIfNeeded();
