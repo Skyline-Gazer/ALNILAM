@@ -1,5 +1,6 @@
 import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -16,12 +17,15 @@ const tool = path.join(root, "scripts/pages-cms.mjs");
 // test root but leaves candidate product scripts in the candidate checkout.
 // Resolve the adapter from cwd (the candidate under test), not from this file.
 const adapter = await import(pathToFileURL(tool).href);
-const { applyEdit, declaredFieldNames, loadCmsConfig, postsFields, splitPost, CMS_CONFIG_FILENAME, POSTS_DIR, REQUIRED_FIELDS } = adapter;
+const { applyEdit, declaredFieldNames, loadCmsConfig, postsFields, splitPost, CMS_CONFIG_FILENAME, POSTS_DIR, PAGES_DIR, REQUIRED_FIELDS } = adapter;
 
 const EDITED_MD_TITLE = "编辑后的往返标题";
 const EDITED_MDX_TITLE = "编辑后的 MDX 标题";
 const CREATED_TITLE = "由 CMS 新建的文章";
 const CREATED_BODY_TEXT = "这是新建文章的正文。";
+const EDITED_PAGE_TITLE = "编辑后的静态页标题";
+const EDITED_EN_PAGE_TITLE = "Edited English page";
+const EDITED_JA_PAGE_TITLE = "編集済み静的ページ";
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-pages-cms-"));
 const siteWithCms = path.join(tmp, "with-cms");
 const siteNoCms = path.join(tmp, "without-cms");
@@ -44,10 +48,32 @@ function postFile(site, relative) {
   return path.join(site, POSTS_DIR, relative);
 }
 
-function recordEdit(site, relative, patch) {
-  const file = postFile(site, relative);
+function siteTreeDigest(site) {
+  const files = [];
+  const visit = (directory) => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const absolute = path.join(directory, entry.name);
+      const relative = path.relative(site, absolute);
+      if (entry.isDirectory()) visit(absolute);
+      else if (entry.isFile()) {
+        files.push([relative, createHash("sha256").update(fs.readFileSync(absolute)).digest("hex")]);
+      } else if (entry.isSymbolicLink()) {
+        files.push([relative, `symlink:${fs.readlinkSync(absolute)}`]);
+      }
+    }
+  };
+  visit(site);
+  files.sort(([left], [right]) => left.localeCompare(right));
+  return createHash("sha256").update(JSON.stringify(files)).digest("hex");
+}
+
+function recordEdit(site, collectionPath, relative, patch) {
+  const config = loadCmsConfig(site);
+  const collection = config.content.find((entry) => entry.type === "collection" && entry.path === collectionPath);
+  assert.ok(collection, `CMS collection ${collectionPath} is not explicitly configured`);
+  const file = path.join(site, collectionPath, relative);
   const raw = fs.readFileSync(file, "utf8");
-  const result = applyEdit(raw, patch, { config: loadCmsConfig(site) });
+  const result = applyEdit(raw, patch, { fields: collection.fields });
   fs.writeFileSync(file, result.content);
   edits[relative] = { raw, result };
   return result;
@@ -80,9 +106,30 @@ function writeBodyFile(name, content) {
 
 before(() => {
   copySite(siteWithCms);
+
+  const englishPost = path.join(siteWithCms, POSTS_DIR, "en", "cms-english.md");
+  fs.mkdirSync(path.dirname(englishPost), { recursive: true });
+  fs.writeFileSync(englishPost, [
+    "---",
+    'title: "English CMS article"',
+    "description: Localized feed regression fixture.",
+    "pubDate: 2026-11-12",
+    "category: guide",
+    "tags: [CMS]",
+    'lang: "en"',
+    'translationKey: "cms-english-post"',
+    "draft: false",
+    "---",
+    "",
+    "A published English article.",
+    "",
+  ].join("\n"));
   const config = loadCmsConfig(siteWithCms);
-  recordEdit(siteWithCms, "cms-basics.md", { title: EDITED_MD_TITLE, tags: ["CMS", "edited"] });
-  recordEdit(siteWithCms, "cms-mdx.mdx", { title: EDITED_MDX_TITLE });
+  recordEdit(siteWithCms, POSTS_DIR, "cms-basics.md", { title: EDITED_MD_TITLE, tags: ["CMS", "edited"] });
+  recordEdit(siteWithCms, POSTS_DIR, "cms-mdx.mdx", { title: EDITED_MDX_TITLE });
+  recordEdit(siteWithCms, PAGES_DIR, "about.md", { title: EDITED_PAGE_TITLE, tags: ["page-only-tag", "edited-page"] });
+  recordEdit(siteWithCms, PAGES_DIR, "en/about.mdx", { title: EDITED_EN_PAGE_TITLE });
+  recordEdit(siteWithCms, PAGES_DIR, "ja/about.mdx", { title: EDITED_JA_PAGE_TITLE });
   assert.equal(config.settings.content.merge, true);
   const created = run("create", [tool, "create", "--site", siteWithCms, "--file", "cms-created.md",
     "--set", JSON.stringify({
@@ -110,11 +157,22 @@ before(() => {
       ALNILAM_CORE_REV: "pages-cms-poc-test",
       ALNILAM_SITE_URL: item.url,
     };
+    const siteDigest = validateSiteRoot(item.site).digest;
+    const siteTreeBefore = siteTreeDigest(item.site);
     const compose = run("compose", [path.join(root, "scripts/compose.mjs"), "--site", item.site, "--out", out], env);
     assert.equal(compose.status, 0, `compose ${item.name} failed:\n${compose.stderr}\n${compose.stdout}`);
     const artifact = run("artifact-check", [path.join(root, "scripts/artifact-check.mjs"), out], env);
     const seo = run("seo-check", [path.join(root, "scripts/seo-check.mjs"), out], env);
-    builds.push({ ...item, out, siteDigest: validateSiteRoot(item.site).digest, artifact, seo });
+    builds.push({
+      ...item,
+      out,
+      siteDigest,
+      siteDigestAfter: validateSiteRoot(item.site).digest,
+      siteTreeBefore,
+      siteTreeAfter: siteTreeDigest(item.site),
+      artifact,
+      seo,
+    });
   }
 });
 
@@ -137,6 +195,14 @@ test(".pages.yml maps the frontmatter contract of existing articles", () => {
   assert.equal(config.media.input, "assets");
   assert.equal(config.media.output, "/site-assets");
   assert.equal(config.settings.content.merge, true);
+  const pages = config.content.find((entry) => entry.type === "collection" && entry.path === PAGES_DIR);
+  assert.ok(pages, "static pages collection is missing from the editor schema");
+  assert.equal(pages.format, "yaml-frontmatter");
+  assert.equal(pages.operations.delete, false, "static page deletes must require reviewed Site commits");
+  for (const key of ["title", "description", "pubDate", "updatedDate", "cover", "category", "tags", "draft", "lang", "translationKey", "body"]) {
+    assert.ok(pages.fields.some((field) => field.name === key), `static page field ${key} is missing`);
+  }
+  assert.equal(pages.fields.find((field) => field.name === "body")?.options?.format, "mdx");
 
   const used = new Set();
   const dir = path.join(demoSite, POSTS_DIR);
@@ -156,6 +222,33 @@ test(".pages.yml maps the frontmatter contract of existing articles", () => {
   }
 });
 
+test("verify honors collection excludes before parsing files", () => {
+  const site = path.join(tmp, "excluded-readme-site");
+  copySite(site);
+  fs.writeFileSync(path.join(site, POSTS_DIR, "README.md"), "# Post editor notes\n");
+  fs.writeFileSync(path.join(site, PAGES_DIR, "README.md"), "# Page editor notes\n");
+  const verify = run("verify", [tool, "verify", "--site", site, "--json"]);
+  assert.equal(verify.status, 0, verify.stderr);
+  const report = JSON.parse(verify.stdout);
+  assert.equal(report.posts.some((post) => post.file === "README.md"), false);
+  assert.equal(report.pages.some((page) => page.file === "README.md"), false);
+});
+
+test("verify requires a non-empty string title for each page", () => {
+  for (const [name, value] of [["null", "null"], ["number", "42"], ["empty", '""'], ["whitespace", '"   "']]) {
+    const site = path.join(tmp, `invalid-page-title-${name}`);
+    copySite(site);
+    const pageFile = path.join(site, PAGES_DIR, "about.md");
+    const page = fs.readFileSync(pageFile, "utf8");
+    fs.writeFileSync(pageFile, page.replace(/^title:.*$/m, `title: ${value}`));
+    const verify = run("verify", [tool, "verify", "--site", site, "--json"]);
+    assert.equal(verify.status, 1, `${name} title must fail verification`);
+    const report = JSON.parse(verify.stdout);
+    assert.equal(report.ok, false, `${name} title must not report success`);
+    assert.deepEqual(report.pages.find((item) => item.file === "about.md").missingRequired, ["title"]);
+  }
+});
+
 test("the offline adapter CLI verifies mapping, preserved keys and media paths", () => {
   const verify = run("verify", [tool, "verify", "--site", fixture, "--json"]);
   assert.equal(verify.status, 0, verify.stderr);
@@ -171,6 +264,18 @@ test("the offline adapter CLI verifies mapping, preserved keys and media paths",
     assert.deepEqual(post.missingRequired, []);
     for (const media of post.media) assert.equal(media.exists, true, `${post.file}: ${media.src} is unresolved`);
   }
+  assert.equal(report.pagesDeleteDisabled, true);
+  assert.equal(report.pages.length, 5, "default, localized, nested and draft pages should be mapped");
+  const defaultPage = report.pages.find((page) => page.file === "about.md");
+  assert.deepEqual(defaultPage.unknown, ["editorialNote"]);
+  assert.equal(defaultPage.lang, "zh-CN");
+  assert.deepEqual(defaultPage.tags, ["page-only-tag", "authoring"]);
+  assert.equal(defaultPage.translationKey, "cms-about");
+  assert.ok(defaultPage.media.length > 0 && defaultPage.media.every((media) => media.exists));
+  assert.deepEqual(report.selectDrift, [], "page-only metadata must not pollute the post category select");
+  assert.equal(defaultPage.category, "page-only-category");
+  assert.ok(defaultPage.media.some((media) => media.kind === "page-relative" && media.exists));
+  assert.equal(report.pages.find((page) => page.file === "draft/hidden.md").draft, true);
 
   const cliSite = path.join(tmp, "cli-site");
   copySite(cliSite);
@@ -331,7 +436,7 @@ test("a CMS save preserves unknown frontmatter keys, comments and Markdown/MDX b
   ]) {
     const raw = fs.readFileSync(path.join(fixture, POSTS_DIR, relative), "utf8");
     const before = splitPost(raw, relative);
-    const result = applyEdit(raw, patch, { config });
+    const result = applyEdit(raw, patch, { fields: postsFields(config) });
     const after = splitPost(result.content, relative);
     assert.equal(result.body, before.body, `${relative}: body changed`);
     assert.equal(Buffer.compare(Buffer.from(result.body), Buffer.from(before.body)), 0, `${relative}: body bytes changed`);
@@ -346,12 +451,12 @@ test("a CMS save preserves unknown frontmatter keys, comments and Markdown/MDX b
   }
   assert.ok(edits["cms-mdx.mdx"].result.body.includes("{1 + 1}"), "MDX expression was rewritten");
 
-  assert.throws(() => applyEdit(edits["cms-basics.md"].raw, { author: "ghost" }, { config }),
+  assert.throws(() => applyEdit(edits["cms-basics.md"].raw, { author: "ghost" }, { fields: postsFields(config) }),
     /off-schema edit rejected/, "the adapter must not invent CMS fields");
 
   // Negative evidence for the Pages CMS default: merge=false rewrites from the
   // editor schema only and drops the Site's own metadata.
-  const lossy = applyEdit(edits["cms-basics.md"].raw, { title: "Lossy" }, { config, merge: false });
+  const lossy = applyEdit(edits["cms-basics.md"].raw, { title: "Lossy" }, { fields: postsFields(config), merge: false });
   assert.deepEqual(lossy.dropped, ["author", "editorialNote", "cmsMeta"]);
   assert.deepEqual(lossy.preserved, []);
   assert.equal("cmsMeta" in splitPost(lossy.content).data, false);
@@ -362,6 +467,21 @@ test("a CMS save preserves unknown frontmatter keys, comments and Markdown/MDX b
   const badConfig = path.join(badSite, CMS_CONFIG_FILENAME);
   fs.writeFileSync(badConfig, fs.readFileSync(badConfig, "utf8").replace("merge: true", "merge: false"));
   assert.throws(() => loadCmsConfig(badSite), /settings.content.merge must be true/);
+});
+
+test("static page edits require an explicitly selected collection schema", () => {
+  const config = loadCmsConfig(fixture);
+  const pages = config.content.find((entry) => entry.type === "collection" && entry.path === PAGES_DIR);
+  const raw = fs.readFileSync(path.join(fixture, PAGES_DIR, "ja/about.mdx"), "utf8");
+  const before = splitPost(raw, "ja/about.mdx");
+  const result = applyEdit(raw, { title: "Updated Japanese page", tags: ["source-edit"] }, { fields: pages.fields });
+  const after = splitPost(result.content, "ja/about.mdx");
+  assert.equal(after.data.title, "Updated Japanese page");
+  assert.deepEqual(after.data.tags, ["source-edit"]);
+  assert.equal(after.data.editorialNote, "preserve-mdx-page-metadata");
+  assert.equal(after.body, before.body, "page MDX/JSX source must remain byte-identical");
+  assert.equal(Buffer.compare(Buffer.from(after.body), Buffer.from(before.body)), 0);
+  assert.throws(() => applyEdit(raw, { title: "No schema selected" }), /explicitly selected CMS collection/);
 });
 
 test("composed builds at root and /ALNILAM/ render the edited content and media", () => {
@@ -394,6 +514,90 @@ test("composed builds at root and /ALNILAM/ render the edited content and media"
     assert.ok(mdx.includes(EDITED_MDX_TITLE), `${build.name}: edited MDX title is missing`);
     assert.ok(mdx.includes('data-pages-cms-mdx="roundtrip"'), `${build.name}: MDX JSX was corrupted`);
     assert.ok(mdx.includes("计算结果：2"), `${build.name}: MDX expression was not evaluated`);
+
+    const page = fs.readFileSync(path.join(build.out, "pages/about/index.html"), "utf8");
+    assert.ok(page.includes(EDITED_PAGE_TITLE), `${build.name}: edited default page title is missing`);
+    assert.ok(page.includes("orion pages fixture"), `${build.name}: default page body is missing`);
+    assert.ok(page.includes(`src="${prefix}/_astro/page-local.`), `${build.name}: page-relative image was not processed`);
+    assert.ok(page.includes('data-pagefind-body'), `${build.name}: static page is not marked searchable`);
+    const siteUrl = build.url.replace(/\/+$/, "");
+    const pageUrl = `${siteUrl}/pages/about/`;
+    const pageLinks = [...page.matchAll(/<link\b[^>]*>/g)].map(([tag]) => tag);
+    const canonical = pageLinks.find((tag) => /\brel="canonical"/.test(tag));
+    const attribute = (tag, name) => tag.match(new RegExp(`\\b${name}="([^"]+)"`))?.[1];
+    assert.equal(attribute(canonical, "href"), pageUrl, `${build.name}: page canonical is wrong`);
+    const alternates = Object.fromEntries(pageLinks
+      .filter((tag) => /\brel="alternate"/.test(tag) && /\bhreflang="/.test(tag))
+      .map((tag) => [attribute(tag, "hreflang"), attribute(tag, "href")]));
+    assert.deepEqual(alternates, {
+      "zh-CN": pageUrl,
+      en: `${siteUrl}/en/pages/about/`,
+      ja: `${siteUrl}/ja/pages/about/`,
+      "x-default": pageUrl,
+    }, `${build.name}: translated page hreflang links are wrong`);
+    assert.ok(fs.existsSync(path.join(build.out, "en/pages/about/index.html")), `${build.name}: English page route is missing`);
+    assert.ok(fs.existsSync(path.join(build.out, "en/posts/cms-english/index.html")), `${build.name}: published English post route is missing`);
+
+    for (const locale of ["en", "ja"]) {
+      const localeOutput = path.join(build.out, locale);
+      for (const route of ["index.html", "posts/index.html", "categories/index.html", "archives/index.html", "tags/index.html"]) {
+        assert.ok(fs.existsSync(path.join(localeOutput, route)), `${build.name}: localized route /${locale}/${route} is missing`);
+      }
+      assert.equal(fs.existsSync(path.join(localeOutput, "rss.xml")), locale === "en", `${build.name}: ${locale} feed presence does not match published posts`);
+    }
+    assert.ok(fs.existsSync(path.join(build.out, "pages/guides/authoring/index.html")), `${build.name}: nested page slug is missing`);
+    assert.equal(fs.existsSync(path.join(build.out, "pages/draft/hidden/index.html")), false, `${build.name}: draft page was published`);
+    const english = fs.readFileSync(path.join(build.out, "en/pages/about/index.html"), "utf8");
+    assert.ok(english.includes(EDITED_EN_PAGE_TITLE), `${build.name}: edited English page title is missing`);
+    assert.ok(english.includes('data-pages-cms-mdx="source-roundtrip"'), `${build.name}: localized MDX was corrupted`);
+    assert.ok(english.includes("nebula pages translation"), `${build.name}: localized page body is missing`);
+    const japanese = fs.readFileSync(path.join(build.out, "ja/pages/about/index.html"), "utf8");
+    assert.ok(japanese.includes(EDITED_JA_PAGE_TITLE), `${build.name}: edited Japanese page title is missing`);
+    assert.ok(japanese.includes('data-pages-cms-mdx="source-roundtrip"'), `${build.name}: Japanese MDX was corrupted`);
+    const englishFeedLink = [...english.matchAll(/<link\b[^>]*>/g)].map(([tag]) => tag).find((tag) => /type="application\/rss\+xml"/.test(tag));
+    const japaneseFeedLink = [...japanese.matchAll(/<link\b[^>]*>/g)].map(([tag]) => tag).find((tag) => /type="application\/rss\+xml"/.test(tag));
+    assert.ok(englishFeedLink, `${build.name}: English pages with published posts must advertise RSS`);
+    assert.equal(japaneseFeedLink, undefined, `${build.name}: page-only Japanese page must not advertise a missing RSS feed`);
+    const categories = fs.readFileSync(path.join(build.out, "categories/index.html"), "utf8");
+    const tags = fs.readFileSync(path.join(build.out, "tags/index.html"), "utf8");
+    const archives = fs.readFileSync(path.join(build.out, "archives/index.html"), "utf8");
+    assert.ok(!categories.includes("page-only-category"), `${build.name}: page category leaked into the post taxonomy`);
+    assert.ok(!tags.includes("page-only-tag"), `${build.name}: page tag leaked into the post taxonomy`);
+    assert.ok(!archives.includes(EDITED_PAGE_TITLE), `${build.name}: static page leaked into post archives`);
+    const feeds = emitted.filter((file) => /(^|\/)rss\.xml$/.test(file))
+      .map((file) => fs.readFileSync(path.join(build.out, file), "utf8")).join("\n");
+    assert.ok(feeds.length > 0, `${build.name}: RSS output was not found`);
+    assert.ok(!feeds.includes(EDITED_PAGE_TITLE), `${build.name}: static page leaked into RSS`);
+    assert.ok(!feeds.includes("page-only-tag"), `${build.name}: page tag leaked into RSS`);
+    const sitemap = fs.readdirSync(build.out, { recursive: true })
+      .filter((file) => /sitemap.*\.xml$/.test(file))
+      .map((file) => fs.readFileSync(path.join(build.out, file), "utf8")).join("\n");
+    assert.ok(sitemap.includes(`https://pages-cms.example.com${prefix}/pages/about/`), `${build.name}: page is missing from sitemap`);
+    assert.ok(!sitemap.includes("/pages/draft/hidden/"), `${build.name}: draft page leaked into sitemap`);
+  }
+});
+
+test("seo-check requires RSS discovery when a locale still has published posts", () => {
+  const rootBuild = builds.find((build) => build.name === "root");
+  const out = path.join(tmp, "missing-english-feed");
+  fs.cpSync(rootBuild.out, out, { recursive: true });
+  fs.rmSync(path.join(out, "en/rss.xml"));
+  const englishDir = path.join(out, "en");
+  for (const rel of fs.readdirSync(englishDir, { recursive: true })) {
+    if (!rel.endsWith(".html")) continue;
+    const file = path.join(englishDir, rel);
+    const html = fs.readFileSync(file, "utf8");
+    fs.writeFileSync(file, html.replace(/<link\b(?=[^>]*\btype="application\/rss\+xml")[^>]*>\s*/gi, ""));
+  }
+  const result = run("seo-missing-locale-feed", [path.join(root, "scripts/seo-check.mjs"), out]);
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /missing RSS discovery link/);
+});
+
+test("compose preserves every Site file across root and nested builds", () => {
+  for (const build of builds) {
+    assert.equal(build.siteDigestAfter, build.siteDigest, `${build.name}: input digest changed during compose`);
+    assert.equal(build.siteTreeAfter, build.siteTreeBefore, `${build.name}: Site file tree changed during compose`);
   }
 });
 
@@ -433,6 +637,10 @@ test("init generates a schema from the Site taxonomy and refuses to overwrite", 
   assert.deepEqual(category.options.values, ["guide", "release"]);
   assert.equal(config.settings.content.merge, true);
   assert.equal(config.content.find((entry) => entry.path === POSTS_DIR).operations.delete, false);
+  const pages = config.content.find((entry) => entry.type === "collection" && entry.path === PAGES_DIR);
+  assert.ok(pages, "generated editor schema must include static pages");
+  assert.equal(pages.operations.delete, false);
+  assert.equal(pages.fields.find((field) => field.name === "body")?.options?.format, "mdx");
   assert.equal(validateSiteRoot(site).digest, digest, "generating .pages.yml changed the Site digest");
 
   const again = run("init", [tool, "init", "--site", site]);
@@ -508,13 +716,27 @@ test("verify rejects media references that leave the Site media roots", () => {
   assert.equal(report.ok, false);
 });
 
+test("verify rejects page media references that leave content/pages", () => {
+  const site = path.join(tmp, "page-media-escape-site");
+  copySite(site);
+  fs.writeFileSync(path.join(site, PAGES_DIR, "media-escape.md"),
+    `---\ntitle: "Page media escape"\nlang: "zh-CN"\ncover: "./../../alnilam.config.yaml"\n---\n\n![x](../../../data/taxonomy.yaml)\n`);
+  const verify = run("verify", [tool, "verify", "--site", site, "--json"]);
+  assert.notEqual(verify.status, 0, "page media outside the selected collection must fail verification");
+  const report = JSON.parse(verify.stdout);
+  const page = report.pages.find((entry) => entry.file === "media-escape.md");
+  assert.deepEqual(page.media.map((entry) => entry.kind), ["outside-media-roots", "outside-media-roots"]);
+  assert.ok(page.media.every((entry) => entry.exists === false));
+  assert.equal(report.ok, false);
+});
+
 test("a body starting with --- or a block scalar keeps its exact bytes", () => {
   const raw = `---\ntitle: "Split"\nnote: |\n  a\n  ---\n  b\n---\n\n---\nbody\n`;
   const split = splitPost(raw);
   assert.equal(split.frontmatter, `title: "Split"\nnote: |\n  a\n  ---\n  b\n`);
   assert.equal(split.body, "\n---\nbody\n");
   assert.equal(split.data.note, "a\n---\nb\n");
-  const result = applyEdit(raw, { title: "Edited" }, { config: loadCmsConfig(fixture) });
+  const result = applyEdit(raw, { title: "Edited" }, { fields: postsFields(loadCmsConfig(fixture)) });
   assert.equal(result.body, "\n---\nbody\n");
   assert.equal(splitPost(result.content).data.note, "a\n---\nb\n");
 });
@@ -524,7 +746,7 @@ test("frontmatter that ends the file without a trailing newline still splits", (
   assert.equal(split.frontmatter, "title: x\n");
   assert.equal(split.body, "");
   assert.equal(split.data.title, "x");
-  const result = applyEdit("---\ntitle: x\n---", { title: "y" }, { config: loadCmsConfig(fixture) });
+  const result = applyEdit("---\ntitle: x\n---", { title: "y" }, { fields: postsFields(loadCmsConfig(fixture)) });
   assert.equal(result.body, "");
   assert.equal(splitPost(result.content).data.title, "y");
 });
@@ -870,7 +1092,7 @@ test("create and edit enforce seriesOrder without partial writes", () => {
 
   const config = loadCmsConfig(site);
   const raw = original.toString("utf8").replace("title:", "seriesOrder: 1.5\ntitle:");
-  const result = applyEdit(raw, { title: "Unrelated edit" }, { config });
+  const result = applyEdit(raw, { title: "Unrelated edit" }, { fields: postsFields(config) });
   assert.equal(splitPost(result.content).data.seriesOrder, 1.5);
   assert.equal(splitPost(result.content).body, splitPost(raw).body);
 });

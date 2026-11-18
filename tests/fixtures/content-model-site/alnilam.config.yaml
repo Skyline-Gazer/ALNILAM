@@ -8,6 +8,7 @@ locales:
   - zh-CN
   - en
   - ja
+  - zh-TW
   - fr
 theme:
   appearance: dark

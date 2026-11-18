@@ -4,10 +4,10 @@ import PostPage from "@alnilam/theme-shirone/PostPage.astro";
 import { getCollection } from "astro:content";
 import { comparePosts } from "../../lib/taxonomy";
 import {
+  activeContentLocales,
   canonicalUrl,
   filterPostsByLocale,
   localeRoutePath,
-  postLang,
   routeAlternates,
   uiStrings,
 } from "../../lib/i18n.mjs";
@@ -17,9 +17,8 @@ import { websiteJsonLd } from "../../lib/seo.mjs";
 export async function getStaticPaths() {
   const { config } = loadSite();
   const allPosts = await getCollection("posts", ({ data }) => !data.draft);
-  const activeLocales = config.locales.filter((locale) =>
-    allPosts.some((post) => postLang(post, config.site.locale) === locale),
-  );
+  const allPages = await getCollection("pages", ({ data }) => !data.draft);
+  const activeLocales = activeContentLocales(allPosts, allPages, config.site.locale, config.locales);
   return activeLocales
     .filter((locale) => locale !== config.site.locale)
     .map((locale) => ({
@@ -31,6 +30,7 @@ export async function getStaticPaths() {
 const { locale, activeLocales, allPosts } = Astro.props;
 const { config } = loadSite();
 const posts = filterPostsByLocale(allPosts, locale, config.site.locale).sort(comparePosts);
+const feedUrl = posts.length > 0 ? undefined : null;
 const latest = posts.slice(0, 5);
 const currentPath = localeRoutePath(locale, config.site.locale, "");
 const page = {
@@ -55,7 +55,7 @@ const jsonLd = websiteJsonLd({
 });
 const t = uiStrings(locale);
 ---
-<MainGridLayout page="home" lang={locale} alternates={alternates}>
+<MainGridLayout page="home" lang={locale} alternates={alternates} feedUrl={feedUrl}>
   <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   <h1 class="sr-only">{t.recentPosts}</h1>
   <PostPage page={page} />

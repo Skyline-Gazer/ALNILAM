@@ -97,3 +97,24 @@ for (const [kind, slug] of [["categories", "ja-series-only"], ["tags", "taxonomy
     }
   });
 }
+test("Site page canonical and alternate URLs include the root or nested deployment base", () => {
+  for (const { out, base } of builds) {
+    const expected = {
+      "zh-CN": `${base}pages/about/`,
+      en: `${base}en/pages/about/`,
+      ja: `${base}ja/pages/about/`,
+    };
+    for (const [locale, rel] of Object.entries({
+      "zh-CN": "pages/about/index.html",
+      en: "en/pages/about/index.html",
+      ja: "ja/pages/about/index.html",
+    })) {
+      const html = fs.readFileSync(path.join(out, rel), "utf8");
+      assert.ok(html.includes(`<link rel="canonical" href="https://content-model.example.com${expected[locale]}">`), `${base}${rel} canonical`);
+      for (const [alternateLocale, href] of Object.entries(expected)) {
+        assert.ok(html.includes(`hreflang="${alternateLocale}" href="https://content-model.example.com${href}"`), `${base}${rel} alternate ${alternateLocale}`);
+      }
+      assert.ok(html.includes(`hreflang="x-default" href="https://content-model.example.com${expected["zh-CN"]}"`));
+    }
+  }
+});

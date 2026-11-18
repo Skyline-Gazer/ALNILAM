@@ -9,9 +9,11 @@ a user's Site, is never published, and contains no third-party media.
 - `content/posts/` holds one Markdown and one MDX post; both carry frontmatter
   keys that are **not** declared in the editor schema, to prove a CMS save does
   not silently drop them.
-- `assets/cms-mark.svg` is a Site asset served at `/site-assets/cms-mark.svg`;
-  `content/posts/cms-local.svg` is a post-relative image resolved into
-  `/_astro/` by the image pipeline.
+- `content/pages/` holds a default-locale page, English and Japanese MDX
+  translations, a nested route and a draft. Page-only category/tag metadata,
+  an undeclared key, a Site asset and a page-relative image exercise isolation.
+- `assets/cms-mark.svg` is served at `/site-assets/cms-mark.svg`; post-relative
+  and page-relative images are processed from their own content collections.
 
 Run the offline adapter from the repository root. This example copies the
 fixture to a separate temporary Git checkout, makes a baseline commit and then
@@ -36,10 +38,10 @@ git -C "$site" status --short
 
 `--expect-branch` does not switch branches or inspect remote branch protection.
 
-`create` adds a post from declared fields (it requires `title` and `pubDate` and
-refuses to overwrite); `edit` writes back to the post. Every write is confined to
-the Site's `content/posts/` (plus `.pages.yml` for `init`), so the tool cannot
-write into another Site or the config.
+`create` and the CLI `edit` command write only posts; the page collection is
+mapped in `.pages.yml`, and the offline roundtrip test supplies its fields
+explicitly to `applyEdit`. All filesystem writes stay inside the selected Site
+posts directory (plus `.pages.yml` for `init`).
 
 Compose both deployment bases (the adapter never writes into the fixture during
 a build):

@@ -135,6 +135,7 @@ test("posts paginate globally with the pinned post first and rel prev/next links
 test("draft posts are excluded from every list, route and feed", (t) => {
   const { out } = ctx;
   assert.equal(fs.existsSync(path.join(out, "posts", "draft-preview")), false, "drafts get no article route");
+  assert.equal(fs.existsSync(path.join(out, "en", "pages", "draft-preview")), false, "draft Site pages get no route");
   const surfaces = [
     "index.html",
     "posts/index.html",
@@ -156,6 +157,81 @@ test("draft posts are excluded from every list, route and feed", (t) => {
     assert.ok(!read(out, rel).includes("draft-preview"), `draft must not leak into ${rel}`);
   }
 });
+test("Site pages render Markdown, canonical URLs, real translations, and sitemap alternates", () => {
+  const { out } = ctx;
+  const expected = {
+    "zh-CN": "https://content-model.example.com/pages/about/",
+    en: "https://content-model.example.com/en/pages/about/",
+    ja: "https://content-model.example.com/ja/pages/about/",
+    "zh-TW": "https://content-model.example.com/zh-TW/pages/about/",
+  };
+  const routes = {
+    "zh-CN": "pages/about/index.html",
+    en: "en/pages/about/index.html",
+    ja: "ja/pages/about/index.html",
+    "zh-TW": "zh-TW/pages/about/index.html",
+  };
+  const bodies = {
+    "zh-CN": "This is the default-locale Site page body.",
+    en: "This is the English Site page body.",
+    ja: "This is the Japanese Site page body.",
+    "zh-TW": "This is the Traditional Chinese Site page body.",
+  };
+
+  for (const [locale, rel] of Object.entries(routes)) {
+    const html = read(out, rel);
+    assert.match(html, /<div[^>]*data-pagefind-body/, `${rel} must use the shared Markdown presentation`);
+    assert.ok(html.includes(bodies[locale]), `${rel} must render its Site-owned body`);
+    assert.ok(html.includes(`<link rel="canonical" href="${expected[locale]}">`), `${rel} must self-canonicalize`);
+    for (const [alternateLocale, href] of Object.entries(expected)) {
+      assert.ok(html.includes(`<link rel="alternate" hreflang="${alternateLocale}" href="${href}">`), `${rel} must link ${alternateLocale}`);
+    }
+    assert.ok(html.includes(`<link rel="alternate" hreflang="x-default" href="${expected["zh-CN"]}">`));
+
+    if (locale === "zh-CN") {
+      assert.match(html, /<meta property="og:type" content="article">/);
+      assert.match(html, /<meta property="og:image" content="https:\/\/images\.example\.test\/site-page\.jpg\?signature=fixture">/);
+      assert.match(html, /<meta property="article:published_time" content="2026-04-05T00:00:00\.000Z">/);
+      assert.match(html, /<meta property="article:modified_time" content="2026-04-06T00:00:00\.000Z">/);
+      assert.match(html, /<meta property="article:section" content="site-page-only-category">/);
+      assert.match(html, /<meta property="article:tag" content="site-page-only-tag">/);
+    }
+  }
+
+  assert.equal(fs.existsSync(path.join(out, "pages", "en", "about")), false, "translated pages have no legacy locale route");
+  assert.equal(fs.existsSync(path.join(out, "en", "pages", "draft-preview")), false);
+  for (const rel of ["archives/index.html", "categories/index.html", "tags/index.html", "rss.xml", "en/rss.xml", "ja/rss.xml"]) {
+    const html = read(out, rel);
+    assert.ok(!html.includes("About Content Model"), `Site pages must stay out of ${rel}`);
+    assert.ok(!html.includes("site-page-only-tag"), `Site page tags must stay out of ${rel}`);
+  }
+  assert.equal(fs.existsSync(path.join(out, "categories", "site-page-only-category")), false);
+  assert.equal(fs.existsSync(path.join(out, "tags", "site-page-only-tag")), false);
+  const sitemap = readSitemap(out);
+  for (const href of Object.values(expected)) assert.ok(sitemap.includes(href), `sitemap must include ${href}`);
+  assert.ok(sitemap.includes(`hreflang="x-default" href="${expected["zh-CN"]}"`));
+  assert.ok(!sitemap.includes("draft-preview"), "draft pages must stay out of the sitemap");
+});
+
+test("Site pages with math link the KaTeX stylesheet", () => {
+  const { out } = ctx;
+  const html = read(out, "en/pages/math/index.html");
+  assert.match(html, /class="katex(?:\s|")/, "page body must render KaTeX markup");
+
+  const mathStylesheets = [...html.matchAll(
+    /<link rel="stylesheet" data-swup-optional="math" href="([^"]+)"\s*\/?>/g,
+  )].map(([, href]) => href);
+  const stylesheetContents = mathStylesheets.map((href) => {
+    const relativePath = new URL(href, "https://content-model.example.com").pathname.replace(/^\/+/, "");
+    const file = path.join(out, relativePath);
+    return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+  });
+  assert.ok(
+    stylesheetContents.some((stylesheet) => stylesheet.includes("KaTeX_Main")),
+    "page head must load KaTeX's stylesheet asset",
+  );
+});
+
 
 test("category index and detail render catalog labels and locale-filtered members", (t) => {
   const { out } = ctx;

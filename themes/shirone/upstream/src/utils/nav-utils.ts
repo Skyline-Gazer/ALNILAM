@@ -58,7 +58,7 @@ export function pruneUnavailableNavLinks(
 /**
  * 当前 URL → 导航高亮标识（pageKey）。
  * 分类/标签筛选优先于归档页（与抽屉/分类栏的筛选优先语义一致）；
- * 文章页、自定义页等无匹配时返回空串（不点亮任何导航项）。
+ * Site Pages return `pages`; article and unmatched custom pages return an empty key.
  */
 export function resolvePageKey(
 	url: Pick<URL, "pathname" | "searchParams">,
@@ -109,6 +109,7 @@ export function resolvePageKey(
 		return "albums";
 	if (pathname === "/series" || pathname.startsWith("/series/"))
 		return "series";
+	if (pathname === "/pages" || pathname.startsWith("/pages/")) return "pages";
 	if (pathname === "/about") return "about";
 	return "";
 }
