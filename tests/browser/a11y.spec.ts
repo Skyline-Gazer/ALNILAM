@@ -59,3 +59,30 @@ test("axe critical/serious home prefers-reduced-motion", async ({ browser }) => 
     await context.close();
   }
 });
+
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+for (const origin of origins) {
+  test(
+    `series navigation names include visible titles and position text at ${new URL(origin).pathname || "/"}`,
+    async ({ page }) => {
+      const response = await page.goto(origin + "/posts/hello-alnilam/", { waitUntil: "networkidle" });
+      expect(response?.status()).toBe(200);
+      const rows = page.locator("a.series-card__row");
+      expect(await rows.count()).toBeGreaterThan(0);
+      for (const row of await rows.all()) {
+        const title = (await row.locator(".series-card__row-title").innerText())
+          .replace(/\s+/g, " ")
+          .trim();
+        const part = (await row.locator(".series-card__row-meta").innerText())
+          .replace(/\s+/g, " ")
+          .trim();
+        await expect(row).toHaveAccessibleName(
+          new RegExp(`${escapeRegex(title)}.*${escapeRegex(part)}`, "s"),
+        );
+      }
+    },
+  );
+}
