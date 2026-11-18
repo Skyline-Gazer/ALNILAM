@@ -73,11 +73,15 @@ for (const origin of ORIGINS) {
 			await page.keyboard.press("Enter");
 			await page.locator("#search-input-desktop").fill(NO_HIT);
 			await expect(page.locator("#search-panel .m3-blog-searchpanel__status")).toHaveText("没有找到结果");
+			await expect(page.locator("#search-panel .m3-blog-searchpanel__status")).toBeVisible();
 
-			// Crossing the breakpoint closes the desktop dialog; reopening the
-			// mobile dialog gives its own empty input and must clear the stale state.
+			// The desktop capsule collapses when its input blurs at the breakpoint.
+			// Wait for that state change, then open the mobile panel with its own input.
 			await page.setViewportSize({ width: 390, height: 844 });
+			await expect(page.locator("#search-input-desktop-switch")).toHaveAttribute("aria-expanded", "false");
+			await expect(page.locator("#search-switch")).toHaveAttribute("aria-expanded", "false");
 			await page.locator("#search-switch").click();
+			await expect(page.locator("#search-switch")).toHaveAttribute("aria-expanded", "true");
 			await expect(page.locator("#search-panel input")).toBeVisible();
 			await expect(page.locator("#search-panel .m3-blog-searchpanel__status")).toHaveCount(0);
 			await page.locator("#search-panel input").fill(NO_HIT);
