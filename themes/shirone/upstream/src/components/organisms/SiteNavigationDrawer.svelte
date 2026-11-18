@@ -142,9 +142,12 @@ function syncFromRoute() {
 	}
 }
 
-// 点击链接后复用模态关闭路径，先恢复背景交互状态再由 Swup 导航。
+// 点击链接后收起抽屉；外部链接不改变路由，高亮已由路由同步维护
 function handleNavClick() {
-	document.dispatchEvent(new CustomEvent("site-drawer:close"));
+	open = false;
+	document
+		.getElementById("nav-drawer-switch")
+		?.setAttribute("aria-expanded", "false");
 }
 
 function toggleGroup(group: string) {

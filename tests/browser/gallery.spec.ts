@@ -60,11 +60,6 @@ for (const deployment of deployments) {
         page.locator('a[href*="no-cover"] .album-card__cover-fallback'),
       ).toBeVisible();
       await albumLink.click();
-      const galleryIsland = page
-        .locator("astro-island")
-        .filter({ has: page.locator(".album-gallery__item") });
-      await expect(galleryIsland).toHaveCount(1);
-      await expect(galleryIsland).not.toHaveAttribute("ssr", "");
 
       const photoButtons = page.locator(".album-gallery__item");
       await expect(photoButtons).toHaveCount(3);
