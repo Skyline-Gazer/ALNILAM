@@ -28,6 +28,8 @@ function reportMetrics(report) {
     totalByteWeight: numeric(audits["total-byte-weight"]?.numericValue),
     scriptTransferBytes: numeric(bytes(["script"])) ,
     cssTransferBytes: numeric(bytes(["stylesheet", "css"])),
+    imageTransferBytes: numeric(bytes(["image"])),
+    fontTransferBytes: numeric(bytes(["font"])),
   };
 }
 
