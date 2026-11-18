@@ -17,7 +17,7 @@ Operational notes for ALNILAM maintainers. Public contributor guidance is in [CO
 5. Create the annotated tag on `main`'s release merge commit:
    ```bash
    git tag -a vX.Y.Z -m "ALNILAM vX.Y.Z" <main-merge-sha>
-   git push github vX.Y.Z
+   git push origin vX.Y.Z
    ```
 6. Set the repository variable `ALNILAM_OLD_CORE_SHA` to the previous release's tag SHA — the CI upgrade/rollback step then always tests real release-to-release upgrades.
 
@@ -32,7 +32,7 @@ Never tag `dev`. Never tag a commit whose `verify` check has not passed on `main
 5. External-Site composition + isolation (byte-compare of the Site before/after)
 6. Two-version Core upgrade/rollback against an unchanged external Site
 7. Artifact budget check (wired into `pnpm build`): external script-tag scan on posts pages, ≤2 islands/page, explicit img dimensions and provenance shape. Inline hydration and canonical correctness are not covered; see the [P0 report](p0/P0-ACCEPTANCE.md).
-8. ADS gitlink pin: match `.ads` against `ads-pin.txt` and root `AGENTS.md` (`b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`). Public CI does not fetch the private submodule.
+8. [ADS gitlink pin check](../scripts/check-ads-pin.sh): compares the current commit's `.ads` gitlink with the exact SHA in `ads-pin.txt`; it does not read root `AGENTS.md`. A missing gitlink is accepted only when the target is `main`. Public CI does not fetch the private submodule.
 9. Markdown link checks, production-boundary negative fixtures and a two-round offline release DAG. The candidate-tree guard runs inside required `verify`; tool-specific `.gitignore` entries remain development-only, with an exact exported-candidate positive check. Built artifacts are also scanned in verify.
 
 ## Known operational notes

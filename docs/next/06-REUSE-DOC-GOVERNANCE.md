@@ -84,7 +84,7 @@ ADR identifiers are unique and traceable: [0001](../adr/0001-shirone-core-site.m
 - Verified upstream release [ADS v0.4.1](https://github.com/Skyline-Gazer/ADS/releases/tag/v0.4.1), **commit SHA `3abf6025657a5d716476029cc8cbf5239543210b`**; annotated tag object `e38d01ff176448a13180afe2419c1c9c94a6ab43` is not the gitlink.
 - ALNILAM's `dev` gitlink was `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac` (v0.3) before adoption; PR #84 recorded the historical move to v0.4.1. That historical adoption does not describe the current project-specific pin.
 - ADS v0.4.1 is historical release/adoption evidence from PR #84. Its release-level CodeGraph/RTK descriptions do not mean those tools or optional profiles are enabled by ALNILAM's current project-specific pin.
-- ALNILAM public CI MUST NOT recursively fetch the private ADS repo. Verify `.ads` gitlink and root policies against pinned external release metadata. ADS v0.4 MIT license does not automatically relicense ALNILAM's Apache-2.0 work.
+- ALNILAM public CI MUST NOT recursively fetch the private ADS repo. The [pin check](../../scripts/check-ads-pin.sh) compares `.ads` with the development SHA in [ads-pin.txt](../../ads-pin.txt); it does not read [AGENTS.md](../../AGENTS.md), and it accepts a missing gitlink when the target is `main`. Keep v0.4.1 release metadata as historical adoption evidence, not current pin verification. ADS v0.4 MIT does not automatically relicense ALNILAM's Apache-2.0 work.
 - **Historical adoption evidence:** the P0 report records the v0.4.1 review. Stable CodeGraph publication was NOT_FOUND; no claim is made that stable CodeGraph or optional CodeGraph/RTK profiles are active under the current pin.
 
 ## F. Deferred upstream build optimizations
