@@ -1,27 +1,25 @@
 # ALNILAM — Current Agent Handoff
 
-## Live-state update — 2026-11-19 · P6 browser and Lighthouse acceptance
+## Live-state update — 2026-11-19 · P6 #74 exact-head acceptance
 
-This records lab evidence for PR #164 at implementation SHA `1effbad9f42832f1609ebbf1e87215962ccaf172`; the Site digest was `527909af24317e93ea7129e89e0da952397b95ac1fdea93bd0646b29e2dfd87f`. Required PR Verify [44356195883](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44356195883) and the opt-in P6 workflow [44357215594](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44357215594) both passed. The P6 workflow is evidence, not a new required check.
+This update supersedes the 2026-11-18 #74 lab note below. PR #164 remains open and unmerged.
 
-### #74 lab results
+### Remote checks and lab evidence
 
-Three Lighthouse runs per URL covered five routes at root and `/ALNILAM/` (`/`, `/posts/`, the demo article, `/search/`, `/tags/`) for mobile and desktop:
+- GitHub `dev` is `e1d0174be5cda5996b39fb59737eca55782b5cc2`. PR #164 uses that exact base and candidate head `92e3e52ab783db891efec04ace4582b6230b446f`.
+- Required Verify passed on the PR head in [run 44374711197](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44374711197). The opt-in P6 dispatch also passed on the same SHA in [run 44379047820](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44379047820); its `p6-performance-audit-92e3e52ab783db891efec04ace4582b6230b446f` artifact contains the Lighthouse JSON/HTML and browser evidence.
+- The P6 browser suite recorded 249 passed, 1 intentional skip, 0 unexpected, and 0 flaky tests. Baseline and candidate used the same Site digest: `527909af24317e93ea7129e89e0da952397b95ac1fdea93bd0646b29e2dfd87f`.
+- Lighthouse covers home, posts, article, search and tags at root and `/ALNILAM/`: 10 URLs, 3 runs per URL, mobile and desktop (60 reports). Candidate LCP medians range 2708–3333 ms mobile and 2714–3332 ms desktop, below the 4000 ms assertion. Maximum normal CLS is 0.001639 mobile and 0 desktop; per-route CLS deltas versus baseline are zero. Lighthouse accessibility score is 1 with no reported findings on all 20 route/form-factor summaries. The axe WCAG 2.1 A/AA critical/serious scan passed all 20 route/base/viewport combinations; the reduced-motion scan passed.
+- The negative CLS control measured `0.123539` against the `0.1` budget and recorded `EXPECTED_RED_VERIFIED`; normal mobile and desktop receipts recorded `BASELINE_RECORDED`.
+- Matched remote baseline [run 44369368204](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44369368204) used product baseline `4ea12382c6320523747c50a819dbe136ba2c096f` and the same Site digest. Request counts are identical; per-route transfer bytes changed by -85 to +28 bytes. Eighteen of twenty route/form-factor LCP medians changed by at most 57 ms. Two noisy medians moved in opposite directions: mobile `/ALNILAM/` +370 ms and desktop `/posts/` -518 ms. Raw reports show the same server-rendered language-switch link and approximately 2.35/2.86 s render-delay bands.
+- Five-run local follow-up on mobile `/ALNILAM/` measured medians 2816 ms baseline and 2803 ms candidate (-13 ms), so the remote +370 ms result did not reproduce. A separate local five-run `/posts/` check showed both builds switching between the same low/high render-delay bands; mode counts changed root and nested medians. This remains a variance caveat, not evidence of a deterministic product slowdown; the local measurements supplement and do not replace the remote artifacts.
+- Field p75 remains **NOT VERIFIED**; manual screen-reader testing remains **NOT RUN**. Keep #74 Open / In Progress; lab evidence does not complete the remaining manual acceptance.
 
-| Form factor | LCP median range | Maximum CLS | Performance score | Accessibility score |
-| --- | ---: | ---: | ---: | ---: |
-| Mobile | 2.709–3.344 s | 0.00164 | 0.90–0.96 | 1.00 |
-| Desktop | 2.714–3.345 s | 0.00000 | 0.68–0.74 | 1.00 |
+### P6 parent and authority status
 
-Across the reports, request counts were 38–52; total byte weight was 210,457–337,201 B, including 165,570–194,707 B script, 33,087–42,462 B CSS, 0–83,572 B image and 0 B font transfer. Every page had no Lighthouse accessibility findings. Browser evidence recorded 249 passed, 1 intentional skip, 0 failed; the WCAG axe critical/serious gate passed on root and nested base. The negative CLS fixture was `EXPECTED_RED_VERIFIED` (mobile 0.12354 > 0.10). These are local lab results, not field data; no comparable before/after performance delta was measured.
-
-Field p75 remains `NOT VERIFIED` (anonymous PageSpeed API returned HTTP 429). Manual screen-reader verification remains `NOT RUN`; no screen-reader runtime is available in this workstation. Issue #74 stays Open / In Progress; the available CI and lab evidence do not complete that manual acceptance.
-
-### P6 and repository state
-
-- Issue #42 remains Open / In Progress. Its unchecked children are #74, #81 and #166; #35 visual acceptance also remains Owner-owned.
-- Project #17 read-back: #42 In Progress, #74 In Progress, #81 In Progress, #136 Todo, #166 Todo. No status transition is supported by the current evidence.
-- GitHub `dev` is `e1d0174be5cda5996b39fb59737eca55782b5cc2`; `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`. CNB `dev` remains frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; ADS remains pinned at `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`.
+- Project #17 readback: #72, #73, #75 and #76 Done; #74 and #81 In Progress; #166 Todo; #42 In Progress. #94 and #138 remain separate In Progress tracks.
+- GitHub `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; CNB `dev` remains frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; ADS remains pinned at `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`.
+- PR #164 has not been merged. No `main`, CNB, Production, tag or ADS-pin change was made.
 
 
 ## Live-state update — 2026-11-18 · Static-page acceptance and deployment boundaries
