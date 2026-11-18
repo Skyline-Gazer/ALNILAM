@@ -22,6 +22,19 @@ def broken_links(root, files):
                 errors.append(f'{relative}: {target}')
     return errors
 
+def duplicate_adr_ids(root):
+    seen = set()
+    duplicates = set()
+    for path in sorted((root / 'docs' / 'adr').glob('*.md')):
+        match = re.match(r'^(\d{4})-', path.name)
+        if match is None:
+            continue
+        identifier = match.group(1)
+        if identifier in seen:
+            duplicates.add(identifier)
+        seen.add(identifier)
+    return sorted(duplicates)
+
 
 class DocsTests(unittest.TestCase):
     def test_tracked_markdown_links(self):
@@ -39,6 +52,16 @@ class DocsTests(unittest.TestCase):
             root = Path(directory)
             (root / 'index.md').write_text('[bad](missing.md) [local](#anchor) [web](https://example.com)')
             self.assertEqual(broken_links(root, ['index.md']), ['index.md: missing.md'])
+
+    def test_adr_identifiers_are_unique_and_duplicate_ids_are_rejected(self):
+        self.assertEqual(duplicate_adr_ids(ROOT), [])
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            adr_dir = root / 'docs' / 'adr'
+            adr_dir.mkdir(parents=True)
+            (adr_dir / '0001-first.md').write_text('# ADR 0001 — first')
+            (adr_dir / '0001-second.md').write_text('# ADR 0001 — second')
+            self.assertEqual(duplicate_adr_ids(root), ['0001'])
 
 
 if __name__ == '__main__':

@@ -100,14 +100,14 @@ Automated acceptance: `node scripts/upgrade-check.mjs --old <historical-core-sha
 
 - Primary development: GitHub `dev` through Issue-linked PRs; GitHub Issues and Project #17 remain the task tracker; `main` is release-only. The active `alnilam-dev` / `alnilam-main` rulesets require PRs and the `verify` check, with no bypass or force pushes.
 - CNB `dev` is frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; new product work and current validation do not run through CNB.
-- Vercel `xxxx` is connected to `Skyline-Gazer/ALNILAM` with production branch `dev`; see [Handoff](docs/HANDOFF.md) for the live deployment and provenance.
+- Vercel: the existing public Demo project remains on GitHub `dev`; separate `alnilam-production-next` tracks `main` with SSO protection. Its deployment URL is gated; first formal Production release and custom-domain activation remain Owner decisions. See [Handoff](docs/HANDOFF.md).
 - Tagging: `vX.Y.Z` on `main` only, annotated, created by the release PR merge. See [CHANGELOG.md](CHANGELOG.md) for versioning rules (SemVer; `lang`/`translationKey` are schema-v1 additive fields).
 - ADS pinned at `.ads` to commit `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` (ADS `cnb/dev` development line, not a release tag; private — optional for public users, `git submodule update --init --checkout .ads` requires authorized access). CI never clones it.
-- Docs: [Architecture](docs/ARCHITECTURE.md) · [Site onboarding](docs/SITE_ONBOARDING.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/HANDOFF.md)
+- Docs: [Contributing](CONTRIBUTING.md) · [Architecture](docs/ARCHITECTURE.md) · [Site onboarding](docs/SITE_ONBOARDING.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/HANDOFF.md)
 - Attribution: [CREDITS.md](CREDITS.md) · [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) · [NOTICE](NOTICE)
 - GitHub Project #17: https://github.com/orgs/Skyline-Gazer/projects/17/
 - ALNILAM Next: G0-F froze the P1 Plan/Spec through [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77). Shirone slice [PR #95](https://github.com/Skyline-Gazer/ALNILAM/pull/95) is merged to `dev`; P1 is accepted under closed [#37](https://github.com/Skyline-Gazer/ALNILAM/issues/37), including the integrated #49 routing/lifecycle, #50 browser evidence and #79 Astro compatibility work. Reusable ALNILAM behavior (immutable Site build, v2 YAML contract, CI, Pagefind and optional modules) is retained; production release remains separately gated. Future Astro build acceleration stays out of release scope until official stabilization.
-- ADS adoption follows the v0.5.0 Lite model: [lite adoption](https://github.com/Skyline-Gazer/ADS/blob/b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695/docs/lite-adoption.md). Optional CodeGraph/RTK and strict profiles are not enabled. This project remains Apache-2.0; ADS's MIT license does not relicense ALNILAM.
+- ADS: the current project pin is `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` on ADS `cnb/dev`, a development line rather than a release. PR #84 records historical v0.4.1 adoption; optional CodeGraph/RTK and strict profiles remain disabled. Public CI does not fetch the private submodule; see [AGENTS](AGENTS.md).
 
 ## License
 

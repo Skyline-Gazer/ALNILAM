@@ -47,24 +47,26 @@ For every nontrivial change that removes or rewrites existing ALNILAM code, the 
 
 ## D. Document governance — single source of truth, owners and timing
 
-The repository Owner reviews product and normative decisions; the maintainer of a change updates the affected documents in that same PR. These are responsibility roles, not a claim that named document owners have been assigned. Named owners and their review acceptance remain open under [#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81). Each document is versioned with the Git revision containing it; historical receipts retain the revision and date they describe.
+The repository Owner owns product/normative decisions, ADR and Spec acceptance, and release/deployment authorization. The change maintainer owns accuracy of directly affected docs, examples, and tests in the same PR. These are role owners; no personal names are assigned here, and delegation of named people remains an Owner decision. Each artifact version is its Git revision; historical receipts retain their source SHA and date.
 
-| Artifact | Authority / upkeep | Required update trigger |
-| --- | --- | --- |
-| [Plan](00-PLAN.md) | Owner-approved product scope, feature choice and risks; plans are not proof of implementation | Product direction or scope changes |
-| [Spec](01-SPEC.md) and linked normative annexes | Testable requirements and behavior; change requires recorded Owner review and affected Issue links | Before affected work enters Ready |
-| [Architecture decisions](../adr/) | Decision, alternatives, consequences and references; check each ADR's own status | Framework/API/source selection or compatibility decisions |
-| [AGENTS](../../AGENTS.md) | Agent governance and ADS consumer rules | Governance or tooling changes |
-| [README](../../README.md), [PRODUCT](../PRODUCT.md), [ARCHITECTURE](../ARCHITECTURE.md) | User entry point, product behavior and architecture boundaries, respectively; distinguish shipped behavior from targets | Product behavior or build interfaces change |
-| [Site onboarding](../SITE_ONBOARDING.md), [Site contract](../../scripts/site-contract.mjs), [composition CLI](../../scripts/compose.mjs) | Onboarding and executable Site/config interfaces; tests and source establish actual behavior | Schema, CLI, configuration or content layout changes |
-| [ROADMAP](../ROADMAP.md), [PROJECT_TRACKING](../PROJECT_TRACKING.md) | Planning and tracker context; live Issues and Project readback establish current status | Scope or status changes |
-| [HANDOFF](../HANDOFF.md), [maintainer release procedure](../MAINTAINERS.md#release-procedure-vxyz) | Handoff context and release instructions; authorize publication separately | Handoff, release or operational procedure changes |
-| [CHANGELOG](../../CHANGELOG.md), [NOTICE](../../NOTICE), [THIRD_PARTY_NOTICES](../../THIRD_PARTY_NOTICES.md) | Released changes and upstream attribution | Release, copied sources/assets or license changes |
-| [Traceability](03-TRACEABILITY.md) and task Issues | Requirement mapping and task-specific proof; link actual PR, revision and CI/browser artifacts rather than inferring a pass | Every task or Phase gate |
+| Artifact | Decision owner | Maintenance owner | Required update trigger |
+| --- | --- | --- | --- |
+| [Plan](00-PLAN.md) | Repository Owner approves product scope and risks | Change maintainer updates affected planning links | Product direction or scope changes |
+| [Spec](01-SPEC.md) and normative annexes | Repository Owner approves normative behavior | Change maintainer updates impacted requirements and evidence | Before affected work enters Ready |
+| [ADRs](../adr/) | Repository Owner approves decisions and status | Decision author / maintainer records alternatives, consequences and links | Framework/API/source or compatibility decisions |
+| [AGENTS](../../AGENTS.md) | Repository Owner | Repository maintainer | Agent governance or tooling changes |
+| [README](../../README.md), [PRODUCT](../PRODUCT.md), [ARCHITECTURE](../ARCHITECTURE.md) | Repository Owner owns product claims | Change maintainer aligns shipped behavior with source | Product behavior or build interfaces change |
+| [CONTRIBUTING](../../CONTRIBUTING.md) | Repository Owner controls authorization and project policy | Contributors and change maintainers follow shared branch, test, Site, and licensing rules | Contributor process or repository policy changes |
+| [Site onboarding](../SITE_ONBOARDING.md), [Site contract](../../scripts/site-contract.mjs), [composition CLI](../../scripts/compose.mjs) | Maintainer owns executable contract; Owner approves material Site-boundary changes | Source change owner updates docs and tests together | Schema, CLI, configuration or content layout changes |
+| [ROADMAP](../ROADMAP.md), [PROJECT_TRACKING](../PROJECT_TRACKING.md) | Repository Owner owns scope; live Project readback owns status claims | Issue/PR owner records evidence and current links | Scope or status changes |
+| [HANDOFF](../HANDOFF.md), [release procedure](../MAINTAINERS.md#release-procedure-vxyz) | Repository Owner owns authorization boundaries; maintainer owns evidence | Integrator records verified refs, CI and deployment evidence | Handoff, release or operational procedure changes |
+| [CHANGELOG](../../CHANGELOG.md), [NOTICE](../../NOTICE), [THIRD_PARTY_NOTICES](../../THIRD_PARTY_NOTICES.md), [CREDITS](../../CREDITS.md), [LICENSES](../../LICENSES/) | Repository Owner approves licensing/attribution decisions; no product Credits page is permitted | Maintainer updates repository-level notices and provenance | Release, copied source/assets or license changes |
+| [Traceability](03-TRACEABILITY.md) and task Issues | Repository Owner approves requirement mapping | Issue/PR owner links real PR, commit and CI/browser evidence | Every task or Phase gate |
 
-The existing [Markdown link test](../../scripts/tests/docs_test.py) checks tracked Markdown relative file paths and includes a missing-link negative fixture. GitHub is the development authority: its [Actions CI workflow](../../.github/workflows/ci.yml) runs the check on pull requests and the `verify` status is required by the active ruleset. The CNB candidate in `.cnb.yml` is retained with the frozen CNB workflow, not as a current development gate. Candidate-controlled tests are not a trusted independent gate, and a configured pipeline is not proof until the observed CI status is recorded. Neither check validates anchors, external links, Markdown formatting, examples or feature claims. Independent Site onboarding requires reviewed evidence from a real separately owned Site; demo fixtures alone do not close that acceptance.
+The existing [Markdown link test](../../scripts/tests/docs_test.py) checks tracked Markdown relative targets and includes a deliberate missing-link negative fixture; this PR also rejects duplicate ADR identifiers. GitHub Actions `verify` runs these tests on pull requests, while `.cnb.yml` retains a separate candidate under the frozen CNB workflow. `pnpm test` and build checks exercise executable Site contracts and fixtures, but do not prove every normative example or feature claim. No Markdown frontmatter convention or dedicated style checker exists; external anchors and claims still need review. Keep the checks narrow rather than adding an unmaintained docs framework.
+Independent Site onboarding remains unverified: GitHub CI copies `sites/demo`, and the CNB script fetches a pinned test fixture. Neither is a real independently owned user Site. `docs/SITE_ONBOARDING.md` records that real use has not been exercised; closure requires review and regression evidence from an independent Site owner.
 
-ADR identifiers are not yet unique: [native MPA/Pagefind](../adr/0002-native-mpa-and-pagefind-lifecycle.md) and the [YAML requirement delta](../adr/0002-vnext-yaml-requirement-delta.md) both use `0002`. Link the full filename until a reviewed decision resolves the collision without losing history. The ADR inventory and requirement-to-Issue-to-run evidence remain incomplete; this table is not an audit sign-off.
+ADR identifiers are unique and traceable: [0001](../adr/0001-shirone-core-site.md) records Shirone and retained ALNILAM; [0002](../adr/0002-native-mpa-and-pagefind-lifecycle.md) records native MPA/Pagefind and is accepted through PR #97; [0003](../adr/0003-vnext-yaml-requirement-delta.md) records the implemented YAML-only Site v2 decision; [0004](../adr/0004-site-locale-taxonomy-seo.md) records locale/taxonomy/SEO rationale against the single normative [04 contract](04-ROUTING-SEO-LLMS-V2.md); [0005](../adr/0005-optional-integrations-disabled-by-default.md) records the optional-module boundary; [0006](../adr/0006-ads-consumer-pin.md) records the current ADS consumer pin. Target requirements remain distinct from implementation evidence. Current ADS policy lives in [AGENTS.md](../../AGENTS.md) and [ads-pin.txt](../../ads-pin.txt); current task-to-run proof belongs in HANDOFF and linked Issues, not this inventory.
 
 ### Governance rules
 
@@ -76,13 +78,14 @@ ADR identifiers are not yet unique: [native MPA/Pagefind](../adr/0002-native-mpa
 6. **No duplicate trackers**: GitHub Project #17 remains tracker, native Milestones/Phase parent/subissues; Markdown is source documentation, not an invented parallel status database.
 7. **Before Agent execution**: all required accounts, external Site credentials, service provider config and permissions are collected **up front**; optional provider gaps cannot block independent feature work. Never ask for private access just to validate public CI.
 
-## E. ADS v0.4.1 adoption: exact state and boundaries
+## E. ADS v0.4.1 adoption and current consumer pin
+- **Current ALNILAM consumer pin:** `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` on ADS `cnb/dev`, a development line rather than a release tag. `AGENTS.md` and `ads-pin.txt` are current policy; optional CodeGraph/RTK and strict profiles are not enabled.
 
 - Verified upstream release [ADS v0.4.1](https://github.com/Skyline-Gazer/ADS/releases/tag/v0.4.1), **commit SHA `3abf6025657a5d716476029cc8cbf5239543210b`**; annotated tag object `e38d01ff176448a13180afe2419c1c9c94a6ab43` is not the gitlink.
-- ALNILAM `dev` Gitlink was `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac` (v0.3) before adoption; merged PR #84 now pins v0.4.1 and updates AGENTS/README. Historical v0.3 remains traceability only.
-- ADS v0.4.1 strengthens developer-tool governance: **CodeGraph and official full RTK**, latest stable channel when officially published, controlled CodeGraph source fallback only with explicit authorization, dev-only tool artifacts/config and production guard, remote-first verification. It remains a standards submodule: it does **not** replace Shirone and does **not** supply a new ALNILAM build engine.
+- ALNILAM's `dev` gitlink was `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac` (v0.3) before adoption; PR #84 recorded the historical move to v0.4.1. That historical adoption does not describe the current project-specific pin.
+- ADS v0.4.1 is historical release/adoption evidence from PR #84. Its release-level CodeGraph/RTK descriptions do not mean those tools or optional profiles are enabled by ALNILAM's current project-specific pin.
 - ALNILAM public CI MUST NOT recursively fetch the private ADS repo. Verify `.ads` gitlink and root policies against pinned external release metadata. ADS v0.4 MIT license does not automatically relicense ALNILAM's Apache-2.0 work.
-- **Adoption evidence:** pinned Gitlink plus CodeGraph MCP/worktree query, official source-fallback provenance, full RTK hook/compression/failure behavior and production-boundary fixtures are recorded in the P0 report. Stable CodeGraph publication remains NOT_FOUND; no claim of a stable CodeGraph release.
+- **Historical adoption evidence:** the P0 report records the v0.4.1 review. Stable CodeGraph publication was NOT_FOUND; no claim is made that stable CodeGraph or optional CodeGraph/RTK profiles are active under the current pin.
 
 ## F. Deferred upstream build optimizations
 

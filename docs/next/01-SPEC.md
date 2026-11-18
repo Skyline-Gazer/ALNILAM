@@ -2,7 +2,7 @@
 
 > **Historical requirement snapshot:** the frozen targets below do not by themselves establish current implementation or development authority. The current Site contract is YAML-only schema v2 (`alnilam.config.yaml`); TOML-only Sites fail closed without automatic migration. See [Site onboarding](../SITE_ONBOARDING.md), [Site contract](../../scripts/site-contract.mjs), and [HANDOFF](../HANDOFF.md) for current behavior, GitHub development authority and evidence.
 
-Current Owner requirement delta (2026-10-27): vNext Site is YAML-only. See [ADR 0002](../adr/0002-vnext-yaml-requirement-delta.md). Historical frozen v1/TOML text below remains evidence; no parser/migration change is implemented by the CNB Pilot.
+Current Owner requirement delta (2026-10-27): vNext Site is YAML-only. See [ADR 0003](../adr/0003-vnext-yaml-requirement-delta.md). The frozen v1/TOML text below remains historical; the current schema v2 behavior and validation are in Site onboarding and the Site contract.
 
 > **FROZEN P1 SCOPE · Owner G0-F approval 2026-10-26** ([decision](08-G0-F-DECISION.md)). Requirements are targets, not features already shipped in v0.1.3. P1 implementation is authorized through reviewed dev PRs, not production publication. The words MUST/SHOULD describe target behavior, not capabilities already shipped in v0.1.3. Linked plan: [00-PLAN.md](00-PLAN.md).
 
@@ -44,7 +44,7 @@ Current Owner requirement delta (2026-10-27): vNext Site is YAML-only. See [ADR 
 
 ### Reuse-first and document-governance normative annex
 
-**[06-REUSE-DOC-GOVERNANCE.md](06-REUSE-DOC-GOVERNANCE.md) binds every Phase.** Preserve the existing `Skyline-Gazer/ALNILAM` repository and working Core/Site, CI and tests while using Shirone as the ONE product frontend base. Every destructive code change requires a Reuse Decision Record and proof; copying upstream code does not imply rewriting ALNILAM. Maintain documents and evidence with the corresponding code PR, not as a release-end afterthought. ADS v0.4.1 is pinned via merged PR #84, and experimental build acceleration is only a post-stable TODO #83.
+**[06-REUSE-DOC-GOVERNANCE.md](06-REUSE-DOC-GOVERNANCE.md) binds every Phase.** Preserve the existing `Skyline-Gazer/ALNILAM` repository and working Core/Site, CI and tests while using Shirone as the ONE product frontend base. Every destructive code change requires a Reuse Decision Record and proof; copying upstream code does not imply rewriting ALNILAM. Maintain documents and evidence with the corresponding code PR, not as a release-end afterthought. PR #84 records historical ADS v0.4.1 adoption; the current pin is `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` per `AGENTS.md` and `ads-pin.txt`. Optional ADS profiles remain disabled; experimental build acceleration is only a post-stable TODO #83.
 
 ### Official-Astro-first implementation criterion
 
@@ -77,6 +77,8 @@ Current Owner requirement delta (2026-10-27): vNext Site is YAML-only. See [ADR 
 | NFR-08 | MUST | **Document governance**: correct single-source Plan/Spec/ADR, current-vs-draft labels, implementation-driven README/PRODUCT/ARCHITECTURE/SITE_ONBOARDING/HANDOFF/ROADMAP/RELEASE/NOTICE, traceability and docs CI. | #81 document inventory, link/schema/version checks, updated owner-and-Site docs in same functional PR, historical evidence preserved, CI with negative fixture. |
 | NFR-09 | MUST | ADS consumer governance follows **v0.4.1** rather than old v0.3, with CodeGraph and **official full RTK** development-only checks and real production boundary. | Gitlink commit matches v0.4.1 `3abf602...`; public CI does not need private ADS clone; dev-only CodeGraph/RTK, production-boundary negative tests, verified preflight/hook status, explicit approval for installs; #82 and merged PR #84. |
 | NFR-10 | MUST | Experimental Astro incremental/parallel build acceleration is **out of current release scope** until officially stable and independently validated. | Future-only #83 has no M1/M2/M3 Milestone or Phase Gate; revisit stable release proof, Shirone compatibility, representative performance and reproducibility after stabilization. |
+
+**Current consumer-policy status:** NFR-09 is retained as historical G0-F requirement text. It does not describe the current ADS pin or authorize optional developer tools; current policy is [ADR 0006](../adr/0006-ads-consumer-pin.md), [AGENTS.md](../../AGENTS.md), and [ads-pin.txt](../../ads-pin.txt).
 
 ## Acceptance scenarios (Gherkin-style)
 
