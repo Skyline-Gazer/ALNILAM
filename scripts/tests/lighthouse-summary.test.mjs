@@ -77,12 +77,14 @@ test("missing resource summaries stay unknown while empty summaries measure zero
   for (let index = 0; index < 3; index++) addReport("http://127.0.0.1/missing", undefined, index);
   addReport("http://127.0.0.1/partial", undefined, 3);
   addReport("http://127.0.0.1/partial", [], 4);
-  addReport("http://127.0.0.1/partial", [{ resourceType: "script", transferSize: 30 }], 5);
+  addReport("http://127.0.0.1/partial", [{ resourceType: "script", transferSize: 30, requestCount: 2 }], 5);
   fs.writeFileSync(path.join(directory, "manifest.json"), JSON.stringify(manifest));
 
   const summary = summarizeLighthouseReports(directory);
   const missing = summary.pages.find((page) => page.url.endsWith("/missing"));
   const partial = summary.pages.find((page) => page.url.endsWith("/partial"));
+  assert.equal(missing.median.requestCount, null);
+  assert.equal(partial.median.requestCount, 1);
   assert.deepEqual(
     ["scriptTransferBytes", "cssTransferBytes", "imageTransferBytes", "fontTransferBytes"].map((key) => missing.median[key]),
     [null, null, null, null],

@@ -12,10 +12,14 @@ const median = (values) => {
 
 function reportMetrics(report) {
   const audits = report.audits ?? {};
-  const network = audits["network-requests"]?.details?.items ?? [];
+  const networkItems = audits["network-requests"]?.details?.items;
   const resourceItems = audits["resource-summary"]?.details?.items;
   const resources = Array.isArray(resourceItems) ? resourceItems : [];
-  const requestCount = network.length || resources.reduce((total, item) => total + (item.requestCount ?? 0), 0);
+  const networkCount = Array.isArray(networkItems) ? networkItems.length : null;
+  const resourceRequestCount = Array.isArray(resourceItems)
+    ? resources.reduce((total, item) => total + (item.requestCount ?? 0), 0)
+    : null;
+  const requestCount = networkCount > 0 ? networkCount : resourceRequestCount ?? networkCount;
   const bytes = (types) => {
     if (!Array.isArray(resourceItems)) return null;
     return resources
