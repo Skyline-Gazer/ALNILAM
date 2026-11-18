@@ -1,6 +1,6 @@
 # CNB Cloud Browser / Plugin Pilot — ALNILAM #94
 
-**Status: source integration in Draft #96; full native acceptance pending.** The isolated candidate merges fetched `dev` `78d63d9bf9d78b1e4f64640fedfc7c079256ef4f` via history-preserving merge `297c0464b0d5aebf14ba4517dec792849e06b690` and retains all seven historical Pilot commits. ALNILAM stays GitHub Primary. Do not merge #96 to dev until its actual CNB acceptance, change production main, create production tags or begin P2 here.
+**Historical snapshot (2026-10-27):** the isolated candidate merged fetched `dev` `78d63d9bf9d78b1e4f64640fedfc7c079256ef4f` via history-preserving merge `297c0464b0d5aebf14ba4517dec792849e06b690` and retained all seven historical Pilot commits. At that time, source integration was Draft #96 and full native acceptance was pending. Those statuses describe the isolated pilot, not current ALNILAM CI or authority: GitHub is the current provider and CNB refs are frozen. The pilot did not authorize a `dev` merge, production `main` change, release tags or P2 work.
 
 ## Reuse and change boundary
 

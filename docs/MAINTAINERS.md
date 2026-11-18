@@ -33,12 +33,12 @@ Never tag `dev`. Never tag a commit whose `verify` check has not passed on `main
 6. Two-version Core upgrade/rollback against an unchanged external Site
 7. Artifact budget check (wired into `pnpm build`): external script-tag scan on posts pages, ≤2 islands/page, explicit img dimensions and provenance shape. Inline hydration and canonical correctness are not covered; see the [P0 report](p0/P0-ACCEPTANCE.md).
 8. [ADS gitlink pin check](../scripts/check-ads-pin.sh): compares the current commit's `.ads` gitlink with the exact SHA in `ads-pin.txt`; it does not read root `AGENTS.md`. A missing gitlink is accepted only when the target is `main`. Public CI does not fetch the private submodule.
-9. Markdown link checks, production-boundary negative fixtures and a two-round offline release DAG. The candidate-tree guard runs inside required `verify`; tool-specific `.gitignore` entries remain development-only, with an exact exported-candidate positive check. Built artifacts are also scanned in verify.
+9. Markdown link checks, documented command and full Site-config examples, rejection of active CNB provider claims, README/Vercel branch consistency with current Handoff evidence, release-version and target-status checks, unique ADR identifiers, production-boundary negative fixtures and a two-round offline release DAG. The candidate-tree guard runs inside required `verify`; tool-specific `.gitignore` entries remain development-only, with an exact exported-candidate positive check. Built artifacts are also scanned in verify.
 
 ## Known operational notes
 
 - **Astro requires Node ≥22.23.4**; older Node versions fail `astro check` with a version banner, not a type error.
-- **Stale `.astro`/Vite caches** can serve old island bundles across rebuilds — if a source fix "doesn't take", `rm -rf apps/web/.astro apps/web/dist` before re-theorizing (documented in HANDOFF).
+- **Generated Astro state:** Compose serializes access to shared `apps/web/.astro` scratch state. If output appears stale, rerun into a fresh temporary output directory and compare provenance. `--clean-cache` only removes the verified managed cache; do not recursively remove `apps/web/.astro` or `apps/web/dist` as a troubleshooting step.
 - **Pagefind index nondeterminism**: `pagefind-entry.json` language key order follows worker completion; compose sorts it. Repeat builds are byte-identical with `SOURCE_DATE_EPOCH` pinned.
 - **`pagefind-entry.json` must not be Svelte-$state wrapped** in islands — the module namespace breaks under reactive proxies (documented in `packages/ui/src/Search.svelte`).
 - The `.ads` submodule is private; CI checks only its gitlink SHA. Do not add credential-based submodule clones.
