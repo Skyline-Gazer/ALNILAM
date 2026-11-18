@@ -74,11 +74,12 @@ for (const origin of ORIGINS) {
 			await page.locator("#search-input-desktop").fill(NO_HIT);
 			await expect(page.locator("#search-panel .m3-blog-searchpanel__status")).toHaveText("没有找到结果");
 
-			// Narrowing the viewport hands the panel its own, empty input: the
-			// empty state must not claim that an empty query matched nothing.
+			// Crossing the breakpoint closes the desktop dialog; reopening the
+			// mobile dialog gives its own empty input and must clear the stale state.
 			await page.setViewportSize({ width: 390, height: 844 });
+			await page.locator("#search-switch").click();
+			await expect(page.locator("#search-panel input")).toBeVisible();
 			await expect(page.locator("#search-panel .m3-blog-searchpanel__status")).toHaveCount(0);
-
 			await page.locator("#search-panel input").fill(NO_HIT);
 			await expect(page.locator("#search-panel .m3-blog-searchpanel__status")).toHaveText("没有找到结果");
 		} finally {
