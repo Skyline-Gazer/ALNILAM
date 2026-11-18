@@ -1,5 +1,29 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-19 · P6 browser and Lighthouse acceptance
+
+This records lab evidence for PR #164 at implementation SHA `1effbad9f42832f1609ebbf1e87215962ccaf172`; the Site digest was `527909af24317e93ea7129e89e0da952397b95ac1fdea93bd0646b29e2dfd87f`. Required PR Verify [44356195883](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44356195883) and the opt-in P6 workflow [44357215594](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44357215594) both passed. The P6 workflow is evidence, not a new required check.
+
+### #74 lab results
+
+Three Lighthouse runs per URL covered five routes at root and `/ALNILAM/` (`/`, `/posts/`, the demo article, `/search/`, `/tags/`) for mobile and desktop:
+
+| Form factor | LCP median range | Maximum CLS | Performance score | Accessibility score |
+| --- | ---: | ---: | ---: | ---: |
+| Mobile | 2.709–3.344 s | 0.00164 | 0.90–0.96 | 1.00 |
+| Desktop | 2.714–3.345 s | 0.00000 | 0.68–0.74 | 1.00 |
+
+Across the reports, request counts were 38–52; total byte weight was 210,457–337,201 B, including 165,570–194,707 B script, 33,087–42,462 B CSS, 0–83,572 B image and 0 B font transfer. Every page had no Lighthouse accessibility findings. Browser evidence recorded 249 passed, 1 intentional skip, 0 failed; the WCAG axe critical/serious gate passed on root and nested base. The negative CLS fixture was `EXPECTED_RED_VERIFIED` (mobile 0.12354 > 0.10). These are local lab results, not field data; no comparable before/after performance delta was measured.
+
+Field p75 remains `NOT VERIFIED` (anonymous PageSpeed API returned HTTP 429). Manual screen-reader verification remains `NOT RUN`; no screen-reader runtime is available in this workstation. Issue #74 stays Open / In Progress; the available CI and lab evidence do not complete that manual acceptance.
+
+### P6 and repository state
+
+- Issue #42 remains Open / In Progress. Its unchecked children are #74, #81 and #166; #35 visual acceptance also remains Owner-owned.
+- Project #17 read-back: #42 In Progress, #74 In Progress, #81 In Progress, #136 Todo, #166 Todo. No status transition is supported by the current evidence.
+- GitHub `dev` is `e1d0174be5cda5996b39fb59737eca55782b5cc2`; `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`. CNB `dev` remains frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; ADS remains pinned at `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`.
+
+
 ## Live-state update — 2026-11-18 · Static-page acceptance and deployment boundaries
 
 This entry supersedes earlier live-state notes where they conflict. It records the current deployment response and authorization boundary; older sections remain historical evidence.
