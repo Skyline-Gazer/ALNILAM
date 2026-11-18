@@ -66,6 +66,23 @@ function escapeRegex(value: string) {
 
 for (const origin of origins) {
   test(
+    `mobile pagination name includes visible page range at ${new URL(origin).pathname || "/"}`,
+    async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      const response = await page.goto(origin + "/posts/", { waitUntil: "networkidle" });
+      expect(response?.status()).toBe(200);
+      const jump = page.locator(".m3-blog-pagination__mobile .m3-blog-pagination__jump");
+      await expect(jump).toBeVisible();
+      const visibleRange = (await jump.innerText()).replace(/\s+/g, "");
+      await expect(jump).toHaveAccessibleName(new RegExp(escapeRegex(visibleRange)));
+      const actionLabel = await jump.getAttribute("data-jump-label");
+      expect(actionLabel).toBeTruthy();
+      await jump.click();
+      await expect(page.locator(".m3-blog-pagination__jump-input")).toHaveAccessibleName(actionLabel!);
+    },
+  );
+ [END]
+  test(
     `series navigation names include visible titles and position text at ${new URL(origin).pathname || "/"}`,
     async ({ page }) => {
       const response = await page.goto(origin + "/posts/hello-alnilam/", { waitUntil: "networkidle" });

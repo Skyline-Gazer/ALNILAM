@@ -71,6 +71,7 @@ const prevUrl = currentPage > 1 ? buildUrl(currentPage - 1) : undefined;
 const nextUrl =
 	currentPage < totalPages ? buildUrl(currentPage + 1) : undefined;
 const jumpLabel = labels.jump;
+const jumpButtonLabel = `${jumpLabel}: ${currentPage}/${totalPages}`;
 // 跳转链接模板：占位符 {page} 由客户端替换；第 1 页特殊（buildUrl(1) 可能是 "/"）
 const jumpTemplate = buildUrl(999_999).replace("999999", "{page}");
 const jumpFirst = buildUrl(1);
@@ -92,7 +93,8 @@ const pageLabel = (p: number) => labels.page.replace("{page}", String(p));
 		<button
 			type="button"
 			class="m3-blog-pagination__jump m3-state-layer"
-			aria-label={jumpLabel}
+			aria-label={jumpButtonLabel}
+			data-jump-label={jumpLabel}
 			data-current={currentPage}
 			data-total={totalPages}
 			data-href-template={jumpTemplate}

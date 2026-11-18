@@ -34,7 +34,7 @@
     },
     {
       "path": "src/layouts/Layout.astro",
-      "sha256": "49a4183e6caeb1514455fde02abdff0a71d3befff4f7021b9b5c95d2e76a7fcb"
+      "sha256": "3633ed08c0a6114628f029e20f301b131814e80751f51be41f936048caf07192"
     },
     {
       "path": "src/i18n/i18nKey.ts",
@@ -1478,7 +1478,7 @@
     },
     {
       "path": "src/components/atoms/blog/PagePagination.astro",
-      "sha256": "49def907e5587754a888f2f60ac1731f66593ff091e77af709292ac9f3a240c9"
+      "sha256": "5e6b003b3f9472e1f1311c12ef0e4c31bafa2a37f7fdfbb747b21937d05c5c97"
     },
     {
       "path": "src/components/atoms/blog/FooterBar.astro",
@@ -1932,7 +1932,7 @@
   "modified": {
     "src/user/user-config.ts": "Read-only ALNILAM Site adapter; replaces upstream generated config mount.",
     "package.json": "Consumer compatibility metadata uses ALNILAM existing locked Astro7.4.2 / Svelte integration9.1.1 / MDX8.1.1; upstream peer checks remain active. See existing #79 record; native integration verification pending.",
-    "src/layouts/Layout.astro": "Retain ALNILAM canonical and keyboard skip-link contracts in actual upstream layout. Default appearance from validated Site; omit unimplemented Atom feed link; consolidate Pagefind loader, WidgetLayout custom element and pagination jump handler into the Layout runtime script. Configure Pagefind result URLs with Astro's base. Initialize shared Markdown and Expressive Code runtimes for navigation from pages without Markdown. Emit layout variables once and omit disabled texture initialization to reduce per-page HTML. Record a pre-hydration drawer tap on documentElement so the island can replay it. Keep the display-settings toggle's aria-expanded in sync on toggle and outside-click close.",
+    "src/layouts/Layout.astro": "Retain ALNILAM canonical and keyboard skip-link contracts in actual upstream layout. Default appearance from validated Site; omit unimplemented Atom feed link; consolidate Pagefind loader, WidgetLayout custom element and pagination jump handler into the Layout runtime script. Configure Pagefind result URLs with Astro's base. Initialize shared Markdown and Expressive Code runtimes for navigation from pages without Markdown. Emit layout variables once and omit disabled texture initialization to reduce per-page HTML. Record a pre-hydration drawer tap on documentElement so the island can replay it. Keep the display-settings toggle's aria-expanded in sync on toggle and outside-click close. Keep the localized pagination action label when the mobile jump button becomes its input.",
     "src/components/content/Markdown.astro": "Retain a separate Markdown runtime binding and share the generated Expressive Code client modules with Layout to preserve code block behavior within script budgets.",
     "src/env.d.ts": "Declare the adapter-provided Expressive Code runtime virtual module used by Layout and Markdown.",
     "src/components/organisms/PostCard.astro": "Retain 640x360 layout dimensions for pass-through Site covers, with metadata dimensions overriding when available.",
@@ -1943,7 +1943,7 @@
     "src/components/molecules/ImageWrapper.astro": "Preserve explicit 640x360 layout dimensions for public/remote Site covers.",
     "src/utils/setting-utils.ts": "Default to Site appearance when no stored visitor choice; keep native theme state and controls.",
     "src/components/molecules/Pagination.astro": "Accept an explicit basePath for existing /posts/ pagination instead of upstream root pagination.",
-    "src/components/atoms/blog/PagePagination.astro": "Preserve rel=prev/next pagination semantics on both native desktop/mobile controls and consolidate jump handler into Layout runtime script.",
+    "src/components/atoms/blog/PagePagination.astro": "Preserve rel=prev/next pagination semantics on both native desktop/mobile controls, include visible current/total page text in the mobile jump button's accessible name, and retain the localized action label for its expanded input.",
     "src/components/molecules/WidgetLayout.astro": "Consolidate widget-layout custom element registration into Layout runtime script.",
     "src/components/molecules/SearchBar.svelte": "Semantic keyboard search trigger, Escape/focus restoration, cancel focus/blur timers on unmount.",
     "src/components/atoms/blog/SearchPanel.svelte": "Render an explicit no-results state with the localized message and a status role, driven by the caller so an empty result set reads as an answer instead of an empty box.",
