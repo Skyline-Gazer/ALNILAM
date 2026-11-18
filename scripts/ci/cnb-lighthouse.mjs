@@ -48,7 +48,7 @@ if (!Number.isFinite(clsBudget) || clsBudget < 0) throw Error('Lighthouse CLS bu
 const root = 'http://127.0.0.1:4323';
 const nested = 'http://127.0.0.1:4324/ALNILAM';
 // lighthouserc.cjs measures the separate P1 external-Site fixture; share its budgets, not its routes.
-const routes = ['/', '/posts/', '/posts/hello-alnilam/'];
+const routes = ['/', '/posts/', '/posts/hello-alnilam/', '/search/', '/tags/'];
 const urls = routes.flatMap(route => [`${root}${route}`, `${nested}${route}`]);
 const config = structuredClone(baseline.ci);
 config.collect.url = urls;
