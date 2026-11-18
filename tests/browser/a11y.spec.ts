@@ -81,7 +81,6 @@ for (const origin of origins) {
       await expect(page.locator(".m3-blog-pagination__jump-input")).toHaveAccessibleName(actionLabel!);
     },
   );
- [END]
   test(
     `series navigation names include visible titles and position text at ${new URL(origin).pathname || "/"}`,
     async ({ page }) => {
