@@ -1,6 +1,6 @@
 # Issue #136 — Four-source differentiation and next-version proposal
 
-**Status:** Draft for Owner decision. Issue #136 stays Open; this proposal does not modify `docs/ROADMAP.md`, create feature issues, or authorize implementation. The current Roadmap remains authoritative.
+**Status:** Draft for Owner decision. Issue #136 stays Open; this proposal does not alter Roadmap direction, create feature issues, or authorize implementation. This PR's separate `docs/ROADMAP.md` edit updates only the current #145 cache-status sentence; the current Roadmap remains authoritative.
 
 **Audit snapshot:** 2026-11-19. ALNILAM `dev` at [`e1d0174be5cda5996b39fb59737eca55782b5cc2`](https://github.com/Skyline-Gazer/ALNILAM/commit/e1d0174be5cda5996b39fb59737eca55782b5cc2). This is a source and evidence review; no upstream application was installed or run and no upstream source, asset, or dependency was imported.
 
@@ -124,7 +124,7 @@ Product goal: maintain a reliable, accessible, static-first publishing path with
 | P2 — conditional Site module | Friends or project showcase, at most one module per decision. | New Owner product decision; no current implementation authorization. | Define a Site schema fixture; default disabled; build makes no Site writes or third-party calls; verify root/subpath, locale labels, canonical URLs, keyboard access, and disabled output. |
 | Defer | Hosted CMS write access, WordPress/Ghost adapters, theme switching, mass upstream ports, and experimental build acceleration. | Respect #88's offline-only boundary, #89's post-launch status, and #83's experimental-build deferral. Cache work stays in #145. | Revisit only through each existing issue's authorization and acceptance criteria; no candidate becomes an implementation task by this audit. |
 
-No source migration, new feature issue, Project status transition, release, or `docs/ROADMAP.md` rewrite is included. After Owner acceptance, link the selected atomic issue(s) and update the Roadmap while retaining its history.
+This proposal authorizes no source migration, new feature issue, Project status transition, or release. The PR's separate update to the #145 cache-status sentence is factual housekeeping only and does not adopt this proposal. After Owner acceptance, link the selected atomic issue(s) and update the Roadmap while retaining its history.
 
 ## References
 
