@@ -21,11 +21,12 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 - **Bangumi snapshots (Issue #70):** opt-in builds cache public collections and locally emitted covers outside the Site. Provider or cover failures reuse the matching last valid snapshot; a successful empty result replaces it. Visitors make no third-party data or cover requests.
 - **Build cache safety and reuse (Issue #145):** normal Compose preserves project-local legacy paths; managed and legacy cleanup stay explicit; bounded GC protects active builds and manifests. Shirone reuses compiled output by Core-input fingerprint and shares identical verified bytes across input fingerprints in immutable SHA-256 objects; mutable Site state stays isolated.
 - **Site-authored static pages (Issue #160):** optional `content/pages/` Markdown/MDX pages render at `/pages/<path>/` and locale-prefixed routes. Drafts are excluded; canonical, sitemap and translation alternates, Open Graph covers/article metadata, and root/subpath output are covered. Page categories and tags do not enter post taxonomies, archives or feeds.
+- **Release artifact hygiene gate (Issue #166):** Verify, external-Site CI, GitHub Pages uploads and `pnpm vercel-build` inspect final `dist/site` output, including copied Site assets, and fail on publication-inappropriate files without printing their contents.
 
 ### Changed
 - The demo Site includes a two-article introductory series and a published MDX example.
 - **Site configuration is YAML-only**: `alnilam.config.yaml` replaces `alnilam.config.toml`; a TOML-only Site now fails closed with an actionable message. No automatic v1→v2 migration is provided.
-- Local browser, CLS and Lighthouse commands share the CNB test configuration; CNB evidence upload verifies downloaded commit attachments and supports a confirmed per-file-limit fallback.
+- Local browser and CLS commands remain available for local checks. Lighthouse measurements use `pnpm lighthouse:local`, which runs `scripts/ci/cnb-lighthouse.mjs` with `lighthouserc.cjs` as a baseline and replaces its routes with composed root and `/ALNILAM/` routes. GitHub Actions `verify` runs its declared checks, including browser acceptance; it does not run Lighthouse. CNB artifact transport belongs to the historical [browser/CLS pilot](docs/pilots/CNB-BROWSER-PLUGINS.md), not current validation.
 - **Comments mapping migration (breaking when comments.enabled):** enabled Sites must explicitly set `mapping`. Existing Sites can select `pathname` to retain URL-based threads; `specific` uses stable terms and starts separate discussions. Omitted mapping now fails the build. `load` defaults to `click`.
 
 ### Removed
