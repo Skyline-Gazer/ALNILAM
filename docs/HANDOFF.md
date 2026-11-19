@@ -1,4 +1,45 @@
 # ALNILAM — Current Agent Handoff
+## Live-state update — 2026-11-19 · Cache, deployment, and evidence refresh
+
+This entry supersedes earlier cache and deployment snapshots where facts differ. The footprint below is a local inventory, not a controlled before/after build benchmark.
+
+### GitHub and cache delivery
+
+- GitHub `dev` is `e1d0174be5cda5996b39fb59737eca55782b5cc2`; `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; CNB `dev` remains frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; ADS remains pinned at `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`.
+- P0 cleanup safety is merged in PR #149 at `9517fc2985599346bf0b2e5b4b68f4e9769f8c23`: normal Compose does not invoke Legacy cleanup, `--clean-cache` stays within the validated managed root, and `--clean-legacy` is an explicit dry-run-capable operation. PR #156 at `11103d3e8cc9e03f1477f9288c27934e5acc0e0e` adds Core-input-keyed compilation reuse and SHA-256-addressed immutable artifacts; PR #157 at `14e15361e981f76429a4b31ba013030925f39937` serializes shared Astro scratch builds and checks ownership. Post-merge Verify [43867996657](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43867996657) passed 310/310 contract tests and the browser, external-Site, output, rollback, and ADS-pin steps.
+- PR #158 remains open to `dev` without auto-merge. Its lock-race code commit `97dce1576ebad8fba1575ceb33a598cd803118d6` includes live `dev` `e1d0174be5cda5996b39fb59737eca55782b5cc2` via a normal merge. `node --test scripts/tests/build-lock.test.mjs` passed 6/6; required Verify runs [44442480710](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44442480710) and [44442488110](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44442488110) passed. Demo and `alnilam-production-next` Preview checks passed; the non-required `alnilam-production` check is blocked because that legacy project remains paused. Issue #145 remains open and its Project #17 item is `In Progress`.
+
+### Artifact identity and lifecycle
+
+- Matching Core compiler-input fingerprints reuse compiled output; immutable bundle bytes are verified by SHA-256 and shared across input manifests. Mutable Site state remains isolated by Core revision and Site digest.
+- The isolated six-bundle sample recorded six unique hashes and zero duplicate bundle bytes before and after. Bundle allocated bytes stayed `28,536,832`; whole-cache allocated bytes changed from `31,580,160` to `31,571,968` in this single fixture. No material physical saving or speed gain is established. The historical 7.2 GiB / 246-bundle cache is unavailable, so its identity, physical allocation, and the 70% reduction target remain unverified.
+- `--gc-cache --dry-run` was exercised on scratch data. The 14-day unused TTL and 2 GiB size cap remain uncalibrated; the cap, historical-cache migration, and real-cache GC effectiveness remain unverified. No real cache or Site was cleaned or modified.
+
+### Vercel readback
+
+- The existing public Demo project `xxxx` remains linked to `Skyline-Gazer/ALNILAM` with production branch `dev`. Its stable project alias `xxxx-beryl-theta.vercel.app` returned anonymous HTTP 200. `/alnilam-provenance.json` reported Core revision `e1d0174be5cda5996b39fb59737eca55782b5cc2`, Site digest `527909af24317e93ea7129e89e0da952397b95ac1fdea93bd0646b29e2dfd87f`, and generation time `2026-11-18T14:55:22.104Z`.
+- `alnilam-production-next` remains linked to `main` with SSO for Production deployment URLs and all Previews. The project alias `alnilam-production-next.vercel.app` returned anonymous HTTP 404; the existing unique Production deployment `dpl_9FFgYBAbQx2Ttkmb3ktruup8ftMb` is READY and returned anonymous HTTP 302 to SSO. Keep #138 In Progress; the first formal Production release and external custom-domain activation remain Owner-gated. No Vercel setting, alias, or deployment changed in this update.
+
+### P6 audit status
+
+- PR #164 head `378a3bfd6b4abdb843c2e57415afd9b98a927a97` passed required Verify and P6 browser/Lighthouse workflow [44440935412](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44440935412). Its exact-head artifact reports 249 browser cases passed, 1 intentional skip, 0 unexpected and 0 flaky; mobile LCP medians ranged 2.712–3.357 s and desktop 2.715–3.363 s across 10 URLs with 3 runs each; maximum normal CLS was 0.001639 mobile / 0 desktop; Lighthouse accessibility score was 1.00 with no findings. The negative CLS controls recorded the expected red results (0.123539 mobile, 0.431101 desktop). Field p75 remains **NOT VERIFIED** and manual screen-reader testing remains **NOT RUN** because this Linux environment has no `orca` or `speech-dispatcher` executable. Keep Issue #74 Open / In Progress.
+
+### Local workstation footprint snapshot
+
+The sample came from the primary checkout at `195e184a3279085d19b0048e5a3ff140e8bf54ba`, which contained uncommitted P6 work. Existing `dist/site` is that checkout's output, not a clean build of current `dev`.
+
+| Area | Measurement |
+| --- | ---: |
+| Tracked files | 848 files; 4,715,500 logical bytes |
+| Git object store | 4,304 loose objects / 23.95 MiB; pack 2.06 MiB; garbage 0 |
+| Git worktrees | 44 |
+| Dependencies | 130 `node_modules` directories; shared pnpm store 745,390,080 allocated bytes; store plus all `node_modules` 1,653,456,896 allocated bytes, counted in one pass with hardlinks deduplicated |
+| Managed cache and Legacy paths | `.cache/alnilam` absent; `apps/web/.astro` 49,152 allocated bytes and retained; the other four listed Legacy paths absent |
+| Test and build artifacts | `browser-results` 5,971,968 allocated bytes; `artifacts` 45,461,504; `test-results` absent; existing `dist/site` 12,648,448 allocated bytes |
+| Existing client assets | 312 JS/CSS/font/image files in `dist/site`; 6,677,876 logical bytes |
+
+The shared dependency total deduplicates hardlinks; reflink sharing was not measured. This host snapshot does not measure a clean Production artifact or establish cache savings. No cache, Site, or primary-worktree file was changed for these measurements.
+
 
 ## Live-state update — 2026-11-18 · Static-page acceptance and deployment boundaries
 
