@@ -11,8 +11,9 @@ def _release_versions(changelog):
 
 
 def _readme_claims(readme):
-    claims = set(re.findall(r'\bReleased\s+v(\d+\.\d+\.\d+)\b', readme, re.I))
-    claims.update(re.findall(r'\bv(\d+\.\d+\.\d+)\s+is released\b', readme, re.I))
+    stable_version = r'(\d+\.\d+\.\d+)\b(?![-+][A-Za-z0-9])'
+    claims = set(re.findall(rf'\bReleased\s+v{stable_version}', readme, re.I))
+    claims.update(re.findall(rf'\bv{stable_version}\s+is released', readme, re.I))
     return claims
 
 

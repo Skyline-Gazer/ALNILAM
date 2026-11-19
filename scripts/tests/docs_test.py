@@ -47,7 +47,7 @@ def command_example_errors(root, files):
                     command = match.group(2)
                     if command not in scripts and (match.group(1) is not None or command not in builtins):
                         errors.append(f'{relative}: unknown pnpm script {command}')
-                for match in re.finditer(r'(?:^|[;&|]\s*)(?:\$\s*)?node\s+(scripts/[^\s`]+)', line):
+                for match in re.finditer(r'(?:^|[;&|]\s*)[ \t]*(?:\$\s*)?node\s+(scripts/[^\s`]+)', line):
                     if not (root / match.group(1)).is_file():
                         errors.append(f'{relative}: missing command target {match.group(1)}')
                 for match in re.finditer(r'(?:^|[;&|]\s*)(?:\$\s*)?python3\s+-m\s+unittest\s+discover\s+-s\s+(\S+)', line):
@@ -132,7 +132,7 @@ def deployment_guidance_errors(readme, handoff):
         return ['HANDOFF: current Vercel evidence section is ambiguous']
     current = current_sections[0]
     demo = re.search(r'existing public Demo project .*? on GitHub `([^`]+)`', current, re.S | re.I)
-    production = re.search(r'Separate project `([^`]+)`.*?productionBranch=([A-Za-z0-9_-]+)', current, re.S | re.I)
+    production = re.search(r'Separate project `([^`]+)`.*?productionBranch=([^`\s]+)', current, re.S | re.I)
     line = next((line for line in readme.splitlines() if line.startswith('- Vercel:')), '')
     if demo is None or production is None or not line:
         return ['README/HANDOFF: current Vercel branch facts are incomplete']
@@ -229,12 +229,13 @@ class DocsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'package.json').write_text('{"scripts":{"test":"node --test"}}')
-            (root / 'README.md').write_text('```bash\npnpm install\npnpm run install\npnpm run test\npnpm missing-script\npnpm run test-\nnode scripts/missing.mjs\n```')
+            (root / 'README.md').write_text('```bash\npnpm install\npnpm run install\npnpm run test\npnpm missing-script\npnpm run test-\nnode scripts/missing.mjs\n  node scripts/indented-missing.mjs\n```')
             self.assertEqual(command_example_errors(root, ['README.md']), [
                 'README.md: unknown pnpm script install',
                 'README.md: unknown pnpm script missing-script',
                 'README.md: unknown pnpm script test-',
                 'README.md: missing command target scripts/missing.mjs',
+                'README.md: missing command target scripts/indented-missing.mjs',
             ])
 
     def test_full_site_config_examples_use_the_current_core_contract(self):
@@ -312,12 +313,12 @@ class DocsTests(unittest.TestCase):
             '## Live-state update — 2099-01-01 · Superseding receipt\n'
             '### Vercel topology and current exposure\n'
             '- Existing public Demo project `demo-next` remained on GitHub `preview`.\n'
-            '- Separate project `production-next` reports `productionBranch=release` and `ssoProtection=all`.\n'
+            '- Separate project `production-next` reports `productionBranch=release/2026.11` and `ssoProtection=all`.\n'
             + handoff
         )
-        newer_readme = '- Vercel: the existing public Demo project remains on GitHub `preview`; separate `production-next` tracks `release` with SSO protection.'
+        newer_readme = '- Vercel: the existing public Demo project remains on GitHub `preview`; separate `production-next` tracks `release/2026.11` with SSO protection.'
         self.assertEqual(deployment_guidance_errors(newer_readme, newer_handoff), [])
-        self.assertTrue(deployment_guidance_errors(newer_readme.replace('tracks `release`', 'tracks `main`'), newer_handoff))
+        self.assertTrue(deployment_guidance_errors(newer_readme.replace('tracks `release/2026.11`', 'tracks `release`'), newer_handoff))
         self.assertEqual(release_claim_errors(readme, changelog), [])
         prepared_changelog = changelog.replace('## [Unreleased]', '## [9.9.9] - 2099-01-01', 1)
         self.assertEqual(current_unreleased_changelog(prepared_changelog), '')
@@ -331,6 +332,9 @@ class DocsTests(unittest.TestCase):
         candidate_readme = readme.replace('v0.1.3', 'v9.9.9')
         self.assertEqual(release_claim_errors(candidate_readme, prepared_changelog), [])
         self.assertEqual(published_release_errors(candidate_readme, prepared_changelog, '9.9.9'), [])
+        self.assertTrue(release_claim_errors('Released v9.9.9-rc.1.', prepared_changelog))
+        self.assertTrue(published_release_errors('Released v9.9.9-rc.1.', prepared_changelog, '9.9.9'))
+        self.assertTrue(published_release_errors('v9.9.9-rc.1 is released', prepared_changelog, '9.9.9'))
         self.assertTrue(published_release_errors(candidate_readme, prepared_changelog, '0.1.4'))
         self.assertTrue(published_release_errors('v9.9.9 is released', prepared_changelog, '0.1.2'))
         self.assertTrue(published_release_errors(candidate_readme, prepared_changelog, 'not-a-version'))
