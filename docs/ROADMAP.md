@@ -38,6 +38,8 @@ The following is **execution order and scope**, not blanket authorization for ev
 
 **[#166 Release Artifact Hygiene Gate](https://github.com/Skyline-Gazer/ALNILAM/issues/166)** is closed and Project #17 is `Done`. PR #171 merged normally to `dev` at `4e0e189453663837054e8134b9a2c196a8b48c6c`; post-merge Verify [44516145869](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44516145869) passed. The gate checks final output in Verify, external-Site CI, GitHub Pages before upload, and `pnpm vercel-build`; the 9/9 artifact-check suite and root/nested output checks passed. No Production release or `main` change was made.
 
+**[#147 Repository credits, attribution and license notices](https://github.com/Skyline-Gazer/ALNILAM/issues/147)** remains Open / Project #17 `In Progress`. PR #172 added canonical notice distribution to the Vercel Demo; PR #173 extends its direct-runtime notice coverage with MIT texts for Svelte, Pagefind, PhotoSwipe and KaTeX plus the SIL OFL 1.1 notice for all 12 KaTeX font families. This update does not complete the transitive dependency/source-license inventory or current-tree credential review; rights for the historical raster Git blob remain unverified. Keep the Issue open.
+
 
 ### Long-running maintenance lane (starts independently; never closes with one release)
 

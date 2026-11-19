@@ -58,10 +58,12 @@ package retains its own license. Vendored Shirone source is described above.
 | Package | License | Role |
 |---|---|---|
 | astro, @astrojs/mdx, @astrojs/svelte, @astrojs/check | MIT | static site framework + integrations |
-| svelte | MIT | island runtime (search, status) |
+| svelte 5.57.2 | MIT (see [LICENSES/Svelte-MIT.txt](LICENSES/Svelte-MIT.txt)) | island runtime (search, status) |
 | tailwindcss, @tailwindcss/vite | MIT | styling engine |
-| pagefind | MIT | local search indexer + lazy runtime |
-| photoswipe | MIT | lightbox gallery |
+| pagefind 1.5.2 | MIT (see [LICENSES/Pagefind-MIT.txt](LICENSES/Pagefind-MIT.txt) and the referenced [vscode-ripgrep notice](LICENSES/Pagefind-vscode-ripgrep-MIT.txt)) | local search indexer + lazy JS/WASM runtime |
+| photoswipe 5.4.4 | MIT (see [LICENSES/PhotoSwipe-MIT.txt](LICENSES/PhotoSwipe-MIT.txt)) | lightbox gallery runtime |
+| katex 0.16.47 | MIT (see [LICENSES/KaTeX-MIT.txt](LICENSES/KaTeX-MIT.txt)) | Markdown math rendering and stylesheet |
+| KaTeX fonts (12 families) | SIL OFL 1.1 (see [LICENSES/KaTeX-Fonts-OFL-1.1.txt](LICENSES/KaTeX-Fonts-OFL-1.1.txt)) | bundled Markdown math font assets |
 | mermaid | MIT (see [LICENSES/Mermaid-MIT.txt](LICENSES/Mermaid-MIT.txt)) | conditional client rendering for Mermaid Markdown diagrams |
 | khroma | MIT (see [LICENSES/Khroma-MIT.txt](LICENSES/Khroma-MIT.txt); package.json omits license) | Mermaid transitive color utility, version 2.1.0 |
 | yaml | MIT | Site config parsing |
@@ -70,9 +72,11 @@ package retains its own license. Vendored Shirone source is described above.
 | axe-core (transitive via @axe-core/playwright) | MPL-2.0 | accessibility engine used by a11y.spec.ts |
 
 The composed output can contain third-party material including Svelte runtime,
-Pagefind assets, theme code and selected icon data. The contents depend on the
-Site and enabled features; this list is not exhaustive. Site owners are responsible
-for the rights to their own content and assets.
+Pagefind assets, PhotoSwipe, KaTeX styles and fonts, theme code, and selected icon
+data. The KaTeX font notice preserves the exact copyright and Reserved Font Name
+declarations from package metadata. The selected direct runtime notices are not a
+full transitive license inventory. Site owners remain responsible for their own
+content and assets.
 
 ## Demo distribution artifacts
 
