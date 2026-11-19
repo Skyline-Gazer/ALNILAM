@@ -24,6 +24,34 @@ test("build lock is exclusive and fails closed on contention", (t) => {
   first.release();
   assert.equal(fs.existsSync(lockPath(dir)), false, "release must remove the holder's own lock");
 });
+test("build lock retries when it disappears during contention inspection", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-race-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const holder = createBuildLock(dir, { pid: process.pid });
+  holder.acquire();
+
+  const realLink = fs.linkSync;
+  let releasedDuringContention = false;
+  t.mock.method(fs, "linkSync", (source, destination) => {
+    try {
+      return realLink(source, destination);
+    } catch (error) {
+      if (error?.code === "EEXIST" && destination === lockPath(dir) && !releasedDuringContention) {
+        releasedDuringContention = true;
+        holder.release();
+      }
+      throw error;
+    }
+  });
+
+  const contender = createBuildLock(dir, { pid: process.pid + 1 });
+  assert.doesNotThrow(() => contender.acquire());
+  assert.equal(releasedDuringContention, true, "the holder must release after EEXIST but before inspection");
+  assert.equal(readLock(dir).pid, process.pid + 1, "the contender retries and publishes its lock");
+  contender.release();
+  assert.equal(fs.existsSync(lockPath(dir)), false);
+});
+
 
 test("published lock remains owned when staging cleanup fails", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));

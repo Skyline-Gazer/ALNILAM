@@ -34,7 +34,7 @@
     },
     {
       "path": "src/layouts/Layout.astro",
-      "sha256": "49a4183e6caeb1514455fde02abdff0a71d3befff4f7021b9b5c95d2e76a7fcb"
+      "sha256": "3633ed08c0a6114628f029e20f301b131814e80751f51be41f936048caf07192"
     },
     {
       "path": "src/i18n/i18nKey.ts",
@@ -1166,7 +1166,7 @@
     },
     {
       "path": "src/components/molecules/SeriesCard.astro",
-      "sha256": "25f5afb01f6b4be7afde689440f13d68dc88d70b0a2442656609716ae4d08f28"
+      "sha256": "c8e5de6cae45f28cfa949473aee7c2cae053b48c02a744f53eccccd98006a065"
     },
     {
       "path": "src/components/molecules/ButtonTag.astro",
@@ -1478,7 +1478,7 @@
     },
     {
       "path": "src/components/atoms/blog/PagePagination.astro",
-      "sha256": "49def907e5587754a888f2f60ac1731f66593ff091e77af709292ac9f3a240c9"
+      "sha256": "5e6b003b3f9472e1f1311c12ef0e4c31bafa2a37f7fdfbb747b21937d05c5c97"
     },
     {
       "path": "src/components/atoms/blog/FooterBar.astro",
@@ -1932,7 +1932,7 @@
   "modified": {
     "src/user/user-config.ts": "Read-only ALNILAM Site adapter; replaces upstream generated config mount.",
     "package.json": "Consumer compatibility metadata uses ALNILAM existing locked Astro7.4.2 / Svelte integration9.1.1 / MDX8.1.1; upstream peer checks remain active. See existing #79 record; native integration verification pending.",
-    "src/layouts/Layout.astro": "Retain ALNILAM canonical and keyboard skip-link contracts in actual upstream layout. Default appearance from validated Site; omit unimplemented Atom feed link; consolidate Pagefind loader, WidgetLayout custom element and pagination jump handler into the Layout runtime script. Configure Pagefind result URLs with Astro's base. Initialize shared Markdown and Expressive Code runtimes for navigation from pages without Markdown. Emit layout variables once and omit disabled texture initialization to reduce per-page HTML. Record a pre-hydration drawer tap on documentElement so the island can replay it. Keep the display-settings toggle's aria-expanded in sync on toggle and outside-click close.",
+    "src/layouts/Layout.astro": "Retain ALNILAM canonical and keyboard skip-link contracts in actual upstream layout. Default appearance from validated Site; omit unimplemented Atom feed link; consolidate Pagefind loader, WidgetLayout custom element and pagination jump handler into the Layout runtime script. Configure Pagefind result URLs with Astro's base. Initialize shared Markdown and Expressive Code runtimes for navigation from pages without Markdown. Emit layout variables once and omit disabled texture initialization to reduce per-page HTML. Record a pre-hydration drawer tap on documentElement so the island can replay it. Keep the display-settings toggle's aria-expanded in sync on toggle and outside-click close. Keep the localized pagination action label when the mobile jump button becomes its input.",
     "src/components/content/Markdown.astro": "Retain a separate Markdown runtime binding and share the generated Expressive Code client modules with Layout to preserve code block behavior within script budgets.",
     "src/env.d.ts": "Declare the adapter-provided Expressive Code runtime virtual module used by Layout and Markdown.",
     "src/components/organisms/PostCard.astro": "Retain 640x360 layout dimensions for pass-through Site covers, with metadata dimensions overriding when available.",
@@ -1943,7 +1943,7 @@
     "src/components/molecules/ImageWrapper.astro": "Preserve explicit 640x360 layout dimensions for public/remote Site covers.",
     "src/utils/setting-utils.ts": "Default to Site appearance when no stored visitor choice; keep native theme state and controls.",
     "src/components/molecules/Pagination.astro": "Accept an explicit basePath for existing /posts/ pagination instead of upstream root pagination.",
-    "src/components/atoms/blog/PagePagination.astro": "Preserve rel=prev/next pagination semantics on both native desktop/mobile controls and consolidate jump handler into Layout runtime script.",
+    "src/components/atoms/blog/PagePagination.astro": "Preserve rel=prev/next pagination semantics on both native desktop/mobile controls, include visible current/total page text in the mobile jump button's accessible name, and retain the localized action label for its expanded input.",
     "src/components/molecules/WidgetLayout.astro": "Consolidate widget-layout custom element registration into Layout runtime script.",
     "src/components/molecules/SearchBar.svelte": "Semantic keyboard search trigger, Escape/focus restoration, cancel focus/blur timers on unmount.",
     "src/components/atoms/blog/SearchPanel.svelte": "Render an explicit no-results state with the localized message and a status role, driven by the caller so an empty result set reads as an answer instead of an empty box.",
@@ -1965,6 +1965,7 @@
     "src/utils/nav-utils.ts": "Map ALNILAM /posts, /archives, /tags, /bangumi and /moments routes in resolvePageKey for native active-link highlighting.",
     "src/utils/content-utils.ts": "Add optional original image dimensions to the MomentImage contract for CLS-safe gallery slots.",
     "src/components/molecules/FloatingActionButton.astro": "Render static FAB button shell without redundant per-button client:load island hydration.",
+    "src/components/molecules/SeriesCard.astro": "Keep the visible series title and part count in the accessible name by using visually hidden direction text instead of an overriding aria-label.",
     "src/components/organisms/TopAppBar.astro": "Gate DisplaySettings island on !siteConfig.themeColor.fixed and consolidate TopAppBar navigation runtime into Layout. Add server-rendered aria-expanded/aria-controls to the menu button so the drawer disclosure is announced before hydration. Add aria-expanded/aria-controls to the display-settings toggle. Add the stable #main-navigation id so browser contracts select the navigation landmark without depending on its accessible name. Localize the navigation landmark name with the page language and resolve the Moments link label from the active locale.",
     "src/layouts/MainGridLayout.astro": "Gate BannerStage when banner images and homeText are disabled; render RouteProgress without redundant island hydration; move the sidebar elements after the main content column so mobile DOM/parse order matches the visual order (content → sidebar → footer) and the already-painted aside is no longer pushed down by late-parsed article blocks (real mobile CLS); desktop columns stay on explicit lg:/xl: col-start/row-start.",
     "src/components/organisms/SideBar.astro": "Render only widgets visible on the current page in static MPA mode and omit unused Swup polling script.",
@@ -1983,6 +1984,7 @@
     "src/pages/[...permalink].astro": "Emit Markdown feature stylesheets as Swup-optional links; omit upstream CommentSection mount so disabled Sites emit no Twikoo/Waline/Giscus provider chunks.",
     "src/pages/about.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
     "src/pages/series/[slug]/index.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
+    "src/pages/tags.astro": "Use the visible tag name and count as the content-derived link name; avoid an overriding aria-label.",
     "src/utils/fancybox-config.ts": "ALNILAM: drop @fancyapps/ui FancyboxOptions import; keep FANCYBOX_SELECTORS only; PhotoSwipe defaults live in fancybox-handler LIGHTBOX_DEFAULTS.",
     "src/components/organisms/LightDarkSwitch.svelte": "Resolve light/dark/system labels, the toggle aria-label and the menu label from the current page locale; keep the stored theme and system-preference behaviour.",
     "src/i18n/translation.ts": "Add i18nForLocale(locale, key) so islands can translate for the current page while still honouring Site i18n overrides; i18n(key) delegates to the site default. Expose resolveTranslation(locale, key, overrides) as the testable seam, normalise Site override locale keys (case and separator insensitive) and define the missing-key degradation (locale dictionary, then English dictionary, then the key name). A regional variant without its own dictionary entry falls back to its base language.",

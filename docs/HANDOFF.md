@@ -1,17 +1,24 @@
 # ALNILAM — Current Agent Handoff
 
-## Live-state update — 2026-11-19 · Release artifact hygiene gate
+## Live-state update — 2026-11-19 · P6 and release-artifact integration
 
-This entry records Issue #166 and PR #171. Required Verify passed on implementation snapshot `01a5a58` and documentation update head `ee8eca1`; the linked PR carries the check rollup for later head changes. This work does not authorize a Production release.
+This entry records the current `dev` merge state; older benchmark and deployment entries remain historical where their SHAs differ.
 
-- GitHub `dev` is `e1d0174be5cda5996b39fb59737eca55782b5cc2`; `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`. CNB refs and ADS pin `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` remain unchanged.
-- [Issue #166](https://github.com/Skyline-Gazer/ALNILAM/issues/166) remains open; its Project #17 item currently reads `Todo`. [PR #171](https://github.com/Skyline-Gazer/ALNILAM/pull/171) targets `dev`; the latest checker/test fix is `01a5a58fd1ca08d90e1cbef7b4397ff0104c26d4` after implementation snapshot `32ada13a7f39c6e3a9215f6797ad11486fddefd2`.
-- The PR checks final `dist/site` output and wires `scripts/artifact-check.mjs` into Verify, external-Site CI, GitHub Pages immediately before upload, and `pnpm vercel-build`.
-- Local Demo output checks passed for root and `/ALNILAM/` bases: 92 pages and 436 island refs each. `node --test scripts/tests/artifact-check.test.mjs` passed 8/8, covering generated and nested routes, rejection of nested local artifact directories, hidden-directory rejection, `.well-known`, and a copied Site assets secret.
-- CodeRabbit findings observed to date have evidence replies and resolved threads. The follow-up finding was fixed in `01a5a58` and answered in [its review thread](https://github.com/Skyline-Gazer/ALNILAM/pull/171#discussion_r4626197342). CodeRabbit runs [135438853024](https://github.com/Skyline-Gazer/ALNILAM/runs/135438853024) and [135452379040](https://github.com/Skyline-Gazer/ALNILAM/runs/135452379040) passed on implementation head `01a5a58` and documentation head `ee8eca1`, respectively. Required Verify runs [44488774469](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44488774469) and [44488765021](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44488765021) passed on `01a5a58`; PR/push Verify runs [44492774205](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44492774205) and [44492767706](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44492767706) passed on `ee8eca1` in 21m29s and 21m21s. The linked PR carries the check rollup for later head changes.
-- The non-required Vercel `alnilam-production` status reports `Deployment was blocked`, consistent with the paused Production project. No Vercel configuration, Production deployment, `main`, release tag, or Demo alias was changed.
+### Release artifact hygiene — Issue #166 / PR #171
 
-Do not mark Issue #166 or its Project item Done until the required Verify and release-path acceptance complete.
+- PR #171 merged normally to GitHub `dev` at `4e0e189453663837054e8134b9a2c196a8b48c6c` from head `c77642df49fd6197c02f940ac86514ce27b3bf91`. `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; CNB refs and ADS pin `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` are unchanged.
+- Current-head PR Verify runs [44508303263](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44508303263) and [44508292215](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44508292215) passed. The 9/9 artifact-check regression suite and Demo root/nested checks passed before merge; CodeRabbit was skipped on the final head, and all three review threads are resolved.
+- The gate checks final composed output in Verify, external-Site CI, GitHub Pages before artifact upload, and `pnpm vercel-build` (`scripts/vercel-build.mjs` runs Compose then `scripts/artifact-check.mjs`). It reports offending paths/rules without printing file contents; Site input remains unchanged.
+- Post-merge Verify [44516145869](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44516145869) is still in progress as of this update. On the merge SHA, the existing Demo deployment is pending, `alnilam-production-next` Preview succeeded, and the intentionally paused `alnilam-production` check reports blocked. No formal Production deployment, `main` change, release tag, alias, or Vercel setting was changed.
+- Issue #166 remains Open / Project #17 `Todo` until post-merge Verify and release-path acceptance are complete.
+
+### P6 evidence snapshot — Issue #74 / PR #164
+
+- The measured product source was `92e3e52ab783db891efec04ace4582b6230b446f`, based directly on the then-current `dev` `e1d0174be5cda5996b39fb59737eca55782b5cc2`; the PR adds evidence and follow-up changes. The pre-merge PR head `378a3bfd6b4abdb843c2e57415afd9b98a927a97` passed Verify and the opt-in P6 browser/Lighthouse audit, including 249 passed, 1 intentional skip, 0 unexpected and 0 flaky browser cases.
+- The same-Site audit covered ten root and `/ALNILAM/` routes, three mobile and desktop runs per route. Candidate LCP medians were 2708–3333 ms mobile and 2714–3332 ms desktop; maximum normal CLS was 0.001639; accessibility scores were 1.00 with no Lighthouse findings. The negative CLS control exceeded budget as expected. The remote +370 ms nested mobile median did not reproduce in a five-run local comparison; this remains lab evidence, not field p75.
+- Field p75 remains **NOT VERIFIED** and manual screen-reader testing remains **NOT RUN**. Keep #74 Open / In Progress; these runs are lab evidence for the recorded source SHAs only, not field-performance or manual accessibility acceptance.
+
+Do not mark Issue #166 or #74 Done from these results alone. The first formal Production release and custom-domain activation remain separate Owner decisions.
 
 ## Live-state update — 2026-11-18 · Static-page acceptance and deployment boundaries
 

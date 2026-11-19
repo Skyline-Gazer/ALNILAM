@@ -6,6 +6,7 @@ import {setTimeout as delay} from 'node:timers/promises';
 import {pathToFileURL} from 'node:url';
 import {chromium} from '@playwright/test';
 import {trackChild, stopChildren, assertSuccessfulResponses, validateLighthouseReports, validateLighthouseRegression} from './cnb-evidence.mjs';
+import {summarizeLighthouseReports} from '../p1/lighthouse-summary.mjs';
 const trustedSourceRoot = process.env.CNB_TRUSTED_SOURCE_ROOT;
 if (!trustedSourceRoot) throw Error('Trusted dependency root is required');
 const cli = path.join(trustedSourceRoot, 'node_modules/@lhci/cli/src/cli.js');
@@ -47,7 +48,7 @@ if (!Number.isFinite(clsBudget) || clsBudget < 0) throw Error('Lighthouse CLS bu
 const root = 'http://127.0.0.1:4323';
 const nested = 'http://127.0.0.1:4324/ALNILAM';
 // lighthouserc.cjs measures the separate P1 external-Site fixture; share its budgets, not its routes.
-const routes = ['/', '/posts/', '/posts/hello-alnilam/'];
+const routes = ['/', '/posts/', '/posts/hello-alnilam/', '/search/', '/tags/'];
 const urls = routes.flatMap(route => [`${root}${route}`, `${nested}${route}`]);
 const config = structuredClone(baseline.ci);
 config.collect.url = urls;
@@ -68,6 +69,14 @@ try {
   if (await run(['autorun', `--config=.tmp/cnb/lighthouse-${formFactor}.json`, '--failOnUploadFailure']) !== 0) throw Error('Lighthouse collection/upload failed');
   const manifest = JSON.parse(fs.readFileSync(path.join(reportDir, 'manifest.json'), 'utf8'));
   validateLighthouseReports(manifest, item => {if (!fs.statSync(item.htmlPath).size) throw Error('Missing HTML');return JSON.parse(fs.readFileSync(item.jsonPath, 'utf8'));}, urls, started, runsPerURL);
+  const rootProvenance = JSON.parse(fs.readFileSync(path.join('dist/site', 'alnilam-provenance.json'), 'utf8'));
+  const nestedProvenance = JSON.parse(fs.readFileSync(path.join('dist/nested-base', 'alnilam-provenance.json'), 'utf8'));
+  const siteDigest = rootProvenance.site?.digest;
+  if (typeof siteDigest !== 'string' || !/^[a-f0-9]{64}$/.test(siteDigest) || nestedProvenance.site?.digest !== siteDigest) {
+    throw Error('Root and nested Lighthouse outputs must share a valid Site digest');
+  }
+  const summary = summarizeLighthouseReports(reportDir, {formFactor, testedSha: receipt.coreSha, siteDigest});
+  fs.writeFileSync(path.join(reportDir, 'summary.json'), JSON.stringify(summary, null, 2) + '\n');
   receipt.normalStatus = 'BASELINE_RECORDED';
   regression = http.createServer((request, response) => response.end('<!doctype html><title>CNB regression</title><h1>Visible content shifts</h1><p>Deterministic severe regression.</p><script>setTimeout(()=>{const e=document.createElement("div");e.style.height="700px";document.body.prepend(e)},900)</script>'));
   await new Promise(resolve => regression.listen(0, '127.0.0.1', resolve));
