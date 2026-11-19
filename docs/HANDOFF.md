@@ -1,26 +1,24 @@
 # ALNILAM — Current Agent Handoff
 
-## Live-state update — 2026-11-19 · P6 #74 exact-head acceptance
+## Live-state update — 2026-11-19 · P6 and release-artifact integration
 
-This update supersedes the 2026-11-18 #74 lab note below. PR #164 remains open and unmerged.
+This entry records the current `dev` merge state; older benchmark and deployment entries remain historical where their SHAs differ.
 
-### Remote checks and lab evidence
+### Release artifact hygiene — Issue #166 / PR #171
 
-- GitHub `dev` is `e1d0174be5cda5996b39fb59737eca55782b5cc2`. The audited PR #164 product SHA was `92e3e52ab783db891efec04ace4582b6230b446f`, based directly on that SHA; this PR worktree adds Handoff-only documentation after the audit.
-- Required Verify passed on that product SHA in [run 44374711197](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44374711197). The opt-in P6 dispatch also passed on the same SHA in [run 44379047820](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44379047820); its `p6-performance-audit-92e3e52ab783db891efec04ace4582b6230b446f` artifact contains the Lighthouse JSON/HTML and browser evidence.
-- The P6 browser suite recorded 249 passed, 1 intentional skip, 0 unexpected, and 0 flaky tests. Baseline and candidate used the same Site digest: `527909af24317e93ea7129e89e0da952397b95ac1fdea93bd0646b29e2dfd87f`.
-- Lighthouse covers home, posts, article, search and tags at root and `/ALNILAM/`: 10 URLs, 3 runs per URL, mobile and desktop (60 reports). Candidate LCP medians range 2708–3333 ms mobile and 2714–3332 ms desktop, below the 4000 ms assertion. Maximum normal CLS is 0.001639 mobile and 0 desktop; per-route CLS deltas versus baseline are zero. Lighthouse accessibility score is 1 with no reported findings on all 20 route/form-factor summaries. The axe WCAG 2.1 A/AA critical/serious scan passed all 20 route/base/viewport combinations; the reduced-motion scan passed.
-- The negative CLS control measured `0.123539` against the `0.1` budget and recorded `EXPECTED_RED_VERIFIED`; normal mobile and desktop receipts recorded `BASELINE_RECORDED`.
-- Matched remote baseline [run 44369368204](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44369368204) used product baseline `4ea12382c6320523747c50a819dbe136ba2c096f` and the same Site digest. Request counts are identical; per-route transfer bytes changed by -85 to +28 bytes. Eighteen of twenty route/form-factor LCP medians changed by at most 57 ms. Two noisy medians moved in opposite directions: mobile `/ALNILAM/` +370 ms and desktop `/posts/` -518 ms. Raw reports show the same server-rendered language-switch link and approximately 2.35/2.86 s render-delay bands.
-- Five-run local follow-up on mobile `/ALNILAM/` measured medians 2816 ms baseline and 2803 ms candidate (-13 ms), so the remote +370 ms result did not reproduce. A separate local five-run `/posts/` check showed both builds switching between the same low/high render-delay bands; mode counts changed root and nested medians. This remains a variance caveat, not evidence of a deterministic product slowdown; the local measurements supplement and do not replace the remote artifacts.
-- Field p75 remains **NOT VERIFIED**; manual screen-reader testing remains **NOT RUN**. Keep #74 Open / In Progress; lab evidence does not complete the remaining manual acceptance.
+- PR #171 merged normally to GitHub `dev` at `4e0e189453663837054e8134b9a2c196a8b48c6c` from head `c77642df49fd6197c02f940ac86514ce27b3bf91`. `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; CNB refs and ADS pin `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` are unchanged.
+- Current-head PR Verify runs [44508303263](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44508303263) and [44508292215](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44508292215) passed. The 9/9 artifact-check regression suite and Demo root/nested checks passed before merge; CodeRabbit was skipped on the final head, and all three review threads are resolved.
+- The gate checks final composed output in Verify, external-Site CI, GitHub Pages before artifact upload, and `pnpm vercel-build` (`scripts/vercel-build.mjs` runs Compose then `scripts/artifact-check.mjs`). It reports offending paths/rules without printing file contents; Site input remains unchanged.
+- Post-merge Verify [44516145869](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44516145869) is still in progress as of this update. On the merge SHA, the existing Demo deployment is pending, `alnilam-production-next` Preview succeeded, and the intentionally paused `alnilam-production` check reports blocked. No formal Production deployment, `main` change, release tag, alias, or Vercel setting was changed.
+- Issue #166 remains Open / Project #17 `Todo` until post-merge Verify and release-path acceptance are complete.
 
-### P6 parent and authority status
+### P6 evidence snapshot — Issue #74 / PR #164
 
-- Project #17 readback: #72, #73, #75 and #76 Done; #74 and #81 In Progress; #166 Todo; #42 In Progress. #94 and #138 remain separate In Progress tracks.
-- GitHub `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; CNB `dev` remains frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; ADS remains pinned at `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`.
-- PR #164 has not been merged. GitHub `main` and CNB `dev`/`main` were not changed. A transient CNB feature branch created by an accidental push was deleted; read-only CNB build history reports zero builds for it. No Production, tag or ADS-pin change was made.
+- The measured product source was `92e3e52ab783db891efec04ace4582b6230b446f`, based directly on the then-current `dev` `e1d0174be5cda5996b39fb59737eca55782b5cc2`; the PR adds evidence and follow-up changes. The pre-merge PR head `378a3bfd6b4abdb843c2e57415afd9b98a927a97` passed Verify and the opt-in P6 browser/Lighthouse audit, including 249 passed, 1 intentional skip, 0 unexpected and 0 flaky browser cases.
+- The same-Site audit covered ten root and `/ALNILAM/` routes, three mobile and desktop runs per route. Candidate LCP medians were 2708–3333 ms mobile and 2714–3332 ms desktop; maximum normal CLS was 0.001639; accessibility scores were 1.00 with no Lighthouse findings. The negative CLS control exceeded budget as expected. The remote +370 ms nested mobile median did not reproduce in a five-run local comparison; this remains lab evidence, not field p75.
+- Field p75 remains **NOT VERIFIED** and manual screen-reader testing remains **NOT RUN**. Keep #74 Open / In Progress; these runs are lab evidence for the recorded source SHAs only, not field-performance or manual accessibility acceptance.
 
+Do not mark Issue #166 or #74 Done from these results alone. The first formal Production release and custom-domain activation remain separate Owner decisions.
 
 ## Live-state update — 2026-11-18 · Static-page acceptance and deployment boundaries
 
