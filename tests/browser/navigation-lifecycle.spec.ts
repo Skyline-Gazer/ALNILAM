@@ -96,10 +96,15 @@ for (const origin of ["http://127.0.0.1:4323", "http://127.0.0.1:4324/ALNILAM"])
           await page.screenshot({ path: info.outputPath("reading-toc.png"), fullPage: true, animations: "disabled" });
         }
         const base = new URL(origin).pathname.replace(/\/$/, "");
+        const menu = page.locator("#nav-drawer-switch");
         for (let round = 0; round < 10; round++) {
           if (width === 390) {
-            await page.locator("#nav-drawer-switch").click();
+            await expect(menu).toHaveAttribute("aria-expanded", "false");
+            await menu.click();
+            await expect(menu).toHaveAttribute("aria-expanded", "true");
+            await expect(page.locator(".site-drawer--open")).toBeVisible();
             await page.locator(".site-drawer__nav").getByRole("link", { name: "文章" }).click();
+            await expect(menu).toHaveAttribute("aria-expanded", "false");
           } else {
             await page.locator('#main-navigation').getByRole("link", { name: "文章" }).click();
           }
@@ -119,6 +124,9 @@ for (const origin of ["http://127.0.0.1:4323", "http://127.0.0.1:4324/ALNILAM"])
           }
           await page.locator(`.m3-blog-postcard a.m3-blog-postcard__title[href="${base}/posts/getting-started/"]`).click();
           await expect(page.locator(".markdown-content")).toBeVisible();
+          if (width === 390) {
+            await expect(menu).toHaveAttribute("aria-expanded", "false");
+          }
         }
         expect(pagefindImports).toBe(0);
         await sample("repeated-navigation");
