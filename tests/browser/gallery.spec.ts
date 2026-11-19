@@ -63,6 +63,9 @@ for (const deployment of deployments) {
 
       const photoButtons = page.locator(".album-gallery__item");
       await expect(photoButtons).toHaveCount(3);
+      const galleryIsland = page.locator("astro-island").filter({ has: photoButtons });
+      await expect(galleryIsland).toHaveCount(1);
+      await expect(galleryIsland).not.toHaveAttribute("ssr", "");
       await photoButtons.first().click();
       const viewer = page.locator(".pswp.pswp--open");
       await expect(viewer).toBeVisible();
