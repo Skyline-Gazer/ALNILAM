@@ -73,14 +73,22 @@ Pagefind assets, theme code and selected icon data. The contents depend on the
 Site and enabled features; this list is not exhaustive. Site owners are responsible
 for the rights to their own content and assets.
 
+## Demo distribution artifacts
+
+The Vercel Demo build copies `LICENSE`, `NOTICE`, `CREDITS.md`, this file, and
+regular `.txt` files from `LICENSES/` to `site-assets/alnilam-notices/`. These
+are static text artifacts; the directory has no `index.html`, Core route,
+navigation item, or footer link. Generic Compose builds for independently owned
+Sites do not inject these Core files or mutate Site content.
+
 ## Outstanding release evidence (#75)
 
 | Risk | Disposition and evidence |
 |---|---|
-| Asset rights | **NOT VERIFIED for final acceptance.** The P0 audit excludes upstream media without separate rights evidence ([P0 acceptance](docs/p0/P0-ACCEPTANCE.md)). The raster fixture `sites/demo/assets/lighthouse.png` entered in commit `a5f2bae108458f21578060063343483652dc2c7e`; that commit does not establish its authorship or redistribution grant. Confirm its provenance or replace it before claiming an authorized asset inventory. External Site assets and build-time provider content require their own rights review. |
+| Asset rights | **CURRENT DEMO ARTIFACT REPLACED; HISTORICAL BLOB UNVERIFIED.** The current `sites/demo/assets/lighthouse.png` is rendered from the authored `sites/demo/assets/lighthouse-artwork.svg`, distributed under ALNILAM's Apache-2.0 license. This replaces the undocumented raster from commit `a5f2bae108458f21578060063343483652dc2c7e`; the old blob remains in Git history, so its rights are still unverified and no history rewrite is claimed. External Site assets and build-time provider content require their own rights review. |
 | Fancyapps UI | **REMOVED.** `@fancyapps/ui` is no longer a dependency or redistributable. The lightbox runtime uses MIT `photoswipe@5.4.4` via the retained `FancyboxHandler` compatibility façade. Fancyapps is not shipped in lockfile, themes, or built assets. |
-| Dependency and source licenses | **PARTIAL.** Shirone's pinned source ledger and license are retained, but the selected dependency list above is not a transitive license inventory or a final source-license scan. The historical [CNB evidence](docs/cnb/CNB-REVIEW.md) says SourceSCA was not configured for those runs; those older results do not establish current-head acceptance. |
-| Credentials | **NOT VERIFIED for final acceptance.** The workflow documents read-only Site credentials and disables persisted checkout credentials ([site-ci.yml](.github/workflows/site-ci.yml)); marker-boundary tests exist in `scripts/tests/secrets-boundary.test.mjs`. These controls and tests do not prove that the current tree, history, artifacts or logs contain no secrets. A scoped secret review and remediation of any finding remain necessary. |
+| Dependency and source licenses | **PARTIAL.** Shirone's pinned source ledger and license are retained, but the selected dependency list above is not a transitive license inventory or a final source-license scan. The historical [CNB evidence](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/cnb/CNB-REVIEW.md) says SourceSCA was not configured for those runs; those older results do not establish current-head acceptance. |
+| Credentials | **NOT VERIFIED for final acceptance.** The workflow documents read-only Site credentials and disables persisted checkout credentials ([site-ci.yml](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/.github/workflows/site-ci.yml)); marker-boundary tests exist in [secrets-boundary.test.mjs](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/scripts/tests/secrets-boundary.test.mjs). These controls and tests do not prove that the current tree, history, artifacts or logs contain no secrets. A scoped secret review and remediation of any finding remain necessary. |
 | Supply chain and build | **PARTIAL.** The lockfile pins resolved dependencies, and historical CNB evidence describes earlier vulnerability and license checks. Current-head dependency risk review and disposition, plus source-bound PR and remote CI evidence, remain outstanding. |
 
 
