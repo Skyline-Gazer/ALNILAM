@@ -2,21 +2,23 @@
 
 ## Live-state update — 2026-11-19 · P6 and release-artifact integration
 
-This entry records the current `dev` merge state; older benchmark and deployment entries remain historical where their SHAs differ.
+This entry records the current `dev` merge state; older benchmark and deployment notes remain historical where their source SHAs differ.
 
-### Release artifact hygiene — Issue #166 / PR #171
+### GitHub refs and Issue #166 / PR #171
 
-- PR #171 merged normally to GitHub `dev` at `4e0e189453663837054e8134b9a2c196a8b48c6c` from head `c77642df49fd6197c02f940ac86514ce27b3bf91`. `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; CNB refs and ADS pin `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` are unchanged.
-- Current-head PR Verify runs [44508303263](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44508303263) and [44508292215](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44508292215) passed. The 9/9 artifact-check regression suite and Demo root/nested checks passed before merge; CodeRabbit was skipped on the final head, and all three review threads are resolved.
-- The gate checks final composed output in Verify, external-Site CI, GitHub Pages before artifact upload, and `pnpm vercel-build` (`scripts/vercel-build.mjs` runs Compose then `scripts/artifact-check.mjs`). It reports offending paths/rules without printing file contents; Site input remains unchanged.
-- Post-merge Verify [44516145869](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44516145869) is still in progress as of this update. On the merge SHA, the existing Demo deployment is pending, `alnilam-production-next` Preview succeeded, and the intentionally paused `alnilam-production` check reports blocked. No formal Production deployment, `main` change, release tag, alias, or Vercel setting was changed.
-- Issue #166 remains Open / Project #17 `Todo` until post-merge Verify and release-path acceptance are complete.
+- PR #171 merged normally to GitHub `dev` at `4e0e189453663837054e8134b9a2c196a8b48c6c` from head `c77642df49fd6197c02f940ac86514ce27b3bf91`. PR Verify runs [44508303263](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44508303263) and [44508292215](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44508292215) and post-merge Verify [44516145869](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44516145869) passed. The 9/9 artifact-check regression suite and Demo root/nested checks passed before merge; CodeRabbit was skipped on the final head and all three review threads were resolved.
+- The release-artifact gate checks final composed output in Verify, external-Site CI, GitHub Pages before artifact upload, and `pnpm vercel-build` (`scripts/vercel-build.mjs` runs Compose then `scripts/artifact-check.mjs`). It reports offending paths/rules without printing file contents; Site input remains unchanged.
+- Issue #166 remains Open / Project #17 `Todo` pending release-path acceptance. No formal Production release, `main` change, release tag, alias, or Vercel setting was made.
 
-### P6 evidence snapshot — Issue #74 / PR #164
+### P6 acceptance — Issue #74 / PR #164
 
-- The measured product source was `92e3e52ab783db891efec04ace4582b6230b446f`, based directly on the then-current `dev` `e1d0174be5cda5996b39fb59737eca55782b5cc2`; the PR adds evidence and follow-up changes. The pre-merge PR head `378a3bfd6b4abdb843c2e57415afd9b98a927a97` passed Verify and the opt-in P6 browser/Lighthouse audit, including 249 passed, 1 intentional skip, 0 unexpected and 0 flaky browser cases.
-- The same-Site audit covered ten root and `/ALNILAM/` routes, three mobile and desktop runs per route. Candidate LCP medians were 2708–3333 ms mobile and 2714–3332 ms desktop; maximum normal CLS was 0.001639; accessibility scores were 1.00 with no Lighthouse findings. The negative CLS control exceeded budget as expected. The remote +370 ms nested mobile median did not reproduce in a five-run local comparison; this remains lab evidence, not field p75.
-- Field p75 remains **NOT VERIFIED** and manual screen-reader testing remains **NOT RUN**. Keep #74 Open / In Progress; these runs are lab evidence for the recorded source SHAs only, not field-performance or manual accessibility acceptance.
+- PR #164 merged normally to GitHub `dev` at `a7eb26805ac9a7e529435b0fd11063cde1d57853` from head `48c31e4637cf966412262056b37af2896975c695`, based on `4e0e189453663837054e8134b9a2c196a8b48c6c`. Refreshed PR Verify [44517760036](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44517760036) and paired push Verify [44517746935](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44517746935) passed. Post-merge Verify [44521231167](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44521231167) is in progress as of this entry.
+- The opt-in P6 audit on product source `92e3e52ab783db891efec04ace4582b6230b446f` recorded 249 browser cases passed, 1 intentional skip, 0 unexpected and 0 flaky. It covered ten root and `/ALNILAM/` routes with three mobile and desktop runs per route. Candidate LCP medians were 2708–3333 ms mobile and 2714–3332 ms desktop; maximum normal CLS was 0.001639; Lighthouse accessibility was 1.00 with no findings. The negative CLS control exceeded budget as expected. The remote +370 ms nested mobile median did not reproduce in a five-run local comparison. These are lab results, not field p75.
+- Field p75 remains **NOT VERIFIED**. On 2026-11-19, Vercel Speed Insights requests for Demo and `alnilam-production-next` were rejected by the Hobby plan for 30-day and 7-day windows (`payment_required` on 7-day requests); the public PageSpeed Insights request returned HTTP 429. No metric/device bucket or field percentile was returned, no plan or billing change was made, and no synthetic traffic was generated. See [#74's field-data follow-up](https://github.com/Skyline-Gazer/ALNILAM/issues/74).
+- The [macOS Safari + VoiceOver checklist](P6-74-MANUAL-SCREEN-READER-CHECKLIST.md) covers the home page, article, TOC, search, responsive navigation drawer, desktop/mobile pagination, and PhotoSwipe. Execution remains `MANUAL_NOT_RUN` because this Linux host cannot run Safari or VoiceOver; expected speech and actual focus behavior remain unobserved.
+- Keep Issue #74 Open / In Progress. These runs do not satisfy field-performance or manual screen-reader acceptance. No Issue/Project status, Vercel setting, Production deployment, `main`, release tag, or ADS pin changed in this evidence pass.
+
+GitHub `dev` is `a7eb26805ac9a7e529435b0fd11063cde1d57853`; `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; CNB refs and ADS pin `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` remain unchanged.
 
 Do not mark Issue #166 or #74 Done from these results alone. The first formal Production release and custom-domain activation remain separate Owner decisions.
 
