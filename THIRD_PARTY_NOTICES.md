@@ -62,7 +62,8 @@ package retains its own license. Vendored Shirone source is described above.
 | tailwindcss, @tailwindcss/vite | MIT | styling engine |
 | pagefind | MIT | local search indexer + lazy runtime |
 | photoswipe | MIT | lightbox gallery |
-| khroma | MIT (package `license` file) | transitive color utility |
+| mermaid | MIT (see [LICENSES/Mermaid-MIT.txt](LICENSES/Mermaid-MIT.txt)) | conditional client rendering for Mermaid Markdown diagrams |
+| khroma | MIT (see [LICENSES/Khroma-MIT.txt](LICENSES/Khroma-MIT.txt); package.json omits license) | Mermaid transitive color utility, version 2.1.0 |
 | yaml | MIT | Site config parsing |
 | typescript | Apache-2.0 | type checking |
 | @axe-core/playwright | MPL-2.0 | Playwright axe WCAG runner (dev/test only) |
