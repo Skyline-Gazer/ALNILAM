@@ -17,7 +17,7 @@ yoursite/
 
 ### `alnilam.config.yaml` (schema v2)
 
-```yaml
+```yaml site-config
 schemaVersion: 2            # required; only 2 is supported. Old Core + new Site fails closed.
 
 site:

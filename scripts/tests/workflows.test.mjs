@@ -74,6 +74,7 @@ test("every workflow declares exactly its allowed permissions", () => {
     "p0-evidence.yml": { contents: "read" },
     "p1-astro-compatibility.yml": { contents: "read" },
     "site-ci.yml": { contents: "read" },
+    "release-status.yml": { contents: "read" },
   };
   const files = fs.readdirSync(workflowsDir).filter((name) => name.endsWith(".yml"));
   assert.deepEqual(files.sort(), Object.keys(allowed).sort(), "an unreviewed workflow was added");
