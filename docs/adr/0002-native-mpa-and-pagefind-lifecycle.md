@@ -1,6 +1,6 @@
 # ADR 0002 — Keep native MPA routing and repair the existing Pagefind island
 
-**Status:** Proposed in [PR #97](https://github.com/Skyline-Gazer/ALNILAM/pull/97), pending review. **Issue:** [#49](https://github.com/Skyline-Gazer/ALNILAM/issues/49).
+**Status:** Accepted and implemented by PR #97, merged 2026-10-28 at `95baf6bc04393f02bf89e2ea08e017c41da1fde3`. **Issue:** [#49](https://github.com/Skyline-Gazer/ALNILAM/issues/49). This ADR records the accepted native-routing and Pagefind lifecycle decision; it does not claim future routing changes are already covered.
 
 ## Context
 
