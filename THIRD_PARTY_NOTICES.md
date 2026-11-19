@@ -60,7 +60,7 @@ package retains its own license. Vendored Shirone source is described above.
 | astro, @astrojs/mdx, @astrojs/svelte, @astrojs/check | MIT | static site framework + integrations |
 | svelte 5.57.2 | MIT (see [LICENSES/Svelte-MIT.txt](LICENSES/Svelte-MIT.txt)) | island runtime (search, status) |
 | tailwindcss, @tailwindcss/vite | MIT | styling engine |
-| pagefind 1.5.2 | MIT (see [LICENSES/Pagefind-MIT.txt](LICENSES/Pagefind-MIT.txt) and the referenced [vscode-ripgrep notice](LICENSES/Pagefind-vscode-ripgrep-MIT.txt)) | local search indexer + lazy JS/WASM runtime |
+| pagefind 1.5.2 | MIT (package: [LICENSES/Pagefind-MIT.txt](LICENSES/Pagefind-MIT.txt); web runtime: [LICENSES/Pagefind-Web-Runtime-MIT.txt](LICENSES/Pagefind-Web-Runtime-MIT.txt); included vscode-ripgrep: [LICENSES/Pagefind-vscode-ripgrep-MIT.txt](LICENSES/Pagefind-vscode-ripgrep-MIT.txt)) | local search indexer + lazy JS/WASM runtime |
 | photoswipe 5.4.4 | MIT (see [LICENSES/PhotoSwipe-MIT.txt](LICENSES/PhotoSwipe-MIT.txt)) | lightbox gallery runtime |
 | katex 0.16.47 | MIT (see [LICENSES/KaTeX-MIT.txt](LICENSES/KaTeX-MIT.txt)) | Markdown math rendering and stylesheet |
 | KaTeX fonts (12 families) | SIL OFL 1.1 (see [LICENSES/KaTeX-Fonts-OFL-1.1.txt](LICENSES/KaTeX-Fonts-OFL-1.1.txt)) | bundled Markdown math font assets |

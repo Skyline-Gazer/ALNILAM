@@ -343,6 +343,14 @@ class DocsTests(unittest.TestCase):
         self.assertFalse(plan_disclaims_implementation_status('# Plan\n\nNot a draft; P1 is implemented.'))
         self.assertFalse(plan_disclaims_implementation_status('# Plan\n\nThis is not a production-release authorization.'))
 
+    def test_pagefind_web_runtime_license_is_retained_and_referenced(self):
+        license_text = (ROOT / 'LICENSES' / 'Pagefind-Web-Runtime-MIT.txt').read_text()
+        self.assertTrue(license_text.startswith('Copyright 2022 Pagefind\n\n'))
+        self.assertIn('The above copyright notice and this permission notice shall be included', license_text)
+        self.assertIn('THE SOFTWARE IS PROVIDED "AS IS"', license_text)
+        notices = (ROOT / 'THIRD_PARTY_NOTICES.md').read_text()
+        self.assertIn('[LICENSES/Pagefind-Web-Runtime-MIT.txt](LICENSES/Pagefind-Web-Runtime-MIT.txt)', notices)
+
 
 if __name__ == '__main__':
     unittest.main()
