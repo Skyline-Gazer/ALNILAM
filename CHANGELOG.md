@@ -21,6 +21,7 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 - **Bangumi snapshots (Issue #70):** opt-in builds cache public collections and locally emitted covers outside the Site. Provider or cover failures reuse the matching last valid snapshot; a successful empty result replaces it. Visitors make no third-party data or cover requests.
 - **Build cache safety and reuse (Issue #145):** normal Compose preserves project-local legacy paths; managed and legacy cleanup stay explicit; bounded GC protects active builds and manifests. Shirone reuses compiled output by Core-input fingerprint and shares identical verified bytes across input fingerprints in immutable SHA-256 objects; mutable Site state stays isolated.
 - **Site-authored static pages (Issue #160):** optional `content/pages/` Markdown/MDX pages render at `/pages/<path>/` and locale-prefixed routes. Drafts are excluded; canonical, sitemap and translation alternates, Open Graph covers/article metadata, and root/subpath output are covered. Page categories and tags do not enter post taxonomies, archives or feeds.
+- **Release artifact hygiene gate (Issue #166):** Verify, external-Site CI, GitHub Pages uploads and `pnpm vercel-build` inspect final `dist/site` output, including copied Site assets, and fail on publication-inappropriate files without printing their contents.
 
 ### Changed
 - The demo Site includes a two-article introductory series and a published MDX example.
