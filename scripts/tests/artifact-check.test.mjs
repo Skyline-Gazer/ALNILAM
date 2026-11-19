@@ -36,7 +36,7 @@ function check(output) {
   return spawnSync(process.execPath, [CHECKER, output], { cwd: REPO_ROOT, encoding: "utf8" });
 }
 
-test("allows intentional public files and a placeholder-only env example", (t) => {
+test("allows public files, generated route slugs and a safe env example", (t) => {
   const { output } = makeOutput(t);
   for (const file of [
     "robots.txt",
@@ -45,11 +45,18 @@ test("allows intentional public files and a placeholder-only env example", (t) =
     ".nojekyll",
     ".well-known/security.txt",
     "pagefind/pagefind.js",
+    "site-assets/.well-known/security.txt",
     "site-assets/gallery/photo.webp",
     "data/search-index.json",
   ]) {
     writeOutputFile(output, file, "PUBLIC_PLACEHOLDER_ONLY=true\n");
   }
+  for (const route of ["pages/coverage", "posts/lighthouse", "en/posts/lighthouse"]) {
+    const routeIndex = path.join(output, route, "index.html");
+    fs.mkdirSync(path.dirname(routeIndex), { recursive: true });
+    fs.copyFileSync(path.join(output, "index.html"), routeIndex);
+  }
+
   writeOutputFile(
     output,
     "docs/examples/.env.example",
@@ -99,6 +106,18 @@ test("rejects private-key, backup, credential and local evidence paths", (t) => 
   assert.match(result.stderr, /site-assets\/\.npmrc: credential configuration/);
   assert.match(result.stderr, /playwright-report: local build or test artifact directory/);
   assert.doesNotMatch(result.stdout + result.stderr, /PRIVATE_KEY_SENTINEL|TOKEN_SENTINEL/);
+});
+
+test("rejects unapproved dot-directories while allowing .well-known resources", (t) => {
+  const { output } = makeOutput(t);
+  writeOutputFile(output, "site-assets/.history/session.json", "HIDDEN_SENTINEL_DO_NOT_PRINT\n");
+  writeOutputFile(output, "site-assets/.well-known/security.txt", "Contact: security@example.com\n");
+
+  const result = check(output);
+  assert.equal(result.status, 1, result.stderr);
+  assert.match(result.stderr, /site-assets\/\.history: unapproved hidden directory/);
+  assert.doesNotMatch(result.stderr, /site-assets\/\.well-known/);
+  assert.doesNotMatch(result.stdout + result.stderr, /HIDDEN_SENTINEL_DO_NOT_PRINT/);
 });
 
 test("rejects symlinked entries and symlinked output roots", (t) => {
