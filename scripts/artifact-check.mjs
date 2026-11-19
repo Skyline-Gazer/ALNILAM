@@ -81,13 +81,26 @@ function isSafePublicEnvExample(relativePath, entry, absolutePath) {
 }
 
 
+function isGeneratedSiteRouteDirectory(segments, absolutePath) {
+  const routeRootIndex = /^[a-z]{2,3}(?:-[a-z0-9]+)*$/.test(segments[0]) ? 1 : 0;
+  if (
+    !["pages", "posts"].includes(segments[routeRootIndex]) ||
+    segments.length <= routeRootIndex + 1
+  ) {
+    return false;
+  }
+  try {
+    const indexStat = fs.lstatSync(path.join(absolutePath, "index.html"));
+    return indexStat.isFile() && !indexStat.isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+
 function hygieneRule(relativePath, entry, absolutePath) {
   const normalized = relativePath.split(path.sep).join("/");
   const segments = normalized.toLowerCase().split("/");
   const base = segments.at(-1);
-  const routeRootIndex = /^[a-z]{2,3}(?:-[a-z0-9]+)*$/.test(segments[0]) ? 1 : 0;
-  const inGeneratedSiteRoute =
-    ["pages", "posts"].includes(segments[routeRootIndex]) && segments.length > routeRootIndex + 1;
   if (entry.isSymbolicLink()) return "symbolic link";
   if (segments.includes(".git") || [".gitattributes", ".gitignore", ".gitmodules"].includes(base)) {
     return "repository metadata";
@@ -102,7 +115,11 @@ function hygieneRule(relativePath, entry, absolutePath) {
   if (CREDENTIAL_FILES.has(base) || base === "credentials.json" || /^service-account(?:[-_].*)?\.json$/i.test(base)) {
     return "credential configuration";
   }
-  if (entry.isDirectory() && LOCAL_ARTIFACT_DIRS.has(base) && !inGeneratedSiteRoute) {
+  if (
+    entry.isDirectory() &&
+    LOCAL_ARTIFACT_DIRS.has(base) &&
+    !isGeneratedSiteRouteDirectory(segments, absolutePath)
+  ) {
     return "local build or test artifact directory";
   }
   if (entry.isDirectory() && base.startsWith(".") && base !== ".well-known") {

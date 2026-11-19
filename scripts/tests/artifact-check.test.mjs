@@ -51,7 +51,12 @@ test("allows public files, generated route slugs and a safe env example", (t) =>
   ]) {
     writeOutputFile(output, file, "PUBLIC_PLACEHOLDER_ONLY=true\n");
   }
-  for (const route of ["pages/coverage", "posts/lighthouse", "en/posts/lighthouse"]) {
+  for (const route of [
+    "pages/coverage",
+    "pages/guide/coverage",
+    "posts/lighthouse",
+    "en/posts/lighthouse",
+  ]) {
     const routeIndex = path.join(output, route, "index.html");
     fs.mkdirSync(path.dirname(routeIndex), { recursive: true });
     fs.copyFileSync(path.join(output, "index.html"), routeIndex);
@@ -66,6 +71,23 @@ test("allows public files, generated route slugs and a safe env example", (t) =>
   const result = check(output);
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /BUDGETS OK/);
+});
+
+test("rejects local artifact directories nested below Site routes", (t) => {
+  const { output } = makeOutput(t);
+  writeOutputFile(
+    output,
+    "pages/guide/playwright-report/results.json",
+    "ROUTE_ARTIFACT_SENTINEL_DO_NOT_PRINT\n",
+  );
+
+  const result = check(output);
+  assert.equal(result.status, 1, result.stderr);
+  assert.match(
+    result.stderr,
+    /pages\/guide\/playwright-report: local build or test artifact directory/,
+  );
+  assert.doesNotMatch(result.stdout + result.stderr, /ROUTE_ARTIFACT_SENTINEL_DO_NOT_PRINT/);
 });
 
 test("rejects nested environment files without printing their contents", (t) => {
