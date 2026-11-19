@@ -45,7 +45,6 @@ const tagSummary = `${tags.length} ${t(I18nKey.tagsCount)} · ${totalPosts} ${t(
 						href={"url" in tag ? tag.url : getTagUrl(tag.name)}
 						variant="tonal"
 						class="tag-index__chip"
-						label={`View all posts with the ${tag.name} tag`}
 					>
 						{tag.name}
 						<span class="tag-index__count">{tag.count}</span>

@@ -9,9 +9,9 @@ test("Lighthouse summary reports per-URL medians and keeps lab data separate", (
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lhci-"));
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
   const values = [
-    { cls: 0.1, lcp: 1200, requests: 8, js: 1000, css: 400, a11y: 0.9 },
-    { cls: 0.3, lcp: 1800, requests: 12, js: 3000, css: 800, a11y: 0.7 },
-    { cls: 0.2, lcp: 1500, requests: 10, js: 2000, css: 600, a11y: 0.8 },
+    { cls: 0.1, lcp: 1200, requests: 8, js: 1000, css: 400, image: 700, font: 500, a11y: 0.9 },
+    { cls: 0.3, lcp: 1800, requests: 12, js: 3000, css: 800, image: 900, font: 700, a11y: 0.7 },
+    { cls: 0.2, lcp: 1500, requests: 10, js: 2000, css: 600, image: 800, font: 600, a11y: 0.8 },
   ];
   const manifest = values.map((value, index) => {
     const jsonPath = path.join(directory, `run-${index}.report.json`);
@@ -28,6 +28,8 @@ test("Lighthouse summary reports per-URL medians and keeps lab data separate", (
         "resource-summary": { details: { items: [
           { resourceType: "script", transferSize: value.js, requestCount: 1 },
           { resourceType: "stylesheet", transferSize: value.css, requestCount: 1 },
+          { resourceType: "image", transferSize: value.image, requestCount: 1 },
+          { resourceType: "font", transferSize: value.font, requestCount: 1 },
         ] } },
         contrast: { title: "Background and foreground colors do not have a sufficient contrast ratio.", score: index === 1 ? 0 : 1 },
       },
@@ -52,11 +54,45 @@ test("Lighthouse summary reports per-URL medians and keeps lab data separate", (
     totalByteWeight: 5001,
     scriptTransferBytes: 2000,
     cssTransferBytes: 600,
+    imageTransferBytes: 800,
+    fontTransferBytes: 600,
   });
   assert.deepEqual(summary.pages[0].accessibilityFindings, [{
     id: "contrast",
     title: "Background and foreground colors do not have a sufficient contrast ratio.",
   }]);
+});
+
+test("missing resource summaries stay unknown while empty summaries measure zero", (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lhci-resources-"));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const manifest = [];
+  const addReport = (url, items, index) => {
+    const audits = {};
+    if (items !== undefined) audits["resource-summary"] = { details: { items } };
+    const jsonPath = path.join(directory, `resource-${index}.report.json`);
+    fs.writeFileSync(jsonPath, JSON.stringify({ audits }));
+    manifest.push({ url, jsonPath });
+  };
+  for (let index = 0; index < 3; index++) addReport("http://127.0.0.1/missing", undefined, index);
+  addReport("http://127.0.0.1/partial", undefined, 3);
+  addReport("http://127.0.0.1/partial", [], 4);
+  addReport("http://127.0.0.1/partial", [{ resourceType: "script", transferSize: 30, requestCount: 2 }], 5);
+  fs.writeFileSync(path.join(directory, "manifest.json"), JSON.stringify(manifest));
+
+  const summary = summarizeLighthouseReports(directory);
+  const missing = summary.pages.find((page) => page.url.endsWith("/missing"));
+  const partial = summary.pages.find((page) => page.url.endsWith("/partial"));
+  assert.equal(missing.median.requestCount, null);
+  assert.equal(partial.median.requestCount, 1);
+  assert.deepEqual(
+    ["scriptTransferBytes", "cssTransferBytes", "imageTransferBytes", "fontTransferBytes"].map((key) => missing.median[key]),
+    [null, null, null, null],
+  );
+  assert.deepEqual(
+    ["scriptTransferBytes", "cssTransferBytes", "imageTransferBytes", "fontTransferBytes"].map((key) => partial.median[key]),
+    [15, 0, 0, 0],
+  );
 });
 
 test("Lighthouse summary rejects an incomplete run group", (t) => {

@@ -13,6 +13,8 @@ function readLock(lockPath) {
     const parsed = JSON.parse(fs.readFileSync(lockPath, "utf8"));
     return typeof parsed?.pid === "number" && typeof parsed?.startedAt === "string" ? parsed : null;
   } catch (error) {
+    // A holder may release after link() reports EEXIST but before this read.
+    // Retry that acquisition race; malformed or unreadable locks still fail closed.
     if (error?.code === "ENOENT") return undefined;
     return null;
   }
