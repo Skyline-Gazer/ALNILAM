@@ -62,6 +62,7 @@ const LOCAL_ARTIFACT_DIRS = new Set([
   "__pycache__", "artifacts", "browser-results", "coverage", "lighthouse", "node_modules", "playwright-report",
   "test-results", "tmp", "temp",
 ]);
+const LOCAL_ARTIFACT_FILE = /\.(?:json|zip|xml)$/;
 const CREDENTIAL_DIRS = new Set([".aws", ".docker", ".gnupg", ".kube", ".ssh"]);
 const CREDENTIAL_FILES = new Set([".netrc", ".npmrc", ".pypirc"]);
 const PRIVATE_KEY_NAMES = new Set(["id_dsa", "id_ecdsa", "id_ed25519", "id_rsa"]);
@@ -114,6 +115,13 @@ function hygieneRule(relativePath, entry, absolutePath) {
   }
   if (CREDENTIAL_FILES.has(base) || base === "credentials.json" || /^service-account(?:[-_].*)?\.json$/i.test(base)) {
     return "credential configuration";
+  }
+  if (
+    !entry.isDirectory() &&
+    segments.some((part) => LOCAL_ARTIFACT_DIRS.has(part)) &&
+    LOCAL_ARTIFACT_FILE.test(base)
+  ) {
+    return "local build or test artifact file";
   }
   if (
     entry.isDirectory() &&

@@ -89,6 +89,26 @@ test("rejects local artifact directories nested below Site routes", (t) => {
   );
   assert.doesNotMatch(result.stdout + result.stderr, /ROUTE_ARTIFACT_SENTINEL_DO_NOT_PRINT/);
 });
+test("rejects report payloads inside route directories with an HTML index", (t) => {
+  const { output } = makeOutput(t);
+  const reportDir = path.join(output, "pages/guide/playwright-report");
+  fs.mkdirSync(reportDir, { recursive: true });
+  fs.copyFileSync(path.join(output, "index.html"), path.join(reportDir, "index.html"));
+  writeOutputFile(output, "pages/guide/playwright-report/results.json", "REPORT_SENTINEL_DO_NOT_PRINT\n");
+  writeOutputFile(output, "pages/guide/playwright-report/trace.zip", "TRACE_SENTINEL_DO_NOT_PRINT\n");
+
+  const result = check(output);
+  assert.equal(result.status, 1, result.stderr);
+  assert.match(
+    result.stderr,
+    /pages\/guide\/playwright-report\/results\.json: local build or test artifact file/,
+  );
+  assert.match(
+    result.stderr,
+    /pages\/guide\/playwright-report\/trace\.zip: local build or test artifact file/,
+  );
+  assert.doesNotMatch(result.stdout + result.stderr, /(?:REPORT|TRACE)_SENTINEL_DO_NOT_PRINT/);
+});
 
 test("rejects nested environment files without printing their contents", (t) => {
   const { output } = makeOutput(t);
