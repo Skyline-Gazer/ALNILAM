@@ -1,5 +1,18 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-19 · Release artifact hygiene gate
+
+This entry records Issue #166 and PR #171. The release gate remains under verification; this work does not authorize a Production release.
+
+- GitHub `dev` is `e1d0174be5cda5996b39fb59737eca55782b5cc2`; `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`. CNB refs and ADS pin `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` remain unchanged.
+- [Issue #166](https://github.com/Skyline-Gazer/ALNILAM/issues/166) remains open; its Project #17 item currently reads `Todo`. [PR #171](https://github.com/Skyline-Gazer/ALNILAM/pull/171) targets `dev` and contains implementation snapshot `32ada13a7f39c6e3a9215f6797ad11486fddefd2`.
+- The PR checks final `dist/site` output and wires `scripts/artifact-check.mjs` into Verify, external-Site CI, GitHub Pages immediately before upload, and `pnpm vercel-build`.
+- Local Demo output checks passed for root and `/ALNILAM/` bases: 92 pages and 436 island refs each. `node --test scripts/tests/artifact-check.test.mjs` passed 7/7, including generated `coverage`/`lighthouse` routes, hidden-directory rejection, and `.well-known` acceptance.
+- CodeRabbit's actionable findings were replied to with evidence and resolved; the CodeRabbit check completed successfully at [run 135425457654](https://github.com/Skyline-Gazer/ALNILAM/runs/135425457654). Required Verify runs [44484774093](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44484774093) and [44484782242](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44484782242) were in progress on implementation snapshot `32ada13` when recorded; read the live PR for final-head status.
+- The non-required Vercel `alnilam-production` status reports `Deployment was blocked`, consistent with the paused Production project. No Vercel configuration, Production deployment, `main`, release tag, or Demo alias was changed.
+
+Do not mark Issue #166 or its Project item Done until the required Verify and release-path acceptance complete.
+
 ## Live-state update — 2026-11-18 · Static-page acceptance and deployment boundaries
 
 This entry supersedes earlier live-state notes where they conflict. It records the current deployment response and authorization boundary; older sections remain historical evidence.
