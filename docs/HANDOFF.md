@@ -1,5 +1,16 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-19 · #74 field data and screen-reader readiness
+
+This entry records the latest field-data access result and the prepared manual checklist. It supplements, rather than replaces, the existing lab and browser evidence below.
+
+- GitHub `dev` was `e1d0174be5cda5996b39fb59737eca55782b5cc2` at this check. Issue [#74](https://github.com/Skyline-Gazer/ALNILAM/issues/74) and PR [#164](https://github.com/Skyline-Gazer/ALNILAM/pull/164) remain open; the PR is not an acceptance or merge of the remaining manual/field requirements.
+- PR #164's exact-head P6 audit [run 44440935412](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44440935412) passed its 60 mobile/desktop Lighthouse reports and browser suite. This is lab and browser evidence only; it supplies no CrUX or other field p75 values.
+- Field p75 is `NOT_VERIFIED`. On 2026-11-19, Vercel Speed Insights requests for the Demo and `alnilam-production-next` were rejected by the Hobby plan for both 30-day and 7-day windows (`payment_required` on the 7-day requests). The public PageSpeed Insights request for the Demo home page returned HTTP 429. No metric/device bucket or field percentile was returned; no plan or billing change was made and no synthetic traffic was generated. The result is recorded in [#74's field-data follow-up](https://github.com/Skyline-Gazer/ALNILAM/issues/74).
+- The [macOS Safari + VoiceOver checklist](P6-74-MANUAL-SCREEN-READER-CHECKLIST.md) covers the home page, article, TOC, search, responsive navigation drawer, pagination, and PhotoSwipe. Its execution status is `MANUAL_NOT_RUN`: this Linux host cannot run Safari or VoiceOver. Checklist preparation does not satisfy the manual screen-reader acceptance.
+- Keep #74 Open / In Progress. No Issue or Project status, Vercel setting, production deployment, `main`, release tag, or ADS pin was changed by this evidence pass.
+
+
 ## Live-state update — 2026-11-18 · Static-page acceptance and deployment boundaries
 
 This entry supersedes earlier live-state notes where they conflict. It records the current deployment response and authorization boundary; older sections remain historical evidence.
