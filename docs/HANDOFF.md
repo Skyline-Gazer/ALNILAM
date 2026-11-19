@@ -1,15 +1,26 @@
 # ALNILAM — Current Agent Handoff
 
-## Live-state update — 2026-11-19 · #74 field data and screen-reader readiness
+## Live-state update — 2026-11-19 · P6 and release-artifact integration
 
-This entry records the latest field-data access result and the prepared manual checklist. It supplements, rather than replaces, the existing lab and browser evidence below.
+This entry records the current `dev` merge state; older benchmark and deployment notes remain historical where their source SHAs differ.
 
-- GitHub `dev` was `e1d0174be5cda5996b39fb59737eca55782b5cc2` at this check. Issue [#74](https://github.com/Skyline-Gazer/ALNILAM/issues/74) and PR [#164](https://github.com/Skyline-Gazer/ALNILAM/pull/164) remain open; the PR is not an acceptance or merge of the remaining manual/field requirements.
-- PR #164's exact-head P6 audit [run 44440935412](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44440935412) passed its 60 mobile/desktop Lighthouse reports and browser suite. This is lab and browser evidence only; it supplies no CrUX or other field p75 values.
-- Field p75 is `NOT_VERIFIED`. On 2026-11-19, Vercel Speed Insights requests for the Demo and `alnilam-production-next` were rejected by the Hobby plan for both 30-day and 7-day windows (`payment_required` on the 7-day requests). The public PageSpeed Insights request for the Demo home page returned HTTP 429. No metric/device bucket or field percentile was returned; no plan or billing change was made and no synthetic traffic was generated. The result is recorded in [#74's field-data follow-up](https://github.com/Skyline-Gazer/ALNILAM/issues/74).
-- The [macOS Safari + VoiceOver checklist](P6-74-MANUAL-SCREEN-READER-CHECKLIST.md) covers the home page, article, TOC, search, responsive navigation drawer, pagination, and PhotoSwipe. Its execution status is `MANUAL_NOT_RUN`: this Linux host cannot run Safari or VoiceOver. Checklist preparation does not satisfy the manual screen-reader acceptance.
-- Keep #74 Open / In Progress. No Issue or Project status, Vercel setting, production deployment, `main`, release tag, or ADS pin was changed by this evidence pass.
+### GitHub refs and Issue #166 / PR #171
 
+- PR #171 merged normally to GitHub `dev` at `4e0e189453663837054e8134b9a2c196a8b48c6c` from head `c77642df49fd6197c02f940ac86514ce27b3bf91`. PR Verify runs [44508303263](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44508303263) and [44508292215](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44508292215) and post-merge Verify [44516145869](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44516145869) passed. The 9/9 artifact-check regression suite and Demo root/nested checks passed before merge; CodeRabbit was skipped on the final head and all three review threads were resolved.
+- The release-artifact gate checks final composed output in Verify, external-Site CI, GitHub Pages before artifact upload, and `pnpm vercel-build` (`scripts/vercel-build.mjs` runs Compose then `scripts/artifact-check.mjs`). It reports offending paths/rules without printing file contents; Site input remains unchanged.
+- Issue #166 remains Open / Project #17 `Todo` pending release-path acceptance. No formal Production release, `main` change, release tag, alias, or Vercel setting was made.
+
+### P6 acceptance — Issue #74 / PR #164
+
+- PR #164 merged normally to GitHub `dev` at `a7eb26805ac9a7e529435b0fd11063cde1d57853` from head `48c31e4637cf966412262056b37af2896975c695`, based on `4e0e189453663837054e8134b9a2c196a8b48c6c`. Refreshed PR Verify [44517760036](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44517760036) and paired push Verify [44517746935](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44517746935) passed. Post-merge Verify [44521231167](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44521231167) is in progress as of this entry.
+- The opt-in P6 audit on product source `92e3e52ab783db891efec04ace4582b6230b446f` recorded 249 browser cases passed, 1 intentional skip, 0 unexpected and 0 flaky. It covered ten root and `/ALNILAM/` routes with three mobile and desktop runs per route. Candidate LCP medians were 2708–3333 ms mobile and 2714–3332 ms desktop; maximum normal CLS was 0.001639; Lighthouse accessibility was 1.00 with no findings. The negative CLS control exceeded budget as expected. The remote +370 ms nested mobile median did not reproduce in a five-run local comparison. These are lab results, not field p75.
+- Field p75 remains **NOT VERIFIED**. On 2026-11-19, Vercel Speed Insights requests for Demo and `alnilam-production-next` were rejected by the Hobby plan for 30-day and 7-day windows (`payment_required` on 7-day requests); the public PageSpeed Insights request returned HTTP 429. No metric/device bucket or field percentile was returned, no plan or billing change was made, and no synthetic traffic was generated. See [#74's field-data follow-up](https://github.com/Skyline-Gazer/ALNILAM/issues/74).
+- The [macOS Safari + VoiceOver checklist](P6-74-MANUAL-SCREEN-READER-CHECKLIST.md) covers the home page, article, TOC, search, responsive navigation drawer, desktop/mobile pagination, and PhotoSwipe. Execution remains `MANUAL_NOT_RUN` because this Linux host cannot run Safari or VoiceOver; expected speech and actual focus behavior remain unobserved.
+- Keep Issue #74 Open / In Progress. These runs do not satisfy field-performance or manual screen-reader acceptance. No Issue/Project status, Vercel setting, Production deployment, `main`, release tag, or ADS pin changed in this evidence pass.
+
+GitHub `dev` is `a7eb26805ac9a7e529435b0fd11063cde1d57853`; `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; CNB refs and ADS pin `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` remain unchanged.
+
+Do not mark Issue #166 or #74 Done from these results alone. The first formal Production release and custom-domain activation remain separate Owner decisions.
 
 ## Live-state update — 2026-11-18 · Static-page acceptance and deployment boundaries
 
