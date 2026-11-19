@@ -3,11 +3,14 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tempfile
 import unittest
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'scripts'))
+from release_status import published_release_errors, release_claim_errors
 
 CURRENT_DOCS = (
     'README.md',
@@ -40,7 +43,7 @@ def command_example_errors(root, files):
         text = (root / relative).read_text()
         for block in re.findall(r'```(?:bash|sh)\s*\n(.*?)\n```', text, re.S):
             for line in block.splitlines():
-                for match in re.finditer(r'(?:^|[;&|]\s*)(?:\$\s*)?pnpm\s+(?:(run)\s+)?([A-Za-z][\w:-]*)\b', line):
+                for match in re.finditer(r'(?:^|[;&|]\s*)(?:\$\s*)?pnpm\s+(?:(run)\s+)?([A-Za-z][\w:-]*)(?=$|\s|[;&|<>])', line):
                     command = match.group(2)
                     if command not in scripts and (match.group(1) is not None or command not in builtins):
                         errors.append(f'{relative}: unknown pnpm script {command}')
@@ -55,7 +58,7 @@ def command_example_errors(root, files):
 
 def invalid_site_config_examples(root, files, core_root):
     examples = []
-    pattern = re.compile(r'^ {0,3}```yaml\s+site-config[^\n]*\n(.*?)\n {0,3}```[ \t]*(?:\n|$)', re.M | re.S)
+    pattern = re.compile(r'^ {0,3}```yaml[ \t]+site-config[^\n]*\n(.*?)(?:\n)?^ {0,3}```[ \t]*(?:\n|$)', re.M | re.S)
     for relative in files:
         for index, content in enumerate(pattern.findall((root / relative).read_text()), start=1):
             examples.append({'filename': f'{relative} example {index}', 'content': content})
@@ -92,10 +95,18 @@ def stale_cnb_claims(text):
     return [
         line.strip()
         for line in text.splitlines()
-        if re.search(r'\bCNB\b', line, re.I)
-        and active.search(line)
-        and not historical.search(line)
+        if any(
+            re.search(r'\bCNB\b', claim, re.I)
+            and active.search(claim)
+            and not historical.search(claim)
+            for claim in line.split(';')
+        )
     ]
+
+
+def current_unreleased_changelog(changelog):
+    section = re.search(r'^## \[Unreleased\][ \t]*\n(.*?)(?=^## |\Z)', changelog, re.M | re.S)
+    return section.group(1) if section is not None else ''
 
 
 def deployment_guidance_errors(readme, handoff):
@@ -104,20 +115,22 @@ def deployment_guidance_errors(readme, handoff):
         handoff,
         re.M | re.S,
     ))
-    if not updates:
+    evidence = []
+    for update in updates:
+        section = re.search(
+            r'^### Vercel topology and current exposure[ \t]*\n(.*?)(?=^### |\Z)',
+            update.group(2),
+            re.M | re.S,
+        )
+        if section is not None:
+            evidence.append((update.group(1), section.group(1)))
+    if not evidence:
         return ['HANDOFF: current Vercel evidence section is missing']
-    latest_date = max(update.group(1) for update in updates)
-    current_updates = [update for update in updates if update.group(1) == latest_date]
-    if len(current_updates) != 1:
+    latest_date = max(date for date, _ in evidence)
+    current_sections = [body for date, body in evidence if date == latest_date]
+    if len(current_sections) != 1:
         return ['HANDOFF: current Vercel evidence section is ambiguous']
-    section = re.search(
-        r'^### Vercel topology and current exposure[ \t]*\n(.*?)(?=^### |\Z)',
-        current_updates[0].group(2),
-        re.M | re.S,
-    )
-    if section is None:
-        return ['HANDOFF: current Vercel evidence section is missing']
-    current = section.group(1)
+    current = current_sections[0]
     demo = re.search(r'existing public Demo project .*? on GitHub `([^`]+)`', current, re.S | re.I)
     production = re.search(r'Separate project `([^`]+)`.*?productionBranch=([A-Za-z0-9_-]+)', current, re.S | re.I)
     line = next((line for line in readme.splitlines() if line.startswith('- Vercel:')), '')
@@ -131,43 +144,38 @@ def deployment_guidance_errors(readme, handoff):
         errors.append('README: Demo branch disagrees with current HANDOFF evidence')
     if production_doc is None or production_doc.groups() != production.groups():
         errors.append('README: production project or branch disagrees with current HANDOFF evidence')
-    if re.search(r'\bSSO\b', current, re.I) and (sso_doc is None or sso_doc.groups() != production.groups()):
-        errors.append('README: current SSO protection is omitted or denied')
+
+    project_line = next((
+        candidate for candidate in current.splitlines()
+        if re.search(rf'Separate project `{re.escape(production.group(1))}`', candidate, re.I)
+        and re.search(rf'productionBranch={re.escape(production.group(2))}\b', candidate, re.I)
+    ), '')
+    sso_enabled = bool(re.search(
+        r'\bssoProtection=(?:all|all_except_custom_domains)\b|\b(?:sets?|enforces?|requires?) SSO for Production URLs\b',
+        project_line,
+        re.I,
+    ))
+    sso_disabled = bool(re.search(
+        r'\bssoProtection=(?:none|disabled|off)\b|\bSSO (?:is )?(?:disabled|off)\b|\bdoes not (?:set|require|use) SSO\b',
+        project_line,
+        re.I,
+    ))
+    if sso_doc is not None:
+        if sso_doc.groups() != production.groups():
+            errors.append('README: SSO claim names a different Production project or branch')
+        if not sso_enabled or sso_disabled:
+            errors.append('README: claims SSO protection without enabled SSO evidence for the named Production project')
+    elif sso_enabled:
+        errors.append('README: current SSO protection is omitted')
     return errors
 
 
-def latest_published_version(root):
-    result = subprocess.run(
-        ['git', 'describe', '--tags', '--abbrev=0', '--match', 'v[0-9]*', 'refs/remotes/origin/main'],
-        cwd=root,
-        text=True,
-        capture_output=True,
-        timeout=30,
-    )
-    if result.returncode != 0:
-        return None
-    match = re.fullmatch(r'v(\d+\.\d+\.\d+)', result.stdout.strip())
-    return match.group(1) if match else None
-
-
-def release_status_errors(readme, changelog, published_version):
-    releases = re.findall(r'(?m)^## \[(\d+\.\d+\.\d+)\]', changelog)
-    claims = set(re.findall(r'\bReleased\s+v(\d+\.\d+\.\d+)\b', readme, re.I))
-    claims.update(re.findall(r'\bv(\d+\.\d+\.\d+)\s+is released\b', readme, re.I))
-    if published_version is None:
-        return ['Git: latest published release tag on origin/main is unavailable']
-    if published_version not in releases:
-        return [f'CHANGELOG: published tag v{published_version} has no release heading']
-    if claims != {published_version}:
-        return [f'README release versions {sorted(claims)} disagree with latest published Git tag v{published_version}']
-    return []
 
 
 def plan_disclaims_implementation_status(text):
     header = text.split('\n## ', 1)[0]
     disclaimers = (
         r'\bnot\s+(?:yet\s+)?implemented\b',
-        r'\bnot\s+a\s+production[- ]release\s+authorization\b',
         r'\b(?:requirements?|targets?)\b.{0,120}\bdo not by themselves establish current implementation\b',
         r'\b(?:requirements?|targets?)\b.{0,120}\bnot features? already shipped\b',
     )
@@ -221,10 +229,11 @@ class DocsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'package.json').write_text('{"scripts":{"test":"node --test"}}')
-            (root / 'README.md').write_text('```bash\npnpm install\npnpm run install\npnpm missing-script\nnode scripts/missing.mjs\n```')
+            (root / 'README.md').write_text('```bash\npnpm install\npnpm run install\npnpm run test\npnpm missing-script\npnpm test-\nnode scripts/missing.mjs\n```')
             self.assertEqual(command_example_errors(root, ['README.md']), [
                 'README.md: unknown pnpm script install',
                 'README.md: unknown pnpm script missing-script',
+                'README.md: unknown pnpm script test-',
                 'README.md: missing command target scripts/missing.mjs',
             ])
 
@@ -239,12 +248,39 @@ class DocsTests(unittest.TestCase):
             valid_yaml = (ROOT / 'sites/demo/alnilam.config.yaml').read_text().rstrip()
             (docs / 'indented-close.md').write_text(f'```yaml site-config\n{valid_yaml}\n  ```\n')
             self.assertEqual(invalid_site_config_examples(root, ['docs/indented-close.md'], ROOT), [])
+            (docs / 'end-of-file.md').write_text(f'```yaml site-config\n{valid_yaml}\n```')
+            self.assertEqual(invalid_site_config_examples(root, ['docs/end-of-file.md'], ROOT), [])
+            (docs / 'valid-then-empty-at-eof.md').write_text(f'```yaml site-config\n{valid_yaml}\n```\n```yaml site-config\n```')
+            empty_errors = invalid_site_config_examples(root, ['docs/valid-then-empty-at-eof.md'], ROOT)
+            self.assertTrue(empty_errors)
+            self.assertNotIn('no complete YAML Site config examples marked `yaml site-config`', empty_errors)
+            self.assertIn('docs/valid-then-empty-at-eof.md example 2:', empty_errors[0])
+
+    def test_post_tag_release_check_uses_the_published_tag_on_the_same_commit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'README.md').write_text('# Test\n\nReleased v9.9.9.\n')
+            (root / 'CHANGELOG.md').write_text('## [9.9.9] - 2099-01-01\n')
+            subprocess.run(['git', 'init', '--quiet', '--initial-branch=main'], cwd=root, check=True)
+            subprocess.run(['git', 'config', 'user.name', 'Docs Test'], cwd=root, check=True)
+            subprocess.run(['git', 'config', 'user.email', 'docs-test@example.invalid'], cwd=root, check=True)
+            subprocess.run(['git', 'add', 'README.md', 'CHANGELOG.md'], cwd=root, check=True)
+            subprocess.run(['git', 'commit', '--quiet', '-m', 'release candidate'], cwd=root, check=True)
+            before_tag = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
+            command = ['python3', str(ROOT / 'scripts/check_release_status.py'), 'v9.9.9', '--root', str(root)]
+            before = subprocess.run(command, cwd=ROOT, text=True, capture_output=True, timeout=30)
+            self.assertNotEqual(before.returncode, 0)
+            self.assertIn('is unavailable', before.stderr)
+            subprocess.run(['git', 'tag', 'v9.9.9'], cwd=root, check=True)
+            after = subprocess.run(command, cwd=ROOT, text=True, capture_output=True, timeout=30)
+            self.assertEqual(after.returncode, 0, after.stderr)
+            self.assertEqual(subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(), before_tag)
 
     def test_current_authority_deployment_release_and_plan_claims_are_checked(self):
         readme = (ROOT / 'README.md').read_text()
         changelog = (ROOT / 'CHANGELOG.md').read_text()
         handoff = (ROOT / 'docs' / 'HANDOFF.md').read_text()
-        current_changelog = changelog.split('## [Unreleased]', 1)[1].split('\n## [', 1)[0]
+        current_changelog = current_unreleased_changelog(changelog)
         authority_docs = '\n'.join([
             readme,
             (ROOT / 'CONTRIBUTING.md').read_text(),
@@ -253,32 +289,55 @@ class DocsTests(unittest.TestCase):
         ])
         self.assertEqual(stale_cnb_claims(authority_docs), [])
         self.assertEqual(stale_cnb_claims('The ADS pin records a frozen CNB development commit.'), [])
-        self.assertTrue(stale_cnb_claims('CNB is the required validation provider; ADS is optional.'))
+        self.assertTrue(stale_cnb_claims(
+            'CNB is the required validation provider; the ADS pin records a frozen CNB development commit.'
+        ))
         self.assertEqual(deployment_guidance_errors(readme, handoff), [])
         wrong_branches = readme.replace('Demo project remains on GitHub `dev`', 'Demo project remains on GitHub `main`').replace('tracks `main`', 'tracks `dev`')
         self.assertTrue(deployment_guidance_errors(wrong_branches, handoff))
         denied_sso = readme.replace('with SSO protection', 'without SSO protection')
         self.assertTrue(deployment_guidance_errors(denied_sso, handoff))
+        disabled_sso_handoff = handoff.replace(
+            'sets SSO for Production URLs and all Previews',
+            'SSO is disabled for Production URLs',
+        )
+        self.assertTrue(deployment_guidance_errors(readme, disabled_sso_handoff))
+        unrelated_same_date = (
+            '## Live-state update — 2026-11-18 · unrelated update\n'
+            'No deployment evidence in this update.\n\n'
+            + handoff
+        )
+        self.assertEqual(deployment_guidance_errors(readme, unrelated_same_date), [])
         newer_handoff = (
             '## Live-state update — 2099-01-01 · Superseding receipt\n'
             '### Vercel topology and current exposure\n'
             '- Existing public Demo project `demo-next` remained on GitHub `preview`.\n'
-            '- Separate project `production-next` reports `productionBranch=release` and sets SSO.\n'
+            '- Separate project `production-next` reports `productionBranch=release` and `ssoProtection=all`.\n'
             + handoff
         )
         newer_readme = '- Vercel: the existing public Demo project remains on GitHub `preview`; separate `production-next` tracks `release` with SSO protection.'
         self.assertEqual(deployment_guidance_errors(newer_readme, newer_handoff), [])
         self.assertTrue(deployment_guidance_errors(newer_readme.replace('tracks `release`', 'tracks `main`'), newer_handoff))
-        published_version = latest_published_version(ROOT)
-        self.assertIsNotNone(published_version)
-        self.assertEqual(release_status_errors(readme, changelog, published_version), [])
+        self.assertEqual(release_claim_errors(readme, changelog), [])
         prepared_changelog = changelog.replace('## [Unreleased]', '## [9.9.9] - 2099-01-01', 1)
-        self.assertEqual(release_status_errors(readme, prepared_changelog, published_version), [])
-        self.assertTrue(release_status_errors('v9.9.9 is released', prepared_changelog, published_version))
-        self.assertTrue(release_status_errors('v0.1.4 is released', '## [0.1.2]\n', '0.1.2'))
+        self.assertEqual(current_unreleased_changelog(prepared_changelog), '')
+        prepared_authority_docs = '\n'.join([
+            readme,
+            (ROOT / 'CONTRIBUTING.md').read_text(),
+            (ROOT / 'docs' / 'MAINTAINERS.md').read_text(),
+            current_unreleased_changelog(prepared_changelog),
+        ])
+        self.assertEqual(stale_cnb_claims(prepared_authority_docs), [])
+        candidate_readme = readme.replace('v0.1.3', 'v9.9.9')
+        self.assertEqual(release_claim_errors(candidate_readme, prepared_changelog), [])
+        self.assertEqual(published_release_errors(candidate_readme, prepared_changelog, '9.9.9'), [])
+        self.assertTrue(published_release_errors(candidate_readme, prepared_changelog, '0.1.4'))
+        self.assertTrue(published_release_errors('v9.9.9 is released', prepared_changelog, '0.1.2'))
+        self.assertTrue(published_release_errors(candidate_readme, prepared_changelog, 'not-a-version'))
         self.assertTrue(plan_disclaims_implementation_status((ROOT / 'docs' / 'next' / '00-PLAN.md').read_text()))
         self.assertTrue(plan_disclaims_implementation_status((ROOT / 'docs' / 'next' / '01-SPEC.md').read_text()))
         self.assertFalse(plan_disclaims_implementation_status('# Plan\n\nNot a draft; P1 is implemented.'))
+        self.assertFalse(plan_disclaims_implementation_status('# Plan\n\nThis is not a production-release authorization.'))
 
 
 if __name__ == '__main__':

@@ -1,0 +1,19 @@
+name: Release status
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: read
+jobs:
+  verify-release-claim:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+          persist-credentials: false
+      - name: Check README and CHANGELOG against the published tag
+        run: python3 scripts/check_release_status.py "$GITHUB_REF_NAME"
