@@ -1,4 +1,46 @@
 # ALNILAM — Current Agent Handoff
+## Live-state update — 2026-11-20 · Release, deployment, and cache reconciliation
+
+This entry is authoritative for current refs and delivery state. Older entries below remain historical evidence where their recorded SHA differs.
+
+### GitHub delivery
+
+- GitHub `dev` is `6b26bdacf0dcaaf47dc29c947fa5579f91e38668` (tree `6ace61745333bb3717e79bce2f78bb82386b81b6`); `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; CNB `dev` remains frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; ADS remains pinned at `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`.
+- PR #158 merged normally at `2e803dec6aacd3ec239031f31a464d8fbe91262e`; its lock regression passed 7/7 and both Required Verify runs [44566598039](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44566598039) and [44566580992](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44566580992) passed. PR #172 merged normally at current `dev` head `6b26bda`; its Required Verify [44584689040](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44584689040) and post-merge Verify [44594781749](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44594781749) passed; CodeRabbit passed as advisory.
+- Before this Handoff update, GitHub showed no open PRs. PRs #142, #143 and #144 are merged; Issue #140 is closed. This Handoff/Roadmap refresh is delivered as an Issue-linked docs PR; no `main` update, release tag, or manual Production deployment occurred.
+
+### Cache safety, reuse, and lifecycle
+
+- P0 cleanup safety is merged in PR #149: normal Compose does not invoke Legacy cleanup; `--clean-cache` is confined to the verified managed root; `--clean-legacy` is explicit and dry-run capable. PR #156 adds compiler-input-keyed reuse and SHA-256 immutable bundles; PR #157 serializes shared Astro scratch builds; PR #158 fixes the lock-release acquisition race. Post-merge Verify [43867996657](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43867996657) passed 310/310 contract tests and browser, external-Site, output, rollback, and ADS-pin steps.
+- `scripts/tests/shirone-cache.test.mjs` covers cache miss/hit, corrupt-object repair, and legacy-manifest migration. Contract tests cover GC dry-run and expiry, size-cap eviction, active-build refusal, and unsafe path boundaries. The latest `dev` Verify is [44594781749](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44594781749). Issue #145 records focused local results of 7/7 cache tests and 8/8 cleanup/GC contract tests.
+- The matched isolated six-Site workload compared Core `1cd67c4` with current `dev` `6b26bda`, using Node `v24.22.2`, pnpm `10.19.0`, the same lockfile SHA, six Site markers, and eight builds per revision (one cold, five Site changes, two warm):
+
+| Metric | Before | Current `dev` |
+| --- | ---: | ---: |
+| Whole cache allocated | 188,866,560 B | 46,129,152 B |
+| Bundle files / unique hashes | 36 / 6 | 6 / 6 |
+| Bundle logical / allocated | 171,106,500 / 171,196,416 B | 28,524,304 / 28,540,928 B |
+| Duplicate bundle logical bytes | 142,588,750 B | 0 B |
+| Cold build | 23.40 s | 23.42 s |
+| Site-change median (5 runs) | 23.09 s | 21.94 s |
+| Warm median (2 runs) | 22.53 s | 21.40 s |
+| Artifact-derived hit rate | 25% | 87.5% |
+
+  Allocated cache bytes fell 75.58% in this isolated workload. Hit rate is artifact-derived; the runtime exposes no hit counter. Fixed-order timings do not establish a causal speed gain.
+- A separate retained pre-CAS tmpfs sample had 198 bundles across six hashes: 28,517,718 unique content bytes and 912,566,976 duplicate logical bytes (912,916,480 duplicate file-block bytes). Reflink extent sharing was not measurable. Neither sample is the reported 7.2 GiB / 246-key DevBox cache. Its identity, allocation, post-CAS savings, and the 70% target remain unverified. GC defaults (14 days / 2 GiB) are uncalibrated to the unavailable working set. No real cache or Site was cleaned.
+
+### Deployment and P6 readiness
+
+- The existing public Demo deployment remains on `dev`. The 2026-11-20 readback found the stable alias returned HTTP 200, the latest deployment was READY / PROMOTED for Core `6b26bdacf0dcaaf47dc29c947fa5579f91e38668`, and `/alnilam-provenance.json` reported Site digest `1761ca3abb68de22ddffc157b1763b20dd847ffa0fb9b9bfedb56d9f1d65c4db`.
+- `alnilam-production-next` remains linked to `main`, with SSO on Production URLs and Previews. Its latest `dev` build is a Preview, its stable project alias returns HTTP 404, and its unique Preview URL redirects to SSO. Three older Production-target deployment records lack Git SHA/ref metadata. Legacy `alnilam-production` remains paused. No Vercel settings, aliases, domains, or deployments were changed in the readback. Keep #138 Open / In Progress: the historical dev-to-Production anomaly remains unexplained; first formal Production release and custom-domain activation remain Owner decisions.
+- P6 lab evidence remains as recorded under #74: 249 browser cases passed, 1 intentional skip, 0 unexpected/flaky; the 60-report Lighthouse matrix met lab thresholds with accessibility 1.00 and no findings. Field p75 is **NOT VERIFIED** (the Hobby plan rejected available Speed Insights windows; PageSpeed returned HTTP 429). Manual Safari/VoiceOver remains **MANUAL_NOT_RUN** on this Linux host. Keep #74 and parent #42 Open / In Progress.
+- PR #165 merged at `c6a7606`; #81 remains Open / In Progress because reviewed onboarding by a real user from an independently owned Site is unverified. Automated external-Site composition evidence does not equal that user acceptance. #35 remains Open / In Progress for Owner product/visual acceptance. PR #169 merged at `2c1939012c32facf59eb5753948cf2bcc6a4074e`; #136 remains Open / In Progress pending Owner accept/revise/decline, and its source audit was not rerun at current `dev`.
+- PR #171 closed #166 and its Project #17 item is Done. PR #172 is a partial #147 fix: it distributes canonical notices with the Vercel Demo and replaces the current undocumented lighthouse raster with authored artwork. #147 remains Open / In Progress; the source/dependency license ledger and current-tree credential review remain incomplete, and the historical raster blob's rights remain unverified.
+
+### Candidate and tracking boundary
+
+`6b26bdacf0dcaaf47dc29c947fa5579f91e38668` is the current Required-Verify-passing development snapshot, not an Owner-accepted Release Candidate. Project #17 readback leaves #35, #42, #74, #81, #136, #138, #145, and #147 In Progress; #166 is Done. No Project status was changed. P6 acceptance, the cache working-set calibration, product sign-off, and first Production release remain incomplete or Owner-gated.
+
 ## Live-state update — 2026-11-19 · Cache, deployment, and evidence refresh
 
 This entry supersedes earlier cache and deployment snapshots where facts differ. The footprint below is a local inventory, not a controlled before/after build benchmark.
