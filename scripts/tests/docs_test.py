@@ -229,7 +229,7 @@ class DocsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'package.json').write_text('{"scripts":{"test":"node --test"}}')
-            (root / 'README.md').write_text('```bash\npnpm install\npnpm run install\npnpm run test\npnpm missing-script\npnpm test-\nnode scripts/missing.mjs\n```')
+            (root / 'README.md').write_text('```bash\npnpm install\npnpm run install\npnpm run test\npnpm missing-script\npnpm run test-\nnode scripts/missing.mjs\n```')
             self.assertEqual(command_example_errors(root, ['README.md']), [
                 'README.md: unknown pnpm script install',
                 'README.md: unknown pnpm script missing-script',
