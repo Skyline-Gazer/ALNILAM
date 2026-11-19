@@ -511,6 +511,23 @@ Vercel builds serve `dist/site` directly (`outputDirectory` in `vercel.json`).
 Set `ALNILAM_SITE_URL` in the project environment to pin a custom domain; the
 derived deployment host is used only when it is absent.
 
+The publishing workflows also run `scripts/artifact-check.mjs` against the
+composed output. Git tracking and `.gitignore` do not filter files copied from
+Site `assets/`; the check examines the final tree after composition, including
+`dist/site/site-assets/`, and rejects known credential/config names, local
+build/test data, backups and symlinks. It reports relative paths and rule names;
+it does not print sensitive values or mutate the Site. The single reserved public
+example path `docs/examples/.env.example` is allowed only when every non-comment
+line is a simple assignment with a bracketed placeholder value, such as
+`API_KEY=<your-api-key>`. The checker reads only that bounded example file to
+validate placeholder syntax; every other `.env` or `.env.*` path is rejected.
+This is not a scan of arbitrary file contents for secrets.
+
+The check runs in GitHub Actions Verify and Site CI, again immediately before
+the owner-dispatched Pages artifact upload, and in the repository's Vercel build.
+It protects only those wired outputs; GitHub source archives and arbitrary
+custom packaging or manual copies are not scanned.
+
 ### Optional Git-based editors (PoC)
 
 An optional Git-based editor such as Pages CMS can author posts in the **Site**

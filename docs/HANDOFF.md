@@ -1,5 +1,18 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-19 · Release artifact hygiene gate
+
+This entry records Issue #166 and PR #171. Required Verify passed on implementation snapshot `01a5a58` and documentation update head `ee8eca1`; the linked PR carries the check rollup for later head changes. This work does not authorize a Production release.
+
+- GitHub `dev` is `e1d0174be5cda5996b39fb59737eca55782b5cc2`; `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`. CNB refs and ADS pin `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` remain unchanged.
+- [Issue #166](https://github.com/Skyline-Gazer/ALNILAM/issues/166) remains open; its Project #17 item currently reads `Todo`. [PR #171](https://github.com/Skyline-Gazer/ALNILAM/pull/171) targets `dev`; the latest checker/test fix is `01a5a58fd1ca08d90e1cbef7b4397ff0104c26d4` after implementation snapshot `32ada13a7f39c6e3a9215f6797ad11486fddefd2`.
+- The PR checks final `dist/site` output and wires `scripts/artifact-check.mjs` into Verify, external-Site CI, GitHub Pages immediately before upload, and `pnpm vercel-build`.
+- Local Demo output checks passed for root and `/ALNILAM/` bases: 92 pages and 436 island refs each. `node --test scripts/tests/artifact-check.test.mjs` passed 8/8, covering generated and nested routes, rejection of nested local artifact directories, hidden-directory rejection, `.well-known`, and a copied Site assets secret.
+- CodeRabbit findings observed to date have evidence replies and resolved threads. The follow-up finding was fixed in `01a5a58` and answered in [its review thread](https://github.com/Skyline-Gazer/ALNILAM/pull/171#discussion_r4626197342). CodeRabbit runs [135438853024](https://github.com/Skyline-Gazer/ALNILAM/runs/135438853024) and [135452379040](https://github.com/Skyline-Gazer/ALNILAM/runs/135452379040) passed on implementation head `01a5a58` and documentation head `ee8eca1`, respectively. Required Verify runs [44488774469](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44488774469) and [44488765021](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44488765021) passed on `01a5a58`; PR/push Verify runs [44492774205](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44492774205) and [44492767706](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44492767706) passed on `ee8eca1` in 21m29s and 21m21s. The linked PR carries the check rollup for later head changes.
+- The non-required Vercel `alnilam-production` status reports `Deployment was blocked`, consistent with the paused Production project. No Vercel configuration, Production deployment, `main`, release tag, or Demo alias was changed.
+
+Do not mark Issue #166 or its Project item Done until the required Verify and release-path acceptance complete.
+
 ## Live-state update — 2026-11-18 · Static-page acceptance and deployment boundaries
 
 This entry supersedes earlier live-state notes where they conflict. It records the current deployment response and authorization boundary; older sections remain historical evidence.

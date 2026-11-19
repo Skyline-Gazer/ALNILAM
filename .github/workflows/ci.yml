@@ -95,6 +95,9 @@ jobs:
           cp -a sites/demo "$RUNNER_TEMP/alnilam-site"
           site_before="$(find "$RUNNER_TEMP/alnilam-site" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)"
           node scripts/compose.mjs --site "$RUNNER_TEMP/alnilam-site" --out dist/external-site
+          node scripts/artifact-check.mjs dist/external-site
+          ALNILAM_SITE_URL=https://example.com/ALNILAM/ node scripts/compose.mjs --site "$RUNNER_TEMP/alnilam-site" --out dist/external-site-nested
+          node scripts/artifact-check.mjs dist/external-site-nested
           site_after="$(find "$RUNNER_TEMP/alnilam-site" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)"
           test "$site_before" = "$site_after"
           test -s dist/external-site/posts/hello-alnilam/index.html
