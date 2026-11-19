@@ -12,12 +12,20 @@ const median = (values) => {
 
 function reportMetrics(report) {
   const audits = report.audits ?? {};
-  const network = audits["network-requests"]?.details?.items ?? [];
-  const resources = audits["resource-summary"]?.details?.items ?? [];
-  const requestCount = network.length || resources.reduce((total, item) => total + (item.requestCount ?? 0), 0);
-  const bytes = (types) => resources
-    .filter((item) => types.includes(String(item.resourceType).toLowerCase()))
-    .reduce((total, item) => total + (item.transferSize ?? 0), 0);
+  const networkItems = audits["network-requests"]?.details?.items;
+  const resourceItems = audits["resource-summary"]?.details?.items;
+  const resources = Array.isArray(resourceItems) ? resourceItems : [];
+  const networkCount = Array.isArray(networkItems) ? networkItems.length : null;
+  const resourceRequestCount = Array.isArray(resourceItems)
+    ? resources.reduce((total, item) => total + (item.requestCount ?? 0), 0)
+    : null;
+  const requestCount = networkCount > 0 ? networkCount : resourceRequestCount ?? networkCount;
+  const bytes = (types) => {
+    if (!Array.isArray(resourceItems)) return null;
+    return resources
+      .filter((item) => types.includes(String(item.resourceType).toLowerCase()))
+      .reduce((total, item) => total + (item.transferSize ?? 0), 0);
+  };
   return {
     cls: numeric(audits["cumulative-layout-shift"]?.numericValue),
     lcpMs: numeric(audits["largest-contentful-paint"]?.numericValue),
@@ -28,6 +36,8 @@ function reportMetrics(report) {
     totalByteWeight: numeric(audits["total-byte-weight"]?.numericValue),
     scriptTransferBytes: numeric(bytes(["script"])) ,
     cssTransferBytes: numeric(bytes(["stylesheet", "css"])),
+    imageTransferBytes: numeric(bytes(["image"])),
+    fontTransferBytes: numeric(bytes(["font"])),
   };
 }
 

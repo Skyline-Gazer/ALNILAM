@@ -73,12 +73,17 @@ for (const origin of ORIGINS) {
 			await page.keyboard.press("Enter");
 			await page.locator("#search-input-desktop").fill(NO_HIT);
 			await expect(page.locator("#search-panel .m3-blog-searchpanel__status")).toHaveText("没有找到结果");
+			await expect(page.locator("#search-panel .m3-blog-searchpanel__status")).toBeVisible();
 
-			// Narrowing the viewport hands the panel its own, empty input: the
-			// empty state must not claim that an empty query matched nothing.
+			// The desktop capsule collapses when its input blurs at the breakpoint.
+			// Wait for that state change, then open the mobile panel with its own input.
 			await page.setViewportSize({ width: 390, height: 844 });
+			await expect(page.locator("#search-input-desktop-switch")).toHaveAttribute("aria-expanded", "false");
+			await expect(page.locator("#search-switch")).toHaveAttribute("aria-expanded", "false");
+			await page.locator("#search-switch").click();
+			await expect(page.locator("#search-switch")).toHaveAttribute("aria-expanded", "true");
+			await expect(page.locator("#search-panel input")).toBeVisible();
 			await expect(page.locator("#search-panel .m3-blog-searchpanel__status")).toHaveCount(0);
-
 			await page.locator("#search-panel input").fill(NO_HIT);
 			await expect(page.locator("#search-panel .m3-blog-searchpanel__status")).toHaveText("没有找到结果");
 		} finally {
