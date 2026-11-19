@@ -15,7 +15,8 @@ function readLock(lockPath) {
   } catch (error) {
     // A holder may release after link() reports EEXIST but before this read.
     // Retry that acquisition race; malformed or unreadable locks still fail closed.
-    return error?.code === "ENOENT" ? undefined : null;
+    if (error?.code === "ENOENT") return undefined;
+    return null;
   }
 }
 
@@ -63,7 +64,7 @@ export function createBuildLock(dir, { pid = process.pid, lockName = ".compose-l
             if (err.code === "ENOENT") continue; // staging was removed under us; retry with a fresh name
             if (err.code !== "EEXIST") throw err;
             const observed = readLock(lockPath);
-            if (observed === undefined) continue; // the observed lock was released; retry acquisition
+            if (observed === undefined) continue; // the holder released after our EEXIST result
             if (observed === null) {
               throw new Error("Unverifiable build lock; refusing automatic recovery: " + lockPath);
             }

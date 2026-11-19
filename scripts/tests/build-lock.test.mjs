@@ -53,6 +53,36 @@ test("build lock retries when it disappears during contention inspection", (t) =
 });
 
 
+test("lock acquisition retries when the holder releases after EEXIST", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const pathToLock = lockPath(dir);
+  const holder = createBuildLock(dir, { pid: process.pid });
+  holder.acquire();
+  const contender = createBuildLock(dir, { pid: 2 });
+  const realLink = fs.linkSync;
+  let releasedBetweenCollisionAndRead = false;
+  t.mock.method(fs, "linkSync", (source, destination) => {
+    try {
+      return realLink.call(fs, source, destination);
+    } catch (error) {
+      if (!releasedBetweenCollisionAndRead && destination === pathToLock && error?.code === "EEXIST") {
+        releasedBetweenCollisionAndRead = true;
+        fs.unlinkSync(pathToLock);
+      }
+      throw error;
+    }
+  });
+
+  assert.doesNotThrow(() => contender.acquire());
+  assert.equal(releasedBetweenCollisionAndRead, true, "the holder must release between EEXIST and lock observation");
+  assert.equal(readLock(dir).pid, 2, "the contender should acquire after the previous lock disappears");
+  holder.release();
+  assert.equal(readLock(dir).pid, 2, "the old holder must not release the contender's lock");
+  contender.release();
+  assert.equal(fs.existsSync(pathToLock), false, "the new holder must be able to release its lock");
+});
+
 test("published lock remains owned when staging cleanup fails", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));

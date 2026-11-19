@@ -1,4 +1,47 @@
 # ALNILAM — Current Agent Handoff
+## Live-state update — 2026-11-19 · Cache, deployment, and evidence refresh
+
+This entry supersedes earlier cache and deployment snapshots where facts differ. The footprint below is a local inventory, not a controlled before/after build benchmark.
+
+### GitHub and cache delivery
+
+- GitHub `dev` is `c6a7606fa4aafa6119660856db573fb606a1503b`; `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; CNB `dev` remains frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; ADS remains pinned at `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`. PR #165 merged normally from head `0af16d1f14b4c0bf7c28c2fd1a05bcac24dc1c4c`; post-merge Verify [44551692285](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44551692285) is running on `dev`.
+- P0 cleanup safety is merged in PR #149 at `9517fc2985599346bf0b2e5b4b68f4e9769f8c23`: normal Compose does not invoke Legacy cleanup, `--clean-cache` stays within the validated managed root, and `--clean-legacy` is an explicit dry-run-capable operation. PR #156 at `11103d3e8cc9e03f1477f9288c27934e5acc0e0e` adds Core-input-keyed compilation reuse and SHA-256-addressed immutable artifacts; PR #157 at `14e15361e981f76429a4b31ba013030925f39937` serializes shared Astro scratch builds and checks ownership. Post-merge Verify [43867996657](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43867996657) passed 310/310 contract tests and the browser, external-Site, output, rollback, and ADS-pin steps.
+- PR #158 remains open to `dev` without auto-merge or force-push. Its last verified head `8309bd55981f14e3c14ed4dfc029e5eafcb3bb91` included `dev` `a54d386f932fdcfcc1f0c983517e84dfc5dfc26e` through a normal merge and passed the lock suite 7/7, both Required Verify runs [44539657211](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44539657211) and [44539644572](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44539644572), and CodeRabbit. The branch is being refreshed against `dev` `c6a7606fa4aafa6119660856db573fb606a1503b` after PR #165; the refreshed head needs Required Verify. The Foundation Release scope permits this bounded lock-race fix to merge once current checks pass; long-term #145 cache savings, working-set and TTL/GC evidence remains unverified. The non-required `alnilam-production` check is blocked while that legacy project remains paused. Issue #145 remains open and its Project #17 item is `In Progress`.
+
+### Artifact identity and lifecycle
+
+- Matching Core compiler-input fingerprints reuse compiled output; immutable bundle bytes are verified by SHA-256 and shared across input manifests. Mutable Site state remains isolated by Core revision and Site digest.
+- A read-only scan of the retained pre-CAS cache `/tmp/alnilam-demo-series-rc/.cache/alnilam`, generated from Core commit `1cd67c47b7cab200f8bc4d25f7c359ef26dfe0f2` (2026-11-13), found 10 Core keys, 33 Site-digest directories (19 distinct digests), and 33 copies of `pkg_utils_markdown-processor_mjs.09301c56c1e3.mjs`. Every copy had SHA-256 `4047a686e7c98c8663bc7cafe8ecab6bd72ddf0d93a5725a549faf719fb0d391`, size 27,030,499 bytes, a distinct inode and `nlink=1`. Together they occupy 892,006,467 logical bytes and 892,108,800 reported file-block bytes. The cache root measured 1,027,914,475 apparent / 1,036,677,120 allocated bytes. Reflink extents were not verified because `filefrag` reported that FIBMAP requires root.
+- The separate 2026-11-16 isolated six-bundle before/after benchmark had six unique hashes and no duplicate bundle bytes in either version; bundle allocation was 28,536,832 bytes before and after. Cold/warm times were 25.48/23.66 s before and 25.25/23.37 s after. This does not establish a speed gain or a matched 33-Site post-CAS saving.
+- A read-only scan found 16 accessible worktree/scratch cache roots totaling 2,181,390,336 allocated / 2,151,636,087 apparent bytes. These are not the historical 7.2 GiB / 246-bundle DevBox cache. Its full identity, physical/reflink allocation, post-CAS savings, and the 70% target remain unverified; no cache or Site was cleaned or modified.
+- `--gc-cache --dry-run` was exercised on scratch data. The 14-day unused TTL and 2 GiB size cap remain uncalibrated; the cap, historical-cache migration, and real-cache GC effectiveness remain unverified. No real cache or Site was cleaned or modified.
+
+### Vercel readback
+
+- The existing public Demo project `xxxx` remains linked to `Skyline-Gazer/ALNILAM` with production branch `dev`. Its stable project alias `xxxx-beryl-theta.vercel.app` returned anonymous HTTP 200. Deployment `7914782159` completed successfully for Core `a54d386f932fdcfcc1f0c983517e84dfc5dfc26e`; `/alnilam-provenance.json` reports Site digest `527909af24317e93ea7129e89e0da952397b95ac1fdea93bd0646b29e2dfd87f` and generation time `2026-11-19T13:39:37.569Z`.
+- `alnilam-production-next` remains linked to `main` with SSO for Production deployment URLs and all Previews. Its project alias returns anonymous HTTP 404; the existing unique Production deployment `dpl_9FFgYBAbQx2Ttkmb3ktruup8ftMb` is READY and returns anonymous HTTP 302 to SSO. Keep #138 In Progress; the first formal Production release and external custom-domain activation remain Owner-gated. No Vercel project setting, alias, or custom domain changed; the Demo's automatic `dev` deployment is recorded above.
+
+### P6 audit status
+
+- PR #164 head `378a3bfd6b4abdb843c2e57415afd9b98a927a97` passed required Verify and P6 browser/Lighthouse workflow [44440935412](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44440935412). Its exact-head artifact reports 249 browser cases passed, 1 intentional skip, 0 unexpected and 0 flaky; mobile LCP medians ranged 2.712–3.357 s and desktop 2.715–3.363 s across 10 URLs with 3 runs each; maximum normal CLS was 0.001639 mobile / 0 desktop; Lighthouse accessibility score was 1.00 with no findings. The negative CLS controls recorded the expected red results (0.123539 mobile, 0.431101 desktop). Field p75 remains **NOT VERIFIED**: authenticated Vercel CLI 65.11.0 queries against `alnilam-production-next` and public Demo `xxxx` hit the Hobby seven-day history cap for 30-day requests, then required a Speed Insights Plus subscription even for seven-day LCP/CLS/INP requests; the public PageSpeed Insights endpoint returned HTTP 429. No billing change was made. Manual screen-reader testing remains **NOT RUN** because this Linux environment has no `orca` or `speech-dispatcher` executable. Keep Issue #74 Open / In Progress.
+
+### Local workstation footprint snapshot
+
+The sample came from the primary checkout at `195e184a3279085d19b0048e5a3ff140e8bf54ba`, which contained uncommitted P6 work. Existing `dist/site` is that checkout's output, not a clean build of current `dev`.
+
+| Area | Measurement |
+| --- | ---: |
+| Tracked files | 848 files; 4,715,500 logical bytes |
+| Git object store | 4,304 loose objects / 23.95 MiB; pack 2.06 MiB; garbage 0 |
+| Git worktrees | 44 |
+| Dependencies | 130 `node_modules` directories; shared pnpm store 745,390,080 allocated bytes; store plus all `node_modules` 1,653,456,896 allocated bytes, counted in one pass with hardlinks deduplicated |
+| Managed cache and Legacy paths | `.cache/alnilam` absent; `apps/web/.astro` 49,152 allocated bytes and retained; the other four listed Legacy paths absent |
+| Test and build artifacts | `browser-results` 5,971,968 allocated bytes; `artifacts` 45,461,504; `test-results` absent; existing `dist/site` 12,648,448 allocated bytes |
+| Existing client assets | 312 JS/CSS/font/image files in `dist/site`; 6,677,876 logical bytes |
+
+The shared dependency total deduplicates hardlinks; reflink sharing was not measured. This host snapshot does not measure a clean Production artifact or establish cache savings. No cache, Site, or primary-worktree file was changed for these measurements.
+
 
 ## Live-state update — 2026-11-19 · P6 and release-artifact integration
 
@@ -17,7 +60,9 @@ This entry records the current `dev` merge state; older benchmark and deployment
 - Field p75 remains **NOT VERIFIED**. On 2026-11-19, Vercel Speed Insights requests for Demo and `alnilam-production-next` were rejected by the Hobby plan for 30-day and 7-day windows (`payment_required` on 7-day requests); the public PageSpeed Insights request returned HTTP 429. No metric/device bucket or field percentile was returned, no plan or billing change was made, and no synthetic traffic was generated. See [#74's field-data follow-up](https://github.com/Skyline-Gazer/ALNILAM/issues/74).
 - The [macOS Safari + VoiceOver checklist](P6-74-MANUAL-SCREEN-READER-CHECKLIST.md) covers the home page, article, TOC, search, responsive navigation drawer, desktop/mobile pagination, and PhotoSwipe. Execution remains `MANUAL_NOT_RUN` because this Linux host cannot run Safari or VoiceOver; expected speech and actual focus behavior remain unobserved.
 - Keep Issue #74 Open / In Progress. These runs do not satisfy field-performance or manual screen-reader acceptance. No Issue/Project status, Vercel setting, formal Production release, `main`, release tag, or ADS pin changed; the existing Demo project automatically deployed the current `dev` commit.
-- PR #170 merged normally to GitHub `dev` at `a54d386f932fdcfcc1f0c983517e84dfc5dfc26e` from head `c18b4891d28cc5d3616b19ed5f51464ae5df0eb4`. Required Verify [44529978359](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44529978359) and post-merge Verify [44535510523](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44535510523) passed. The separate P6 browser/Lighthouse job was skipped for this documentation-only PR.
+- PR #170 merged normally to GitHub `dev` at `a54d386f932fdcfcc1f0c983517e84dfc5dfc26e` from head `c18b4891d28cc5d3616b19ed5f51464ae5df0eb4`. Required Verify [44529978359](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44529978359) and post-merge Verify [44535510523](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44535510523) passed. The separate P6 browser/Lighthouse job was skipped for this documentation-only PR; the VoiceOver checklist remains `MANUAL_NOT_RUN`.
+
+GitHub `dev` is `a54d386f932fdcfcc1f0c983517e84dfc5dfc26e`; `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; CNB refs and ADS pin `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` remain unchanged.
 
 ### Vercel topology and current exposure
 
