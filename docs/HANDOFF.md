@@ -1,21 +1,21 @@
 # ALNILAM — Current Agent Handoff
 ## Live-state update — 2026-11-20 · Release, deployment, and cache reconciliation
 
-This entry is authoritative for current refs and delivery state. Older entries below remain historical evidence where their recorded SHA differs.
+This entry records GitHub and Vercel state as read on 2026-11-20, before PR #173 merges. Consult GitHub for the live `dev` head after this snapshot. Older entries below remain historical evidence where their recorded SHA differs.
 
 ### GitHub delivery
 
-- GitHub `dev` is `6b26bdacf0dcaaf47dc29c947fa5579f91e38668` (tree `6ace61745333bb3717e79bce2f78bb82386b81b6`); `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; CNB `dev` remains frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; ADS remains pinned at `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`.
-- PR #158 merged normally at `2e803dec6aacd3ec239031f31a464d8fbe91262e`; its lock regression passed 7/7 and both Required Verify runs [44566598039](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44566598039) and [44566580992](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44566580992) passed. PR #172 merged normally at current `dev` head `6b26bda`; its Required Verify [44584689040](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44584689040) and post-merge Verify [44594781749](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44594781749) passed; CodeRabbit passed as advisory.
+- The verified GitHub `dev` base for this Handoff PR was `6b26bdacf0dcaaf47dc29c947fa5579f91e38668` (tree `6ace61745333bb3717e79bce2f78bb82386b81b6`); consult GitHub for the live `dev` head. `main` remains `285a62cecd87f8f20276c7cc989537a391f488c8`; CNB `dev` remains frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; ADS remains pinned at `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`.
+- PR #158 merged normally at `2e803dec6aacd3ec239031f31a464d8fbe91262e`; its lock regression passed 7/7 and both Required Verify runs [44566598039](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44566598039) and [44566580992](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44566580992) passed. PR #172 merged normally at the recorded base commit `6b26bda`; its Required Verify [44584689040](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44584689040) and post-merge Verify [44594781749](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44594781749) passed; CodeRabbit passed as advisory.
 - Before this Handoff update, GitHub showed no open PRs. PRs #142, #143 and #144 are merged; Issue #140 is closed. This Handoff/Roadmap refresh is delivered as an Issue-linked docs PR; no `main` update, release tag, or manual Production deployment occurred.
 
 ### Cache safety, reuse, and lifecycle
 
 - P0 cleanup safety is merged in PR #149: normal Compose does not invoke Legacy cleanup; `--clean-cache` is confined to the verified managed root; `--clean-legacy` is explicit and dry-run capable. PR #156 adds compiler-input-keyed reuse and SHA-256 immutable bundles; PR #157 serializes shared Astro scratch builds; PR #158 fixes the lock-release acquisition race. Post-merge Verify [43867996657](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/43867996657) passed 310/310 contract tests and browser, external-Site, output, rollback, and ADS-pin steps.
-- `scripts/tests/shirone-cache.test.mjs` covers cache miss/hit, corrupt-object repair, and legacy-manifest migration. Contract tests cover GC dry-run and expiry, size-cap eviction, active-build refusal, and unsafe path boundaries. The latest `dev` Verify is [44594781749](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44594781749). Issue #145 records focused local results of 7/7 cache tests and 8/8 cleanup/GC contract tests.
-- The matched isolated six-Site workload compared Core `1cd67c4` with current `dev` `6b26bda`, using Node `v24.22.2`, pnpm `10.19.0`, the same lockfile SHA, six Site markers, and eight builds per revision (one cold, five Site changes, two warm):
+- `scripts/tests/shirone-cache.test.mjs` covers cache miss/hit, corrupt-object repair, and legacy-manifest migration. Contract tests cover GC dry-run and expiry, size-cap eviction, active-build refusal, and unsafe path boundaries. The last verified `dev` Verify before this handoff was [44594781749](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44594781749) on base `6b26bdacf0dcaaf47dc29c947fa5579f91e38668`. Issue #145 records focused local results of 7/7 cache tests and 8/8 cleanup/GC contract tests.
+- The matched isolated six-Site workload compared Core `1cd67c4` with the pre-handoff `dev` base `6b26bda`, using Node `v24.22.2`, pnpm `10.19.0`, the same lockfile SHA, six Site markers, and eight builds per revision (one cold, five Site changes, two warm):
 
-| Metric | Before | Current `dev` |
+| Metric | Before | After shared-artifact change |
 | --- | ---: | ---: |
 | Whole cache allocated | 188,866,560 B | 46,129,152 B |
 | Bundle files / unique hashes | 36 / 6 | 6 / 6 |
@@ -39,7 +39,7 @@ This entry is authoritative for current refs and delivery state. Older entries b
 
 ### Candidate and tracking boundary
 
-`6b26bdacf0dcaaf47dc29c947fa5579f91e38668` is the current Required-Verify-passing development snapshot, not an Owner-accepted Release Candidate. Project #17 readback leaves #35, #42, #74, #81, #136, #138, #145, and #147 In Progress; #166 is Done. No Project status was changed. P6 acceptance, the cache working-set calibration, product sign-off, and first Production release remain incomplete or Owner-gated.
+`6b26bdacf0dcaaf47dc29c947fa5579f91e38668` is the pre-handoff `dev` base with passing Required Verify, not an Owner-accepted Release Candidate. Consult GitHub for the live ref after this PR. Project #17 readback leaves #35, #42, #74, #81, #136, #138, #145, and #147 In Progress; #166 is Done. No Project status was changed. P6 acceptance, the cache working-set calibration, product sign-off, and first Production release remain incomplete or Owner-gated.
 
 ## Live-state update — 2026-11-19 · Cache, deployment, and evidence refresh
 
