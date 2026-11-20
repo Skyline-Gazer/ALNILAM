@@ -1,0 +1,29 @@
+Font Awesome 7 Free icon notice
+
+Includes SVG icon data by Dave Gandy and Fonticons, Inc. from Font Awesome
+Solid 7.3.0 and Brands 7.3.1. This Demo selects and converts the icons for
+offline SVG rendering using Iconify collections @iconify-json/fa7-solid
+1.2.5 and @iconify-json/fa7-brands 1.2.4. The drawings are unchanged.
+
+The original Font Awesome Free license notice for SVG and JS icons follows.
+Source releases:
+https://github.com/FortAwesome/Font-Awesome/blob/7.3.0/LICENSE.txt
+https://github.com/FortAwesome/Font-Awesome/blob/7.3.1/LICENSE.txt
+
+Fonticons, Inc. (https://fontawesome.com)
+
+--------------------------------------------------------------------------------
+
+Font Awesome Free License
+
+Font Awesome Free is free, open source, and GPL friendly. You can use it for
+commercial projects, open source projects, or really almost whatever you want.
+Full Font Awesome Free license: https://fontawesome.com/license/free.
+
+--------------------------------------------------------------------------------
+
+# Icons: CC BY 4.0 License (https://creativecommons.org/licenses/by/4.0/)
+
+The Font Awesome Free download is licensed under a Creative Commons
+Attribution 4.0 International License and applies to all icons packaged
+as SVG and JS file types.

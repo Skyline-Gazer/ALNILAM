@@ -7,6 +7,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { validateSiteRoot, assertExternalOutput, isWithin } from "./site-contract.mjs";
 import { createBuildLock } from "./build-lock.mjs";
+import { copyDistributionNotices } from "./distribution-notices.mjs";
 import { resolveSiteRef, resolveCoreRevision } from "./site-ref.mjs";
 import { shironeBuildInputKey } from "./shirone-input-key.mjs";
 
@@ -653,6 +654,10 @@ try {
       Object.entries(entry.languages ?? {}).sort(([a], [b]) => a.localeCompare(b)),
     );
     fs.writeFileSync(entryPath, JSON.stringify({ ...entry, languages: sortedLanguages }));
+  }
+  // The bundled Demo is published by multiple hosts. Copies at other paths are independent Sites.
+  if (realSite === path.join(fs.realpathSync(repoRoot), "sites", "demo")) {
+    copyDistributionNotices(repoRoot, stage);
   }
   const after = validateSiteRoot(site).digest;
   if (after !== before) throw new Error("Site source changed during build; refusing to publish");
