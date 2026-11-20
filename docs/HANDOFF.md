@@ -1,5 +1,31 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-20 · Foundation v0.2.0 released
+
+### Release
+
+- `dev` reached `2e2c88c7c122895e5c3b25a2c70eb78297d6d85d` and its push Verify [44674996007](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44674996007) passed. Release PR #175 merged normally into `main` at `e8239cf4f2272c7cb9429f8c740aa6677f9ed040`; post-merge Verify [44677251989](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44677251989) passed on `main`, which now runs the same `verify` job as `dev`.
+- Annotated tag `v0.2.0` points at that `main` merge commit. The tag's Release status workflow [44679643928](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44679643928) passed.
+- GitHub Release [v0.2.0](https://github.com/Skyline-Gazer/ALNILAM/releases/tag/v0.2.0) publishes `alnilam-v0.2.0-demo-root.tar.gz` (3,700,157 bytes, SHA-256 `3ee261ea71aa4ebeddaea47cdb3858829ebe6c66f8e83349200539328b1e7087`), its sorted file manifest and `SHA256SUMS`. Two isolated builds of the tagged commit produced byte-identical archives; extraction verified 458 files and 19 notice files, and the provenance document bound Core and Site ref to `e8239cf`. Downloaded release assets passed `sha256sum -c SHA256SUMS` after publication. The archive uses `https://example.com/`, the commit timestamp as `SOURCE_DATE_EPOCH`, and GNU tar as documented in [MAINTAINERS](MAINTAINERS.md#demo-release-assets).
+- Version `v0.2.0` supersedes `v0.1.3`. The Site contract is YAML schema v2; the [CHANGELOG](../CHANGELOG.md) records the required migration and rollback.
+
+### Acceptance
+
+- Passed: required functional Verify on `dev` and `main`, root and `/ALNILAM/` browser acceptance, external-Site composition and isolation, two-version upgrade/rollback, artifact hygiene, SEO and provenance checks, public Test-Site fresh-clone composition and search at both bases, and targeted live Chromium checks of Gallery and Moments.
+- Open and Owner-approved for post-release work: product/visual sign-off (#35), field p75 and manual macOS Safari/VoiceOver (#74), and reviewed onboarding by a real user from an independently owned Site (#81). They remain **NOT VERIFIED** or **MANUAL_NOT_RUN**; the public Test-Site run is regression evidence only.
+- The Demo notices cover 15 license texts plus four canonical documents. Historical v0.1.3/Demo Pagefind 1.5.2 corresponding-source review, remote Unsplash author identity and historical raster rights remain disclosed in [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md). A read-only Vercel query about 20 minutes after the merge found no deployment for the release SHA in `alnilam-production-next`; the repository-level guard therefore prevented automatic publishing in this observed window.
+- [Issue #42](https://github.com/Skyline-Gazer/ALNILAM/issues/42) therefore stays In Progress; [#74](https://github.com/Skyline-Gazer/ALNILAM/issues/74), [#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81) and [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35) keep their own exit conditions. [#147](https://github.com/Skyline-Gazer/ALNILAM/issues/147) holds the notice and provenance follow-ups.
+
+### Vercel topology and current exposure
+
+- The existing public Demo project `xxxx` remains on GitHub `dev`; its stable alias last returned HTTP 200 while serving the pre-release `dev` revision `6b26bdacf0dcaaf47dc29c947fa5579f91e38668`, because the project hit the Vercel build limit. Its next successful `dev` build deploys the post-release `dev` state.
+- Separate project `alnilam-production-next` retains `productionBranch=main` and sets SSO for Production URLs and all Previews. Read-only provider data showed its production target on `main` (SHA `285a62cecd87f8f20276c7cc989537a391f488c8`) and `ssoProtection.deploymentType=prod_deployment_urls_and_all_previews`. The repository disables automatic Vercel Git deployments for `main` (`git.deploymentEnabled.main`), so the release merge does not publish public Production. First-merge enforcement is documented by Vercel but was not separately observed before merging; the release PR records the post-merge deployment-event readback.
+- Public Production promotion therefore remains an explicit Owner action: deploy the verified artifact or the composed output, then move the production domain. No Vercel setting, alias, DNS record or domain changed during the release.
+
+### Tracking
+
+Project #17 readback after the release: Release items for v0.1.0–v0.1.3 remain historical. #35, #42, #68, #74, #81, #136, #137, #138, #145, #147 and #148 remain In Progress; #69, #83, #88, #89 and #94 remain Todo; #67, #140 and #166 are Done. No Project status was changed during the release.
+
 ## Foundation GA preparation — 2026-11-20
 
 Foundation targets `v0.2.0`. [PR #175](https://github.com/Skyline-Gazer/ALNILAM/pull/175) tracks the `dev` to `main` promotion as a draft. The latest published version at this checkpoint is `v0.1.3`. The baseline `73718644151f2821221a080ca31c177ba8f139a0` passed [Verify](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44640611621). See the promotion PR for the current integration and release status.
