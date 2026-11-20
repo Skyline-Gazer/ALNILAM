@@ -61,7 +61,7 @@ package retains its own license. Vendored Shirone source is described above.
 | astro, @astrojs/mdx, @astrojs/svelte, @astrojs/check | MIT | static site framework + integrations |
 | svelte 5.57.2 | MIT (see [LICENSES/Svelte-MIT.txt](LICENSES/Svelte-MIT.txt)) | island runtime (search, status) |
 | tailwindcss, @tailwindcss/vite | MIT | styling engine |
-| pagefind 1.5.2 | MIT (package: [LICENSES/Pagefind-MIT.txt](LICENSES/Pagefind-MIT.txt); web runtime: [LICENSES/Pagefind-Web-Runtime-MIT.txt](LICENSES/Pagefind-Web-Runtime-MIT.txt); included vscode-ripgrep: [LICENSES/Pagefind-vscode-ripgrep-MIT.txt](LICENSES/Pagefind-vscode-ripgrep-MIT.txt)) | local search indexer + lazy JS/WASM runtime |
+| pagefind 1.6.0 | MIT (package: [LICENSES/Pagefind-MIT.txt](LICENSES/Pagefind-MIT.txt), web runtime: [LICENSES/Pagefind-Web-Runtime-MIT.txt](LICENSES/Pagefind-Web-Runtime-MIT.txt), included vscode-ripgrep: [LICENSES/Pagefind-vscode-ripgrep-MIT.txt](LICENSES/Pagefind-vscode-ripgrep-MIT.txt)) | local search indexer + lazy JS/WASM runtime |
 | photoswipe 5.4.4 | MIT (see [LICENSES/PhotoSwipe-MIT.txt](LICENSES/PhotoSwipe-MIT.txt)) | lightbox gallery runtime |
 | katex 0.16.47 | MIT (see [LICENSES/KaTeX-MIT.txt](LICENSES/KaTeX-MIT.txt)) | Markdown math rendering and stylesheet |
 | KaTeX fonts (12 families) | SIL OFL 1.1 (see [LICENSES/KaTeX-Fonts-OFL-1.1.txt](LICENSES/KaTeX-Fonts-OFL-1.1.txt)) | bundled Markdown math font assets |
@@ -76,10 +76,13 @@ The [Demo client dependency notices](LICENSES/Demo-Client-Dependencies.txt)
 preserve original texts for components identified in emitted browser bundles and
 generated assets, including the Mermaid dependency tree members found in the
 bundle and the prebuilt Pagefind JavaScript dependencies identified from its
-release sources and packaged assets. Both shipped Pagefind WebAssembly variants
-(English and fallback) identify `minicbor` 2.2.1 and `wasm-bindgen` 0.2.117.
-Their licenses are retained in the same file. Other Rust dependencies listed in
-Pagefind's build lockfile still need to be matched to the emitted binaries.
+release sources and packaged assets. The notices also cover the 35 registry
+crates locked for the Pagefind 1.6.0 WebAssembly build. Both shipped variants
+(English and fallback) carry a source path identifying `minicbor` 2.3.1.
+Individual binary contributions remain unverified for the rest of the lockfile.
+Pagefind 1.6.0 replaced the GPL-3.0-only `pagefind_microjson` parser used in
+1.5.2 with MIT-licensed `hifijson`. The historical 1.5.2 artifacts still need
+a corresponding-source and redistribution review.
 The KaTeX font notice preserves the copyright and Reserved Font Name declarations
 from the font metadata. Site owners remain responsible for their own content and
 assets and for accompanying notices when distributing composed output.
@@ -106,7 +109,7 @@ artifact. Original photo pages and photographer identities remain unverified.
 |---|---|
 | Asset rights | **CURRENT DEMO ARTIFACT REPLACED; HISTORICAL BLOB UNVERIFIED.** The current `sites/demo/assets/lighthouse.png` is rendered from the authored `sites/demo/assets/lighthouse-artwork.svg`, distributed under ALNILAM's Apache-2.0 license. This replaces the undocumented raster from commit `a5f2bae108458f21578060063343483652dc2c7e`; the old blob remains in Git history, so its rights are still unverified and no history rewrite is claimed. External Site assets and build-time provider content require their own rights review. |
 | Fancyapps UI | **REMOVED.** `@fancyapps/ui` is no longer a dependency or redistributable. The lightbox runtime uses MIT `photoswipe@5.4.4` via the retained `FancyboxHandler` compatibility façade. Fancyapps is not shipped in lockfile, themes, or built assets. |
-| Dependency and source licenses | **PARTIAL.** The Shirone MIT text and 480 original source hashes match the pinned upstream archive. The scoped Demo bundle notices cover the components above. Full source attribution outside the retained Shirone manifest and the remaining Pagefind WebAssembly dependencies are unverified. Historical [CNB evidence](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/cnb/CNB-REVIEW.md) cannot establish current-head coverage. |
+| Dependency and source licenses | **PARTIAL.** The Shirone MIT text and 480 original source hashes match the pinned upstream archive. The scoped Demo notices cover the identified client dependencies and the Pagefind 1.6.0 WebAssembly lockfile. Full source attribution outside the retained Shirone manifest remains unverified. Historical [CNB evidence](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/cnb/CNB-REVIEW.md) cannot establish current-head coverage. |
 | Credentials | **NOT VERIFIED for final acceptance.** The workflow documents read-only Site credentials and disables persisted checkout credentials ([site-ci.yml](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/.github/workflows/site-ci.yml)); marker-boundary tests exist in [secrets-boundary.test.mjs](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/scripts/tests/secrets-boundary.test.mjs). These controls and tests do not prove that the current tree, history, artifacts or logs contain no secrets. A scoped secret review and remediation of any finding remain necessary. |
 | Supply chain and build | **PARTIAL.** The lockfile pins resolved dependencies, and historical CNB evidence describes earlier vulnerability and license checks. Current-head dependency risk review and disposition, plus source-bound PR and remote CI evidence, remain outstanding. |
 
