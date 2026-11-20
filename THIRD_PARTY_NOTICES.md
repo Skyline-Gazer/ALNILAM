@@ -27,15 +27,16 @@ the current integration includes frontend integration, HCT and offline icons.
 ALNILAM's original code remains Apache-2.0; copied and adapted Shirone code
 retains its MIT license.
 
-Native icon runtime dependencies retain their package notices. Attribution for the
-bundled offline icon data: Font Awesome 7 Free Solid/Brands by Dave Gandy / Fonticons
-([source](https://github.com/FortAwesome/Font-Awesome)),
-[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); Material Symbols by Google
-([source and Apache-2.0 license](https://github.com/google/material-design-icons));
-Simple Icons by the Simple Icons Collaborators
-([source and CC0-1.0 license](https://github.com/simple-icons/simple-icons)).
-Shirone/Iconify convert and select these icons for offline rendering; ALNILAM does
-not alter the underlying icon drawings. Layout/runtime sizing and color follow the theme.
+The Demo emits offline SVG icon data from Font Awesome 7 Free Solid and Brands
+under CC BY 4.0 and Material Symbols by Google under Apache-2.0. The retained
+Font Awesome attribution identifies the upstream icon and Iconify package versions.
+Site configurations can also select Simple Icons by the Simple Icons Collaborators
+under CC0-1.0. Shirone and Iconify select and convert the icons for offline
+rendering while preserving the drawings.
+
+- [Font Awesome SVG icon notice](LICENSES/Font-Awesome-Icons-CC-BY-4.0.txt)
+- [Material Symbols source and Apache-2.0 license](https://github.com/google/material-design-icons)
+- [Simple Icons source and CC0-1.0 license](https://github.com/simple-icons/simple-icons)
 
 For any future code migration:
 1. Identify exact upstream repository, path, commit and license.
@@ -71,20 +72,33 @@ package retains its own license. Vendored Shirone source is described above.
 | @axe-core/playwright | MPL-2.0 | Playwright axe WCAG runner (dev/test only) |
 | axe-core (transitive via @axe-core/playwright) | MPL-2.0 | accessibility engine used by a11y.spec.ts |
 
-The composed output can contain third-party material including Svelte runtime,
-Pagefind assets, PhotoSwipe, KaTeX styles and fonts, theme code, and selected icon
-data. The KaTeX font notice preserves the exact copyright and Reserved Font Name
-declarations from package metadata. The selected direct runtime notices are not a
-full transitive license inventory. Site owners remain responsible for their own
-content and assets.
+The [Demo client dependency notices](LICENSES/Demo-Client-Dependencies.txt)
+preserve original texts for components identified in emitted browser bundles and
+generated assets, including the Mermaid dependency tree members found in the
+bundle and the prebuilt Pagefind JavaScript dependencies identified from its
+release sources and packaged assets. Both shipped Pagefind WebAssembly variants
+(English and fallback) identify `minicbor` 2.2.1 and `wasm-bindgen` 0.2.117.
+Their licenses are retained in the same file. Other Rust dependencies listed in
+Pagefind's build lockfile still need to be matched to the emitted binaries.
+The KaTeX font notice preserves the copyright and Reserved Font Name declarations
+from the font metadata. Site owners remain responsible for their own content and
+assets and for accompanying notices when distributing composed output.
 
 ## Demo distribution artifacts
 
-The Vercel Demo build copies `LICENSE`, `NOTICE`, `CREDITS.md`, this file, and
-regular `.txt` files from `LICENSES/` to `site-assets/alnilam-notices/`. These
-are static text artifacts; the directory has no `index.html`, Core route,
-navigation item, or footer link. Generic Compose builds for independently owned
-Sites do not inject these Core files or mutate Site content.
+Compose copies `LICENSE`, `NOTICE`, `CREDITS.md`, this file, and regular `.txt`
+files from `LICENSES/` to `site-assets/alnilam-notices/` in the bundled Demo's
+output. The Vercel and GitHub Pages Demo entrypoints both use this path. The copy
+is selected by the bundled Demo directory in the Core checkout, so copies of the
+Demo elsewhere are composed as independent Sites. The notices are plain files
+without an HTML page, navigation entry, footer link, or Site source changes.
+
+The Demo packages the self-contained `orion.svg` introduced in `802e804`,
+the lighthouse illustration and its PNG render, and the default social card PNG
+rendered from vector markup in `apps/web/src/pages/og-default.png.js`. The latter
+contains no font or external image. Gallery examples reference three Unsplash
+CDN photos directly from generated HTML. Their image bytes are absent from the
+artifact. Original photo pages and photographer identities remain unverified.
 
 ## Outstanding release evidence (#75)
 
@@ -92,7 +106,7 @@ Sites do not inject these Core files or mutate Site content.
 |---|---|
 | Asset rights | **CURRENT DEMO ARTIFACT REPLACED; HISTORICAL BLOB UNVERIFIED.** The current `sites/demo/assets/lighthouse.png` is rendered from the authored `sites/demo/assets/lighthouse-artwork.svg`, distributed under ALNILAM's Apache-2.0 license. This replaces the undocumented raster from commit `a5f2bae108458f21578060063343483652dc2c7e`; the old blob remains in Git history, so its rights are still unverified and no history rewrite is claimed. External Site assets and build-time provider content require their own rights review. |
 | Fancyapps UI | **REMOVED.** `@fancyapps/ui` is no longer a dependency or redistributable. The lightbox runtime uses MIT `photoswipe@5.4.4` via the retained `FancyboxHandler` compatibility façade. Fancyapps is not shipped in lockfile, themes, or built assets. |
-| Dependency and source licenses | **PARTIAL.** Shirone's pinned source ledger and license are retained, but the selected dependency list above is not a transitive license inventory or a final source-license scan. The historical [CNB evidence](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/cnb/CNB-REVIEW.md) says SourceSCA was not configured for those runs; those older results do not establish current-head acceptance. |
+| Dependency and source licenses | **PARTIAL.** The Shirone MIT text and 480 original source hashes match the pinned upstream archive. The scoped Demo bundle notices cover the components above. Full source attribution outside the retained Shirone manifest and the remaining Pagefind WebAssembly dependencies are unverified. Historical [CNB evidence](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/cnb/CNB-REVIEW.md) cannot establish current-head coverage. |
 | Credentials | **NOT VERIFIED for final acceptance.** The workflow documents read-only Site credentials and disables persisted checkout credentials ([site-ci.yml](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/.github/workflows/site-ci.yml)); marker-boundary tests exist in [secrets-boundary.test.mjs](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/scripts/tests/secrets-boundary.test.mjs). These controls and tests do not prove that the current tree, history, artifacts or logs contain no secrets. A scoped secret review and remediation of any finding remain necessary. |
 | Supply chain and build | **PARTIAL.** The lockfile pins resolved dependencies, and historical CNB evidence describes earlier vulnerability and license checks. Current-head dependency risk review and disposition, plus source-bound PR and remote CI evidence, remain outstanding. |
 
