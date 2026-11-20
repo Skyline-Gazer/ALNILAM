@@ -4,6 +4,9 @@ The following versions contribute code or CSS to the Demo. Each section
 reproduces the identified upstream license or notice. Packages with the
 same upstream text share a section. Separate license files in this
 directory cover KaTeX, Khroma, Mermaid, Pagefind, PhotoSwipe and Svelte.
+Pagefind's released WebAssembly is built with `-Z build-std`, so it also
+contains the Rust standard library; its dual MIT/Apache-2.0 texts are
+`Rust-Std-MIT.txt` and `Rust-Std-Apache-2.0.txt` in this directory.
 
 @astrojs/svelte 9.1.1 (LICENSE)
 astro 7.4.2 (LICENSE)

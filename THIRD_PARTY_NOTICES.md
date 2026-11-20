@@ -79,7 +79,17 @@ bundle and the prebuilt Pagefind JavaScript dependencies identified from its
 release sources and packaged assets. The notices also cover the 35 registry
 crates locked for the Pagefind 1.6.0 WebAssembly build. Both shipped variants
 (English and fallback) carry a source path identifying `minicbor` 2.3.1.
-Individual binary contributions remain unverified for the rest of the lockfile.
+Pagefind's release script builds these variants with
+`-Z build-std=panic_abort,std`, so the emitted WebAssembly also contains the
+Rust standard library (`core`, `alloc`, `std`, `panic_abort`) from the Rust
+Project Contributors, dual-licensed MIT OR Apache-2.0. Exact texts:
+[LICENSES/Rust-Std-MIT.txt](LICENSES/Rust-Std-MIT.txt) and
+[LICENSES/Rust-Std-Apache-2.0.txt](LICENSES/Rust-Std-Apache-2.0.txt),
+retrieved from `rust-lang/rust` at commit
+`4b5350e87e487aed08ab2f9f0160a4b2616438bc`; the exact rustc nightly used by
+Pagefind is not recorded in its release metadata, and individual crate or
+standard-library code contributions remain unverified beyond the identified
+markers.
 Pagefind 1.6.0 replaced the GPL-3.0-only `pagefind_microjson` parser used in
 1.5.2 with MIT-licensed `hifijson`. The historical 1.5.2 artifacts still need
 a corresponding-source and redistribution review.
