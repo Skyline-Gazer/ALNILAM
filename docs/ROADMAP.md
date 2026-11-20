@@ -1,5 +1,35 @@
 # ALNILAM roadmap (Issue-driven)
 
+## Foundation v0.2.0 released — 2026-11-20
+
+Foundation is published from `main` at `e8239cf4f2272c7cb9429f8c740aa6677f9ed040`
+with annotated tag `v0.2.0` and
+[GitHub Release](https://github.com/Skyline-Gazer/ALNILAM/releases/tag/v0.2.0). The
+release commit passed Required Verify
+[44677251989](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44677251989) on
+`main`; the tagged asset was rebuilt twice from that commit and byte-compared
+before publication.
+
+The release keeps the `v0.2.0` scope frozen in the section below. Post-release
+work is stabilization only: patch releases for confirmed defects, the deferred
+manual and field acceptance items, and the recorded notice/provenance follow-ups.
+New product scope remains with [#136](https://github.com/Skyline-Gazer/ALNILAM/issues/136)
+and the Owner.
+
+During stabilization no new feature work starts: Music (#69), hosted CMS
+(#88), additional content adapters (#89), a Shirone major-version migration and
+experimental Astro acceleration stay outside this release. The merged offline
+Pages CMS PoC remains available as-is and is not an active workstream. Any new
+scope needs a fresh Owner decision under [#136](https://github.com/Skyline-Gazer/ALNILAM/issues/136).
+
+Open acceptance at publication, approved by the Owner as post-release work:
+[#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35) product/visual sign-off,
+[#74](https://github.com/Skyline-Gazer/ALNILAM/issues/74) field p75 and manual
+Safari/VoiceOver, and [#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81)
+reviewed real-user onboarding from an independently owned Site. They are
+**NOT VERIFIED** or **MANUAL_NOT_RUN**, never PASS. The public Demo remains on
+`dev`; public Production promotion is a separate Owner action.
+
 ## Foundation GA scope freeze — 2026-11-20
 
 Foundation targets `v0.2.0`. The release includes the existing Shirone-based
