@@ -375,7 +375,8 @@ Node.js 22.23.4 or newer and pnpm 10.19.0 for the current Core.
 pnpm install --frozen-lockfile
 
 # This build uses the URL in the Site config:
-node scripts/compose.mjs --site /absolute/path/to/yoursite --out /absolute/path/to/output
+ALNILAM_SITE_URL= \
+  node scripts/compose.mjs --site /absolute/path/to/yoursite --out /absolute/path/to/output
 
 # Root host vs project-page / subpath base (same Site, separate outputs):
 ALNILAM_SITE_URL=https://example.com/ \
@@ -397,6 +398,8 @@ with the same Site digest can still differ if the deployment URL or other build
 inputs differ. For a repeatable build, pin the deployment URL, use the Core
 lockfile and set `SOURCE_DATE_EPOCH` to a fixed value. Verify the Core revision,
 Site ref and Site digest before publishing.
+An enabled Bangumi build also depends on the provider response and cached
+snapshot. Retain the checked output for byte-identical rollback.
 
 ## Core upgrade / rollback workflow
 
