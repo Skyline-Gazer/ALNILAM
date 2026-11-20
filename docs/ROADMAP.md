@@ -16,6 +16,12 @@ manual and field acceptance items, and the recorded notice/provenance follow-ups
 New product scope remains with [#136](https://github.com/Skyline-Gazer/ALNILAM/issues/136)
 and the Owner.
 
+During stabilization no new feature work starts: Music (#69), hosted CMS
+(#88), additional content adapters (#89), a Shirone major-version migration and
+experimental Astro acceleration stay outside this release. The merged offline
+Pages CMS PoC remains available as-is and is not an active workstream. Any new
+scope needs a fresh Owner decision under [#136](https://github.com/Skyline-Gazer/ALNILAM/issues/136).
+
 Open acceptance at publication, approved by the Owner as post-release work:
 [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35) product/visual sign-off,
 [#74](https://github.com/Skyline-Gazer/ALNILAM/issues/74) field p75 and manual
