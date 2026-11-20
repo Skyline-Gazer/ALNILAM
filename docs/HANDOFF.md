@@ -1,4 +1,14 @@
 # ALNILAM — Current Agent Handoff
+
+## Foundation GA preparation — 2026-11-20
+
+Foundation targets `v0.2.0`. [PR #175](https://github.com/Skyline-Gazer/ALNILAM/pull/175) tracks the `dev` to `main` promotion as a draft. The latest published version at this checkpoint is `v0.1.3`. The baseline `73718644151f2821221a080ca31c177ba8f139a0` passed [Verify](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44640611621). See the promotion PR for the current integration and release status.
+
+- Public Test-Site `6c0246f31cf6af04167c9ec7d09237731167c38d` built at `/` and `/ALNILAM/` with matching Site digest `74fa5cd5b8ba0f0ce0658a5760539fbe63ddb4986fd23825cf85c78267aa3a42`. Compatible rollback to Core `bc02fc2dea5c35218100fb320f695b7127fdf6ad` succeeded on the same unchanged Site. v0.1.3 still builds its own TOML v1 input. For the schema boundary, retain the old Site revision and artifact. [Onboarding PR #176](https://github.com/Skyline-Gazer/ALNILAM/pull/176)
+- [Pipeline PR #177](https://github.com/Skyline-Gazer/ALNILAM/pull/177) preserves both Git histories, retains manual Pages publishing, enables post-merge Verify on `main`, and proposes a repository-side opt-out for automatic Vercel builds on `main`. The opt-out follows Vercel's documented branch rule. First-push enforcement remains unobserved. The stable Demo returned HTTP 200 at Core `6b26bdacf0dcaaf47dc29c947fa5579f91e38668`. The separate Production alias returned HTTP 404 and its unique deployment URL required SSO. Public Production requires separate Owner authorization.
+- Two isolated root Demo builds on pipeline head `5065c078cfafbded607219ca489e6ecad49ba0d9` produced identical archives and verified 454 file digests after extraction. Build and verify the assets again at the approved `main` SHA using the [maintainer procedure](MAINTAINERS.md#demo-release-assets).
+- [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35) product sign-off, [#74](https://github.com/Skyline-Gazer/ALNILAM/issues/74) field p75 and [Safari/VoiceOver](P6-74-MANUAL-SCREEN-READER-CHECKLIST.md), and [#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81) real-user onboarding still require evidence or an explicit Owner decision on acceptance. The prior lab audit and public Test-Site regression are engineering evidence. [#147](https://github.com/Skyline-Gazer/ALNILAM/issues/147) tracks distribution notices and provenance.
+
 ## Live-state update — 2026-11-20 · Release, deployment, and cache reconciliation
 
 This entry records GitHub and Vercel state as read on 2026-11-20, before PR #173 merges. Consult GitHub for the live `dev` head after this snapshot. Older entries below remain historical evidence where their recorded SHA differs.

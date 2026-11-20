@@ -6,6 +6,13 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 
 ## [Unreleased]
 
+### Migration from v0.1.x
+
+- Foundation targets **v0.2.0** because v0.1.3 Sites use the incompatible TOML v1 contract. Before switching, keep the old Core tag, Site revision and working output. In a separate Site revision, author `alnilam.config.yaml` with `schemaVersion: 2`, add `locales` including `site.locale`, and remove `alnilam.config.toml`. A Site containing both config files is rejected. Use the [schema example](docs/SITE_ONBOARDING.md#alnilamconfigyaml-schema-v2) and review all enabled modules.
+- For existing Giscus pathname discussions, explicitly set `comments.mapping: pathname` and retain the same public paths. `specific` uses a different identity and does not migrate discussions. Check translated article aliases, canonical URLs, feeds and Pagefind at the actual deployment base before switching output.
+- Roll back across the schema boundary by restoring the previous output or rebuilding the pinned v0.1.3 Core with its original TOML Site revision. For compatible YAML revisions, use the [same-Site upgrade and rollback procedure](docs/SITE_ONBOARDING.md#core-upgrade--rollback-workflow).
+
+
 ### Added
 - **Optional Site Gallery (Issue #67):** `gallery.enabled` gates Site-owned `data/albums.yaml` album/list pages, locale-aware routes, lazy Gallery images and PhotoSwipe. Image references accept validated Site asset paths or HTTPS URLs; Core does not fetch or proxy remote images. The Demo Site opts in with licensed remote samples and local illustrations.
 - **Git-based CMS authoring PoC (Issue #88):** an isolated Site `.pages.yml`, an offline write-back adapter and dual-base compose tests verify post field mapping, unknown-frontmatter and MDX roundtrip with no data loss, media paths at root and `/ALNILAM/`, and that removing the editor config leaves the Site digest, build and provenance unchanged. No Core runtime, hosted service or production integration is included.
@@ -17,8 +24,9 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 - **Opt-in llms.txt v2 discovery (Issue #78):** site and locale indexes, source-backed article Markdown views and HTML discovery; optional full aggregation defaults off. Draft, private and unlisted posts are excluded from published routes.
 - **Site schema v2 validation (Issue #51)**: strict `schemaVersion: 2`, closed-world unknown-field rejection, locale/routing/taxonomy validation, and a fail-closed YAML parser (no duplicate keys, unresolved tags or non-plain values).
 - **Comments provider/privacy contract (Issue #71):** Giscus is the single first-launch provider with stable `specific` terms (`commentId` → `translationKey` → content id), explicit `sharing`/`load`/`lang` options, third-party disclosure, provider-scoped CSP, non-blocking failure/retry fallback and idempotent provider teardown. Disabled comments still ship zero comment JS/network.
-- **P1 Shirone frontend vertical slice (candidate, #48):** local Shirone-derived M3E home/list/article/archive/tag presentation with the retained ALNILAM Core/Site contracts, Pagefind, optional-module and rollback coverage. Not released or deployed.
+- **Shirone frontend:** one Shirone-derived M3E application for home, posts, archives and taxonomy, retaining the ALNILAM Core/Site boundary, Pagefind and optional module behavior.
 - **Bangumi snapshots (Issue #70):** opt-in builds cache public collections and locally emitted covers outside the Site. Provider or cover failures reuse the matching last valid snapshot; a successful empty result replaces it. Visitors make no third-party data or cover requests.
+- **Optional Site Moments (Issue #68):** Site-owned `data/moments.yaml`, build-time filtering and localized Moments routes. The Demo enables Moments explicitly.
 - **Build cache safety and reuse (Issue #145):** normal Compose preserves project-local legacy paths; managed and legacy cleanup stay explicit; bounded GC protects active builds and manifests. Shirone reuses compiled output by Core-input fingerprint and shares identical verified bytes across input fingerprints in immutable SHA-256 objects; mutable Site state stays isolated.
 - **Site-authored static pages (Issue #160):** optional `content/pages/` Markdown/MDX pages render at `/pages/<path>/` and locale-prefixed routes. Drafts are excluded; canonical, sitemap and translation alternates, Open Graph covers/article metadata, and root/subpath output are covered. Page categories and tags do not enter post taxonomies, archives or feeds.
 - **Release artifact hygiene gate (Issue #166):** Verify, external-Site CI, GitHub Pages uploads and `pnpm vercel-build` inspect final `dist/site` output, including copied Site assets, and fail on publication-inappropriate files without printing their contents.
