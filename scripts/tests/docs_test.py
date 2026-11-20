@@ -320,7 +320,9 @@ class DocsTests(unittest.TestCase):
         self.assertEqual(deployment_guidance_errors(newer_readme, newer_handoff), [])
         self.assertTrue(deployment_guidance_errors(newer_readme.replace('tracks `release/2026.11`', 'tracks `release`'), newer_handoff))
         self.assertEqual(release_claim_errors(readme, changelog), [])
-        prepared_changelog = changelog.replace('## [Unreleased]', '## [9.9.9] - 2099-01-01', 1)
+        prepared_changelog = '## [9.9.9] - 2099-01-01\n' + re.sub(
+            r'(?m)^## \[Unreleased\][^\n]*\n', '', changelog, count=1
+        )
         self.assertEqual(current_unreleased_changelog(prepared_changelog), '')
         prepared_authority_docs = '\n'.join([
             readme,
@@ -329,7 +331,9 @@ class DocsTests(unittest.TestCase):
             current_unreleased_changelog(prepared_changelog),
         ])
         self.assertEqual(stale_cnb_claims(prepared_authority_docs), [])
-        candidate_readme = readme.replace('v0.1.3', 'v9.9.9')
+        released_version = re.search(r'(?m)^## \[(\d+\.\d+\.\d+)\]', changelog).group(1)
+        candidate_readme = re.sub(rf'\bv{re.escape(released_version)}\b', 'v9.9.9', readme)
+        self.assertNotEqual(candidate_readme, readme)
         self.assertEqual(release_claim_errors(candidate_readme, prepared_changelog), [])
         self.assertEqual(published_release_errors(candidate_readme, prepared_changelog, '9.9.9'), [])
         self.assertTrue(release_claim_errors('Released v9.9.9-rc.1.', prepared_changelog))

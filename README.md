@@ -2,9 +2,9 @@
 
 **ALNILAM — A Modern, Extensible Blogging Platform**
 
-Apache-2.0 licensed, static-first Astro 7 / Svelte 5 / Tailwind CSS 4 blogging platform, with a strict Core/Site ownership boundary. Released v0.1.3 uses the Editorial theme; the P1 preview on `dev` uses the Shirone-derived theme.
+Apache-2.0 licensed, static-first Astro 7 / Svelte 5 / Tailwind CSS 4 blogging platform, with a strict Core/Site ownership boundary. Released v0.2.0 uses the Shirone-derived frontend; the Editorial theme remains the v0.1.x rollback package.
 
-> **Status:** v0.1.3 is released; GitHub `dev` carries unreleased development and CNB `dev` is frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`. P2 Core/Site work is accepted on the tracker: independent CNB Site and Core push runs are recorded in [#55](https://github.com/Skyline-Gazer/ALNILAM/issues/55). A reusable GitHub Site workflow [passed on an authorized non-production ref](https://github.com/Skyline-Gazer/Test-Site/actions/runs/41836937453). See [Handoff](docs/HANDOFF.md) and check live Issues and GitHub Actions before starting work.
+> **Status:** v0.2.0 is the Foundation release. GitHub `main` is release-only at that version; `dev` carries post-release development. GitHub Actions `verify` is the required check on both branches. CNB `dev` remains frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`. See [Handoff](docs/HANDOFF.md) and live Issues for current state and remaining acceptance.
 
 ## Quickstart
 
@@ -99,7 +99,7 @@ Automated acceptance: `node scripts/upgrade-check.mjs --old <historical-core-sha
 - Docs: [Contributing](CONTRIBUTING.md) · [Architecture](docs/ARCHITECTURE.md) · [Site onboarding](docs/SITE_ONBOARDING.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/HANDOFF.md) · [Security policy](SECURITY.md)
 - Attribution: [CREDITS.md](CREDITS.md) · [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) · [NOTICE](NOTICE)
 - GitHub Project #17: https://github.com/orgs/Skyline-Gazer/projects/17/
-- ALNILAM Next: G0-F froze the P1 Plan/Spec through [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77). Shirone slice [PR #95](https://github.com/Skyline-Gazer/ALNILAM/pull/95) is merged to `dev`; P1 is accepted under closed [#37](https://github.com/Skyline-Gazer/ALNILAM/issues/37), including the integrated #49 routing/lifecycle, #50 browser evidence and #79 Astro compatibility work. Reusable ALNILAM behavior (immutable Site build, v2 YAML contract, CI, Pagefind and optional modules) is retained; production release remains separately gated. Future Astro build acceleration stays out of release scope until official stabilization.
+- Release line: Foundation v0.2.0 ships the Shirone-derived frontend adopted after G0-F, the YAML schema v2 Site contract, optional Site modules and the release artifact hygiene gate. Post-release fixes and the next roadmap follow [#136](https://github.com/Skyline-Gazer/ALNILAM/issues/136); experimental Astro build acceleration stays out of scope until its official stable release is validated.
 - ADS: the current project pin is `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` on ADS `cnb/dev`, a development line rather than a release. PR #84 records historical v0.4.1 adoption; optional CodeGraph/RTK and strict profiles remain disabled. Public CI does not fetch the private submodule; see [AGENTS](AGENTS.md).
 
 ## License

@@ -4,7 +4,7 @@
 
 **Core promise:** Upgrade platform code without rewriting articles or user configuration. Use an independent Site source as the content owner.
 
-## Released v0.1.3 visual contract
+## Historical v0.1.3 visual contract (Editorial)
 - Editorial theme: cinematic dark visual language inspired by SHBlog Next, distinct original branding and components.
 - Main/home post list: **exactly one Post per row**, not a two-column masonry/grid.
 - Desktop post card: readable text on the left, cover on the right at approximately 28% width.
@@ -12,6 +12,28 @@
 - Article detail: centered readable column, no mandatory right-hand article column.
 - Motion: reduced-motion compliance and no required Lenis/smooth-scroll runtime.
 - Dark and light palettes are implemented in `themes/editorial/src/editorial.css`; the legacy Site fixture exercises light appearance.
+
+## Foundation v0.2.0
+- Shirone-derived Material 3 Expressive presentation for the main blog pages;
+  the Editorial theme remains the v0.1.x rollback surface.
+- One post per row is retained: text left with an approximately 28% cover on the
+  right for desktop, cover above content on mobile. Dark and light palettes,
+  keyboard operation and reduced-motion support ship without a required
+  smooth-scroll runtime.
+- Delivered surfaces: homepage, posts index and detail, pagination, archives,
+  categories, tags, series, localized routes for enabled locales, Pagefind
+  search, RSS/sitemap/robots, canonical/hreflang/JSON-LD metadata, opt-in
+  llms.txt v2, Giscus comments, Bangumi snapshots, Site-owned Gallery and
+  Moments, static Site pages, Markdown and trusted MDX.
+- Core/Site contract: YAML schema v2 with fail-closed validation, non-mutating
+  staged composition, provenance (Core revision, Site ref and digest), atomic
+  output swap, the documented upgrade/rollback procedure and a release artifact
+  hygiene gate over final output.
+- Acceptance still open at this release: field p75 performance, manual macOS
+  Safari/VoiceOver, reviewed onboarding by a real user from an independently
+  owned Site, and Owner product/visual sign-off. Lab browser and Lighthouse
+  evidence plus the public Test-Site regression are recorded in the
+  [Handoff](HANDOFF.md).
 
 ## Minimal product v0.1
 - Static homepage, posts index and post detail.
@@ -21,9 +43,16 @@
 - Core/Site CLI composition and a Site immutability test.
 
 ## Delivered and proposed scope
-v0.1.3 includes archives, tags, Pagefind, RSS/sitemap, translation metadata, pagination, optional giscus and static Bangumi. Categories and complete locale-scoped navigation are not delivered. Nested-base canonical/link defects and the limits of current artifact checks are recorded in the [P0 report](p0/P0-ACCEPTANCE.md).
+The v0.1.3 line included archives, tags, Pagefind, RSS/sitemap, translation
+metadata, pagination, optional giscus and static Bangumi. Its category routes,
+complete locale-scoped navigation and nested-base canonical defects are recorded
+in the [P0 report](p0/P0-ACCEPTANCE.md); Foundation v0.2.0 supersedes that
+contract.
 
-The [historical release roadmap](ROADMAP.md) is distinct from the frozen [Next Plan/Spec](next/01-SPEC.md). G0-F authorizes P1 development only. The first P1 Shirone vertical slice (`#48`) keeps the v1 Site contract, adds a Shirone-derived presentation for the main blog routes, and retains Editorial as a rollback path. It is not released, does not close #37 and does not authorize deployment or P2–P6 work. See [the slice record](p1/48-SHIRONE-VERTICAL-SLICE.md).
+The [historical release roadmap](ROADMAP.md) is distinct from the frozen
+[Next Plan/Spec](next/01-SPEC.md). G0-F authorized P1 development; Foundation
+v0.2.0 is the resulting released line. Post-release features and the next
+roadmap remain separate decisions tracked in [#136](https://github.com/Skyline-Gazer/ALNILAM/issues/136).
 
 ## Non-goals for bootstrap
 User authentication, admin dashboard, hosted content DB, CMS server, commercial plugin marketplace, external media hotlinking, automatic production deployment.
