@@ -28,6 +28,7 @@ test("fixed inputs rebuild byte-identical output without touching the Site", (t)
   const second = compose("out-b");
   assert.equal(second.status, 0, second.stderr);
   assert.equal(hashTree(path.join(root, "out-b")), hashTree(path.join(root, "out-a")));
+  assert.equal(fs.existsSync(path.join(root, "out-a/site-assets/alnilam-notices")), false);
   assert.equal(validateSiteRoot(site).digest, digest);
   assert.deepEqual(fs.readdirSync(root).filter((n) => n.startsWith(".alnilam-")), []);
 });
