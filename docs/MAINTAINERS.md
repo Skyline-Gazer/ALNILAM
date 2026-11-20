@@ -10,18 +10,62 @@ Operational notes for ALNILAM maintainers. Public contributor guidance is in [CO
 
 ## Release procedure (vX.Y.Z)
 
-1. Confirm `dev` CI green at the intended SHA (workflow `CI`, job `verify`).
-2. Update `CHANGELOG.md` (move Unreleased → new version, date, compare links) in a small PR to `dev`.
-3. Open release PR `dev` → `main`. Title: `release: vX.Y.Z`. Body links the changelog section and the green CI run.
-4. Owner-authorized merge. CI must pass on `main` post-merge.
-5. Create the annotated tag on `main`'s release merge commit:
+1. Confirm `dev` Verify and the current acceptance requirements pass at the intended SHA. Record any Owner-approved changes to the acceptance contract in the release PR.
+2. Open the release PR from `dev` to `main` with title `release: vX.Y.Z`. Include the full change and migration notes since the last tag. Prepare the README release version and numbered changelog in a small PR to `dev` once the release is approved.
+3. Check the release PR's required Verify, resolve applicable review findings, and verify the deployment boundary before merging. GitHub Pages requires a separate manual workflow dispatch. Confirm the Vercel Git configuration will prevent automatic publication from this merge. Use a normal merge commit, then confirm Verify passes on the resulting `main` SHA.
+4. Build and verify the release assets from that exact `main` commit using the procedure below. Create an annotated tag and push it to GitHub:
    ```bash
-   git tag -a vX.Y.Z -m "ALNILAM vX.Y.Z" <main-merge-sha>
-   git push origin vX.Y.Z
+   git tag -a "$tag" -m "ALNILAM $tag" "$release_sha"
+   git push https://github.com/Skyline-Gazer/ALNILAM.git "refs/tags/$tag:refs/tags/$tag"
    ```
-6. Set the repository variable `ALNILAM_OLD_CORE_SHA` to the previous release's tag SHA — the CI upgrade/rollback step then always tests real release-to-release upgrades.
+5. Confirm the exact tag's Release status workflow passes. Create the GitHub Release using `gh release create --verify-tag`, the reviewed notes, verified archive, file manifest and `SHA256SUMS`. Verify the public entry points at the annotated tag and the downloaded assets match `SHA256SUMS`.
+6. Keep `ALNILAM_OLD_CORE_SHA` pointed at the previous released Core for upgrade/rollback evidence.
 
 Never tag `dev`. Never tag a commit whose `verify` check has not passed on `main`.
+
+### Demo release assets
+
+Use a fresh Linux clone at the approved merge commit with GNU tar. Use the same Node and pnpm versions for both builds and record them in the release notes. The example packages the bundled root-hosted Demo for inspection at a fixed sample URL. Build for the actual host URL before publishing a Site.
+
+```bash
+set -euo pipefail
+export LC_ALL=C TZ=UTC
+release_sha=$(git rev-parse HEAD)
+export ALNILAM_CORE_REV="$release_sha" ALNILAM_SITE_REF="$release_sha"
+export ALNILAM_SITE_URL=https://example.com/
+export SOURCE_DATE_EPOCH=$(git show -s --format=%ct "$release_sha")
+tag=vX.Y.Z  # replace with the approved release version
+pnpm install --frozen-lockfile
+scratch=$(mktemp -d)
+stem="alnilam-$tag-demo-root"
+for run in 1 2; do
+  mkdir "$scratch/$run"
+  out="$scratch/$run/site"
+  ALNILAM_CACHE_DIR="$scratch/$run/cache" \
+    node scripts/compose.mjs --site sites/demo --out "$out"
+  node scripts/artifact-check.mjs "$out"
+  node scripts/seo-check.mjs "$out"
+  (cd "$out" && find . -type f -print0 | sort -z | xargs -0 sha256sum) \
+    > "$scratch/$run/$stem.files.sha256"
+  tar --sort=name --format=ustar --mtime="@$SOURCE_DATE_EPOCH" \
+    --owner=0 --group=0 --numeric-owner --mode='u+rwX,go+rX,go-w' \
+    -C "$out" -cf - . | gzip -n > "$scratch/$run/$stem.tar.gz"
+done
+cmp "$scratch/1/$stem.files.sha256" "$scratch/2/$stem.files.sha256"
+cmp "$scratch/1/$stem.tar.gz" "$scratch/2/$stem.tar.gz"
+mkdir "$scratch/extracted"
+tar -xzf "$scratch/1/$stem.tar.gz" -C "$scratch/extracted"
+(cd "$scratch/extracted" && sha256sum -c --quiet "$scratch/1/$stem.files.sha256")
+node scripts/artifact-check.mjs "$scratch/extracted"
+(cd "$scratch/1" && sha256sum "$stem.tar.gz" "$stem.files.sha256" > SHA256SUMS)
+```
+
+Verify `alnilam-provenance.json` in the extracted archive records the expected
+Core and bundled Site commit and Site digest, and compare its distribution
+notices with the repository copies. Upload the three verified files from
+`$scratch/1`. Record the canonical URL, epoch, input SHAs, digest, archive
+checksum and Verify URL with the release. GitHub Release assets are separate
+from protected Vercel staging and the Owner-authorized public promotion.
 
 ## CI acceptance inventory (workflow: CI, job: verify)
 
