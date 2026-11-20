@@ -1,5 +1,21 @@
 # ALNILAM roadmap (Issue-driven)
 
+## Foundation GA scope freeze — 2026-11-20
+
+Foundation targets `v0.2.0`. The release includes the existing Shirone-based
+blog, the YAML-only Site schema v2, Markdown/MDX posts and pages, search, i18n,
+SEO, root and nested builds, and the existing opt-in Gallery, Moments,
+Comments, Bangumi and LLM discovery modules. The Core/Site contract and
+upgrade/rollback guidance are release requirements.
+
+Only fixes for release blockers are in scope until GA. [#42](https://github.com/Skyline-Gazer/ALNILAM/issues/42) tracks the release gate, including the applicable [#74](https://github.com/Skyline-Gazer/ALNILAM/issues/74) field and manual accessibility evidence, [#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81) independent Site onboarding, [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35) product sign-off, and [#147](https://github.com/Skyline-Gazer/ALNILAM/issues/147) obligations for distributed materials. Keep unmet requirements open pending evidence or an explicit Owner change to the acceptance contract. First public Production deployment requires separate authorization under [#138](https://github.com/Skyline-Gazer/ALNILAM/issues/138).
+
+After the GitHub release, prioritize stability and patch releases. Music,
+hosted CMS, additional content adapters, a Shirone major-version migration and
+experimental Astro acceleration remain outside Foundation. The offline Pages
+CMS PoC remains optional. Upstream watch and cache working-set calibration
+continue separately. [#136](https://github.com/Skyline-Gazer/ALNILAM/issues/136) holds the next-version proposal for a separate Owner decision.
+
 ## Current workflow decision — 2026-11-13
 
 GitHub is the development authority. Use ordinary Issue-linked PRs to GitHub
