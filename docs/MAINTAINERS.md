@@ -26,6 +26,7 @@ Never tag `dev`. Never tag a commit whose `verify` check has not passed on `main
 ### Demo release assets
 
 Use a fresh Linux clone at the approved merge commit with GNU tar. Use the same Node and pnpm versions for both builds and record them in the release notes. The example packages the bundled root-hosted Demo for inspection at a fixed sample URL. Build for the actual host URL before publishing a Site.
+The `tar` must be GNU tar (`tar --version` reports `tar (GNU tar)`); the BSD/libarchive tar shipped by macOS does not support the reproducibility flags above.
 
 ```bash
 set -euo pipefail

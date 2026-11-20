@@ -27,6 +27,12 @@ test("external trusted toolchain runs its own CLI from the candidate workspace",
   const sourceRoot = process.env.CNB_TRUSTED_SOURCE_ROOT || path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
   try {
     fs.mkdirSync(path.join(site, "content/posts"), { recursive: true });
+    fs.mkdirSync(path.join(site, "assets"));
+    fs.writeFileSync(path.join(site, "assets/example.svg"), "site asset\n");
+    fs.mkdirSync(path.join(candidate, "LICENSES"));
+    for (const file of ["LICENSE", "NOTICE", "CREDITS.md", "THIRD_PARTY_NOTICES.md", "LICENSES/Example-MIT.txt"]) {
+      fs.writeFileSync(path.join(candidate, file), `${file}\n`);
+    }
     fs.mkdirSync(path.join(candidate, "apps/web"), { recursive: true });
     for (const dir of ["apps/web/src", "themes/shirone/upstream/src"]) fs.mkdirSync(path.join(candidate, dir), { recursive: true });
     for (const file of ["package.json", "pnpm-lock.yaml", "apps/web/astro.config.mjs", "themes/shirone/package.json"]) {
@@ -66,6 +72,8 @@ fs.appendFileSync(process.env.TOOL_LOG, JSON.stringify({tool:'pagefind', cwd:pro
     assert.ok(calls.every((call) => call.nodePath === path.join(tools, "node_modules/.pnpm/node_modules")));
     assert.deepEqual(calls[0].args, ["build", "--root", path.join(candidate, "apps/web")]);
     assert.equal(fs.readFileSync(path.join(output, "index.html"), "utf8"), "fixture");
+    assert.equal(fs.readFileSync(path.join(output, "site-assets/alnilam-notices/NOTICE"), "utf8"), "NOTICE\n");
+    assert.equal(fs.readFileSync(path.join(output, "site-assets/example.svg"), "utf8"), "site asset\n");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

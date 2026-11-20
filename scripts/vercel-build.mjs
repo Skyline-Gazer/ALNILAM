@@ -8,12 +8,8 @@
 // deployment that is actually served. When the project does not pin
 // ALNILAM_SITE_URL, derive it from Vercel's own system variables: the stable
 // production host for production deployments and the deployment host elsewhere.
-import path from 'node:path';
-import {fileURLToPath} from 'node:url';
-import {copyDistributionNotices} from './distribution-notices.mjs';
 import {spawnSync} from 'node:child_process';
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const env = {...process.env};
 const host = env.VERCEL_ENV === 'production'
   ? env.VERCEL_PROJECT_PRODUCTION_URL || env.VERCEL_URL
@@ -30,6 +26,4 @@ const run = (name, command, args) => {
 
 if (env.ALNILAM_SITE_URL) console.log(`Deploying with site URL: ${env.ALNILAM_SITE_URL}`);
 run('compose', process.execPath, ['scripts/compose.mjs', '--site', 'sites/demo', '--out', 'dist/site']);
-const noticesPath = copyDistributionNotices(repoRoot, path.join(repoRoot, 'dist/site'));
-console.log(`Distribution notices: ${noticesPath}`);
 run('artifact-check', process.execPath, ['scripts/artifact-check.mjs', 'dist/site']);
