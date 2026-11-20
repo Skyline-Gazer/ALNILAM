@@ -4,6 +4,9 @@ An ALNILAM **Site** is an independent directory (usually its own Git repository)
 your content, configuration and assets. Core never writes into it, fetches it, or checks
 it out — you pin the Site revision yourself.
 
+This guide covers the current YAML v2 contract. For the published TOML v1
+contract, see the [v0.1.3 Site layout](https://github.com/Skyline-Gazer/ALNILAM/blob/v0.1.3/docs/SITE_ONBOARDING.md#site-layout-schema-v1--frozen).
+
 ## Site layout (schema v2 — frozen)
 
 ```
@@ -364,8 +367,14 @@ or structured data.
 
 ## Building
 
+Install dependencies in the pinned Core checkout before running Compose. Use
+Node.js 22.23.4 or newer and pnpm 10.19.0 for the current Core.
+
 ```bash
-# From a checkout of ALNILAM (Core):
+# From the pinned Core checkout, with pnpm available (corepack enable if needed):
+pnpm install --frozen-lockfile
+
+# This build uses the URL in the Site config:
 node scripts/compose.mjs --site /absolute/path/to/yoursite --out /absolute/path/to/output
 
 # Root host vs project-page / subpath base (same Site, separate outputs):
@@ -384,37 +393,45 @@ The output directory must not overlap the Site directory. The build:
 
 Set `ALNILAM_SITE_REF` to the Site commit SHA in CI; otherwise a Site that is its own
 Git root records its `HEAD`, and an unversioned Site records `unversioned`. An output
-from Core revision X is reproducible from the same Site digest; bind the Core revision,
-Site ref and Site digest in your deployment configuration and fail closed if they drift.
+with the same Site digest can still differ if the deployment URL or other build
+inputs differ. For a repeatable build, pin the deployment URL, use the Core
+lockfile and set `SOURCE_DATE_EPOCH` to a fixed value. Verify the Core revision,
+Site ref and Site digest before publishing.
 
 ## Core upgrade / rollback workflow
 
-1. Check out the target Core revision in its own directory (`git worktree` or a second clone).
+1. Check out the target Core revision in its own directory (`git worktree` or a
+   second clone) and install its dependencies with `pnpm install --frozen-lockfile`.
 2. Run `compose` against the **same unchanged Site directory**.
-3. Verify `alnilam-provenance.json` in the new output: the Site digest must match the previous build's.
-4. Swap the served output directory; rollback = rebuild with the previous Core revision.
+3. Verify that `alnilam-provenance.json` records the intended Core revision and
+   Site ref. For a Core-only upgrade, the Site digest must match the previous build's.
+4. Publish the checked output. To roll back, restore the previous checked
+   artifact or rebuild with the previous Core and the Site revision it supports.
+   Across a schema migration, this may require the previous pinned Site revision
+   in a separate checkout. Current Core requires YAML v2, and v0.1.3 requires TOML v1.
 
 Automated acceptance (CI and local):
 
 ```bash
-node scripts/upgrade-check.mjs --old <historical-core-sha> [--site /absolute/path/to/yoursite]
+node scripts/upgrade-check.mjs --old "$OLD_CORE_SHA" --site /absolute/path/to/yoursite
 ```
 
 The script builds the Site with the current Core, then with `--old` in an isolated
 worktree. The Site digest must be identical before, after the upgrade build, and after
-the rollback build. Default `--site` is a throwaway copy of `sites/demo`. Expected
-fail-closed outcomes for a Site the old Core cannot yet consume (missing TOML on
-pre-YAML Core, unsupported `schemaVersion`, or unknown config fields such as a module
-block added later) still count as a passed Site non-mutation check; unexpected build
-failures fail the run. Output bytes may differ when Core rendering changed.
+the rollback build. Set `OLD_CORE_SHA` to the historical commit SHA. Omit `--site`
+to use a throwaway copy of `sites/demo`. The script treats an older Core's
+contract rejection (missing TOML, unsupported schema version, or unknown config
+fields) as a pass for Site non-mutation. Only a successful old-Core build
+verifies that it can rebuild this Site revision. Unexpected build failures fail
+the run. Output bytes may differ when Core rendering changes.
 
 The Site's Git ref is never touched by any of these steps.
 
 ## Content build security and secrets boundary
 
-- **Secrets never belong in the Site.** `alnilam.config.yaml`, `content/` and
-  `assets/` are copied verbatim into the build and published as content — any
-  value placed there is public. Keep credentials in your CI system's secret
+- **Secrets never belong in the Site.** `assets/` is copied to the output as-is,
+  and values from the Site config and content can appear in generated pages,
+  feeds and other public files. Keep credentials in your CI system's secret
   store (GitHub Actions Secrets); the shipped workflows consume them only
   where needed and never echo them (anchored by
   `scripts/tests/workflows.test.mjs`).
@@ -449,9 +466,9 @@ Compose copies validated Site inputs into a digest-keyed snapshot inside the man
 
 ### Ready-made CI: the reusable `site-ci` workflow
 
-The two-checkout pattern ships as `.github/workflows/site-ci.yml` in Core. GitHub
-`dev` may lag CNB `dev`, so the workflow must exist at the GitHub ref named in
-`uses`. The GitHub cross-repository call was [validated on a non-production ref](https://github.com/Skyline-Gazer/Test-Site/actions/runs/41836937453).
+The two-checkout pattern ships as `.github/workflows/site-ci.yml` in Core. The
+workflow must exist at the GitHub ref named in `uses`. The public Test-Site
+[validated the reusable workflow on a non-production ref](https://github.com/Skyline-Gazer/Test-Site/actions/runs/41836937453).
 Pin the same published Core SHA in `uses` and `core_ref`:
 
 ```yaml
@@ -468,11 +485,13 @@ jobs:
       site_token: ${{ secrets.SITE_TOKEN }}
 ```
 
-It runs the Core contract tests, validates your Site against the YAML-only v2
-contract, composes it (root base, plus your `site_url` base when different),
-runs artifact budgets, asserts `alnilam-provenance.json` binds `site.ref` to
-the exact SHA you asked for, and uploads the composed output for inspection.
-The workflow uses `contents: read` and disables persisted checkout credentials.
+It runs the Core contract tests, validates the YAML-only v2 Site contract and
+composes the Site using its configured URL. If you supply `site_url`, it runs a
+second compose using that URL as an override. For a root and subpath matrix,
+set a root URL in the Site config and pass the subpath URL as `site_url`. The
+workflow runs the artifact checker, verifies the Core revision, Site SHA and
+Site digest against the checkouts, and uploads the output for inspection. It
+uses `contents: read` and disables persisted checkout credentials.
 A reusable workflow runs on the caller’s chosen event, including pull requests;
 do not pass the Site token from pull-request jobs; configure the caller to run
 this job only on trusted events and refs (for example, `workflow_dispatch` or
@@ -485,19 +504,20 @@ When the caller is the public Site repository itself, its `GITHUB_TOKEN` with
 that configuration. Private or cross-repository Sites require an appropriately
 scoped read-only credential.
 
-The reusable workflow must be available at the referenced Core ref before a
-Site can invoke it.
+The Test-Site run supplies regression evidence for the workflow. Onboarding
+acceptance requires a separate review by a real user with an independently
+owned Site. See [issue #81](https://github.com/Skyline-Gazer/ALNILAM/issues/81).
 
 ### Static publishing (multi-host)
 
-The composed `dist/` directory is a self-contained static bundle — any static
-file host works. Supported in detail:
+The directory passed to Compose via `--out` is a self-contained static bundle.
+Publish the contents of that directory. Supported in detail:
 
 | Host | Base | Notes |
 | --- | --- | --- |
 | GitHub Pages project page | `https://<org>.github.io/<repo>/` | subpath; set `site_url` accordingly, add `.nojekyll` |
 | GitHub Pages user/org page or custom domain | `https://<your-domain>/` | root base |
-| Any static host (nginx, Netlify, Cloudflare Pages…) | your choice | copy `dist/` as-is |
+| Any static host (nginx, Netlify, Cloudflare Pages…) | your choice | publish the composed output as-is |
 | Vercel (this repository's preview project) | root | `vercel.json` builds `dist/site` via `pnpm vercel-build`; the script derives the Site URL from `VERCEL_PROJECT_PRODUCTION_URL`/`VERCEL_URL` so canonical, sitemap, robots and RSS name the deployed host |
 
 The owner-gated `deploy` workflow (`.github/workflows/deploy.yml`) publishes to
@@ -527,6 +547,13 @@ The check runs in GitHub Actions Verify and Site CI, again immediately before
 the owner-dispatched Pages artifact upload, and in the repository's Vercel build.
 It protects only those wired outputs; GitHub source archives and arbitrary
 custom packaging or manual copies are not scanned.
+
+For a local or manually packaged build, run the same check against the exact
+output directory before publishing:
+
+```bash
+node scripts/artifact-check.mjs /absolute/path/to/output
+```
 
 ### Optional Git-based editors (PoC)
 
