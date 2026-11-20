@@ -1,0 +1,31 @@
+/* Locale switcher (M3 pill row). Kept in a global stylesheet so the LangSwitch
+   component can ship without a scoped <style> block: Astro emits
+   data-astro-cid-* attributes on every element of a component that owns any
+   scoped style, and the listing pages sit within a few hundred bytes of the
+   64 KiB document budget. */
+.top-app-bar__lang {
+	display: flex;
+	gap: 0.125rem;
+	margin-inline-start: 0.25rem;
+}
+
+.top-app-bar__lang-item {
+	display: flex;
+	align-items: center;
+	height: 2rem;
+	padding: 0 0.5rem;
+	border-radius: var(--shape-corner-full);
+	color: var(--on-surface-variant);
+	font-size: 0.75rem;
+	font-weight: 700;
+	text-decoration: none;
+	transition: color var(--m3e-duration-short) var(--m3e-easing-standard);
+}
+
+.top-app-bar__lang-item:hover {
+	color: var(--on-surface);
+}
+
+.top-app-bar__lang-item--active {
+	color: var(--primary);
+}

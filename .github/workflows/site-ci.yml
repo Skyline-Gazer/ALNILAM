@@ -1,0 +1,222 @@
+name: Site CI
+# Validates an EXTERNAL Site (a different repository) against a Core
+# revision: contract tests, compose, artifact budgets and provenance gating.
+# Called via workflow_call from a Site repository or run on demand. This is
+# validation only — it never publishes and never touches production.
+#
+# Least privilege: the workflow runs with contents: read and
+# persist-credentials: false. Cross-repo Site checkout needs a fine-grained
+# token scoped to the Site repository with contents: read only, supplied via
+# the site_token secret; the calling workflow passes its own secret to the
+# reusable workflow (secrets: site_token: ${{ secrets.SITE_TOKEN }}). Tokens
+# are consumed by actions/checkout and never echoed; Actions masks any secret
+# value appearing in logs automatically. The token never appears in any run
+# or env step of this workflow.
+#
+# core_ref defaults to dev, which is a moving branch: validation results for
+# the same Site SHA drift with dev unless the caller pins a full Core SHA.
+# provenance.site.ref is bound to site_ref; provenance.core.revision records
+# whatever Core revision actually built.
+
+on:
+  workflow_call:
+    inputs:
+      core_ref:
+        description: "Core (this repository) revision to validate against; a moving branch does not pin Core"
+        required: false
+        type: string
+        default: dev
+      site_repository:
+        description: "External Site repository (owner/name)"
+        required: true
+        type: string
+      site_ref:
+        description: "Site commit SHA to validate (full 40-hex lowercase SHA)"
+        required: true
+        type: string
+      site_url:
+        description: "Absolute https URL for the nested-base compose; omit to skip it"
+        required: false
+        type: string
+        default: ""
+    secrets:
+      site_token:
+        description: "Fine-grained token with contents: read on the Site repository only"
+        required: true
+  workflow_dispatch:
+    inputs:
+      core_ref:
+        description: "Core (this repository) revision to validate against; a moving branch does not pin Core"
+        required: false
+        type: string
+        default: dev
+      site_repository:
+        description: "External Site repository (owner/name)"
+        required: true
+        type: string
+      site_ref:
+        description: "Site commit SHA to validate (full 40-hex lowercase SHA)"
+        required: true
+        type: string
+      site_url:
+        description: "Absolute https URL for the nested-base compose; omit to skip it"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-ci-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Guard the caller-supplied inputs
+        run: |
+          [[ "$SITE_REF" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "::error::site_ref must be a full 40-hex lowercase commit SHA"
+            exit 1
+          }
+          if [ -n "$SITE_URL_PRESENT" ]; then
+            node -e 'if (/[\r\n]/.test(process.env.SITE_URL)) throw Error("site_url contains a line break"); const u = new URL(process.env.SITE_URL); if (u.protocol !== "https:" || u.username || u.password) { console.error("site_url must be an absolute https URL without credentials"); process.exit(1); }'
+          fi
+        env:
+          SITE_REF: ${{ inputs.site_ref }}
+          SITE_URL_PRESENT: ${{ inputs.site_url != '' && '1' || '' }}
+          SITE_URL: ${{ inputs.site_url }}
+
+      - name: Check out Core at the requested revision
+        uses: actions/checkout@v4
+        with:
+          repository: Skyline-Gazer/ALNILAM
+          ref: ${{ inputs.core_ref }}
+          submodules: false
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.19.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Contract tests
+        run: pnpm test
+
+      - name: Check out the external Site at the pinned SHA
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.site_repository }}
+          ref: ${{ inputs.site_ref }}
+          token: ${{ secrets.site_token }}
+          path: site-checkout
+          persist-credentials: false
+
+      - name: Bind the checked-out Site to the requested SHA
+        run: |
+          actual="$(git -C site-checkout rev-parse HEAD)"
+          echo "site sha: $actual"
+          test -z "$(git -C site-checkout status --porcelain --untracked-files=all)" || {
+            echo "::error::Site checkout is not clean"
+            exit 1
+          }
+          test "$actual" = "$EXPECTED_SITE_REF" || {
+            echo "::error::checked-out Site SHA does not match the requested SHA"
+            exit 1
+          }
+
+        env:
+          EXPECTED_SITE_REF: ${{ inputs.site_ref }}
+
+      - name: Validate the Site contract
+        run: |
+          node --input-type=module -e "
+            import { validateSiteRoot } from './scripts/site-contract.mjs';
+            try {
+              const { digest } = validateSiteRoot('site-checkout');
+              (await import('node:fs')).writeFileSync(process.env.RUNNER_TEMP + '/alnilam-site-digest', digest);
+              console.log('Site contract OK:', digest);
+            } catch (error) {
+              console.error(error.message);
+              console.error('See docs/SITE_ONBOARDING.md for the YAML-only v2 contract.');
+              process.exit(1);
+            }
+          "
+
+      - name: Compose the external Site (root base)
+        env:
+          ALNILAM_SITE_REF: ${{ inputs.site_ref }}
+          ALNILAM_CORE_REV: ""
+          SOURCE_DATE_EPOCH: "1700000000"
+        run: |
+          node scripts/compose.mjs --site site-checkout --out dist/site-root
+          node scripts/artifact-check.mjs dist/site-root
+
+      - name: Compose the external Site (nested base)
+        if: ${{ inputs.site_url != '' }}
+        env:
+          ALNILAM_SITE_REF: ${{ inputs.site_ref }}
+          ALNILAM_CORE_REV: ""
+          ALNILAM_SITE_URL: ${{ inputs.site_url }}
+          SOURCE_DATE_EPOCH: "1700000000"
+        run: |
+          node scripts/compose.mjs --site site-checkout --out dist/site-nested
+          node scripts/artifact-check.mjs dist/site-nested
+
+      - name: Verify the Site was not modified and provenance binds the inputs
+        run: |
+          actual="$(git -C site-checkout rev-parse HEAD)"
+          test "$actual" = "$EXPECTED_SITE_REF" || {
+            echo "::error::Site checkout changed during the build"
+            exit 1
+          }
+          test -z "$(git -C site-checkout status --porcelain --untracked-files=all)" || {
+            echo "::error::Site working tree changed during the build"
+            exit 1
+          }
+          node --input-type=module <<'EOF'
+          import fs from "node:fs";
+          import { execFileSync } from "node:child_process";
+          import { validateSiteRoot } from "./scripts/site-contract.mjs";
+          const expected = process.env.EXPECTED_SITE_REF;
+          const before = fs.readFileSync(`${process.env.RUNNER_TEMP}/alnilam-site-digest`, "utf8").trim();
+          const after = validateSiteRoot("site-checkout").digest;
+          if (before !== after) throw Error("Site input digest changed during builds");
+          const core = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+          const dirs = fs.globSync("dist/site-*");
+          if (!dirs.includes("dist/site-root")) {
+            console.error("dist/site-root is missing: compose did not produce the required artifact");
+            process.exit(1);
+          }
+          for (const dir of dirs) {
+            const prov = JSON.parse(fs.readFileSync(`${dir}/alnilam-provenance.json`, "utf8"));
+            if (prov.site?.ref !== expected) {
+              console.error(`${dir}: provenance site.ref ${prov.site?.ref} does not bind ${expected}`);
+              process.exit(1);
+            }
+            if (prov.site?.digest !== before || prov.core?.revision !== core) {
+              throw Error(`${dir}: provenance digest or Core revision mismatch`);
+            }
+            console.log(`${dir}: Core ${core}, Site ${expected}, digest ${before}`);
+          }
+          EOF
+        env:
+          EXPECTED_SITE_REF: ${{ inputs.site_ref }}
+
+      - name: Upload composed output for inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: composed-site-${{ inputs.site_ref }}
+          path: dist/
+          retention-days: 7
+          if-no-files-found: warn

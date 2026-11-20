@@ -1,0 +1,18 @@
+---
+import type { GetStaticPaths } from "astro";
+import MomentsIndexPage from "../components/MomentsIndexPage.astro";
+import { momentsRouteLocales } from "../lib/moments.mjs";
+import { loadSite } from "../lib/site-source.mjs";
+
+interface Props {
+  lang: string;
+}
+
+export const getStaticPaths: GetStaticPaths = () => {
+  const { config } = loadSite();
+  return momentsRouteLocales(config).map((lang: string) => ({ params: { lang }, props: { lang } }));
+};
+
+const { lang } = Astro.props;
+---
+<MomentsIndexPage locale={lang} />

@@ -10,6 +10,17 @@ dist/
 .temp/
 .tmp/
 .site-cache/
-.codegraph/
-.rtk/
+browser-results/
+playwright-report/
+test-results/
 
+artifacts/
+.lighthouseci/
+
+__pycache__/
+*.pyc
+/.cache/
+
+# Native Shirone integration cache (Core-owned derived output).
+.shirones/
+apps/web/src/generated/

@@ -1,0 +1,47 @@
+{
+  "run": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40284029959",
+  "artifacts": [
+    {
+      "digest": "sha256:ee5afdae85dc2d2b1c46877eec9d9c61a1b27430fe77792313937837975aa749",
+      "id": 12633845122,
+      "name": "p0-shirone-astro-7.3.8",
+      "size_in_bytes": 10199099
+    },
+    {
+      "digest": "sha256:278b461de5345fb12a3b5aa7965782ff50916aaab62712d5e8d1031c06694619",
+      "id": 12633841569,
+      "name": "p0-e2e-7.3.8-4",
+      "size_in_bytes": 74897645
+    },
+    {
+      "digest": "sha256:2e172e934b317a9b25d1127b1af50f97edce734793a736c256a9a0534e47c531",
+      "id": 12633590386,
+      "name": "p0-legacy",
+      "size_in_bytes": 1675
+    },
+    {
+      "digest": "sha256:8601276b08e69dfaa88062db9879249bcedc69d53fe459949f550d42447b87bd",
+      "id": 12633466456,
+      "name": "p0-shirone-astro-7.4.2",
+      "size_in_bytes": 9998377
+    },
+    {
+      "digest": "sha256:64893c0ad89b1d24868478128e61873422846aaf29f065d1fcfba61f3fd4e7b6",
+      "id": 12633423319,
+      "name": "p0-e2e-7.4.2-3",
+      "size_in_bytes": 36306107
+    },
+    {
+      "digest": "sha256:569bec63c86e2e4c03f41cca36d421a51db2bd52b5772063f20169af48c4d90a",
+      "id": 12633333996,
+      "name": "p0-e2e-7.3.8-3",
+      "size_in_bytes": 40218133
+    },
+    {
+      "digest": "sha256:131a37f372593087a58040827f141a2e0517c0426286803e59d69946523bb0ea",
+      "id": 12632634652,
+      "name": "p0-e2e-7.4.2-4",
+      "size_in_bytes": 74483896
+    }
+  ]
+}

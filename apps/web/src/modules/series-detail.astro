@@ -1,0 +1,12 @@
+---
+// Route wrapper for the pinned native Shirone series detail page: the upstream
+// page resolves its own static paths from the series catalog and reads
+// `Astro.params.slug`, so we forward `getStaticPaths` unchanged instead of
+// inventing a second data path. Astro infers the upstream component's props as
+// `never` (its paths carry none), so bind it through a permissive type.
+import NativeSeriesDetail, { getStaticPaths } from "@alnilam/theme-shirone/SeriesDetail.astro";
+export { getStaticPaths };
+
+const SeriesDetail = NativeSeriesDetail as unknown as (props: Record<string, never>) => unknown;
+---
+<SeriesDetail />

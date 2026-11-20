@@ -1,0 +1,60 @@
+# Pages CMS PoC Site (isolated fixture)
+
+This directory is a disposable, independently owned ALNILAM Site used only by
+the offline Git-based authoring proof of concept (GitHub Issue #88). It is not
+a user's Site, is never published, and contains no third-party media.
+
+- `.pages.yml` is the Site-owned Pages CMS editor schema. Core never reads it.
+- `alnilam.config.yaml` is the ordinary schema v2 Site config.
+- `content/posts/` holds one Markdown and one MDX post; both carry frontmatter
+  keys that are **not** declared in the editor schema, to prove a CMS save does
+  not silently drop them.
+- `content/pages/` holds a default-locale page, English and Japanese MDX
+  translations, a nested route and a draft. Page-only category/tag metadata,
+  an undeclared key, a Site asset and a page-relative image exercise isolation.
+- `assets/cms-mark.svg` is served at `/site-assets/cms-mark.svg`; post-relative
+  and page-relative images are processed from their own content collections.
+
+Run the offline adapter from the repository root. This example copies the
+fixture to a separate temporary Git checkout, makes a baseline commit and then
+limits authoring commands to the explicitly selected local branch:
+
+```sh
+tmp="$(mktemp -d)"
+site="$tmp/site"
+cp -a tests/fixtures/pages-cms-site "$site"
+git -C "$site" init --quiet --initial-branch=cms-poc
+git -C "$site" config user.name "ALNILAM CMS PoC"
+git -C "$site" config user.email cms-poc@example.invalid
+git -C "$site" add --all
+git -C "$site" commit --quiet -m "Baseline Site"
+node scripts/pages-cms.mjs verify --site "$site"
+node scripts/pages-cms.mjs edit --site "$site" --post cms-basics.md \
+  --set '{"title":"Edited by the PoC"}' --expect-branch cms-poc
+node scripts/pages-cms.mjs create --site "$site" --file branch-post.md \
+  --set '{"title":"Branch post","pubDate":"2026-11-12"}' --expect-branch cms-poc
+git -C "$site" status --short
+```
+
+`--expect-branch` does not switch branches or inspect remote branch protection.
+
+`create` and the CLI `edit` command write only posts; the page collection is
+mapped in `.pages.yml`, and the offline roundtrip test supplies its fields
+explicitly to `applyEdit`. All filesystem writes stay inside the selected Site
+posts directory (plus `.pages.yml` for `init`).
+
+Compose both deployment bases (the adapter never writes into the fixture during
+a build):
+
+```sh
+ALNILAM_SITE_URL=https://example.com/ node scripts/compose.mjs \
+  --site tests/fixtures/pages-cms-site --out dist/pages-cms
+ALNILAM_SITE_URL=https://example.com/ALNILAM/ node scripts/compose.mjs \
+  --site tests/fixtures/pages-cms-site --out dist/pages-cms-nested
+```
+
+Limits of this PoC: it models the editor's write-back locally. A hosted Pages
+CMS instance, its GitHub App permissions, Decap/Keystatic comparisons, a real
+external Site repository and production publishing are **not** exercised and
+remain Owner-authorized work. MDX is edited through the source path only; a
+rich-text/WYSIWYG editor is not used for MDX.

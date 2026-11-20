@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "id": "shirone",
+      "repository": "https://github.com/LyraVoid/Shirone",
+      "defaultBranch": "main",
+      "role": "sole frontend base",
+      "baselineRevision": "55a84b2322bdfb634a59ca6383bb242e5ce646bf",
+      "baselineVersion": "1.0.6",
+      "license": "MIT",
+      "policy": "Selective fixes only; preserve ALNILAM adapters, single-router, PhotoSwipe, and Core/Site contracts."
+    },
+    {
+      "id": "firefly",
+      "repository": "https://github.com/CuteLeaf/Firefly",
+      "defaultBranch": "master",
+      "role": "selective feature and UX reference",
+      "baselineRevision": "cd920b035b475fe9a6cd3a88afb42cf9440bb8a9",
+      "license": "MIT",
+      "policy": "Adapt only reproducible fixes with an ALNILAM defect or measured benefit; no theme/runtime replacement."
+    },
+    {
+      "id": "mizuki",
+      "repository": "https://github.com/matsuzaka-yuki/Mizuki",
+      "defaultBranch": "master",
+      "role": "selective feature fallback",
+      "baselineRevision": "14da4262d8aa1d93dc8cff11705f14918ed7369f",
+      "license": "Apache-2.0",
+      "policy": "Selective compatibility-safe reference; no automatic feature or visual port."
+    },
+    {
+      "id": "kirari",
+      "repository": "https://github.com/markd3ng/KIRARI",
+      "defaultBranch": "main",
+      "role": "Core/Site, content, and SEO reference",
+      "baselineRevision": "5700bcdeb965de87a1818d5d9aec6bf8e227523d",
+      "license": "MIT",
+      "policy": "Reference only unless a concrete ALNILAM gap is reproduced and reviewed."
+    }
+  ],
+  "dependencyInputs": ["workspace package.json manifests", "pnpm-lock.yaml", "pnpm audit --json"],
+  "boundaries": {
+    "mode": "MANUAL_READY",
+    "scheduled": false,
+    "readOnlyUpstream": true,
+    "readOnlySite": true,
+    "neverAutoMerge": true,
+    "neverWriteMain": true
+  }
+}

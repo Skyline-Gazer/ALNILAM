@@ -1,0 +1,35 @@
+---
+// AdSense Auto Ads mount (GH Issue #90). Rendered only when Core ships
+// `ads.adsense.enabled`; loader injection and removal are consent-gated
+// inside the runtime module.
+import type { PrivacyConfig } from "virtual:alnilam-privacy";
+
+interface Props {
+	privacy: PrivacyConfig;
+}
+
+const { privacy } = Astro.props;
+const adsense = privacy.ads.adsense;
+
+if (!adsense.enabled || !adsense.clientId || import.meta.env.DEV) {
+	return null;
+}
+
+const consentGated = privacy.consent.mode === "basic";
+---
+
+<div
+	id="alnilam-adsense"
+	hidden
+	data-client-id={adsense.clientId}
+	data-consent-gated={String(consentGated)}
+></div>
+
+<script>
+	import { initAdsense } from "@utils/adsense";
+
+	const mount = document.getElementById("alnilam-adsense");
+	if (mount?.dataset.clientId) {
+		initAdsense(mount.dataset.clientId, mount.dataset.consentGated === "true");
+	}
+</script>

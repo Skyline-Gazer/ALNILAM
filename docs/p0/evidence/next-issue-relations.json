@@ -1,0 +1,106 @@
+{
+  "data": {
+    "repository": {
+      "i36": {
+        "number": 36,
+        "id": "I_kwDOVWbBic8AAAABZydEyg",
+        "state": "OPEN",
+        "milestone": null,
+        "parent": null,
+        "subIssues": {
+          "nodes": []
+        }
+      },
+      "i44": {
+        "number": 44,
+        "id": "I_kwDOVWbBic8AAAABZyeBcQ",
+        "state": "OPEN",
+        "milestone": null,
+        "parent": null,
+        "subIssues": {
+          "nodes": []
+        }
+      },
+      "i45": {
+        "number": 45,
+        "id": "I_kwDOVWbBic8AAAABZyeCwg",
+        "state": "OPEN",
+        "milestone": null,
+        "parent": null,
+        "subIssues": {
+          "nodes": []
+        }
+      },
+      "i46": {
+        "number": 46,
+        "id": "I_kwDOVWbBic8AAAABZyeD2w",
+        "state": "OPEN",
+        "milestone": null,
+        "parent": null,
+        "subIssues": {
+          "nodes": []
+        }
+      },
+      "i47": {
+        "number": 47,
+        "id": "I_kwDOVWbBic8AAAABZyeFDA",
+        "state": "OPEN",
+        "milestone": null,
+        "parent": null,
+        "subIssues": {
+          "nodes": []
+        }
+      },
+      "i79": {
+        "number": 79,
+        "id": "I_kwDOVWbBic8AAAABZ4CIcg",
+        "state": "OPEN",
+        "milestone": null,
+        "parent": null,
+        "subIssues": {
+          "nodes": []
+        }
+      },
+      "i80": {
+        "number": 80,
+        "id": "I_kwDOVWbBic8AAAABZ4OOmw",
+        "state": "OPEN",
+        "milestone": null,
+        "parent": null,
+        "subIssues": {
+          "nodes": []
+        }
+      },
+      "i81": {
+        "number": 81,
+        "id": "I_kwDOVWbBic8AAAABZ4OP9Q",
+        "state": "OPEN",
+        "milestone": null,
+        "parent": null,
+        "subIssues": {
+          "nodes": []
+        }
+      },
+      "i82": {
+        "number": 82,
+        "id": "I_kwDOVWbBic8AAAABZ4ORcw",
+        "state": "OPEN",
+        "milestone": null,
+        "parent": null,
+        "subIssues": {
+          "nodes": []
+        }
+      },
+      "i83": {
+        "number": 83,
+        "id": "I_kwDOVWbBic8AAAABZ4OS1g",
+        "state": "OPEN",
+        "milestone": null,
+        "parent": null,
+        "subIssues": {
+          "nodes": []
+        }
+      }
+    }
+  }
+}

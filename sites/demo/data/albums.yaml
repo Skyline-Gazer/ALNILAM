@@ -1,0 +1,58 @@
+# Site-owned Gallery sample data. Remote Unsplash assets are served directly by Unsplash
+# under its public Unsplash License; ALNILAM does not download or proxy them.
+schemaVersion: 1
+albums:
+  - id: coast-and-mountains
+    title: 海岸与群山
+    description: Site-owned album data with separate thumbnail and full image URLs.
+    date: 2026-11-13
+    location: Pacific coast
+    tags: [landscape, demo]
+    layout: grid
+    columns: 3
+    cover: https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80
+    photos:
+      - id: mountain-lake
+        src: https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=max&w=2400&q=90
+        thumbnail: https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80
+        alt: Mountain lake beneath a cloudy sky
+        location: Alpine lake
+        title: Mountain lake
+        width: 2400
+        height: 1600
+      - id: open-road
+        src: https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=max&w=2400&q=90
+        thumbnail: https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=900&q=80
+        alt: A quiet mountain valley in warm light
+        title: Valley light
+        width: 2400
+        height: 1600
+      - id: site-lighthouse
+        src: assets/lighthouse.png
+        alt: ALNILAM synthetic lighthouse fixture image
+        title: Local Site asset
+        width: 1200
+        height: 800
+  - id: local-assets
+    title: 站点本地图片
+    description: Relative Site asset paths are published beneath /site-assets/.
+    cover: site-assets/orion.svg
+    layout: masonry
+    columns: 2
+    photos:
+      - src: ./orion.svg?variant=gallery#nebula
+        alt: ALNILAM Orion illustration
+        title: Orion
+  - id: no-cover
+    title: 无封面相册
+    description: Albums without a cover still show a stable card fallback.
+    photos:
+      - src: https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=max&w=2400&q=90
+        thumbnail: https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80
+        alt: A sunlit landscape
+        width: 2400
+        height: 1600
+  - id: empty-album
+    title: 空相册
+    description: An empty album remains navigable and explains its empty state.
+    photos: []

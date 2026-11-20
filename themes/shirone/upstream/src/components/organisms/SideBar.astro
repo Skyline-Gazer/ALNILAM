@@ -1,0 +1,173 @@
+---
+/**
+ * 侧边栏（数据驱动）：遍历 sidebarConfig.components 渲染 widget。
+ * componentMap 是唯一的 widget 注册表——新增 widget 时在
+ * src/types/sidebarConfig.ts 扩展联合分支，并在此注册组件。
+ * 职责仅是编排，不取数；widget 自己的配置经 `widget` prop 透传。
+ *
+ * 页面过滤（widget.pages）：SSR 全量渲染并在包装层打
+ * data-sidebar-pages + hidden 初始标记；侧栏静态渲染在 Swup 容器外，
+ * 导航后不重渲染，由底部脚本监听 content:replace 按新页面的
+ * data-current-page（#swup-container，Swup 同步属性）重新过滤。
+ */
+import Announcement from "@components/molecules/Announcement.astro";
+import Calendar from "@components/molecules/Calendar.astro";
+import Categories from "@components/molecules/Categories.astro";
+import Series from "@components/molecules/Series.astro";
+import SidebarTOC from "@components/molecules/SidebarTOC.astro";
+import SiteStats from "@components/molecules/SiteStats.astro";
+import Tags from "@components/molecules/Tags.astro";
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+import { isWidgetVisibleOnPage, pagesToAttribute } from "@utils/sidebar-page";
+import { musicConfig, resolveMusicOptions } from "@/config/musicConfig";
+import { sidebarConfig } from "@/config/sidebarConfig";
+import type {
+	SidebarColumn,
+	SidebarPage,
+	SidebarWidget,
+} from "@/types/sidebarConfig";
+import Profile from "./Profile.astro";
+
+interface Props {
+	class?: string;
+	/** 本实例渲染哪一栏的 widget（dual 编排下主/副栏各挂一个实例） */
+	column?: SidebarColumn;
+	/** 侧栏根元素 id，sticky 容器 id 由其派生（多实例必须不同，默认 "sidebar"） */
+	id?: string;
+	/** 当前页面标识符，用于 widget 的 pages 过滤 */
+	currentPage?: SidebarPage;
+	headings?: import("astro").MarkdownHeading[];
+}
+
+const {
+	class: className,
+	column = "primary",
+	id = "sidebar",
+	currentPage,
+	headings = [],
+} = Astro.props;
+
+// 双栏时页面存在两个 complementary landmark，axe landmark-unique
+// 要求每个 aside 有区分性名称
+const ariaLabel =
+	column === "secondary"
+		? i18n(I18nKey.sidebarSecondary)
+		: i18n(I18nKey.sidebar);
+
+const musicOptions = resolveMusicOptions(musicConfig);
+const hasEnabledMusicWidget =
+	sidebarConfig.enable &&
+	sidebarConfig.components.some(
+		(widget) => widget.type === "music" && widget.enable,
+	);
+const MusicSidebar =
+	musicOptions && hasEnabledMusicWidget
+		? (await import("virtual:shirone-music-sidebar")).default
+		: null;
+
+// widget 类型 → 组件（键必须覆盖 SidebarWidget 的全部 type）
+const componentMap = {
+	profile: Profile,
+	categories: Categories,
+	tags: Tags,
+	series: Series,
+	announcement: Announcement,
+	stats: SiteStats,
+	calendar: Calendar,
+	toc: SidebarTOC,
+	music: MusicSidebar,
+} satisfies Record<SidebarWidget["type"], unknown>;
+
+type WidgetRenderer = (props: Record<string, unknown>) => unknown;
+
+// 按列取整：SSR 不做页面过滤（全量渲染，swup 导航后客户端才能恢复
+// 被隐藏的 widget），页面可见性仅体现在包装层的 hidden 标记上
+const widgets = sidebarConfig.enable
+	? sidebarConfig.components.filter(
+			(widget) =>
+				widget.enable &&
+				(widget.column ?? "primary") === column &&
+				(widget.type !== "music" || MusicSidebar !== null),
+		)
+	: [];
+const topWidgets = widgets.filter((widget) => widget.slot === "top");
+const stickyWidgets = widgets.filter((widget) => widget.slot === "sticky");
+
+// stagger 揭幕：基础延迟 = --m3e-duration-short（150ms），每张卡片递增一档
+const STAGGER_BASE_MS = 150;
+const STAGGER_STEP_MS = 50;
+const animationDelay = (index: number) =>
+	`${STAGGER_BASE_MS + index * STAGGER_STEP_MS}ms`;
+
+// 首屏可见性：与客户端脚本共用 utils/sidebar-page 的判定，避免漂移
+const isVisible = (widget: SidebarWidget) =>
+	isWidgetVisibleOnPage(widget.pages, currentPage);
+const visibleTopWidgets = topWidgets.filter(isVisible);
+const visibleStickyWidgets = stickyWidgets.filter(isVisible);
+const hasVisibleTop = visibleTopWidgets.length > 0;
+const hasVisibleSticky = visibleStickyWidgets.length > 0;
+---
+
+<aside id={id} aria-label={ariaLabel} class:list={[className, "w-full lg:h-full"]}>
+	{visibleTopWidgets.length > 0 && (
+		<div
+			data-sidebar-group
+			class:list={["flex flex-col w-full gap-4 mb-4", { hidden: !hasVisibleTop }]}
+		>
+			{visibleTopWidgets.map((widget) => {
+				const Component = componentMap[widget.type] as WidgetRenderer;
+				return (
+					<div
+						data-sidebar-pages={pagesToAttribute(widget.pages)}
+						class="sidebar-widget"
+					>
+						<Component
+							widget={widget}
+							headings={widget.type === "toc" ? headings : undefined}
+							priority={widget.type === "profile" && currentPage === "about"}
+						/>
+					</div>
+				);
+			})}
+		</div>
+	)}
+	{visibleStickyWidgets.length > 0 && (
+		<div
+			id={`${id}-sticky`}
+			data-sidebar-group
+			class:list={[
+				"flex flex-col w-full gap-4 lg:sticky lg:top-20",
+				{ hidden: !hasVisibleSticky },
+				{ "lg:min-h-0 lg:flex-1": column === "secondary" },
+			]}
+		>
+			{visibleStickyWidgets.map((widget, index) => {
+				const Component = componentMap[widget.type] as WidgetRenderer;
+				return (
+					<div
+						data-sidebar-pages={pagesToAttribute(widget.pages)}
+						class="sidebar-widget"
+					>
+						<Component
+							widget={widget}
+							headings={widget.type === "toc" ? headings : undefined}
+							priority={widget.type === "profile" && currentPage === "about"}
+							class="onload-animation"
+							style={`animation-delay: ${animationDelay(index)}`}
+						/>
+					</div>
+				);
+			})}
+		</div>
+	)}
+</aside>
+
+<style lang="stylus">
+	/* 包装层修正：widget 根元素原本直接作为 flex item 被 blockified；
+	   包进 .sidebar-widget 后自定义元素（widget-layout）恢复 inline，
+	   需显式拉满宽度 */
+	.sidebar-widget > *
+		display: block
+		width: 100%
+</style>

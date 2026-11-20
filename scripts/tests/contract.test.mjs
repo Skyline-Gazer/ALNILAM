@@ -1,116 +1,1001 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
-import { normalizeSiteConfig } from "../../packages/core/src/index.mjs";
+import { spawn, spawnSync } from "node:child_process";
+import { createBuildLock } from "../build-lock.mjs";
+import { normalizeSiteConfig, parseSiteConfigDocument } from "../../packages/core/src/index.mjs";
 import { assertExternalOutput, validateSiteRoot } from "../site-contract.mjs";
-import { spawnSync } from "node:child_process";
+import {
+  categoryDisplayLabel,
+  comparePosts,
+  loadSiteTaxonomy,
+  resolvePostCategory,
+  tagDisplayLabel,
+} from "../../apps/web/src/lib/taxonomy.ts";
 
-test("valid configuration is normalized", () => {
-  const x = normalizeSiteConfig({
-    site: { title: "ALNILAM", url: "https://example.com" },
-    theme: { appearance: "dark" },
-  });
-  assert.equal(x.site.title, "ALNILAM");
-  assert.equal(x.schemaVersion, 1);
+const DEMO = "sites/demo";
+const YAML_CONFIG = "alnilam.config.yaml";
+const TOML_CONFIG = "alnilam.config.toml";
+const SHARED_SHIRONE_OBJECTS_KEY = crypto.createHash("sha256").update("alnilam-shirone-shared-object-store-v1").digest("hex");
+if (!fs.existsSync(path.join(DEMO, YAML_CONFIG)) || fs.existsSync(path.join(DEMO, TOML_CONFIG))) {
+  throw new Error("demo Site must declare only alnilam.config.yaml");
+}
+
+const validYaml = `
+schemaVersion: 2
+site:
+  title: ALNILAM
+  url: https://example.com
+  locale: zh-CN
+locales:
+  - zh-CN
+  - en
+theme:
+  appearance: dark
+`;
+
+const parseConfig = (text) =>
+  normalizeSiteConfig(parseSiteConfigDocument(text, { filename: YAML_CONFIG }));
+
+test("valid schema v2 YAML is normalized", () => {
+  const value = parseConfig(validYaml);
+  assert.equal(value.site.title, "ALNILAM");
+  assert.equal(value.schemaVersion, 2);
 });
+
 test("reject malformed site and URL schemes", () => {
-  assert.throws(() => normalizeSiteConfig({ site: { title: "", url: "https://example.com" } }));
-  assert.throws(() => normalizeSiteConfig({ site: { title: "hi", url: "file:///x" } }));
+  assert.throws(() => parseConfig(`schemaVersion: 2\nsite:\n  title: ""\n  url: https://example.com\n`), /site\.title/);
+  assert.throws(() => parseConfig(`schemaVersion: 2\nsite:\n  title: hi\n  url: file:///x\n`), /site\.url/);
 });
-test("schema v1 is the only supported version and fails closed on unknown versions", () => {
-  // Absent and explicit 1 are accepted and normalized to 1.
-  assert.equal(normalizeSiteConfig({ site: { title: "t", url: "https://e.com" } }).schemaVersion, 1);
-  assert.equal(normalizeSiteConfig({ schemaVersion: 1, site: { title: "t", url: "https://e.com" } }).schemaVersion, 1);
-  // Future/unknown versions must be rejected, not silently mis-rendered.
-  for (const bad of [2, 0, -1, 1.5, "1", null, true]) {
-    assert.throws(() => normalizeSiteConfig({ schemaVersion: bad, site: { title: "t", url: "https://e.com" } }), /schemaVersion/);
+
+test("schema v2 is the only supported version and fails closed on unknown versions", () => {
+  // A missing version must not be silently upgraded to the current schema.
+  assert.throws(() => parseConfig(`site:\n  title: t\n  url: https://e.com\n`), /schemaVersion/);
+  for (const bad of [1, 0, -1, 1.5, '"2"', null, true]) {
+    assert.throws(
+      () => parseConfig(`schemaVersion: ${bad}\nsite:\n  title: t\n  url: https://e.com\n`),
+      /schemaVersion/,
+    );
   }
 });
+
+test("unknown config fields fail closed", () => {
+  assert.throws(() => parseConfig(`${validYaml}\nlegacy: true\n`), /unknown config field "legacy"/);
+  assert.throws(
+    () => parseConfig(`schemaVersion: 2\nsite:\n  title: t\n  url: https://e.com\n  timezone: UTC\n`),
+    /unknown site field "timezone"/,
+  );
+});
+
+test("locales are validated and must include site.locale", () => {
+  assert.throws(
+    () => parseConfig(validYaml.replace("  - zh-CN\n  - en", "  - en")),
+    /site\.locale must appear in locales/,
+  );
+  assert.throws(
+    () => parseConfig(`schemaVersion: 2\nsite:\n  title: t\n  url: https://e.com\nlocales: []\n`),
+    /locales must be a non-empty array/,
+  );
+  assert.throws(
+    () => parseConfig(validYaml.replace("  - zh-CN\n  - en", "  - zh-CN\n  - en\n  - en")),
+    /duplicate locale/,
+  );
+  assert.throws(() => parseConfig(validYaml.replace("  - en", "  - not_a_tag")), /BCP-47/);
+});
+
+test("reserved routing and taxonomy catalogs are validated", () => {
+  assert.throws(() => parseConfig(`${validYaml}\ncategories:\n  - id: Tech\n    slug: tech\n`), /id must be a stable lowercase ASCII slug/);
+  assert.throws(
+    () => parseConfig(`${validYaml}\ntags:\n  - id: astro\n    slug: astro\n  - id: astro\n    slug: duplicate\n`),
+    /duplicate tags id "astro"/,
+  );
+  assert.throws(() => parseConfig(`${validYaml}\nrouting:\n  prefixDefaultLocale: maybe\n`), /prefixDefaultLocale must be a boolean/);
+});
+
 test("comments module: disabled by default, giscus fields validated when enabled", () => {
-  // Disabled by default — no fields required, no behavior.
-  const off = normalizeSiteConfig({ site: { title: "t", url: "https://e.com" } });
+  const off = parseConfig(validYaml);
   assert.equal(off.comments.enabled, false);
   assert.equal(off.comments.provider, "giscus");
-  // Enabled requires all four giscus identifiers.
-  assert.throws(() => normalizeSiteConfig({ site: { title: "t", url: "https://e.com" }, comments: { enabled: true } }), /comments\.repo/);
-  assert.throws(() => normalizeSiteConfig({
-    site: { title: "t", url: "https://e.com" },
-    comments: { enabled: true, repo: "o/r", repoId: "R", category: "C" },
-  }), /comments\.categoryId/);
-  const on = normalizeSiteConfig({
-    site: { title: "t", url: "https://e.com" },
-    comments: { enabled: true, repo: "o/r", repoId: "R_1", category: "Announcements", categoryId: "DIC_1" },
-  });
+  assert.throws(() => parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  mapping: specific\n`), /comments\.repo/);
+  assert.throws(
+    () => parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R\n  category: C\n  mapping: specific\n`),
+    /comments\.categoryId/,
+  );
+  assert.throws(
+    () => parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  provider: disqus\n  repo: o/r\n  repoId: R\n  category: C\n  categoryId: D\n`),
+    /giscus/,
+  );
+  assert.throws(
+    () => parseConfig(`${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R\n  category: C\n  categoryId: D\n  mapping: bogus\n`),
+    /mapping/,
+  );
+  const legacyYaml = `${validYaml}\ncomments:\n  enabled: true\n  repo: o/r\n  repoId: R_1\n  category: Announcements\n  categoryId: DIC_1\n`;
+  assert.throws(() => parseConfig(legacyYaml), /comments\.mapping is required.*pathname.*specific/);
+  assert.equal(parseConfig(`${legacyYaml}  mapping: pathname\n`).comments.mapping, "pathname");
+  const on = parseConfig(`${legacyYaml}  mapping: specific\n`);
   assert.equal(on.comments.enabled, true);
-  assert.equal(on.comments.mapping, "pathname");
-  // Unknown providers and bad mapping rejected.
-  assert.throws(() => normalizeSiteConfig({
-    site: { title: "t", url: "https://e.com" },
-    comments: { enabled: true, provider: "disqus", repo: "o/r", repoId: "R", category: "C", categoryId: "D" },
-  }), /giscus/);
-  assert.throws(() => normalizeSiteConfig({
-    site: { title: "t", url: "https://e.com" },
-    comments: { enabled: true, repo: "o/r", repoId: "R", category: "C", categoryId: "D", mapping: "bogus" },
-  }), /mapping/);
+  assert.equal(on.comments.mapping, "specific");
+  assert.equal(on.comments.sharing, "translation");
+  assert.equal(on.comments.load, "click");
+  assert.equal(on.comments.lang, "auto");
+  assert.equal(on.comments.csp, true);
 });
+
+test("YAML root documents must be mappings", () => {
+  for (const text of ["42\n", "text\n", "- a\n- b\n", "---\n"]) {
+    assert.throws(() => parseSiteConfigDocument(text), /must contain a YAML mapping/);
+  }
+});
+
+test("unresolved YAML tags, duplicate keys and non-plain values fail closed", () => {
+  assert.throws(() => parseSiteConfigDocument('schemaVersion: !!js/function "function(){}"\n'), /invalid YAML/);
+  assert.throws(() => parseSiteConfigDocument("site:\n  title: a\n  title: b\n"), /invalid YAML/);
+  // `!!binary` resolves to a Buffer without a parser warning; the contract
+  // layer must still reject host objects.
+  assert.throws(() => parseSiteConfigDocument('site:\n  title: !!binary "aGk="\n'), /plain YAML data/);
+});
+
+test("dangerous and unknown YAML tags fail closed", () => {
+  // Tags the core schema resolves into host objects (Set, Date) are caught by
+  // the plain-data check; tags it cannot resolve fail as invalid YAML.
+  assert.throws(() => parseSiteConfigDocument("schemaVersion: !!set { a }\n"), /plain YAML data/);
+  assert.throws(() => parseSiteConfigDocument("schemaVersion: !!timestamp 2026-01-01\n"), /plain YAML data/);
+  assert.throws(() => parseSiteConfigDocument("schemaVersion: !!js/regexp /x/\n"), /invalid YAML/);
+  assert.throws(() => parseSiteConfigDocument("schemaVersion: !!python/object:os.system\n"), /invalid YAML/);
+  assert.throws(() => parseSiteConfigDocument('schemaVersion: !!js/function "function(){}"\n'), /invalid YAML/);
+  assert.throws(() => parseSiteConfigDocument('site:\n  title: !!binary "aGk="\n'), /plain YAML data/);
+});
+
+test("alias expansion is bounded and literal merge keys fail field validation", () => {
+  // Billion-laughs style alias expansion: the parser's alias budget stops it.
+  assert.throws(
+    () => parseConfig("a: &a [x, x]\nb: &b [*a, *a]\nc: &c [*b, *b]\nd: &d [*c, *c]\ne: &e [*d, *d]\nf: &f [*e, *e]\nschemaVersion: *f\n"),
+    /invalid YAML/,
+  );
+  // A recursive anchor must be rejected with a contract error, not a stack
+  // overflow escaping the parser.
+  assert.throws(() => parseConfig("a: &x\n  b: *x\nschemaVersion: *x\n"), /circular reference/);
+  // YAML 1.2 keeps `<<` as a literal key; it does not merge the mapping.
+  // The contract must reject that key through unknown-field validation.
+  const literal = parseSiteConfigDocument("schemaVersion: 2\n<<: { a: 1 }\n");
+  assert.deepEqual(literal["<<"], { a: 1 });
+  assert.equal(Object.hasOwn(literal, "a"), false);
+  assert.throws(
+    () => parseConfig("schemaVersion: 2\n<<: { a: 1 }\n"),
+    /unknown config field/,
+  );
+});
+test("shared aliases are not circular references", () => {
+  // Reusing one anchored mapping under two fields maps both to the same JS
+  // object instance: a DAG, not a cycle. The plain-data check must let it
+  // through (field validation rejects unknown fields separately).
+  const shared = parseSiteConfigDocument("site: &s { title: t, url: https://e.com, locale: zh-CN }\nextra: *s\n");
+  assert.equal(shared.extra, shared.site);
+  assert.equal(shared.site.title, "t");
+  // A genuine cycle (a mapping containing itself) is still rejected.
+  assert.throws(() => parseSiteConfigDocument("a: &x\n  b: *x\n"), /circular reference/);
+});
+
+test("non-string mapping keys and wrong field types fail closed", () => {
+  // A numeric key is not one of the known config fields.
+  assert.throws(() => parseConfig("1: x\nschemaVersion: 2\n"), /unknown config field/);
+  // Core fields with wrong data shapes are rejected by the schema.
+  assert.throws(() => parseConfig("schemaVersion: [2]\n"), /schemaVersion/);
+  assert.throws(
+    () => parseConfig("schemaVersion: 2\nsite:\n  title: t\n  url: 42\n  locale: zh-CN\nlocales:\n  - zh-CN\n"),
+    /site\.url/,
+  );
+  assert.throws(
+    () => parseConfig("schemaVersion: 2\nsite:\n  title: t\n  url: https://e.com\n  locale:\n    - zh-CN\nlocales:\n  - zh-CN\n"),
+    /site\.locale/,
+  );
+});
+
 test("demo Site is valid and the read-only digest is stable", () => {
-  const a = validateSiteRoot("sites/demo");
-  const b = validateSiteRoot("sites/demo");
+  const a = validateSiteRoot(DEMO);
+  const b = validateSiteRoot(DEMO);
   assert.equal(a.digest, b.digest);
   assert.match(a.digest, /^[a-f0-9]{64}$/);
 });
-test("output paths cannot overlap the Site source", () => {
-  assert.throws(() => assertExternalOutput("sites/demo", "sites/demo/dist"));
-  assert.throws(() => assertExternalOutput("sites/demo", "sites"));
-});
-test("compose writes deterministic provenance binding Core rev and Site digest", (t) => {
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-prov-"));
+
+test("nested-base output keeps canonical and internal links inside /ALNILAM/", (t) => {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-base-"));
   t.after(() => fs.rmSync(out, { recursive: true, force: true }));
-  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", "sites/demo", "--out", path.join(out, "site")], {
-    env: { ...process.env, ALNILAM_CORE_REV: "test-core-rev-1234" },
+  const site = path.join(out, "site-source");
+  fs.cpSync(DEMO, site, { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "pagination-regression.md"),
+    ["---", 'title: "Pagination regression"', 'description: "Sixth post exercises page two under a nested base."', "pubDate: 2026-10-24", 'tags: ["Test"]', "---", "", "Pagination regression fixture.", ""].join("\n"),
+  );
+  fs.mkdirSync(path.join(site, "content", "posts", "assets"), { recursive: true });
+  fs.copyFileSync(path.join(DEMO, "assets", "orion.svg"), path.join(site, "content", "posts", "assets", "orion.svg"));
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "relative-image.md"),
+    ["---", 'title: "Relative image"', 'description: "Post-relative image under a nested base."', "pubDate: 2026-10-24", 'tags: ["Test"]', "---", "", "![orion](./assets/orion.svg)", ""].join("\n"),
+  );
+  const digest = validateSiteRoot(site).digest;
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(out, "site")], {
+    env: { ...process.env, ALNILAM_SITE_URL: "https://example.com/ALNILAM/", SOURCE_DATE_EPOCH: "1700000000" },
   });
-  assert.equal(result.status, 0, "compose failed: " + result.stderr);
-  const prov = JSON.parse(fs.readFileSync(path.join(out, "site", "alnilam-provenance.json"), "utf8"));
-  assert.equal(prov.core.revision, "test-core-rev-1234");
-  assert.equal(prov.site.digest, validateSiteRoot("sites/demo").digest);
-  assert.equal(prov.schema, 1);
-  assert.match(prov.generatedAt, /^\d{4}-\d{2}-\d{2}T/);
+  assert.equal(result.status, 0, "nested-base compose failed: " + result.stderr);
+  assert.equal(validateSiteRoot(site).digest, digest);
+  const html = fs.readFileSync(path.join(out, "site", "index.html"), "utf8");
+  const posts = fs.readFileSync(path.join(out, "site", "posts", "index.html"), "utf8");
+  assert.match(html, /<link rel="canonical" href="https:\/\/example\.com\/ALNILAM\/">/);
+  assert.doesNotMatch(html, /href="\/(?!ALNILAM\/)/);
+  assert.doesNotMatch(html, /href="\/ALNILAM\/\//);
+  assert.doesNotMatch(posts, /href="\/(?!ALNILAM\/)/);
+  assert.match(posts, /<a href="\/ALNILAM\/posts\/2\/" rel="next"/);
+  assert.doesNotMatch(posts, /\/ALNILAM\/ALNILAM\//);
+  const relativeArticle = fs.readFileSync(path.join(out, "site", "posts", "relative-image", "index.html"), "utf8");
+  const relativeSrc = relativeArticle.match(/<img[^>]*src="([^"]+orion[^"]*)"/)?.[1];
+  assert.ok(relativeSrc, "relative image must render under a nested base");
+  assert.match(relativeSrc, /^\/ALNILAM\/_astro\//, "relative image must be base-prefixed: " + relativeSrc);
+  assert.equal(fs.existsSync(path.join(out, "site", decodeURIComponent(relativeSrc).replace(/^\/ALNILAM\//, "").replace(/^\//, ""))), true);
 });
+
+test("compose rejects a post slug that collides with a pagination route without changing the Site", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-post-route-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site-source");
+  fs.cpSync(DEMO, site, { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "2.md"),
+    ["---", 'title: "Numeric slug"', 'description: "Pagination collision fixture."', "pubDate: 2026-10-25", 'tags: ["Test"]', "---", "", "Numeric slug fixture.", ""].join("\n"),
+  );
+  const digest = validateSiteRoot(site).digest;
+  const output = path.join(root, "output");
+  fs.mkdirSync(output);
+  fs.writeFileSync(path.join(output, "previous.txt"), "previous successful build");
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", output], {
+    env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" },
+    encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr + result.stdout, /Post slug "2" conflicts with pagination route \/posts\/2\//);
+  assert.equal(validateSiteRoot(site).digest, digest);
+  assert.equal(fs.readFileSync(path.join(output, "previous.txt"), "utf8"), "previous successful build");
+  assert.deepEqual(fs.readdirSync(root).filter((entry) => entry.startsWith(".alnilam-build-")), []);
+});
+
+test("output paths cannot overlap the Site source", () => {
+  assert.throws(() => assertExternalOutput(DEMO, path.join(DEMO, "dist")));
+  assert.throws(() => assertExternalOutput(DEMO, "sites"));
+});
+
+test("compose rejects a temporary directory inside the Site without modifying it", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-temp-site-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const digest = validateSiteRoot(site).digest;
+  const entries = fs.readdirSync(site);
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, TMPDIR: site }, encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Temporary directory must not be inside the Site source/);
+  assert.equal(validateSiteRoot(site).digest, digest);
+  assert.deepEqual(fs.readdirSync(site), entries);
+});
+
+test("compose rejects a cache directory inside the Site without modifying it", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cache-site-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const digest = validateSiteRoot(site).digest;
+  const entries = fs.readdirSync(site);
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: path.join(site, "cache") }, encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Cache directory must not be inside the Site source/);
+  assert.equal(validateSiteRoot(site).digest, digest);
+  assert.deepEqual(fs.readdirSync(site), entries);
+});
+
+test("compose rejects a cache directory inside the output", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cache-out-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const output = path.join(root, "out");
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", output], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: path.join(output, "cache") }, encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Cache directory must not be inside the output/);
+  assert.equal(fs.existsSync(output), false);
+});
+
+test("relative post images render from the build space and repeated builds stay clean", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-relimg-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site-source");
+  fs.cpSync(DEMO, site, { recursive: true });
+  fs.mkdirSync(path.join(site, "content", "posts", "assets"), { recursive: true });
+  fs.copyFileSync(path.join(DEMO, "assets", "orion.svg"), path.join(site, "content", "posts", "assets", "orion.svg"));
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "rel-image.md"),
+    ["---", 'title: "Relative image"', 'description: "Post-relative image fixture."', "pubDate: 2026-10-30", 'tags: ["Test"]', "---", "", "![orion](./assets/orion.svg)", ""].join("\n"),
+  );
+  const digest = validateSiteRoot(site).digest;
+  const postEntries = fs.readdirSync(path.join(site, "content", "posts")).sort();
+  for (let run = 1; run <= 2; run++) {
+    const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+      env: { ...process.env, ALNILAM_CACHE_DIR: path.join(root, "cache"), ALNILAM_CORE_REV: "cache-test", SOURCE_DATE_EPOCH: "1700000000" },
+      encoding: "utf8",
+    });
+    assert.equal(result.status, 0, "relative-image compose failed on run " + run + ": " + result.stderr);
+    assert.equal(validateSiteRoot(site).digest, digest, "Site digest changed during build run " + run);
+    assert.deepEqual(fs.readdirSync(path.join(site, "content", "posts")).sort(), postEntries, "Site content dir gained files on run " + run);
+  }
+  const html = fs.readFileSync(path.join(root, "out", "posts", "rel-image", "index.html"), "utf8");
+  const src = html.match(/<img[^>]*src="([^"]+orion[^"]*)"/)?.[1];
+  assert.ok(src, "relative image must render as an img element");
+  // Default base is "/", so the build-space copy must be served from /_astro/.
+  assert.match(src, /^\/_astro\//, "relative image must be served from the /_astro/ build-space prefix");
+  assert.equal(fs.existsSync(path.join(root, "out", decodeURIComponent(src).replace(/^\//, ""))), true, "rendered image must exist in the output: " + src);
+  assert.deepEqual(
+    fs.readdirSync(root).filter((entry) => entry.startsWith(".alnilam-build-") || entry.includes(".alnilam-backup-")),
+    [],
+    "no build residue may remain outside the managed cache",
+  );
+});
+
+test("hostile Core revisions map to a safe hashed cache key", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-revesc-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const cache = path.join(root, "cache");
+  fs.mkdirSync(cache);
+  fs.writeFileSync(path.join(cache, "keep.txt"), "must survive");
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CORE_REV: "../../../..", SOURCE_DATE_EPOCH: "1700000000" }, encoding: "utf8",
+  });
+  assert.equal(result.status, 0, "hostile revision must hash to a safe key: " + result.stderr);
+  const revisions = fs.readdirSync(path.join(cache, "v1"));
+  assert.equal(revisions.length, 1);
+  assert.match(revisions[0], /^[0-9a-f]{16}$/, "revision key must be a 16-hex digest");
+  assert.equal(fs.existsSync(path.join(cache, "keep.txt")), true, "cache siblings must survive");
+  assert.equal(fs.existsSync(path.join(root, "out", "alnilam-provenance.json")), true);
+});
+
+test("concurrent composes of the same revision are serialized by the cache lock", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-lock-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const digest = validateSiteRoot(site).digest;
+  const cache = path.join(root, "cache");
+  const revKey = crypto.createHash("sha256").update("lock-test").digest("hex").slice(0, 16);
+  fs.mkdirSync(cache, { recursive: true });
+  fs.writeFileSync(path.join(cache, ".alnilam-cache-owner.json"), JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n");
+  const buildDir = path.join(cache, "v1", revKey, digest);
+  // A fresh lock means another compose is mid-build: the second must fail closed.
+  fs.mkdirSync(buildDir, { recursive: true });
+  const lock = path.join(buildDir, ".compose-lock");
+  fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, token: "fresh", startedAt: new Date().toISOString() }));
+  const blocked = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CORE_REV: "lock-test" }, encoding: "utf8",
+  });
+  assert.notEqual(blocked.status, 0);
+  assert.match(blocked.stderr, /Another compose is building this Site revision/);
+  // A crash leftover is preserved; recovery requires an operator to verify
+  // the holder is gone before removing the lock.
+  const unassignablePid = 2 ** 22 + 12345;
+  fs.writeFileSync(lock, JSON.stringify({ pid: unassignablePid, token: "crash", startedAt: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString() }));
+  const orphanedStage = path.join(buildDir, "site.staging-999999");
+  fs.mkdirSync(orphanedStage, { recursive: true });
+  const stale = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CORE_REV: "lock-test", SOURCE_DATE_EPOCH: "1700000000" },
+    encoding: "utf8",
+  });
+  assert.notEqual(stale.status, 0);
+  assert.match(stale.stderr, /Stale compose lock/);
+  assert.equal(fs.existsSync(lock), true, "automatic recovery must preserve the stale lock for explicit review");
+  assert.equal(fs.existsSync(orphanedStage), true, "staging cleanup must wait until the lock is explicitly recovered");
+
+  fs.rmSync(lock); // The fixture PID is above Linux pid_max and cannot be live.
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CORE_REV: "lock-test", SOURCE_DATE_EPOCH: "1700000000" },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(fs.existsSync(lock), false, "lock must be released after a successful build");
+  assert.equal(fs.existsSync(orphanedStage), false, "orphaned staging dirs are swept after explicit recovery");
+  assert.equal(validateSiteRoot(site).digest, digest);
+  // Even a stale timestamp cannot authorize displacement of a live process.
+  fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, token: "expired", startedAt: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString() }));
+  const retained = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CORE_REV: "lock-test", SOURCE_DATE_EPOCH: "1700000000" },
+    encoding: "utf8",
+  });
+  assert.notEqual(retained.status, 0, "a stale live-holder lock must fail closed");
+  assert.match(retained.stderr, /Another compose is building this Site revision/);
+  assert.equal(fs.existsSync(lock), true, "a live lock must remain intact");
+});
+
+test("compose refuses symlink-poisoned cache entries", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-symlink-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const cache = path.join(root, "cache");
+  const revKey = crypto.createHash("sha256").update("poison-test").digest("hex").slice(0, 16);
+  fs.mkdirSync(cache, { recursive: true });
+  fs.writeFileSync(path.join(cache, ".alnilam-cache-owner.json"), JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n");
+  const buildDir = path.join(cache, "v1", revKey, validateSiteRoot(site).digest);
+  fs.mkdirSync(buildDir, { recursive: true });
+  const canary = path.join(root, "canary");
+  fs.mkdirSync(canary);
+  fs.writeFileSync(path.join(canary, "keep.txt"), "must survive");
+  fs.symlinkSync(canary, path.join(buildDir, "site"));
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CORE_REV: "poison-test" }, encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Refusing to remove a symbolic link/);
+  assert.equal(fs.existsSync(path.join(canary, "keep.txt")), true, "symlink target must survive");
+});
+
+test("external image URLs pass through and local site assets are served as-is", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-extimg-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site-source");
+  fs.cpSync(DEMO, site, { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "ext-image.md"),
+    ["---", 'title: "External image"', 'description: "Remote image fixture."', "pubDate: 2026-10-30", 'tags: ["Test"]', "---", "", "![ext](https://example.com/cat.png)", ""].join("\n"),
+  );
+  const digest = validateSiteRoot(site).digest;
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: path.join(root, "cache"), ALNILAM_CORE_REV: "cache-test", SOURCE_DATE_EPOCH: "1700000000" },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, "external-image compose failed: " + result.stderr);
+  assert.equal(validateSiteRoot(site).digest, digest);
+  const html = fs.readFileSync(path.join(root, "out", "posts", "ext-image", "index.html"), "utf8");
+  assert.match(html, /<img[^>]*src="https:\/\/example\.com\/cat\.png"/);
+  assert.equal(fs.existsSync(path.join(root, "out", "site-assets", "orion.svg")), true);
+});
+
+test("build cache is version-isolated and managed cleanup preserves siblings", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cacheiso-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const cache = path.join(root, "cache");
+  const composeEnv = { ...process.env, ALNILAM_CACHE_DIR: cache, SOURCE_DATE_EPOCH: "1700000000" };
+  const buildSentinels = ["apps/web/.astro", "apps/web/node_modules/.astro", "apps/web/.shirones", "apps/web/src/generated", "apps/web/public/assets/moments/thumbnails"].map((relative) => {
+    const dir = path.join(process.cwd(), relative);
+    const missingDirs = [];
+    for (let current = dir; !fs.existsSync(current); current = path.dirname(current)) missingDirs.push(current);
+    fs.mkdirSync(dir, { recursive: true });
+    const file = path.join(dir, ".compose-sentinel-" + crypto.randomUUID());
+    fs.writeFileSync(file, "preserve through Compose\n");
+    t.after(() => {
+      fs.rmSync(file, { force: true });
+      for (const createdDir of missingDirs) {
+        if (fs.existsSync(createdDir) && fs.readdirSync(createdDir).length === 0) fs.rmdirSync(createdDir);
+      }
+    });
+    return file;
+  });
+  const bundleState = () => {
+    const shirone = path.join(cache, "shirone");
+    const inputKey = fs.readdirSync(shirone).find((name) => /^[a-f0-9]{64}$/.test(name) && name !== SHARED_SHIRONE_OBJECTS_KEY);
+    const digestFiles = (dir) => fs.readdirSync(dir).sort().map((name) => [name, crypto.createHash("sha256").update(fs.readFileSync(path.join(dir, name))).digest("hex")]);
+    return {
+      manifests: digestFiles(path.join(shirone, inputKey, "loaded")),
+      objects: digestFiles(path.join(shirone, SHARED_SHIRONE_OBJECTS_KEY, "objects")),
+    };
+  };
+  let firstBundleState;
+  const digests = [];
+  for (const rev of ["test-core-rev-1234", "rev-b"]) {
+    if (rev === "rev-b") {
+      fs.writeFileSync(path.join(site, "content/posts/cache-input.md"), "---\ntitle: Cache input change\npubDate: 2026-01-01\n---\n\nA distinct Site digest.\n");
+    }
+    digests.push(validateSiteRoot(site).digest);
+    const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+      env: { ...composeEnv, ALNILAM_CORE_REV: rev }, encoding: "utf8",
+    });
+    assert.equal(result.status, 0, "compose failed for " + rev + ": " + result.stderr);
+    for (const sentinel of buildSentinels) assert.equal(fs.readFileSync(sentinel, "utf8"), "preserve through Compose\n", "normal Compose must preserve " + sentinel);
+    const currentBundleState = bundleState();
+    if (firstBundleState) assert.deepEqual(currentBundleState, firstBundleState, "changed Site digests must reuse the same immutable Shirone artifact tree");
+    else firstBundleState = currentBundleState;
+    if (rev === "test-core-rev-1234") {
+      const prov = JSON.parse(fs.readFileSync(path.join(root, "out", "alnilam-provenance.json"), "utf8"));
+      assert.equal(prov.core.revision, "test-core-rev-1234");
+      assert.equal(prov.site.digest, validateSiteRoot(DEMO).digest);
+      // The demo fixture is not a Git repository and no ref was supplied.
+      assert.equal(prov.site.ref, "unversioned");
+      // Provenance schema versions the document format, independent of Site schemaVersion.
+      assert.equal(prov.schema, 1);
+      assert.match(prov.generatedAt, /^\d{4}-\d{2}-\d{2}T/);
+    }
+  }
+  const keyOf = (rev) => crypto.createHash("sha256").update(rev).digest("hex").slice(0, 16);
+  assert.deepEqual(fs.readdirSync(path.join(cache, "v1")).sort(), [keyOf("test-core-rev-1234"), keyOf("rev-b")].sort());
+  assert.notEqual(digests[0], digests[1], "the second build uses a changed Site digest");
+  assert.equal(fs.existsSync(path.join(cache, "v1", keyOf("test-core-rev-1234"), digests[0], "site", "alnilam.config.yaml")), true);
+  assert.equal(fs.existsSync(path.join(cache, "v1", keyOf("test-core-rev-1234"), digests[0], "astro", "data-store.json")), true);
+  assert.equal(fs.existsSync(path.join(cache, "v1", keyOf("rev-b"), digests[1], "astro", "data-store.json")), true);
+  for (const [index, rev] of ["test-core-rev-1234", "rev-b"].entries()) {
+    assert.equal(fs.existsSync(path.join(cache, "v1", keyOf(rev), digests[index], "shirone", "generated", "local-icon-collections.ts")), true);
+  }
+  const shironeKeys = fs.readdirSync(path.join(cache, "shirone")).filter((name) => /^[a-f0-9]{64}$/.test(name) && name !== SHARED_SHIRONE_OBJECTS_KEY);
+  assert.equal(shironeKeys.length, 1, "the same compile inputs share one bundle manifest directory across Core revisions and Site digests");
+  const bundles = fs.readdirSync(path.join(cache, "shirone", shironeKeys[0], "loaded"));
+  assert.ok(bundles.length > 0 && bundles.every((file) => file.endsWith(".manifest.json")), "per-input directories contain only cache manifests");
+  const objects = fs.readdirSync(path.join(cache, "shirone", SHARED_SHIRONE_OBJECTS_KEY, "objects"));
+  assert.ok(objects.some((file) => file.endsWith(".mjs")), "compiled content-addressed objects are present");
+  // Cache cleanup must not touch unrelated project-local legacy directories.
+  const legacyRoot = path.join(root, "legacy-repo");
+  const legacyPaths = ["apps/web/.astro", "apps/web/node_modules/.astro", "apps/web/.shirones", "apps/web/src/generated", "apps/web/public/assets/moments/thumbnails"];
+  for (const relative of legacyPaths) {
+    fs.mkdirSync(path.join(legacyRoot, relative), { recursive: true });
+    fs.writeFileSync(path.join(legacyRoot, relative, "sentinel.txt"), "keep");
+  }
+  fs.writeFileSync(path.join(cache, "unmanaged.txt"), "preserve");
+  const clean = spawnSync(process.execPath, ["scripts/compose.mjs", "--clean-cache"], {
+    env: { ...composeEnv, ALNILAM_REPO_ROOT: legacyRoot }, encoding: "utf8",
+  });
+  assert.equal(clean.status, 0, clean.stderr);
+  assert.equal(fs.existsSync(path.join(cache, "v1")), false);
+  assert.equal(fs.existsSync(path.join(cache, "shirone")), false);
+  assert.equal(fs.existsSync(path.join(cache, "bangumi")), false);
+  assert.equal(fs.existsSync(path.join(cache, ".alnilam-cache-owner.json")), true);
+  assert.equal(fs.readFileSync(path.join(cache, "unmanaged.txt"), "utf8"), "preserve");
+  for (const relative of legacyPaths) assert.equal(fs.readFileSync(path.join(legacyRoot, relative, "sentinel.txt"), "utf8"), "keep");
+  const dryRun = spawnSync(process.execPath, ["scripts/compose.mjs", "--clean-legacy", "--dry-run"], {
+    env: { ...composeEnv, ALNILAM_REPO_ROOT: legacyRoot }, encoding: "utf8",
+  });
+  assert.equal(dryRun.status, 0, dryRun.stderr);
+  assert.match(dryRun.stdout, /preserve-unverified-content/);
+  assert.equal(fs.readFileSync(path.join(legacyRoot, "apps/web/.astro/sentinel.txt"), "utf8"), "keep");
+});
+test("managed cache cleanup refuses active builds and symlinked cache paths", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cache-boundary-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const marker = JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n";
+  const cache = path.join(root, "cache");
+  const active = path.join(cache, "v1", "revision", "site");
+  fs.mkdirSync(active, { recursive: true });
+  fs.writeFileSync(path.join(cache, ".alnilam-cache-owner.json"), marker);
+  fs.writeFileSync(path.join(active, ".compose-lock"), JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() }));
+  fs.writeFileSync(path.join(active, "sentinel.txt"), "active");
+  const cleanActive = spawnSync(process.execPath, ["scripts/compose.mjs", "--clean-cache"], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: cache }, encoding: "utf8",
+  });
+  assert.notEqual(cleanActive.status, 0);
+  assert.match(cleanActive.stderr, /Active build uses managed cache/);
+  assert.equal(fs.readFileSync(path.join(active, "sentinel.txt"), "utf8"), "active");
+  const gcActive = spawnSync(process.execPath, ["scripts/compose.mjs", "--gc-cache", "--dry-run"], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: cache }, encoding: "utf8",
+  });
+  assert.notEqual(gcActive.status, 0);
+  assert.match(gcActive.stderr, /Active build uses managed cache/);
+  assert.equal(fs.readFileSync(path.join(active, "sentinel.txt"), "utf8"), "active");
+
+  const outside = path.join(root, "outside");
+  fs.mkdirSync(outside);
+  fs.writeFileSync(path.join(outside, ".alnilam-cache-owner.json"), marker);
+  fs.mkdirSync(path.join(outside, "v1"));
+  fs.writeFileSync(path.join(outside, "v1", "sentinel.txt"), "outside");
+  const link = path.join(root, "cache-link");
+  fs.symlinkSync(outside, link, "dir");
+  const cleanLink = spawnSync(process.execPath, ["scripts/compose.mjs", "--clean-cache"], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: link }, encoding: "utf8",
+  });
+  assert.notEqual(cleanLink.status, 0);
+  assert.match(cleanLink.stderr, /symbolic-link component/);
+  assert.equal(fs.readFileSync(path.join(outside, "v1", "sentinel.txt"), "utf8"), "outside");
+
+  const ancestorLink = path.join(root, "ancestor-link");
+  fs.symlinkSync(root, ancestorLink, "dir");
+  const cleanAncestor = spawnSync(process.execPath, ["scripts/compose.mjs", "--clean-cache"], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: path.join(ancestorLink, "missing-cache") }, encoding: "utf8",
+  });
+  assert.notEqual(cleanAncestor.status, 0);
+  assert.match(cleanAncestor.stderr, /symbolic-link component/);
+});
+
+test("managed cleanup and GC reject dangling namespace symlinks", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cache-dangling-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const marker = JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n";
+
+  for (const namespace of ["v1", "bangumi", "shirone"]) {
+    const cache = path.join(root, namespace + "-cache");
+    fs.mkdirSync(cache, { recursive: true });
+    fs.writeFileSync(path.join(cache, ".alnilam-cache-owner.json"), marker);
+    const entry = path.join(cache, namespace);
+    fs.symlinkSync(path.join(root, "missing-" + namespace), entry, "dir");
+    const env = { ...process.env, ALNILAM_CACHE_DIR: cache };
+
+    for (const args of [["--clean-cache"], ["--gc-cache", "--dry-run"]]) {
+      const result = spawnSync(process.execPath, ["scripts/compose.mjs", ...args], { env, encoding: "utf8" });
+      assert.notEqual(result.status, 0, `${namespace} dangling symlink must fail closed for ${args.join(" ")}`);
+      assert.match(result.stderr, /symbolic link/);
+      assert.equal(fs.lstatSync(entry).isSymbolicLink(), true, "cleanup must preserve the unverified namespace entry");
+    }
+  }
+});
+
+test("managed cache cleanup preserves siblings and refuses unmarked namespaces", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cache-owner-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const marker = JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n";
+  const managed = path.join(root, "managed");
+  fs.mkdirSync(path.join(managed, "v1", "revision"), { recursive: true });
+  fs.writeFileSync(path.join(managed, ".alnilam-cache-owner.json"), marker);
+  fs.writeFileSync(path.join(managed, "v1", "revision", "cache.bin"), "managed");
+  fs.writeFileSync(path.join(managed, "keep.txt"), "unmanaged");
+  const clean = spawnSync(process.execPath, ["scripts/compose.mjs", "--clean-cache"], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: managed }, encoding: "utf8",
+  });
+  assert.equal(clean.status, 0, clean.stderr);
+  assert.equal(fs.existsSync(path.join(managed, "v1")), false);
+  assert.equal(fs.readFileSync(path.join(managed, "keep.txt"), "utf8"), "unmanaged");
+
+  const unmarked = path.join(root, "unmarked");
+  fs.mkdirSync(path.join(unmarked, "v1"), { recursive: true });
+  fs.writeFileSync(path.join(unmarked, "v1", "sentinel.txt"), "preserve");
+  const reject = spawnSync(process.execPath, ["scripts/compose.mjs", "--clean-cache"], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: unmarked }, encoding: "utf8",
+  });
+  assert.notEqual(reject.status, 0);
+  assert.match(reject.stderr, /unmarked cache root/);
+  assert.equal(fs.readFileSync(path.join(unmarked, "v1", "sentinel.txt"), "utf8"), "preserve");
+  assert.equal(fs.existsSync(path.join(unmarked, ".alnilam-cache-owner.json")), false);
+});
+
+test("cache GC dry-run reports aged entries and preserves recent and unmanaged data", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cache-gc-ttl-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const cache = path.join(root, "cache");
+  fs.mkdirSync(cache, { recursive: true });
+  fs.writeFileSync(path.join(cache, ".alnilam-cache-owner.json"), JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n");
+  const old = path.join(cache, "v1", "a".repeat(16));
+  const recent = path.join(cache, "v1", "b".repeat(16));
+  fs.mkdirSync(path.join(old, "site"), { recursive: true });
+  fs.mkdirSync(path.join(recent, "site"), { recursive: true });
+  fs.writeFileSync(path.join(old, "site", "cache.bin"), "old");
+  fs.writeFileSync(path.join(recent, "site", "cache.bin"), "recent");
+  const marker = (dir, daysAgo) => {
+    const file = path.join(dir, ".alnilam-last-used");
+    fs.writeFileSync(file, "ALNILAM managed cache last use\n");
+    const time = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
+    fs.utimesSync(file, time, time);
+  };
+  marker(old, 30);
+  marker(recent, 1);
+  fs.writeFileSync(path.join(cache, "unmanaged.txt"), "preserve");
+  const env = { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CACHE_TTL_DAYS: "14", ALNILAM_CACHE_MAX_BYTES: "2147483648" };
+  const dryRun = spawnSync(process.execPath, ["scripts/compose.mjs", "--gc-cache", "--dry-run"], { env, encoding: "utf8" });
+  assert.equal(dryRun.status, 0, dryRun.stderr);
+  const plan = JSON.parse(dryRun.stdout);
+  assert.equal(plan.mode, "dry-run");
+  assert.ok(plan.estimatedFreedBytes > 0);
+  assert.equal(plan.targets.find((entry) => entry.path === old).action, "would-remove");
+  assert.equal(plan.targets.find((entry) => entry.path === old).reason, "unused-ttl");
+  assert.equal(plan.targets.find((entry) => entry.path === recent).action, "keep");
+  assert.equal(fs.existsSync(old), true);
+  assert.equal(fs.readFileSync(path.join(cache, "unmanaged.txt"), "utf8"), "preserve");
+
+  const collect = spawnSync(process.execPath, ["scripts/compose.mjs", "--gc-cache"], { env, encoding: "utf8" });
+  assert.equal(collect.status, 0, collect.stderr);
+  assert.equal(fs.existsSync(old), false);
+  assert.equal(fs.existsSync(recent), true);
+  assert.equal(fs.readFileSync(path.join(cache, "unmanaged.txt"), "utf8"), "preserve");
+});
+test("cache GC preserves referenced objects and reclaims orphaned publications", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cache-gc-objects-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const cache = path.join(root, "cache");
+  const shirone = path.join(cache, "shirone");
+  const objectStore = path.join(shirone, SHARED_SHIRONE_OBJECTS_KEY, "objects");
+  fs.mkdirSync(objectStore, { recursive: true });
+  fs.writeFileSync(path.join(cache, ".alnilam-cache-owner.json"), JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n");
+
+  const inputKeys = ["a".repeat(64), "b".repeat(64)];
+  const cacheKey = "module:shared";
+  const cacheKeyHash = crypto.createHash("sha256").update(cacheKey).digest("hex").slice(0, 24);
+  const code = "export const shared = true;";
+  const artifactHash = crypto.createHash("sha256").update(code).digest("hex");
+  const sharedObject = path.join(objectStore, `${artifactHash}.mjs`);
+  fs.writeFileSync(sharedObject, code);
+  const inputRoots = inputKeys.map((inputKey) => path.join(shirone, inputKey));
+  for (const inputKey of inputKeys) {
+    const loaded = path.join(shirone, inputKey, "loaded");
+    fs.mkdirSync(loaded, { recursive: true });
+    fs.writeFileSync(path.join(loaded, `${cacheKeyHash}.manifest.json`), JSON.stringify({ schema: 2, inputKey, cacheKeyHash, artifactHash }) + "\n");
+  }
+  const marker = (dir, daysAgo) => {
+    const file = path.join(dir, ".alnilam-last-used");
+    fs.writeFileSync(file, "ALNILAM managed cache last use\n");
+    const time = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
+    fs.utimesSync(file, time, time);
+  };
+  marker(inputRoots[0], 30);
+  marker(inputRoots[1], 1);
+
+  const orphanCode = "orphan artifact";
+  const orphanHash = crypto.createHash("sha256").update(orphanCode).digest("hex");
+  const orphan = path.join(objectStore, `${orphanHash}.mjs`);
+  fs.writeFileSync(orphan, orphanCode);
+  const interrupted = path.join(objectStore, `${"c".repeat(64)}.mjs.${process.pid}.${crypto.randomUUID()}.tmp`);
+  fs.writeFileSync(interrupted, "partial publication");
+
+  const env = { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CACHE_TTL_DAYS: "14", ALNILAM_CACHE_MAX_BYTES: "2147483648" };
+  const dryRun = spawnSync(process.execPath, ["scripts/compose.mjs", "--gc-cache", "--dry-run"], { env, encoding: "utf8" });
+  assert.equal(dryRun.status, 0, dryRun.stderr);
+  const plan = JSON.parse(dryRun.stdout);
+  const target = (file) => plan.targets.find((entry) => entry.path === file);
+  assert.equal(target(inputRoots[0]).reason, "unused-ttl");
+  assert.equal(target(inputRoots[0]).action, "would-remove");
+  assert.equal(target(sharedObject).action, "keep", "a recent input manifest protects its shared artifact");
+  assert.equal(target(orphan).reason, "unreferenced");
+  assert.equal(target(orphan).action, "would-remove");
+  assert.equal(target(interrupted).reason, "interrupted-publication");
+  assert.equal(target(interrupted).action, "would-remove");
+  for (const file of [inputRoots[0], sharedObject, orphan, interrupted]) assert.equal(fs.existsSync(file), true, "dry-run must preserve every cache entry");
+
+  const collect = spawnSync(process.execPath, ["scripts/compose.mjs", "--gc-cache"], { env, encoding: "utf8" });
+  assert.equal(collect.status, 0, collect.stderr);
+  assert.equal(fs.existsSync(inputRoots[0]), false);
+  assert.equal(fs.existsSync(inputRoots[1]), true);
+  assert.equal(fs.existsSync(sharedObject), true);
+  assert.equal(fs.existsSync(orphan), false);
+  assert.equal(fs.existsSync(interrupted), false);
+
+  marker(inputRoots[1], 30);
+  const expire = spawnSync(process.execPath, ["scripts/compose.mjs", "--gc-cache"], { env, encoding: "utf8" });
+  assert.equal(expire.status, 0, expire.stderr);
+  assert.equal(fs.existsSync(inputRoots[1]), false);
+  assert.equal(fs.existsSync(sharedObject), false, "an object becomes eligible after its last input manifest expires");
+});
+
+test("cache GC enforces the configured maximum and refuses hard-linked data", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-cache-gc-size-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const cache = path.join(root, "cache");
+  fs.mkdirSync(cache, { recursive: true });
+  fs.writeFileSync(path.join(cache, ".alnilam-cache-owner.json"), JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n");
+  const first = path.join(cache, "v1", "c".repeat(16));
+  const second = path.join(cache, "v1", "d".repeat(16));
+  fs.mkdirSync(path.join(first, "site"), { recursive: true });
+  fs.mkdirSync(path.join(second, "site"), { recursive: true });
+  fs.writeFileSync(path.join(first, "site", "cache.bin"), "first");
+  fs.writeFileSync(path.join(second, "site", "cache.bin"), "second");
+  const env = { ...process.env, ALNILAM_CACHE_DIR: cache, ALNILAM_CACHE_TTL_DAYS: "36500", ALNILAM_CACHE_MAX_BYTES: "1" };
+  const dryRun = spawnSync(process.execPath, ["scripts/compose.mjs", "--gc-cache", "--dry-run"], { env, encoding: "utf8" });
+  assert.equal(dryRun.status, 0, dryRun.stderr);
+  const plan = JSON.parse(dryRun.stdout);
+  assert.ok(plan.targets.filter((entry) => entry.action === "would-remove").length >= 1);
+  const collect = spawnSync(process.execPath, ["scripts/compose.mjs", "--gc-cache"], { env, encoding: "utf8" });
+  assert.equal(collect.status, 0, collect.stderr);
+  assert.equal(fs.existsSync(first), false);
+  assert.equal(fs.existsSync(second), false);
+
+  const linkedCache = path.join(root, "linked-cache");
+  fs.mkdirSync(linkedCache, { recursive: true });
+  fs.writeFileSync(path.join(linkedCache, ".alnilam-cache-owner.json"), JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n");
+  const linked = path.join(linkedCache, "v1", "e".repeat(16), "site", "shared.bin");
+  fs.mkdirSync(path.dirname(linked), { recursive: true });
+  const outside = path.join(root, "outside.bin");
+  fs.writeFileSync(outside, "external sentinel");
+  fs.linkSync(outside, linked);
+  const reject = spawnSync(process.execPath, ["scripts/compose.mjs", "--gc-cache", "--dry-run"], {
+    env: { ...process.env, ALNILAM_CACHE_DIR: linkedCache }, encoding: "utf8",
+  });
+  assert.notEqual(reject.status, 0);
+  assert.match(reject.stderr, /hard-linked managed cache file/);
+  assert.equal(fs.readFileSync(outside, "utf8"), "external sentinel");
+});
+
+test("explicit legacy cleanup removes only empty allowlisted targets", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-legacy-clean-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(root, "apps/web/.astro"), { recursive: true });
+  fs.mkdirSync(path.join(root, "apps/web/.shirones"), { recursive: true });
+  fs.writeFileSync(path.join(root, "apps/web/.shirones", "user-data.json"), "preserve");
+  const clean = spawnSync(process.execPath, ["scripts/compose.mjs", "--clean-legacy"], {
+    env: { ...process.env, ALNILAM_REPO_ROOT: root }, encoding: "utf8",
+  });
+  assert.equal(clean.status, 0, clean.stderr);
+  assert.equal(fs.existsSync(path.join(root, "apps/web/.astro")), false);
+  assert.equal(fs.readFileSync(path.join(root, "apps/web/.shirones/user-data.json"), "utf8"), "preserve");
+});
+
+
+test("provenance writes the Site ref into the published document", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-site-ref-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const git = (...args) => spawnSync("git", ["-C", site, ...args], { encoding: "utf8" });
+  assert.equal(git("init", "-q").status, 0);
+  assert.equal(git("add", "-A").status, 0);
+  const committed = git("-c", "user.name=fixture", "-c", "user.email=fixture@example.invalid", "commit", "-qm", "site");
+  assert.equal(committed.status, 0, committed.stderr);
+  const head = git("rev-parse", "HEAD").stdout.trim();
+  // End-to-end: the resolved Site ref reaches the published provenance.
+  // Branch coverage for resolution lives in scripts/tests/site-ref.test.mjs.
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, ALNILAM_CORE_REV: "core-rev", SOURCE_DATE_EPOCH: "1700000000" },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const prov = JSON.parse(fs.readFileSync(path.join(root, "out", "alnilam-provenance.json"), "utf8"));
+  assert.equal(prov.site.ref, head);
+});
+
+test("two parallel composes serialize: exactly one publishes, the loser fails closed", async (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-compose-lock-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.cpSync(DEMO, site, { recursive: true });
+  const digest = validateSiteRoot(site).digest;
+  const env = { ...process.env, ALNILAM_CACHE_DIR: path.join(root, "managed-cache"), ALNILAM_CORE_REV: "lockrace-core", SOURCE_DATE_EPOCH: "1700000000" };
+  // Parallel first use races cache-marker publication; only one process may
+  // then acquire the shared Astro build state and publish.
+  const run = (out) =>
+    new Promise((resolve) => {
+      const child = spawn(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, out)], { env });
+      let text = "";
+      child.stdout.on("data", (d) => (text += d));
+      child.stderr.on("data", (d) => (text += d));
+      child.on("exit", (status) => resolve({ out, status, text }));
+    });
+  const results = await Promise.all([run("out-a"), run("out-b")]);
+  const winners = results.filter((r) => r.status === 0);
+  const losers = results.filter((r) => r.status !== 0);
+  assert.equal(winners.length, 1, "exactly one compose may hold the build state: " + results.map((r) => r.out + "=" + r.status + "\n" + r.text.slice(-2500)).join("\n"));
+  assert.equal(losers.length, 1);
+  assert.equal(
+    fs.readFileSync(path.join(env.ALNILAM_CACHE_DIR, ".alnilam-cache-owner.json"), "utf8"),
+    JSON.stringify({ owner: "ALNILAM", schema: 1 }) + "\n",
+    "parallel first use must publish a complete cache owner marker",
+  );
+  assert.equal(
+    fs.readdirSync(env.ALNILAM_CACHE_DIR).some((entry) => entry.startsWith(".alnilam-cache-owner.json.staging-")),
+    false,
+    "marker staging files must be removed after initialization",
+  );
+  assert.match(losers[0].text, /Another compose is building this Site revision/);
+  assert.equal(fs.existsSync(path.join(root, losers[0].out)), false, "the blocked compose must not publish");
+  assert.equal(validateSiteRoot(site).digest, digest);
+});
+
+test("different Site and cache roots fail closed while the shared Astro root is locked", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-astro-lock-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const siteA = path.join(root, "site-a");
+  const siteB = path.join(root, "site-b");
+  fs.cpSync(DEMO, siteA, { recursive: true });
+  fs.cpSync(DEMO, siteB, { recursive: true });
+  const configPath = path.join(siteB, YAML_CONFIG);
+  const originalConfig = fs.readFileSync(configPath, "utf8");
+  const changedConfig = originalConfig.replace("  title: ALNILAM\n", "  title: Parallel Site B\n");
+  assert.notEqual(changedConfig, originalConfig);
+  fs.writeFileSync(configPath, changedConfig);
+  const digestA = validateSiteRoot(siteA).digest;
+  assert.notEqual(validateSiteRoot(siteB).digest, digestA, "the Sites must use distinct per-Site cache locks");
+
+  const repoRoot = process.cwd();
+  const lockDirectory = path.join(repoRoot, "apps/web");
+  const lockPath = path.join(lockDirectory, ".alnilam-compose-astro-build.lock");
+  assert.equal(fs.existsSync(lockPath), false, "the shared Astro root must be idle before the test");
+  const commonEnv = {
+    ...process.env,
+    ALNILAM_REPO_ROOT: repoRoot,
+    ALNILAM_CORE_REV: "astro-root-lock-test",
+    SOURCE_DATE_EPOCH: "1700000000",
+  };
+  const lock = createBuildLock(lockDirectory, {
+    lockName: ".alnilam-compose-astro-build.lock",
+    description: "the shared Astro root",
+  });
+  lock.acquire();
+  try {
+    const outB = path.join(root, "out-b");
+    const blocked = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", siteB, "--out", outB], {
+      cwd: repoRoot,
+      env: { ...commonEnv, ALNILAM_CACHE_DIR: path.join(root, "cache-b") },
+      encoding: "utf8",
+    });
+    assert.notEqual(blocked.status, 0, "a different Site and cache root must not enter the shared Astro scratch");
+    assert.match(blocked.stderr, /Another compose is building the shared Astro root/);
+    assert.equal(fs.existsSync(outB), false, "a blocked Site must not publish output");
+    assert.equal(fs.existsSync(lockPath), true, "the contender must leave the active holder's lock untouched");
+  } finally {
+    lock.release();
+  }
+
+  const outA = path.join(root, "out-a");
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", siteA, "--out", outA], {
+    cwd: repoRoot,
+    env: { ...commonEnv, ALNILAM_CACHE_DIR: path.join(root, "cache-a") },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, "Compose should acquire and release the shared lock after contention: " + result.stderr.slice(-2500));
+  const provenance = JSON.parse(fs.readFileSync(path.join(outA, "alnilam-provenance.json"), "utf8"));
+  assert.equal(provenance.site.digest, digestA);
+  assert.equal(fs.existsSync(lockPath), false, "Compose must release its Astro scratch lock after success");
+});
+
 test("symlinks in Site inputs are rejected", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-contract-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   fs.mkdirSync(path.join(root, "content/posts"), { recursive: true });
-  fs.writeFileSync(path.join(root, "alnilam.config.toml"), "[site]\n");
+  const config = path.join(root, YAML_CONFIG);
+  fs.writeFileSync(config, validYaml);
   try {
-    fs.symlinkSync(path.join(root, "alnilam.config.toml"), path.join(root, "content/posts/unsafe.md"));
+    fs.symlinkSync(config, path.join(root, "content/posts/unsafe.md"));
   } catch {
     t.skip("symlinks unavailable");
     return;
   }
   assert.throws(() => validateSiteRoot(root), /symlinks/);
 });
-test("legacy Site (no schemaVersion, no i18n fields) builds and gets provenance", (t) => {
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-legacy-"));
-  t.after(() => fs.rmSync(out, { recursive: true, force: true }));
-  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", "sites/legacy-demo", "--out", path.join(out, "site")], {
+
+test("v1 TOML Site is rejected by the YAML-only contract", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-toml-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site-source");
+  fs.mkdirSync(path.join(site, "content/posts"), { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "content/posts", "old-post.md"),
+    ["---", 'title: "Old post"', 'description: "v1 fixture"', "pubDate: 2026-01-01", "---", "", "Body.", ""].join("\n"),
+  );
+  fs.writeFileSync(path.join(site, TOML_CONFIG), ['[site]', 'title = "Legacy"', 'url = "https://legacy.example.com"', ""].join("\n"));
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "site")], {
     env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" },
+    encoding: "utf8",
   });
-  assert.equal(result.status, 0, "legacy Site compose failed: " + result.stderr);
-  // Light theme config must actually render.
-  const html = fs.readFileSync(path.join(out, "site", "index.html"), "utf8");
-  assert.match(html, /data-theme="light"/);
-  assert.match(html, /Legacy Site/);
-  const prov = JSON.parse(fs.readFileSync(path.join(out, "site", "alnilam-provenance.json"), "utf8"));
-  assert.equal(prov.schema, 1);
-  assert.equal(prov.site.digest, validateSiteRoot("sites/legacy-demo").digest);
+  assert.notEqual(result.status, 0, "a TOML-only Site must fail the YAML-only contract");
+  assert.match(result.stderr + result.stdout, /Site missing required input: alnilam\.config\.yaml/);
+  assert.equal(fs.existsSync(path.join(root, "site")), false);
+  assert.deepEqual(fs.readdirSync(root).filter((entry) => entry.startsWith(".alnilam-build-")), []);
 });
-test("legacy Site digest is stable across reads", () => {
-  const a = validateSiteRoot("sites/legacy-demo");
-  const b = validateSiteRoot("sites/legacy-demo");
-  assert.equal(a.digest, b.digest);
+
+test("upgrade-check classifies rollback outcomes", async () => {
+  const { classifyRollback, isExpectedContractRejection } = await import("../upgrade-check.mjs");
+  // The released v0.1.3 Core still requires the retired TOML file.
+  const toml = "Error: Site missing required input: alnilam.config.toml";
+  // A later Core that reads YAML but only supports schema v1. An uncaught
+  // `throw new Error(...)` prints with the `Error: ` prefix; accept both forms
+  // while the line stays anchored.
+  const schema = "Error: ALNILAM: unsupported schemaVersion 2 (supported: 1). Upgrade Core to build this Site.";
+  // A YAML v2 Core that predates a later optional module rejects unknown keys.
+  const unknown = 'Error: ALNILAM: unknown config field "llms"';
+  assert.equal(isExpectedContractRejection(toml), true);
+  assert.equal(isExpectedContractRejection(schema), true);
+  assert.equal(isExpectedContractRejection(schema.replace(/^Error: /, "")), true);
+  assert.equal(isExpectedContractRejection(unknown), true);
+  assert.equal(isExpectedContractRejection(unknown.replace(/^Error: /, "")), true);
+  // Indented stack frames, pnpm wrappers and unrelated failures do not qualify.
+  assert.equal(isExpectedContractRejection("  at fail (" + toml + ")"), false);
+  assert.equal(isExpectedContractRejection("ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL: " + schema), false);
+  assert.equal(isExpectedContractRejection(""), false);
+  // Execution-path classification: success, expected rejection, real failure.
+  assert.equal(classifyRollback({ status: 0, output: "" }), "ok");
+  assert.equal(classifyRollback({ status: 1, output: toml }), "expected-contract-failure");
+  assert.equal(classifyRollback({ status: 1, output: schema }), "expected-contract-failure");
+  assert.equal(classifyRollback({ status: 1, output: unknown }), "expected-contract-failure");
+  assert.equal(classifyRollback({ status: 1, output: "ELIFECYCLE Command failed with exit code 1." }), "unexpected");
+  assert.equal(classifyRollback({ status: 2, output: toml }), "unexpected");
 });
+
 test("upgrade-check hashTree is content-addressed and filename-insensitive to order", async (t) => {
   const { hashTree } = await import("../upgrade-check.mjs");
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-hash-"));
@@ -131,13 +1016,15 @@ test("upgrade-check hashTree is content-addressed and filename-insensitive to or
   fs.writeFileSync(path.join(root, "a.txt"), "alphA");
   assert.notEqual(hashTree(root), base);
 });
+
 test("upgrade-check rejects missing or malformed --old revision", () => {
   for (const args of [[], ["--old", "not-a-sha"], ["--old", "zzzz"]]) {
     const result = spawnSync(process.execPath, ["scripts/upgrade-check.mjs", ...args]);
     assert.equal(result.status, 2, "expected exit 2 for args: " + args.join(" "));
   }
 });
-test("upgrade-check resolveRevision verifies known local commits", async (t) => {
+
+test("upgrade-check resolveRevision verifies known local commits", async () => {
   const { execFileSync } = await import("node:child_process");
   const repoTop = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
   const { resolveRevision } = await import("../upgrade-check.mjs");
@@ -149,3 +1036,240 @@ test("upgrade-check resolveRevision verifies known local commits", async (t) => 
   assert.throws(() => resolveRevision("zzzzzzz", repoTop), /fetch/);
 });
 
+// ---------------------------------------------------------------------------
+// #62 content model: taxonomy catalog, category resolution, series and ordering
+// ---------------------------------------------------------------------------
+
+const taxonomyConfig = parseConfig(`
+schemaVersion: 2
+site:
+  title: Taxonomy fixture
+  url: https://example.com
+  locale: zh-CN
+locales:
+  - zh-CN
+  - en
+categories:
+  - id: guide
+    slug: guide
+    label:
+      zh-CN: 指南
+      en: Guide
+tags:
+  - id: astro
+    slug: astro
+    label:
+      zh-CN: Astro
+      en: Astro
+`);
+
+test("taxonomy catalog resolves ids, slugs and localized labels to canonical slugs", () => {
+  const entries = taxonomyConfig.categories;
+  assert.equal(resolvePostCategory("guide", entries), "guide");
+  assert.equal(resolvePostCategory("指南", entries), "guide");
+  assert.equal(resolvePostCategory("  guide  ", entries), "guide");
+  assert.equal(resolvePostCategory("", entries), "");
+  assert.equal(resolvePostCategory(undefined, entries), "");
+  // Without a declared catalog, frontmatter values pass through untouched.
+  assert.equal(resolvePostCategory("anything", []), "anything");
+  assert.equal(categoryDisplayLabel("guide", entries, "zh-CN"), "指南");
+  assert.equal(categoryDisplayLabel("guide", entries, "en"), "Guide");
+  // Unknown locales fall back through zh-CN then en then the slug.
+  assert.equal(categoryDisplayLabel("guide", entries, "ja"), "指南");
+  assert.equal(categoryDisplayLabel("bare", entries, "en"), "bare");
+});
+
+test("unknown post category fails closed against a declared catalog", () => {
+  assert.throws(
+    () => resolvePostCategory("nope", taxonomyConfig.categories),
+    /post references unknown category "nope" \(declared categories: guide\)/,
+  );
+});
+
+test("display tags and taxonomy.yaml merging stay catalog-consistent", () => {
+  assert.equal(tagDisplayLabel("Astro", taxonomyConfig.tags, "zh-CN"), "Astro");
+  assert.equal(tagDisplayLabel("guide", [{ id: "guide", slug: "guide", label: { "zh-CN": "指南", en: "Guide" } }], "en"), "Guide");
+  assert.equal(tagDisplayLabel("freeform", [], "en"), "freeform");
+});
+
+test("data/taxonomy.yaml extends the catalog; duplicates and unknown fields fail closed", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-taxonomy-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  // Absent file: config catalog passes through unchanged.
+  const bare = loadSiteTaxonomy(root, taxonomyConfig);
+  assert.deepEqual(bare.categories, taxonomyConfig.categories);
+  fs.mkdirSync(path.join(root, "data"));
+  fs.writeFileSync(
+    path.join(root, "data/taxonomy.yaml"),
+    "categories:\n  - id: lab\n    slug: lab\n    label:\n      zh-CN: 实验室\n      en: Lab\n",
+  );
+  const merged = loadSiteTaxonomy(root, taxonomyConfig);
+  assert.deepEqual(merged.categories.map((e) => e.slug), ["guide", "lab"]);
+  // Duplicate id against the config catalog fails closed.
+  fs.writeFileSync(
+    path.join(root, "data/taxonomy.yaml"),
+    "categories:\n  - id: guide\n    slug: other\n    label:\n      en: Other\n",
+  );
+  assert.throws(() => loadSiteTaxonomy(root, taxonomyConfig), /duplicate categories id "guide"/);
+  // Unknown top-level fields are rejected.
+  fs.writeFileSync(path.join(root, "data/taxonomy.yaml"), "collections: []\n");
+  assert.throws(() => loadSiteTaxonomy(root, taxonomyConfig), /unknown data\/taxonomy\.yaml field/);
+});
+
+test("comparePosts pins first, then newest, then id for a deterministic order", () => {
+  const mk = (id, pubDate, pinned) => ({ id, data: { pubDate: new Date(pubDate), pinned } });
+  const posts = [
+    mk("b", "2026-01-02"),
+    mk("c", "2026-01-01", true),
+    mk("a", "2026-01-01"),
+    mk("d", "2026-03-01"),
+  ];
+  assert.deepEqual([...posts].sort(comparePosts).map((p) => p.id), ["c", "d", "b", "a"]);
+});
+
+test("compose fails closed on an unknown post category without touching the Site", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-badcat-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site-source");
+  fs.cpSync(DEMO, site, { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "bad-category.md"),
+    ["---", 'title: "Bad category"', 'description: "Unknown taxonomy reference."', "pubDate: 2026-10-28", 'category: "ghost"', 'tags: ["Test"]', "---", "", "Unknown category fixture.", ""].join("\n"),
+  );
+  const digest = validateSiteRoot(site).digest;
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" }, encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0, "an unknown category must fail the build");
+  assert.match(result.stderr + result.stdout, /post references unknown category "ghost"/);
+  assert.equal(validateSiteRoot(site).digest, digest, "Site inputs must stay untouched");
+  assert.equal(fs.existsSync(path.join(root, "out")), false, "failed build must not publish");
+});
+
+test("compose fails closed on a duplicate translationKey within one locale", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-duptk-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site-source");
+  fs.cpSync(DEMO, site, { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "en", "hello-duplicate.md"),
+    ["---", 'title: "Hello duplicate"', 'description: "Duplicate translationKey fixture."', "pubDate: 2026-10-29", 'category: "release"', 'lang: "en"', 'translationKey: "hello-alnilam"', 'tags: ["Test"]', "---", "", "Duplicate translationKey fixture.", ""].join("\n"),
+  );
+  const digest = validateSiteRoot(site).digest;
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", path.join(root, "out")], {
+    env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" }, encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0, "a duplicate translationKey per locale must fail the build");
+  assert.match(result.stderr + result.stdout, /duplicate translationKey "hello-alnilam" for locale "en"/);
+  assert.equal(validateSiteRoot(site).digest, digest);
+  assert.equal(fs.existsSync(path.join(root, "out")), false);
+});
+
+test("taxonomy, series and pinned frontmatter compose category, tag and series routes", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-content-model-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site-source");
+  fs.cpSync(DEMO, site, { recursive: true });
+  fs.mkdirSync(path.join(site, "data"), { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "data/taxonomy.yaml"),
+    "categories:\n  - id: lab\n    slug: lab\n    label:\n      zh-CN: 实验室\n      en: Lab\ntags:\n  - id: series\n    slug: series\n    label:\n      zh-CN: 系列\n      en: Series\n",
+  );
+  fs.mkdirSync(path.join(site, "content", "series"), { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "content", "series", "demo-series.md"),
+    ["---", 'title: "Demo Series"', "status: completed", 'defaultCategory: "lab"', "---", "", "Series overview body.", ""].join("\n"),
+  );
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "pinned-post.md"),
+    ["---", 'title: "置顶文章"', 'description: "Pinned fixture."', "pubDate: 2020-01-01", 'category: "lab"', 'pinned: true', 'series: "demo-series"', "seriesOrder: 2", 'tags: ["Test", "series"]', "---", "", "Pinned fixture.", ""].join("\n"),
+  );
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "series-part-one.md"),
+    ["---", 'title: "Series one"', 'description: "Series order one."', "pubDate: 2026-05-01", 'series: "demo-series"', "seriesOrder: 1", 'tags: ["Test", "Series"]', "---", "", "First member.", ""].join("\n"),
+  );
+  const digest = validateSiteRoot(site).digest;
+  const out = path.join(root, "out");
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", out], {
+    env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" }, encoding: "utf8",
+  });
+  assert.equal(result.status, 0, "content-model compose failed: " + result.stderr.slice(-2500));
+  assert.equal(validateSiteRoot(site).digest, digest, "Site inputs must stay untouched");
+
+  // /categories/ index links both catalog-backed slugs.
+  const catIndex = fs.readFileSync(path.join(out, "categories", "index.html"), "utf8");
+  for (const slug of ["guide", "release", "lab"]) {
+    assert.match(catIndex, new RegExp(`href="/categories/${slug}/"`), `categories index must link ${slug}`);
+  }
+  // /categories/<slug>/ renders the localized catalog label and its members.
+  const labPage = fs.readFileSync(path.join(out, "categories", "lab", "index.html"), "utf8");
+  assert.match(labPage, /<title>实验室 - ALNILAM<\/title>/, "category page uses the zh-CN catalog label");
+  assert.match(labPage, /\/posts\/pinned-post\//, "category page lists its posts");
+  assert.match(labPage, /\/posts\/series-part-one\//, "category page includes the series default category");
+  const guidePage = fs.readFileSync(path.join(out, "categories", "guide", "index.html"), "utf8");
+  assert.match(guidePage, /<title>指南 - ALNILAM<\/title>/);
+  // Tags routes exist for catalog and free-form tags.
+  const labTag = fs.readFileSync(path.join(out, "tags", "test", "index.html"), "utf8");
+  assert.match(labTag, /\/posts\/pinned-post\//, "tag route lists matching posts");
+
+  const seriesTag = fs.readFileSync(path.join(out, "tags", "series", "index.html"), "utf8");
+  assert.match(seriesTag, /<title>#系列 - ALNILAM<\/title>/, "tag page uses the localized label");
+  assert.match(seriesTag, /\/posts\/pinned-post\//, "canonical tag includes slug matches");
+  assert.match(seriesTag, /\/posts\/series-part-one\//, "canonical tag includes alias matches");
+
+  // Label-alias tag routes are layout-dependent: the legacy layout emits them
+  // as self-canonical pages; the locale-first contract emits them (when at all)
+  // as noindex pages canonicalizing to the slug route. Either way the alias
+  // route lists the same posts and never competes with the canonical route in
+  // the sitemap.
+  const aliasTagPath = path.join(out, "tags", "Series", "index.html");
+  if (fs.existsSync(aliasTagPath)) {
+    const aliasTag = fs.readFileSync(aliasTagPath, "utf8");
+    const selfCanonical = /rel="canonical"[^>]*href="[^"]*\/tags\/Series\/"/.test(aliasTag);
+    if (selfCanonical) {
+      assert.match(aliasTag, /\/posts\/pinned-post\//, "alias tag includes slug matches");
+      assert.match(aliasTag, /\/posts\/series-part-one\//, "alias tag includes alias matches");
+    } else {
+      assert.match(aliasTag, /<meta name="robots" content="noindex(?:,\s*follow)?"/, "non-self-canonical alias tag must be noindex");
+      assert.match(aliasTag, /rel="canonical"[^>]*href="[^"]*\/tags\/series\/"/, "alias tag canonicalizes to the slug route");
+    }
+  }
+
+  // Series collection drives /series/ and /series/<slug>/ ordering.
+  const seriesIndex = fs.readFileSync(path.join(out, "series", "index.html"), "utf8");
+  assert.match(seriesIndex, /\/series\/demo-series\//, "series index links the series");
+  const seriesDetail = fs.readFileSync(path.join(out, "series", "demo-series", "index.html"), "utf8");
+  assert.match(seriesDetail, /<title>Demo Series - ALNILAM<\/title>/);
+  const memberOrder = [...seriesDetail.matchAll(/href="\/posts\/([^"/]+)\/"/g)].map((m) => m[1]);
+  assert.deepEqual(memberOrder, ["series-part-one", "pinned-post"], "members follow seriesOrder, not pubDate");
+
+  // Pinned posts sort first on the paginated list even with an old pubDate:
+  // the pinned fixture must precede the newest regular post.
+  const postsPage = fs.readFileSync(path.join(out, "posts", "index.html"), "utf8");
+  const cardOrder = [...postsPage.matchAll(/href="\/posts\/([^"/]+)\/"/g)].map((m) => m[1]).filter((slug) => slug !== "page");
+  assert.ok(cardOrder.length >= 2, "post list must render card links: " + cardOrder.join(","));
+  assert.equal(cardOrder[0], "pinned-post", "pinned fixture must lead the list");
+
+  // Article pages expose the resolved category as article:section.
+  const article = fs.readFileSync(path.join(out, "posts", "pinned-post", "index.html"), "utf8");
+  assert.match(article, /<meta property="article:section" content="lab">/);
+  assert.match(article, /\/categories\/lab\//, "article links its category route");
+});
+
+
+test("free-form categories containing slashes link to the archive filter", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-slash-category-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const site = path.join(root, "site");
+  fs.mkdirSync(path.join(site, "content/posts"), { recursive: true });
+  fs.writeFileSync(path.join(site, "alnilam.config.yaml"), "schemaVersion: 2\nsite:\n  title: Test\n  url: https://example.com\n  locale: zh-CN\nlocales: [zh-CN]\ntheme:\n  appearance: dark\n");
+  fs.writeFileSync(path.join(site, "content/posts/slash.md"), '---\ntitle: Slash category\npubDate: 2026-01-01\ncategory: "A/B"\n---\n\nExample.\n');
+  const out = path.join(root, "out");
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", out], {
+    env: { ...process.env, SOURCE_DATE_EPOCH: "1700000000" }, encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr.slice(-2500));
+  const post = fs.readFileSync(path.join(out, "posts/slash/index.html"), "utf8");
+  assert.match(post, /href="\/archives\/\?category=A%2FB"/);
+  assert.ok(fs.existsSync(path.join(out, "archives/index.html")));
+});

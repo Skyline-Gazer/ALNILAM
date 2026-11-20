@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "git": {
+    "primary": "cnb",
+    "development_branch": "dev",
+    "production_branch": "main",
+    "issue_provider": "github",
+    "github_mirror": {
+      "enabled": true,
+      "direction": "cnb-to-github",
+      "branches": ["main"],
+      "tags": "approved-releases-only"
+    }
+  },
+  "review": {
+    "auto": "cnb-code-review",
+    "npc": "on-demand-read-only",
+    "max_fix_rounds": 3
+  },
+  "release": {
+    "approval_required": true,
+    "force_push": false
+  }
+}

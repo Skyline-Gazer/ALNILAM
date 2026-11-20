@@ -1,0 +1,142 @@
+# Historical CNB Primary / GitHub Mirror readiness
+
+## Current provider status — 2026-11-13
+
+GitHub `dev` is the development authority following PR #132. CNB `dev` is frozen
+at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; GitHub `main` and CNB `main` remain
+unchanged. The entries below preserve earlier CNB-primary decisions and evidence;
+they are not current development instructions. See [HANDOFF](../HANDOFF.md) for
+the exact GitHub merge, CI, and Vercel deployment records.
+
+## CNB Dev Cutover — COMPLETE (2026-10-30)
+
+Development authority now rests on CNB `KoolingMachine/ALNILAM` with feature branches from CNB `dev`. Verified acceptance refs:
+
+- CNB `dev`: `e602e29a1fc9cff20e438b29251fec4482eba64b`
+- GitHub `dev`: `0d11757e111a4a5169d3a473b736ed2918bd3d2e`
+- Shared Git tree: `5530addc6e4d719229641e9e2cd0828d78256e78`
+
+GitHub Issues and Project #17 remain task-management authority. GitHub code is mirror-only for new feature development. Residual zero-status/non-atomic merge risk is accepted and documented; production `main`, first production mirror, tags/releases and deployments remain separately authorized.
+
+## Current Owner correction — 2026-11-02
+
+CNB dev is the development authority and has no mandatory platform protection.
+Use ordinary PRs or authorized non-force Git integration. CI/CodeBuddy provide
+truthful functional feedback, not mandatory approval per ordinary change. Follow
+[AGENTS.md](../../AGENTS.md) and the current [handoff](../HANDOFF.md) for the
+retained ADS pin and read-only production preflight. Main/release/mirror/deploy
+still require separate authorization. The earlier decision and pilot evidence
+below are historical; their outcomes are not rescored or repeated prerequisites.
+
+## Historical Owner decision — Agent-governed PRs (2026-10-30)
+
+This decision supersedes the independent Gatekeeper proposal and its acceptance blockers below. The Agent must verify complete current-version CI plus actual CodeBuddy review, resolve blocking findings, re-read the live PR head, and actively perform a normal merge. No independent approval identity, fixed required Reviewer or CNB Auto Merge is required. CNB zero-status mergeability remains a disclosed platform risk; it has not been repaired. Production main, the first production mirror, formal tags/releases and deployments are excluded from this authorization.
+
+Native system CodeBuddy now runs on real isolated PR #18 with Work Mode off. The minimal private-submodule fix is update=none in .gitmodules; the immutable ADS gitlink is unchanged and explicit authorized checkout still works. The first real review, comment 2116007303258533888, bound head f8f56e9927bc62fc40eccbf6bbb8c16ba3ce0ce4 and found a Critical eval issue; the unchanged ADS validator rejected it and no merge was attempted. After repair, old evidence was rejected as STALE_REVIEW. Native re-review comment 2116008620634898432 reports passed on head f1ae3bd736e10adbc587a81ece04b9f2340a0e4c. Current CI subsequently passed, including trusted consumer, coverage, vulnerability/license, SBOM and evidence upload. Both PR status contexts passed. After a live head/base recheck the Agent normally merged PR #18 to its disposable target at d89d9ba34d6edfc5c1462afe09fff5af5c46473d. The source ancestry and tested-tree equality were verified after merge; actual dev/main were untouched by this isolated merge. Historical Gatekeeper and NPC failures remain evidence for their original versions only.
+
+The gate rows and FAIL/NO outcomes retained below under `Candidate and native evidence`, `Historical acceptance result`, and `Historical Owner actions and boundaries` are historical pre-decision records. They are superseded as workflow prerequisites by the current Agent-governed decision above; they do not claim that production cutover, the first production mirror, a release, or deployment is complete. The production-clean tree described in `MIRROR.md` is a disposable fixture for verify compatibility and tree reproduction, not a production release-candidate approval.
+
+
+## Agent merge lifecycle acceptance — PR #18
+
+[Native trusted consumer run](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-9q2-1k65dadhi); [retained CNB evidence attachment](https://cnb.cool/KoolingMachine/ALNILAM/-/commit/b240a7ce465956da5b2727d49578f34182d804e3?tab=attachments). Tested commit 5640a56884388fe63f27ed8b48c6d4736bab4963 is a CNB-generated pre-merge object; absence from the GitHub object store is not contradictory evidence. The main Agent independently downloaded and validated the retained archive with its existing credential; a reviewer token lacking build-history scopes must disclose that limit without requesting wider credentials.
+
+- Source f1ae3bd736e10adbc587a81ece04b9f2340a0e4c; target b240a7ce465956da5b2727d49578f34182d804e3; tested merge 5640a56884388fe63f27ed8b48c6d4736bab4963; Agent-created merge d89d9ba34d6edfc5c1462afe09fff5af5c46473d. Merged/tested/source tree is 579f10f4047fe185f19b798eb71a82dc64295624.
+- Native review comment 2116008620634898432 completed successfully in read/comment mode and passed the unchanged ADS validator. The earlier real Critical review was rejected; reusing its old head produced STALE_REVIEW. An invalid-schema follow-up audit was also rejected until CodeBuddy issued a valid result.
+- Native trusted consumer run and source-side official advisory both passed on the repaired source. Downloaded archive is 29,070,797 bytes, SHA-256 682dc9d9e7c9e5427ceeb2ac49cd47dab8c2c5b3902d70606a9c0577facd0e08 (matched platform metadata); 187 entries passed path/type validation; nine build steps passed and Site digest was unchanged.
+- The earlier candidate also had a genuine Playwright timeout (180 seconds) in the navigation test, retained as a failed run. It was not labeled a stale-check failure or reused as positive evidence. The current repaired version completed the full check suite.
+- No Auto Merge, force merge, separate approver or protected-ref push was used. The CNB read-check/merge API window is not atomic; this remains a disclosed Agent-workflow risk.
+
+## Historical assessment before the Agent-governed decision
+
+Current native repair evidence: [CNB PR #17](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/17) trusted target pipeline **PASS**, target `911fe4327ecb81179df2ee5bccabd47f2cb5b48e`, source `e5ab2e50ee6494f8d493836c33f55872e896d4fe`, merge/tested `e2ed40ba6a61b4f63d88f6ebaa2e5460b4c3457f`. Nine build steps, Astro checks, 18 browser tests (one intentional skip), mobile/desktop Lighthouse normal and negative probes, coverage, vulnerability/license gates, SBOM and upload receipt passed. Downloaded evidence is 29,350,458 bytes, SHA-256 `aed34057e6f0bbae50d96b589ef442b7669580667f38f3f24f2629460a4d6f86`, matching CNB metadata; 187 archive entries passed path/type inspection and build/browser receipts bind these SHAs with unchanged Site digest. Source-side empty-diff advisory failed to emit JSON; this is a successful trusted target run, not a green combined PR or Gatekeeper acceptance. PR #17 was closed unmerged and both scratch refs deleted. GitHub PR #96 checks passed 6/6 on the target SHA.
+
+`BLOCKED_WITH_EVIDENCE`: GitHub remains primary; `CNB_CUTOVER_READY=NO` and `FIRST_MIRROR_EXECUTED=NO`. The superseded Owner decision had authorized investigation of an independent CNB Gatekeeper and selected a future GitHub PR mirror. No Gatekeeper, identity-bound approval, stale-approval rejection, or CNB auto-merge has been verified. The branch-protection API exposes counts and ratios but no named reviewer or approval-reset field; the review and merge requests expose no expected SHA parameter. The signed-in UI additionally offers “require necessary reviewers” and “auto merge only”, but the branch rule form did not select an identity, the read API did not expose that UI field, and enforcement against another reviewer or stale approval remains unverified. The existing isolated zero-status bypass remains direct failure evidence.
+
+A disposable rule `904f0e4385ed0e64bc61b8819d1745b790369438` enabled mandatory review, necessary-reviewer approval, status checks, and auto-merge-only with all owner/admin exceptions off. On [CNB PR #13](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/13), the sole author was a non-NPC user, statuses were empty, and the platform reported `waiting_review`. An author approval API request returned HTTP 403 (`2003024`, message referring to a self-owned NPC); no review was recorded. The PR also had a merge conflict, so this does not prove identity binding, stale-review invalidation, or zero-status protection under otherwise mergeable conditions. PR #13 was closed unmerged, the rule and both disposable branches were deleted, and the actual `main`/`dev` rules were read back unchanged. The existing CLI token could not create the temporary rule itself (`repo-manage:rw` missing); the existing signed-in UI was used for that isolated rule.
+
+GitHub PR [#96](https://github.com/Skyline-Gazer/ALNILAM/pull/96) was Draft at the pre-decision snapshot `911fe4327ecb81179df2ee5bccabd47f2cb5b48e`; 25 targeted local script tests pass. Historical positive and adversarial CNB runs below apply to the older `7f080e02cc56f49d066cc4036a6d4c914f4b367a` target. The first [native regression](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-fo0-1k65812fr) on `988ed0405085401bba6160366d6eaf9877dfac09` failed because an override leaked into contract tests; the [second](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-3ae-1k658e35e) on `03ca64d0087e2cdbb9cd44615c4ef7df0e99278c` passed 45 unit tests and Astro checks but failed resolving Tailwind. The [third target run](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-952-1k658uqrk) on `94b11375dcf01aed816b10d83205e0646c18a438` also failed at Tailwind resolution; its source-side advisory Review separately failed to produce JSON. No current-head CNB acceptance is claimed. GitHub PR [#112](https://github.com/Skyline-Gazer/ALNILAM/pull/112) fixes the production-clean `verify` pin incompatibility and has passing GitHub CI at `17d5d9159961ff437bf9a73d7f3afbf36bae1aa1`.
+
+The GitHub `alnilam-main` ruleset remains active with strict `verify` from GitHub Actions and no bypass actors. Repository Auto-merge is currently disabled. No production ruleset, protected branch, tag, deployment, or mirror ref has been changed. Only local mirror-candidate construction is proposed in [PR #113](https://github.com/Skyline-Gazer/ALNILAM/pull/113); the full PR mirror has not been implemented or accepted. See [MIRROR.md](MIRROR.md).
+
+## Historical repair and delivery snapshot
+
+Commit `911fe4327ecb81179df2ee5bccabd47f2cb5b48e` restores the trusted pnpm virtual-store `NODE_PATH` while continuing to execute target-owned Astro/Pagefind from the candidate app. A restricted local process reproduced the Tailwind error before the fix; the repaired real Astro build and Pagefind indexing then passed, producing 13 pages with unchanged Site digest `7e7500946378db5173f52294bf9662744ce40086a526d7cb40c0a3bf4f8a9db5`. The isolated Node 24 suite passed 25 tests, including replacement of an untrusted incoming module path. This is local repair evidence, not platform approval.
+
+[CNB PR #17](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/17) tests source `e5ab2e50ee6494f8d493836c33f55872e896d4fe` against target `911fe4327ecb81179df2ee5bccabd47f2cb5b48e`; its [trusted target build](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-veo-1k65a8pbq) was pending at the preceding snapshot and subsequently passed as recorded above. Its empty-diff source advisory failed to emit JSON. Neither a pending target build nor this failed combined PR is consumer acceptance.
+
+At that historical snapshot, PR #96 remained Draft pending current native evidence and review. At that historical snapshot PR #111 followed unmerged #96 and separate merge authorization was pending. The current Owner decision grants normal verified development-PR merge authority; #96 is now merged. PR #112 (`17d5d9159961ff437bf9a73d7f3afbf36bae1aa1`) fixes the existing `verify` ADS-pin compatibility; PR #113 (`b16d176ffb35071054b4e967eca279969f1b2b29`) only prepares a local history-preserving candidate. Their GitHub CI passed. Production-clean GitHub PR E2E, live sync updates, automatic PR creation/merge, and tag writes remain unverified. No independent Gatekeeper service or identity has been provisioned.
+
+The pinned ADS validator/manifest was audited, but no ADS execution path is invoked by the new local preparer. Direct-main ADS execution is unsuitable for this PR protocol and remains disabled. No upstream ADS code or released pin changed. GitHub Project #17 was read back: #94/#100 remain In Progress, #37 Done, #51 Todo; the board has no Blocked status. Keep issues open with this blocking evidence.
+
+Rollback: close the draft PRs and discard their task branches to retain current protected refs. Scratch test PRs must be closed without merging and their test refs removed after logs are retained. Do not weaken rules or rewrite shared history to recover. Retain GitHub Primary; P2 may proceed separately on GitHub only after explicit development authorization on #51, without making CNB acceptance a new P1 prerequisite.
+
+## Historical 2026-10-29 assessment
+
+**Final acceptance: `BLOCKED_WITH_EVIDENCE` (2026-10-29). `CNB_CUTOVER_READY = NO`; `FIRST_MIRROR_EXECUTED = NO`.** GitHub remains the code authority. Then-current GitHub PR #96 head `7f080e02cc56f49d066cc4036a6d4c914f4b367a` passed native positive CNB `pull_request.target` E2E, and a no-op-script adversarial PR failed closed. However, CNB permits merging a PR with zero check statuses, exposes no named required-check setting, and the candidate workflow remains outside actual `dev` while PR #4 is open. Consumer acceptance and Cutover therefore fail. No protected refs, production settings, release, or mirror were changed.
+
+2026-10-29 follow-up: trusted harness issues found during native runs were fixed on GitHub PR #96 by commits `d0f3b2b92f88b7f4d48b95c6a5bd2a677f5ed840`, `7fe4a92bae40d4c7d20b2b930c935fb8f735e107`, and `7f080e02cc56f49d066cc4036a6d4c914f4b367a`. The candidate SHA at that time was `7f080e02cc56f49d066cc4036a6d4c914f4b367a`; all six GitHub checks then passed, confirmed with `gh pr checks 96`. Earlier P1/Lighthouse evidence was not rerun for this acceptance pass.
+
+Credential preflight used the existing macOS `osxkeychain` entry for `cnb.cool/KoolingMachine/ALNILAM`, username `cnb`; the secret was never displayed or exported. `git ls-remote`, scratch-ref pushes, native PRs, and artifact download succeeded with `https://cnb.cool/KoolingMachine/ALNILAM` (no `.git`). No helper or global setting changed.
+
+Positive native build [cnb-jhf-1k6423aiu](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-jhf-1k6423aiu) ran on scratch PR #11 `pull_request.target`: source `5f3f03b09453c5a892ffc27f99c4b70d7c8444d3`, target `7f080e02cc56f49d066cc4036a6d4c914f4b367a`, merge/tested `f39faf197ccbd9078a60192c0de11bc9cfdc3b37`. All 14 stages passed. Its 29,184,087-byte [evidence attachment](https://cnb.cool/KoolingMachine/ALNILAM/-/commit/7f080e02cc56f49d066cc4036a6d4c914f4b367a?tab=attachments) downloaded and matched CNB metadata at SHA-256 `e8d29826daca486bd1809f7d96cc463527d1959956c6196dfbd9ed7599072b9a`; 187 archive entries passed safe-path/type inspection. Receipts bind all four identities; nine deterministic build steps passed, before/after external Site digests match, Node source coverage is 79.23% (393/496; minimum 77%), browser tests are 18 passed/one intentional skip, and browser/Lighthouse negative cases are expected-red.
+
+Adversarial build [cnb-phj-1k642341e](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-phj-1k642341e) ran on scratch PR #12 `pull_request.target` with candidate no-op scripts and an intentionally invalid Astro page. The target-owned gate failed in the exact-merge test stage, and later coverage/security/upload stages were skipped. This is the expected fail-closed result. Vulnerability and component-license gates passed on the positive run. SourceSCA is not configured. The source-side fixture separately failed during Prepare while fetching private `.ads`; no private repository content/token was exposed, and target-side CI did not recursively fetch ADS.
+
+Cleanup: scratch PRs #8–#12 were closed without merge, and all seven isolated test refs were deleted. The existing CNB bootstrap ref for PR #4 was retained; `dev` and `main` were untouched.
+
+## Historical verified configuration and refs — 2026-10-29
+
+| Ref | GitHub | CNB |
+| --- | --- | --- |
+| `main` | `285a62cecd87f8f20276c7cc989537a391f488c8` | `285a62cecd87f8f20276c7cc989537a391f488c8` |
+| `dev` | `78d63d9bf9d78b1e4f64640fedfc7c079256ef4f` | `78d63d9bf9d78b1e4f64640fedfc7c079256ef4f` |
+| `v0.1.0`–`v0.1.3` | Annotated tag object IDs and peeled commits match | Annotated tag object IDs and peeled commits match |
+
+CNB `dev` protection rule `34c6fceca75e456f25e7e99531e2425c6c1de443` was read back after Plan B. Original values and rollback are recorded in [CNB-DEV-SETTINGS.md](CNB-DEV-SETTINGS.md). The UI states checks must pass “if there are status checks.” A disposable rule with identical Plan B values confirmed zero-status PRs are unblocked/mergeable, a failing status blocks merge (HTTP 409), and direct push is rejected. This is not accepted as a strict required-check gate. Actual `dev` write/merge behavior remains untested. See [CNB’s trigger documentation](https://docs.cnb.cool/zh/build/trigger-rule.html).
+
+The 2026-10-29 signed-in UI readback confirmed root organization event/cron/NPC controls are enabled. Repository event, cron, and NPC switches are enabled for `ALNILAM`, `ads-cnb-acceptance-20261027`, `AiringCal`, and `airingcal-control`; `code-import` event and cron switches are off. The Owner selected organization event scope, which therefore unlocks those four repository event triggers. No trigger setting changed. Untrusted-event and scheduled cross-repository access remain disabled. The `airingcal-secrets` settings page was inaccessible and its switches remain unverified.
+
+## Candidate and native evidence
+
+- At the historical 2026-10-29 snapshot, CNB bootstrap PR [#4](https://cnb.cool/KoolingMachine/ALNILAM/-/pulls/4) was open/unmerged to dev at `98511ad526c0d77ede979e88ebe5b9c4f584a739`; read its live API head for current integration. GitHub PR [#96](https://github.com/Skyline-Gazer/ALNILAM/pull/96) was Draft at `7f080e02cc56f49d066cc4036a6d4c914f4b367a`; all six GitHub checks then passed. The current CNB `dev` branch was not advanced. No formal merge was attempted.
+- Official advisory AI Review build [`cnb-kcp-1k61p09tu`](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-kcp-1k61p09tu) completed on `98511ad`; Review JSON returned `passed` with zero issues and native source/target/merge identity was recorded. AI Review remains advisory and cannot authorize or block a formal merge.
+- Full trusted target build [`cnb-oi5-1k61oiv57`](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-oi5-1k61oiv57) passed all stages on candidate `cba3353613402646440858f9298af87b8450ba74`, with source marker `78fd54a80be70aebdc1b9b891d68937fede76373` and exact merge/tested SHA `434e4a66eb6566c478810851dbd83ffc982da4b5`. Its 9,830,956-byte evidence archive was downloaded and SHA-256 verified as `417daf4a53e954e692975990505a1bd60ff7c2fc50e1e6037c7fd552577423c6`. The bounded archive held 126 entries, 42 Lighthouse JSON reports, all exact SHA receipts, 9 passing build steps, 79.02% Node-source coverage, browser positive/expected-negative evidence, and successful SCA gates.
+- Historical target run [`cnb-iin-1k61q4mp4`](https://cnb.cool/KoolingMachine/ALNILAM/-/build/logs/cnb-iin-1k61q4mp4) passed all stages on candidate `98511ad526c0d77ede979e88ebe5b9c4f584a739`, source marker `54f043d806e346aca7fb42ce5e2ba3f3aff4ecc3`, and exact merge/tested SHA `c131e6d560db8dab395ee201e7a517d4b620e498`. It predates the `4e37bdc`/`00651cc` trusted-tool/test hardening and is not current-head acceptance. Its 10,050,080-byte archive matched the CNB asset SHA-256 `c4ad40391cac5b795681b49fa51e1f28b1f0a9ca8a3fdff8b4ceecde90156e21`; 127 safe entries contained nine successful deterministic receipts, 79.02% coverage, 36 Lighthouse JSON reports, browser negative screenshot/trace, and mobile/desktop CLS expected-red receipts. Vulnerability and component-license diff gates reported zero new risk findings; source license scanning was unavailable because SourceSCA was not configured. The latest source-side event build `cnb-pln-1k61q4mp3` passed on the earlier candidate. Disposable PR #5 was merged only to its scratch target at `730b63df81ce37f0db17b20b5ec15220d4cc7420`, then both scratch refs were deleted.
+- On the then-current GitHub head `7f080e0`, the trusted gate, harness, candidate checkout isolation, and metrics dependency were exercised by the native positive and adversarial runs above. The positive archive and exact SHA receipts were downloaded and verified. This evidence superseded the earlier gap for that SHA only; it does not cover the 2026-10-30 head.
+- The separate missing-check test used disposable PR #6 and build `cnb-if2-1k61pq4p0`: zero-status PR readback was `blocked_on=unblocked` / `mergeable_state=mergeable`; after an intentional failing status, PR was `blocked_on=status_check` and the merge attempt returned HTTP 409. The same scratch protection rule rejected direct push. The temporary rule, PR and refs were removed after capture.
+- `@CodeBuddy` is **FAIL / not executed**. CNB Prepare recursively checked out private `.ads` and failed before the model stage, despite a source-level `git.submodules: false`. The current trusted target pipeline also sets `git.submodules: false`; its successful Prepare and target run did not fetch private ADS. No private token was exposed.
+- The isolated Critical fixture review (source `077fcfa40f1768c31345c4e76383dd0221d25e1e`, target `78d63d9bf9d78b1e4f64640fedfc7c079256ef4f`) produced model output classified `critical`, but the response was invalid JSON, no PR comment was posted, and the Review stage/build still succeeded. AI Review therefore remains advisory and is not a Critical Required Check.
+- Issues #94 and #100 remain open. Current Project #17 readback: #94 and #100 In Progress, #51 Todo. The board readback found #100 missing; it was added to Project #17 and set to In Progress on 2026-10-29. P2 code was not started.
+
+## Historical acceptance result — before Agent-governed PR adoption
+
+| Gate | Result |
+| --- | --- |
+| `CNB_BOOTSTRAP` | **FAIL** — candidate `.cnb.yml` is not installed on actual `dev` |
+| `CNB_NATIVE_CI` | **PASS on historical isolated candidate** — positive `pull_request.target` build passed all stages; native no-op-script adversarial build failed closed |
+| `CNB_NPC_REVIEW` | **FAIL** — built-in NPC stopped before model execution |
+| `CNB_TRUSTED_GATE` | **PASS for historical execution; not enforceable when missing** — native positive and negative runs prove target-owned execution and fail-closed behavior |
+| `CNB_BRANCH_PROTECTION` | **FAIL / NOT ACCEPTED** — scratch protected PR with zero statuses was mergeable; a failed status and direct push were blocked; pending behavior is unverified |
+| `CNB_REVIEW_GATE_TRUSTED` | **NO** — AI Review is advisory and separate from deterministic trusted CI |
+| `CNB_CONSUMER_ACCEPTED` | **NO** — strict check-must-exist behavior fails and actual `dev` does not yet contain the workflow |
+| `CNB_DEV_WORKFLOW_READY` | **NO** |
+| `CNB_CUTOVER_READY` | **NO** |
+| `FIRST_MIRROR_EXECUTED` | **NO** |
+
+## Historical Owner actions and boundaries — superseded by the current decision
+
+A previously demonstrated blocking technical control is strict required-check existence: CNB branch-protection reads expose a boolean `required_status_checks`, with no named required-check context. A disposable PR on a matching protected rule was actually tested: zero statuses gave `blocked_on=unblocked`/`mergeable_state=mergeable`; a failing status blocked merge with HTTP 409; direct push was rejected. A pending status was not separately tested. CNB's [trigger documentation](https://docs.cnb.cool/en/build/trigger-rule.html) likewise describes checks as conditional on statuses being present. Do not report this as PASS or alter the Owner-approved Plan B. A minimum Owner decision is whether to keep CNB non-primary until CNB provides a native check-must-exist control, or separately authorize testing a compensating control such as mandatory Reviewer Approval. No compensation was configured here.
+
+CNB PR #4 should **not** be merged while strict protection fails. Suggested eventual sequence after an acceptable gate and explicit Owner authority: GitHub the then-unmerged PR #96 (candidate implementation), PR #111 (evidence update), then refresh/review CNB PR #4 against the then-current `dev` and merge only by separate Owner approval. At that historical snapshot, PR #96 remained Draft, PR #111 remains open, and PR #4 remains open. No merge occurred. Issue #100 remains Open and In Progress in Project #17; #94 remains In Progress and P2 #51 remains Todo.
+
+GitHub `main` Ruleset `alnilam-main` (ID `25809753`) is active, requires a PR plus `verify` status (integration `15368`), and has no bypass actor. It blocks a direct first mirror write. The Owner has selected a PR-based mirror with no Ruleset bypass; its implementation and isolated acceptance remain outstanding. No Ruleset, mirror ref, first sync, production release/deploy, or formal tag was changed or created. `FIRST_MIRROR_EXECUTED=NO`.
+
+## Detail
+
+- [CNB CLI and native E2E](CNB-CLI.md)
+- [Developer workflow and protection matrix](CNB-WORKFLOW.md)
+- [Automatic Review and NPC evidence](CNB-REVIEW.md)
+- [Mirror policy, manifest and dry-run](MIRROR.md)
+
+ADS v0.4.2 remains pinned and materialized at `.ads` commit `375fc71f977c40c2053140c34431cc60a6d42883`; the five required ADS guidance files were read before changes. ADS source was not modified and generic ADS acceptance was not rerun.

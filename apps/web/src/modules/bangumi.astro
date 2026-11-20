@@ -1,0 +1,65 @@
+---
+import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
+import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
+import Card from "@alnilam/theme-shirone/Card.svelte";
+import { loadSite } from "../lib/site-source.mjs";
+import { loadBangumiCollections } from "../lib/bangumi.mjs";
+import { withBase } from "../lib/i18n.mjs";
+
+// Injected via astro.config.mjs only when [bangumi] enabled = true — the page
+// never ships for disabled modules.
+const { config } = loadSite();
+type BangumiCollection = { name: string; nameCn: string; cover: string; href: string; summary: string; comment: string; updatedAt: string; category: string; status: string };
+const { collections, stale, error }: { collections: BangumiCollection[]; stale: boolean; error: string | null } =
+  await loadBangumiCollections(config.bangumi);
+const CATEGORY_LABELS: Record<string, string> = { anime: "动画", book: "书籍", music: "音乐", game: "游戏" };
+const STATUS_LABELS: Record<string, string> = { "wish": "想收藏", "collected": "已完成", "doing": "进行中", "onHold": "搁置", "dropped": "抛弃" };
+const categoryLabel = (category: string) => CATEGORY_LABELS[category] ?? category;
+const pageCategory = collections[0]?.category || config.bangumi.subjectType;
+---
+<MainGridLayout title="番组计划" description={`${config.bangumi.userId} 的${categoryLabel(pageCategory)}收藏`}>
+  <Card color="var(--card-bg)" radius="l" class="p-6 mb-4">
+    <PageHeader title="Bangumi 收藏" />
+    <p>
+      <a href={`https://bgm.tv/user/${config.bangumi.userId}`} rel="noopener noreferrer">@{config.bangumi.userId}</a>
+      · <span class="bangumi-category">{categoryLabel(pageCategory)}</span> · 数据在构建时获取
+    </p>
+  </Card>
+  {stale ? (
+    <p class="module-alert" role="status">Bangumi 数据暂时无法更新，显示上次成功获取的收藏。</p>
+  ) : error ? (
+    <p class="module-alert" role="alert">Bangumi 数据暂时无法获取，请稍后重新构建。</p>
+  ) : null}
+  {collections.length ? (
+    <ul class="flex flex-col gap-4">
+      {collections.map((c) => (
+        <li><Card color="var(--card-bg)" radius="l" class="flex flex-row gap-4 p-4">
+          {c.cover && (
+            <img
+              src={withBase(c.cover)}
+              alt={`${c.nameCn} 封面`}
+              loading="lazy"
+              decoding="async"
+              width="200"
+              height="280"
+              referrerpolicy="no-referrer"
+              class="w-24 h-auto shrink-0 object-cover rounded-xl"
+              style="background: var(--surface-container)"
+            />
+          )}
+          <div class="min-w-0">
+            <h2>
+              {c.href ? <a href={c.href} rel="noopener noreferrer" >{c.nameCn}</a> : c.nameCn}
+            </h2>
+            {c.category && <p class="text-[var(--on-surface-variant)] bangumi-category">{categoryLabel(c.category)}</p>}
+            {c.status && STATUS_LABELS[c.status] && <p class="text-[var(--on-surface-variant)] bangumi-status">{STATUS_LABELS[c.status]}</p>}
+            {c.nameCn !== c.name && <p class="text-[var(--on-surface-variant)]">{c.name}</p>}
+            <p class="mt-2 line-clamp-4">{c.summary}</p>
+          </div>
+        </Card></li>
+      ))}
+    </ul>
+  ) : (
+    (stale || !error) && <p>暂无收藏。</p>
+  )}
+</MainGridLayout>

@@ -1,0 +1,144 @@
+[
+  {
+    "name": "upstream-e2e (7.3.8, 3)",
+    "id": 121443409737,
+    "url": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40284029959/job/121443409737",
+    "conclusion": "failure",
+    "counts": {
+      "passed": 119,
+      "failed": 3,
+      "skipped": 1,
+      "did not run": 0
+    },
+    "failures": [
+      "tests/site/motion.spec.ts:336:2 › sidebar pages filter (swup sync) › stats hides on post page and returns on home (animated path) ",
+      "tests/site/motion.spec.ts:367:2 › sidebar pages filter (swup sync) › stats tag icon remains self-contained after post to archive navigation ",
+      "tests/site/motion.spec.ts:379:2 › sidebar pages filter (swup sync) › rapid navigation keeps only the final page widgets visible "
+    ]
+  },
+  {
+    "name": "upstream-e2e (7.3.8, 2)",
+    "id": 121443409879,
+    "url": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40284029959/job/121443409879",
+    "conclusion": "success",
+    "counts": {
+      "passed": 99,
+      "failed": 0,
+      "skipped": 13,
+      "did not run": 0
+    },
+    "failures": []
+  },
+  {
+    "name": "upstream-e2e (7.4.2, 2)",
+    "id": 121443409896,
+    "url": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40284029959/job/121443409896",
+    "conclusion": "success",
+    "counts": {
+      "passed": 99,
+      "failed": 0,
+      "skipped": 13,
+      "did not run": 0
+    },
+    "failures": []
+  },
+  {
+    "name": "upstream-e2e (7.4.2, 1)",
+    "id": 121443409908,
+    "url": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40284029959/job/121443409908",
+    "conclusion": "success",
+    "counts": {
+      "passed": 129,
+      "failed": 0,
+      "skipped": 2,
+      "did not run": 0
+    },
+    "failures": []
+  },
+  {
+    "name": "upstream-e2e (7.4.2, 4)",
+    "id": 121443409934,
+    "url": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40284029959/job/121443409934",
+    "conclusion": "failure",
+    "counts": {
+      "passed": 68,
+      "failed": 14,
+      "skipped": 32,
+      "did not run": 0
+    },
+    "failures": [
+      "tests/site/taxonomy.spec.ts:14:2 › 分类索引页 /categories/ › 渲染页头与全部分类行（规格表：名称 + 计数 + 归档过滤链接） ──────",
+      "tests/site/taxonomy.spec.ts:80:2 › 标签索引页 /tags/ › 渲染页头与全部标签 chip（名称 + 计数徽标 + 归档过滤链接） ──────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (light) › 首页 ────────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (light) › 首页-网格 ─────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (light) › 归档 ────────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (light) › 动态 ────────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (light) › 关于 ────────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (light) › 文章页 ───────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (dark) › 首页 ─────────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (dark) › 首页-网格 ─────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (dark) › 归档 ────────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (dark) › 动态 ────────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (dark) › 关于 ────────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (dark) › 文章页 ───────────────────────────────────"
+    ]
+  },
+  {
+    "name": "upstream-e2e (7.3.8, 4)",
+    "id": 121443409945,
+    "url": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40284029959/job/121443409945",
+    "conclusion": "failure",
+    "counts": {
+      "passed": 68,
+      "failed": 14,
+      "skipped": 32,
+      "did not run": 0
+    },
+    "failures": [
+      "tests/site/taxonomy.spec.ts:14:2 › 分类索引页 /categories/ › 渲染页头与全部分类行（规格表：名称 + 计数 + 归档过滤链接） ──────",
+      "tests/site/taxonomy.spec.ts:80:2 › 标签索引页 /tags/ › 渲染页头与全部标签 chip（名称 + 计数徽标 + 归档过滤链接） ──────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (light) › 首页 ────────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (light) › 首页-网格 ─────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (light) › 归档 ────────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (light) › 动态 ────────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (light) › 关于 ────────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (light) › 文章页 ───────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (dark) › 首页 ─────────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (dark) › 首页-网格 ─────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (dark) › 归档 ────────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (dark) › 动态 ────────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (dark) › 关于 ────────────────────────────────────",
+      "tests/site/visual.spec.ts:112:4 › Site visual (dark) › 文章页 ───────────────────────────────────"
+    ]
+  },
+  {
+    "name": "upstream-e2e (7.4.2, 3)",
+    "id": 121443409955,
+    "url": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40284029959/job/121443409955",
+    "conclusion": "failure",
+    "counts": {
+      "passed": 119,
+      "failed": 3,
+      "skipped": 1,
+      "did not run": 0
+    },
+    "failures": [
+      "tests/site/motion.spec.ts:336:2 › sidebar pages filter (swup sync) › stats hides on post page and returns on home (animated path) ",
+      "tests/site/motion.spec.ts:367:2 › sidebar pages filter (swup sync) › stats tag icon remains self-contained after post to archive navigation ",
+      "tests/site/motion.spec.ts:379:2 › sidebar pages filter (swup sync) › rapid navigation keeps only the final page widgets visible "
+    ]
+  },
+  {
+    "name": "upstream-e2e (7.3.8, 1)",
+    "id": 121443409972,
+    "url": "https://github.com/Skyline-Gazer/ALNILAM/actions/runs/40284029959/job/121443409972",
+    "conclusion": "success",
+    "counts": {
+      "passed": 129,
+      "failed": 0,
+      "skipped": 2,
+      "did not run": 0
+    },
+    "failures": []
+  }
+]

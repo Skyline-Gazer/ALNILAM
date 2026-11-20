@@ -1,0 +1,13 @@
+---
+import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
+import { canonicalUrl, withBase } from "../lib/i18n.mjs";
+import { loadSite } from "../lib/site-source.mjs";
+const { config } = loadSite();
+---
+<MainGridLayout title="页面不存在" description="请求的页面不存在。" page="home" canonical={canonicalUrl("/", config.site.url)} noindex>
+  <div class="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center">
+    <h1 class="text-4xl font-semibold">404</h1>
+    <p class="text-[var(--on-surface-variant)]">请求的页面不存在或已移动。</p>
+    <a href={withBase("/")} class="text-[var(--primary)]">返回首页</a>
+  </div>
+</MainGridLayout>

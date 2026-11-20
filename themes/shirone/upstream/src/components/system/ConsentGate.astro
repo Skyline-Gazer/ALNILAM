@@ -1,0 +1,96 @@
+---
+// First-party consent gate (GH Issue #92). Rendered only when Core ships
+// `consent.mode: "basic"` AND at least one gated feature is enabled; every
+// other combination renders nothing — no module, no DOM, no requests.
+import { i18n } from "@i18n/translation";
+import I18nKey from "@i18n/i18nKey";
+import type { ConsentCategory } from "@utils/consent";
+import type { PrivacyConfig } from "virtual:alnilam-privacy";
+
+interface Props {
+	privacy: PrivacyConfig;
+}
+
+const { privacy } = Astro.props;
+
+const categories: ConsentCategory[] = [];
+if (privacy.analytics.googleAnalytics.enabled) categories.push("analytics");
+if (privacy.ads.adsense.enabled) categories.push("ads");
+
+const gated =
+	privacy.consent.mode === "basic" && categories.length > 0;
+
+if (!gated) {
+	return null;
+}
+
+const labelAttributes = {
+	"data-label-title": i18n(I18nKey.consentTitle),
+	"data-label-description": i18n(I18nKey.consentDescription),
+	"data-label-analytics": i18n(I18nKey.consentAnalytics),
+	"data-label-ads": i18n(I18nKey.consentAds),
+	"data-label-allow": i18n(I18nKey.consentAllow),
+	"data-label-deny": i18n(I18nKey.consentDeny),
+	"data-label-note": i18n(I18nKey.consentNote),
+	"data-categories": categories.join(","),
+};
+---
+
+<div id="alnilam-consent-gate" class="fixed inset-x-0 bottom-0 z-[90]" hidden {...labelAttributes}></div>
+
+<script>
+	import { initConsentGate } from "@utils/consent";
+
+	const mount = document.getElementById("alnilam-consent-gate");
+	if (mount) initConsentGate(mount);
+</script>
+
+<style>
+	#alnilam-consent-gate {
+		background: var(--surface);
+		color: var(--on-surface);
+		padding: 0.75rem 1rem;
+	}
+	#alnilam-consent-gate[hidden] {
+		display: none;
+	}
+	.alnilam-consent-panel {
+		max-width: 60rem;
+		margin: 0 auto;
+		display: grid;
+		gap: 0.5rem;
+	}
+	.alnilam-consent-title {
+		font-weight: 700;
+		margin: 0;
+	}
+	.alnilam-consent-desc,
+	.alnilam-consent-note {
+		font-size: 0.85rem;
+		color: var(--on-surface-variant);
+		margin: 0;
+	}
+	.alnilam-consent-row {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		border: 1px solid var(--outline);
+		border-radius: 0.5rem;
+		padding: 0.5rem 0.75rem;
+	}
+	.alnilam-consent-label {
+		flex: 1;
+	}
+	.alnilam-consent-btn {
+		border: 1px solid var(--outline);
+		border-radius: 9999px;
+		background: transparent;
+		color: var(--on-surface);
+		padding: 0.25rem 1rem;
+		cursor: pointer;
+	}
+	.alnilam-consent-btn:hover {
+		background: var(--primary);
+		color: var(--surface);
+	}
+</style>

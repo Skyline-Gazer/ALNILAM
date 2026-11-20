@@ -1,0 +1,6 @@
+---
+import SearchRoute from "../../components/SearchRoute.astro";
+import { loadSite } from "../../lib/site-source.mjs";
+const { config } = loadSite();
+---
+<SearchRoute locale={config.site.locale} />

@@ -1,9 +1,28 @@
 import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import { z } from "astro/zod";
+import fs from "node:fs";
+import path from "node:path";
 import { loadSite } from "./lib/site-source.mjs";
+import { loadSiteTaxonomy, resolvePostCategory } from "./lib/taxonomy";
+import { normalizeMomentImageUrl } from "./lib/moments.mjs";
 
-const { root } = loadSite();
+const { root, config } = loadSite();
+const taxonomy = loadSiteTaxonomy(root, config);
+const base = new URL(config.site.url).pathname.replace(/\/$/, "");
+const seriesDir = path.join(root, "content/series");
+const momentsDir = path.join(root, "content/moments");
+const pagesDir = path.join(root, "content/pages");
+
+function resolveCover(cover: string | undefined, basePath: string): string {
+  if (!cover) return "";
+  if (/^(?:https?:|data:|\/\/)/i.test(cover)) return cover;
+  if (cover.startsWith("/")) return `${basePath}${cover}`;
+  const clean = cover
+    .replace(/^(?:\.\.?\/)+/, "")
+    .replace(/^(?:site-)?assets\//, "");
+  return `${basePath}/site-assets/${clean}`;
+}
 
 const posts = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: root + "/content/posts" }),
@@ -13,14 +32,109 @@ const posts = defineCollection({
     pubDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
     cover: z.string().optional(),
+    category: z.string().default(""),
     tags: z.array(z.string()).default([]),
+    series: z.string().default(""),
+    seriesOrder: z.number().int().optional(),
+    pinned: z.boolean().default(false),
     draft: z.boolean().default(false),
+    private: z.boolean().default(false),
+    unlisted: z.boolean().default(false),
     // i18n (schema v1 additive): `lang` is BCP-47, defaults to the site locale.
     // `translationKey` groups translations of the same article; when present on
     // any post, hreflang alternates are rendered for the whole group.
     lang: z.string().regex(/^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$/, "must be a BCP-47 tag").optional(),
     translationKey: z.string().min(1).optional(),
+    // Stable Giscus term override. Use this when a source file or public slug
+    // may move but the discussion thread must stay the same.
+    commentId: z.string().min(1).max(200).regex(/^\S+$/, "must not contain whitespace").optional(),
+  }).transform((data) => ({
+    ...data,
+    draft: data.draft || data.private || data.unlisted,
+    published: data.pubDate,
+    updated: data.updatedDate,
+    image: resolveCover(data.cover, base),
+    pinned: data.pinned,
+    category: resolvePostCategory(data.category, taxonomy.categories),
+    series: data.series.trim(),
+    seriesOrder: data.seriesOrder,
+    // Upstream CommentSection is disabled in favor of ALNILAM's Core Comments island.
+    encrypted: false, hideHomeContent: true,
+    comment: config.comments.enabled,
+    prevTitle: '', prevSlug: '', nextTitle: '', nextSlug: '',
+  })),
+});
+
+const seriesSchema = z
+  .object({
+    title: z.string().min(1),
+    status: z.enum(["ongoing", "completed"]).default("ongoing"),
+    defaultCategory: z.string().default(""),
+  })
+  .transform((data) => ({
+    ...data,
+    defaultCategory: resolvePostCategory(data.defaultCategory, taxonomy.categories),
+  }));
+const series = defineCollection({
+  loader: fs.existsSync(seriesDir) ? glob({ pattern: "**/*.{md,mdx}", base: seriesDir }) : async () => [],
+  schema: seriesSchema,
+});
+
+const moments = defineCollection({
+  loader: config.moments.enabled && fs.existsSync(momentsDir)
+    ? glob({ pattern: "**/*.md", base: momentsDir })
+    : async () => [],
+  schema: z.object({
+    published: z.coerce.date(),
+    pinned: z.boolean().default(false),
+    location: z.string().default(""),
+    mood: z.string().default(""),
+    tags: z.array(z.string()).default([]),
+    images: z.array(z.object({
+      src: z.string().min(1),
+      thumbnail: z.string().min(1).optional(),
+      alt: z.string().default(""),
+      width: z.number().int().positive().optional(),
+      height: z.number().int().positive().optional(),
+    }).superRefine((image, context) => {
+      if ((image.width === undefined) !== (image.height === undefined)) {
+        context.addIssue({ code: "custom", message: "width and height must be provided together" });
+      }
+    }).transform(({ src, thumbnail, alt, width, height }) => ({
+      src: normalizeMomentImageUrl(src),
+      ...(thumbnail ? { thumbnailSrc: normalizeMomentImageUrl(thumbnail) } : {}),
+      ...(width !== undefined && height !== undefined ? { width, height } : {}),
+      alt,
+    }))).default([]),
+    draft: z.boolean().default(false),
   }),
 });
-export const collections = { posts };
+const pages = defineCollection({
+  loader: fs.existsSync(pagesDir)
+    ? glob({
+        pattern: "**/*.{md,mdx}",
+        base: pagesDir,
+        generateId: ({ entry }) => entry.replace(/\\/g, "/").replace(/\.(?:md|mdx)$/i, ""),
+      })
+    : async () => [],
+  schema: z.object({
+    title: z.string().min(1),
+    description: z.string().default(""),
+    pubDate: z.coerce.date().optional(),
+    updatedDate: z.coerce.date().optional(),
+    cover: z.string().optional(),
+    category: z.string().default(""),
+    tags: z.array(z.string()).default([]),
+    draft: z.boolean().default(false),
+    lang: z.string().regex(/^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$/, "must be a BCP-47 tag").optional(),
+    translationKey: z.string().min(1).optional(),
+  }).transform((data) => ({
+    ...data,
+    published: data.pubDate,
+    updated: data.updatedDate,
+    image: resolveCover(data.cover, base),
+  })),
+});
+const emptyCollection = (schema = z.object({title: z.string().default('')})) => defineCollection({loader: async () => [], schema});
+export const collections = { posts, series, pages, moments, spec: emptyCollection() };
 

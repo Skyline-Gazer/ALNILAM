@@ -1,0 +1,22 @@
+schemaVersion: 2
+site:
+  title: Ads Fixture
+  description: Deterministic AdSense fixture for Issue #90.
+  url: https://ads.example.com
+  locale: zh-CN
+locales:
+  - zh-CN
+  - en
+theme:
+  appearance: dark
+consent:
+  mode: off
+ads:
+  adsense:
+    enabled: true
+    clientId: ca-pub-0000000000000000
+    mode: auto
+    recovery:
+      mode: custom
+      dismissDays: 7
+    adsTxt: google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0

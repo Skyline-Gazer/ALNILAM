@@ -1,0 +1,27 @@
+---
+/**
+ * Locale switcher (M3 pill row). Rendered inside the top app bar and kept in
+ * its own component with no scoped stylesheet, so Astro adds no
+ * data-astro-cid-* attributes to the emitted markup — the list pages sit
+ * within a few hundred bytes of the 64 KiB document budget and the cid
+ * overhead was pushing them over.
+ */
+interface Props {
+	targets: Array<{
+		locale: string;
+		label: string;
+		href: string;
+		active: boolean;
+		exact: boolean;
+	}>;
+}
+
+const { targets } = Astro.props;
+---
+{targets.length > 1 && (
+	<div class="top-app-bar__lang" data-lang-switcher>
+		{targets.map((item) => (
+			<a href={item.href} data-lang-target={item.locale} data-lang-exact={item.active ? undefined : item.exact ? "true" : "false"} class:list={["top-app-bar__lang-item", item.active && "top-app-bar__lang-item--active"]}>{item.label}</a>
+		))}
+	</div>
+)}

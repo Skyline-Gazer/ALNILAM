@@ -1,0 +1,57 @@
+---
+import { render, type CollectionEntry } from "astro:content";
+import Card from "@alnilam/theme-shirone/Card.svelte";
+import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
+import Markdown from "@alnilam/theme-shirone/Markdown.astro";
+import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
+import {
+  getMarkdownMathStylesheetAssets,
+  getMarkdownStylesheetAssets,
+} from "@alnilam/theme-shirone/markdown-assets";
+
+interface Props {
+  page: CollectionEntry<"pages">;
+  lang: string;
+  canonical: string;
+  alternates?: Array<{ lang: string; href: string }>;
+  feedUrl?: string | null;
+}
+
+const { page, lang, canonical, alternates, feedUrl } = Astro.props;
+const hasArticleMetadata = Boolean(
+  page.data.pubDate || page.data.updatedDate || page.data.category || page.data.tags.length,
+);
+const { Content, remarkPluginFrontmatter } = await render(page);
+const markdownStylesheetAssets = await getMarkdownStylesheetAssets(
+  remarkPluginFrontmatter.markdownSyntaxes,
+);
+const markdownMathStylesheetAssets = getMarkdownMathStylesheetAssets(
+  remarkPluginFrontmatter.markdownSyntaxes,
+);
+---
+<MainGridLayout
+  title={page.data.title}
+  description={page.data.description || page.data.title}
+  ogImage={page.data.image}
+  setOGTypeArticle={hasArticleMetadata}
+  page="pages"
+  lang={lang}
+  canonical={canonical}
+  alternates={alternates}
+  feedUrl={feedUrl}
+>
+  <Fragment slot="head">
+    {markdownMathStylesheetAssets.map(({ pack, href }) => <link rel="stylesheet" data-swup-optional={pack} href={href} />)}
+    {markdownStylesheetAssets.map(({ pack, href }) => <link rel="stylesheet" data-swup-optional={pack} href={href} />)}
+    {page.data.pubDate && <meta property="article:published_time" content={page.data.pubDate.toISOString()} />}
+    {page.data.updatedDate && <meta property="article:modified_time" content={page.data.updatedDate.toISOString()} />}
+    {page.data.category && <meta property="article:section" content={page.data.category} />}
+    {page.data.tags.map((tag) => <meta property="article:tag" content={tag} />)}
+  </Fragment>
+  <Card color="var(--card-bg)" radius="l" class="p-6 lg:p-8">
+    <PageHeader title={page.data.title} subtitle={page.data.description} />
+    <Markdown class="mt-2">
+      <Content />
+    </Markdown>
+  </Card>
+</MainGridLayout>

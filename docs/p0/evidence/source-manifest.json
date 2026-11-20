@@ -1,0 +1,54 @@
+[
+  {
+    "name": "Shirone",
+    "remote": "https://github.com/LyraVoid/Shirone.git",
+    "sha": "55a84b2322bdfb634a59ca6383bb242e5ce646bf",
+    "detached": true,
+    "clean": true,
+    "licenses_sha256": {
+      "LICENSE": "3d0dde254e123f698ff9bb1754a05687a1c365abe33bc6c4ecede896cafdc260"
+    }
+  },
+  {
+    "name": "Firefly",
+    "remote": "https://github.com/CuteLeaf/Firefly.git",
+    "sha": "cd920b035b475fe9a6cd3a88afb42cf9440bb8a9",
+    "detached": true,
+    "clean": true,
+    "licenses_sha256": {
+      "LICENSE": "d403e8d1dc09f7088b029a65b37895cce1a5802c086321c2df3a28ba779399f6"
+    }
+  },
+  {
+    "name": "KIRARI",
+    "remote": "https://github.com/markd3ng/KIRARI.git",
+    "sha": "5700bcdeb965de87a1818d5d9aec6bf8e227523d",
+    "detached": true,
+    "clean": true,
+    "licenses_sha256": {
+      "LICENSE": "6b8a446a639c963e76a03328a38b08b0b201f1c2b08a4fd6069cafcbb2d8bb34"
+    }
+  },
+  {
+    "name": "Mizuki",
+    "remote": "https://github.com/matsuzaka-yuki/Mizuki.git",
+    "sha": "14da4262d8aa1d93dc8cff11705f14918ed7369f",
+    "detached": true,
+    "clean": true,
+    "licenses_sha256": {
+      "LICENSE.MIT": "cfec60c9db7545ab647ad32ff6733aa6049112cb792689a0b6fa3a7676d49cad",
+      "LICENSE": "981c97d60ef02d6b455704b66ed31e578017b2d327763f1db00480749321d934"
+    }
+  },
+  {
+    "name": "ALNILAM-v0.1.3",
+    "remote": "https://github.com/Skyline-Gazer/ALNILAM.git",
+    "sha": "07fac43cba0c3d303c930c098b6e2124b2c79e4a",
+    "detached": true,
+    "clean": true,
+    "licenses_sha256": {
+      "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "NOTICE": "fc4c704a0d51bfaea8fef4e9c8b3be0f1fadfbcb637e4977ab06c3bbed763a30"
+    }
+  }
+]
