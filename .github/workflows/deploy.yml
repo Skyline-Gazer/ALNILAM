@@ -63,14 +63,19 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Guard the caller-supplied inputs
+        env:
+          SITE_REPOSITORY: ${{ inputs.site_repository }}
+          SITE_REF: ${{ inputs.site_ref }}
+          DEPLOY_BASE: ${{ inputs.deploy_base }}
+          PAGES_ROOT_URL: ${{ vars.PAGES_ROOT_URL }}
         run: |
-          if [ -n "${{ inputs.site_repository }}" ]; then
-            echo "${{ inputs.site_ref }}" | grep -Eq '^[0-9a-f]{40}$' || {
+          if [ -n "$SITE_REPOSITORY" ]; then
+            printf '%s\n' "$SITE_REF" | grep -Eq '^[0-9a-f]{40}$' || {
               echo "::error::site_ref must be a full 40-hex lowercase commit SHA"
               exit 1
             }
           fi
-          if [ "${{ inputs.deploy_base }}" = "root" ] && [ -z "${{ vars.PAGES_ROOT_URL }}" ]; then
+          if [ "$DEPLOY_BASE" = "root" ] && [ -z "$PAGES_ROOT_URL" ]; then
             echo "::error::deploy_base=root requires the PAGES_ROOT_URL repository variable"
             exit 1
           fi
@@ -91,7 +96,7 @@ jobs:
       - name: Compose the demo Site for Pages
         if: ${{ inputs.site_repository == '' }}
         env:
-          ALNILAM_SITE_URL: ${{ vars.PAGES_URL || 'https://skyline-gazer.github.io/ALNILAM/' }}
+          ALNILAM_SITE_URL: ${{ inputs.deploy_base == 'root' && vars.PAGES_ROOT_URL || vars.PAGES_URL || 'https://skyline-gazer.github.io/ALNILAM/' }}
           SOURCE_DATE_EPOCH: "1700000000"
         run: |
           node scripts/compose.mjs --site sites/demo --out dist/site
