@@ -12,7 +12,7 @@
 
 ### Boundaries and tracking
 
-- Separate project `alnilam-production-next` remains linked to `main`; no deployment targeted it, and no Vercel settings, SSO, domain, `main`, tag, or release asset changed.
+- Separate project `alnilam-production-next` remains linked to `main` with SSO for Production URLs and Previews. Its pre-existing SSO-gated Production-target deployment `dpl_9FFgYBAbQx2Ttkmb3ktruup8ftMb` uses `main` SHA `285a62cecd87f8f20276c7cc989537a391f488c8` and is not a public release. Pushing this PR branch triggered Preview deployments `dpl_5pzTaTynYDboyCCy7Ay5h3uKAgW9` on that project and `dpl_DrKciigUV3Vjj67SF2GfcieHQwoC` on Demo project `xxxx`; no new Production-target deployment, Vercel setting, SSO, or domain change occurred. `main`, the tag, and release assets were unchanged.
 - Issue #138 remains Open / In Progress: the historical dev-to-Production anomaly is unexplained, and formal Production release/custom-domain activation remain Owner-gated. Issue #147 remains Open / In Progress for the incomplete transitive source/license inventory, current-tree credential review, and historical raster-rights follow-up.
 
 ## Live-state update — 2026-11-20 · Foundation v0.2.0 released
