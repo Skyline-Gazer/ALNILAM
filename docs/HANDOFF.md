@@ -1,5 +1,20 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-21 · Development Demo distribution
+
+### Demo deployment
+
+- Verified GitHub `dev` at `fd64c5decc49d56de91a7810d0951abdace4cb03`; it contains PR #178 (merge `e55f47c109c1dec93fc75f20861cfd2c7aa7da39`). `main` and annotated tag `v0.2.0` remain at `e8239cf4f2272c7cb9429f8c740aa6677f9ed040`.
+- Existing Vercel Demo project `xxxx` (`prj_2eRtFJHWRJPlM90z2CPT5kJA1XNg`) remains linked to `Skyline-Gazer/ALNILAM` with `productionBranch=dev`. `vercel build --prod` at the exact SHA passed artifact-check (92 page records, 436 island references, budgets OK); `vercel deploy --prebuilt --prod --yes` created [deployment `dpl_GzyqkyquuXH8sgauKA6NTAUAVQyX`](https://vercel.com/martyjstogner-2766s-projects/xxxx/GzyqkyquuXH8sgauKA6NTAUAVQyX), READY and assigned to the stable alias [xxxx-beryl-theta.vercel.app](https://xxxx-beryl-theta.vercel.app/). Vercel's `--prod` target here is scoped to this Demo project: this was a public Demo deployment, not a formal Production deployment or release.
+- Public `/alnilam-provenance.json` reports Core `fd64c5decc49d56de91a7810d0951abdace4cb03` and Site digest `1761ca3abb68de22ddffc157b1763b20dd847ffa0fb9b9bfedb56d9f1d65c4db`. All 19 notice URLs returned HTTP 200 and byte-matched their canonical sources: 15 `LICENSES/*.txt` files plus `LICENSE`, `NOTICE`, `CREDITS.md`, and `THIRD_PARTY_NOTICES.md`.
+- Local Chromium regression passed 12/12 root/nested desktop/mobile Moments, PhotoSwipe, and drawer-hydration cases. Live Chromium confirmed PhotoSwipe navigation `1 / 3` → `2 / 3`, Escape close and focus restoration; mobile navigation open/close and focus restoration; Moments navigation `1 / 2` → `2 / 2`, Escape close and focus restoration. No browser errors were recorded.
+- `/credits/`, `/licenses/`, and `/alnilam-notices/` return 404; site navigation/footer contain no Credits/Licenses link. Notices remain static assets under `/site-assets/alnilam-notices/`. The architectural prohibition in #147 remains in force: no ALNILAM Credits/Licenses page, route, component, navigation/footer link, or Site-template injection. Previous Demo deployment `dpl_Boj4fvzMayQuUXUu9F5RLYL4hKxf` remains READY and inspectable for rollback.
+
+### Boundaries and tracking
+
+- Separate project `alnilam-production-next` remains linked to `main`; no deployment targeted it, and no Vercel settings, SSO, domain, `main`, tag, or release asset changed.
+- Issue #138 remains Open / In Progress: the historical dev-to-Production anomaly is unexplained, and formal Production release/custom-domain activation remain Owner-gated. Issue #147 remains Open / In Progress for the incomplete transitive source/license inventory, current-tree credential review, and historical raster-rights follow-up.
+
 ## Live-state update — 2026-11-20 · Foundation v0.2.0 released
 
 ### Release
