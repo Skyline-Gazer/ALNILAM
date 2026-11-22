@@ -47,6 +47,16 @@ type SlideExtras = SlideData & {
 const STYLE_ATTR = "data-alnilam-lightbox-css";
 const PROBE_TIMEOUT_MS = 8_000;
 const PLACEHOLDER_SIZE = 1;
+const PHOTOSWIPE_FOCUSABLE_SELECTOR = [
+	"a[href]",
+	"area[href]",
+	"button",
+	'input:not([type="hidden"])',
+	"select",
+	"textarea",
+	'[contenteditable="true"]',
+	"[tabindex]",
+].join(",");
 
 function isSitePath(raw: string): boolean {
 	if (!raw) return false;
@@ -366,6 +376,40 @@ export class FancyboxHandler {
 		this.handleActivate(event);
 	};
 
+	private trapPhotoSwipeTab(event: KeyboardEvent, root: HTMLElement): void {
+		let first: HTMLElement | null = null;
+		let last: HTMLElement | null = null;
+		let activeIsFocusable = false;
+		const active = document.activeElement;
+		for (const element of root.querySelectorAll<HTMLElement>(PHOTOSWIPE_FOCUSABLE_SELECTOR)) {
+			const style = getComputedStyle(element);
+			if (
+				element.tabIndex < 0 ||
+				element.matches(":disabled") ||
+				element.hidden ||
+				element.closest("[inert], [aria-hidden='true']") ||
+				style.display === "none" ||
+				style.visibility === "hidden" ||
+				element.getClientRects().length === 0
+			) {
+				continue;
+			}
+			first ??= element;
+			last = element;
+			activeIsFocusable ||= element === active;
+		}
+		if (!first || !last) {
+			event.preventDefault();
+			root.focus({ preventScroll: true });
+			return;
+		}
+		if (!activeIsFocusable || (event.shiftKey ? active === first : active === last)) {
+			event.preventDefault();
+			(event.shiftKey ? last : first).focus({ preventScroll: true });
+		}
+	}
+
+
 	async init(): Promise<void> {
 		if (!this.checkForImages()) return;
 		this.initPromise ??= this.doInit().catch((error) => {
@@ -670,6 +714,15 @@ export class FancyboxHandler {
 			if (this.lightbox === lightbox) this.lightbox = null;
 			if (this.openPswp === lightbox.pswp) this.openPswp = null;
 			this.restoreFocus();
+		});
+
+		lightbox.on("keydown", (event) => {
+			const { originalEvent } = event;
+			if (originalEvent.key !== "Tab") return;
+			const root = lightbox.pswp?.element;
+			if (!root) return;
+			event.preventDefault();
+			this.trapPhotoSwipeTab(originalEvent, root);
 		});
 
 		lightbox.on("contentLoadImage", ({ content }) => {

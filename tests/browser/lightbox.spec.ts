@@ -407,7 +407,7 @@ for (const [name, origin] of deployments) {
 
 		test(`keyboard a11y trap and caption ${name} ${width}`, async ({ browser }) => {
 			const context = await browser.newContext({
-				viewport: { width, height: 1000 },
+				viewport: { width, height: width === 390 ? 844 : 1000 },
 				reducedMotion: "reduce",
 			});
 			const page = await context.newPage();
@@ -434,22 +434,49 @@ for (const [name, origin] of deployments) {
 			await expect.poll(async () => page.locator(".pswp__counter").textContent()).not.toBe(before);
 			await assertSlideLoaded(page, responses);
 
-			await page.locator('.pswp__button--close, .pswp [title="Close"]').first().focus();
-			let trapped = 0;
-			for (let i = 0; i < 6; i += 1) {
-				await page.keyboard.press("Tab");
-				const inside = await page.evaluate(() =>
-					Boolean(document.activeElement?.closest(".pswp")),
-				);
-				if (inside) trapped += 1;
-			}
-			expect(trapped).toBeGreaterThan(0);
-			const underlyingFocused = await page.evaluate(() => {
-				const el = document.activeElement;
-				if (!el) return false;
-				return !el.closest(".pswp") && el !== document.body && el !== document.documentElement;
+			const closeButton = container.locator(".pswp__button--close");
+			const zoomButton = container.locator(".pswp__button--zoom");
+			await expect(closeButton).toBeVisible();
+			const zoomAvailable = await zoomButton.isVisible();
+			if (width === 390) await expect(zoomButton).toBeVisible();
+			await closeButton.focus();
+			await expect(closeButton).toBeFocused();
+			const focusState = () => page.evaluate(() => {
+				const active = document.activeElement;
+				return {
+					inside: Boolean(active?.closest(".pswp")),
+					close: active instanceof Element && active.matches(".pswp__button--close"),
+					zoom: active instanceof Element && active.matches(".pswp__button--zoom"),
+				};
 			});
-			expect(underlyingFocused).toBe(false);
+			let zoomReached = false;
+			let returnedToClose = false;
+			for (let i = 0; i < 12; i += 1) {
+				await page.keyboard.press("Tab");
+				const active = await focusState();
+				expect(active.inside).toBe(true);
+				zoomReached ||= active.zoom;
+				if (active.close) {
+					returnedToClose = true;
+					break;
+				}
+			}
+			expect(zoomReached).toBe(zoomAvailable);
+			expect(returnedToClose).toBe(true);
+			let reverseZoomReached = false;
+			returnedToClose = false;
+			for (let i = 0; i < 12; i += 1) {
+				await page.keyboard.press("Shift+Tab");
+				const active = await focusState();
+				expect(active.inside).toBe(true);
+				reverseZoomReached ||= active.zoom;
+				if (active.close) {
+					returnedToClose = true;
+					break;
+				}
+			}
+			expect(reverseZoomReached).toBe(zoomAvailable);
+			expect(returnedToClose).toBe(true);
 
 			const caption = page.locator(".pswp__custom-caption");
 			await expect(caption).toHaveCount(1);
@@ -461,6 +488,7 @@ for (const [name, origin] of deployments) {
 			expect(text).toMatch(/Lighthouse|fixture|Orion|External|Signed|Protocol|Thumb|Missing|Grid/i);
 
 			await closeLightbox(page, container, await page.evaluate(() => window.scrollY));
+			await expect(trigger).toBeFocused();
 			await context.close();
 		});
 
