@@ -220,8 +220,8 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 			paragraph.style.display = "none";
 			Object.assign(paragraph.style, {
 				margin: "0",
-				fontSize: "1px",
-				lineHeight: "1px",
+				fontSize: "16px",
+				lineHeight: "20px",
 				whiteSpace: "nowrap",
 			});
 			const spacer = document.createElement("div");
@@ -266,8 +266,10 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 		await expect.poll(async () => {
 			const state = await inspectOverlap(page);
 			return state.overlaps.length > 0 && state.visuallyHidden && state.textObscured &&
-				state.inert && state.ariaHidden === "true";
-		}).toBe(true);
+				state.inert && state.ariaHidden === "true"
+				? "ready"
+				: JSON.stringify(state);
+		}).toBe("ready");
 		await info.attach("floating-controls-transform-return.png", {
 			body: await page.screenshot({ animations: "disabled" }),
 			contentType: "image/png",
