@@ -328,7 +328,7 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 	}
 });
 
-test("rebuilds obstruction targets when protected content mounts after initialization", async ({ browser }, info) => {
+test("rebuilds obstruction targets for decrypted content without a TOC", async ({ browser }, info) => {
 	for (const [name, origin] of [["root", ROOT], ["nested", NESTED]] as const) {
 		const context = await browser.newContext({
 			viewport: { width: 390, height: 844 },
@@ -356,6 +356,11 @@ test("rebuilds obstruction targets when protected content mounts after initializ
 			const response = await page.goto(`${origin}${ARTICLE}`, { waitUntil: "load" });
 			expect(response?.status()).toBe(200);
 			await expect(page.locator(".markdown-content[data-pagefind-body]")).toHaveCount(0);
+			await page.evaluate(() => {
+				document.querySelectorAll("table-of-contents").forEach((toc) => toc.remove());
+			});
+			await expect(page.locator("table-of-contents")).toHaveCount(0);
+
 
 			await page.evaluate(() => {
 				const placeholder = document.querySelector<HTMLElement>(".encrypted-post-placeholder");
@@ -367,7 +372,7 @@ test("rebuilds obstruction targets when protected content mounts after initializ
 				content.append(paragraph);
 				placeholder.after(content);
 				paragraph.scrollIntoView({ block: "end", behavior: "instant" });
-				document.dispatchEvent(new CustomEvent("shirone:toc-synced"));
+				document.dispatchEvent(new CustomEvent("shirone:post-content-mounted"));
 			});
 			await expect.poll(async () => {
 				const state = await inspectOverlap(page);
@@ -407,7 +412,7 @@ test("limits scroll obstruction reads to visible article blocks", async ({ brows
 				paragraphs.append(paragraph);
 			}
 			content.append(paragraphs);
-			document.dispatchEvent(new CustomEvent("shirone:toc-synced"));
+			document.dispatchEvent(new CustomEvent("shirone:post-content-mounted"));
 		});
 		await expect(page.locator("#floating-controls")).not.toHaveAttribute(
 			"data-fab-text-obstruction-pending",
@@ -454,6 +459,66 @@ test("limits scroll obstruction reads to visible article blocks", async ({ brows
 		}, textBlockSelector);
 		expect(measurements.totalBlocks).toBeGreaterThan(1000);
 		expect(measurements.blockReads).toBeLessThan(measurements.totalBlocks / 4);
+	} finally {
+		await context.close();
+	}
+});
+
+test("moves focus to visible article text when closing TOC hides overlapping controls", async ({ browser }) => {
+	const context = await browser.newContext({
+		viewport: { width: 390, height: 1000 },
+		isMobile: true,
+		hasTouch: true,
+		reducedMotion: "reduce",
+	});
+	const page = await context.newPage();
+	try {
+		const response = await page.goto(`${ROOT}${ARTICLE}`, { waitUntil: "load" });
+		expect(response?.status()).toBe(200);
+		await page.evaluate(() => document.fonts.ready);
+
+		const button = page.locator("#fab-toc-btn button");
+		await button.focus();
+		await page.keyboard.press("Enter");
+		const panel = page.locator("#floating-toc-panel");
+		await expect(panel).toHaveAttribute("aria-hidden", "false");
+		await page.evaluate(() => {
+			const paragraph = document.querySelector<HTMLElement>(".markdown-content p");
+			const button = document.querySelector<HTMLElement>("#fab-toc-btn button");
+			if (!paragraph || !button) throw new Error("Article paragraph or TOC button is missing");
+			const buttonRect = button.getBoundingClientRect();
+			const paragraphRect = paragraph.getBoundingClientRect();
+			Object.assign(paragraph.style, {
+				position: "relative",
+				top: `${buttonRect.top + 1 - paragraphRect.top}px`,
+				left: `${buttonRect.left + 1 - paragraphRect.left}px`,
+				margin: "0",
+				fontSize: "16px",
+				lineHeight: "20px",
+				whiteSpace: "nowrap",
+			});
+		});
+		await expect.poll(async () => {
+			const state = await inspectOverlap(page);
+			return state.overlaps.length > 0 && !state.visuallyHidden && !state.inert;
+		}).toBe(true);
+
+		await page.keyboard.press("Escape");
+		await expect(panel).toHaveAttribute("aria-hidden", "true");
+		await expect(page.locator("#floating-controls")).toHaveAttribute("aria-hidden", "true");
+		const focus = await page.evaluate(() => {
+			const active = document.activeElement;
+			return {
+				isBody: active === document.body,
+				inControls: Boolean(active && document.getElementById("floating-controls")?.contains(active)),
+				inArticle: active instanceof HTMLElement && Boolean(active.closest(".markdown-content")),
+				text: active?.textContent?.trim() ?? "",
+			};
+		});
+		expect(focus.isBody).toBe(false);
+		expect(focus.inControls).toBe(false);
+		expect(focus.inArticle).toBe(true);
+		expect(focus.text.length).toBeGreaterThan(0);
 	} finally {
 		await context.close();
 	}

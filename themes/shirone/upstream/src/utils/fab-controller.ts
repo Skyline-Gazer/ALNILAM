@@ -437,11 +437,13 @@ class FabController {
 			}
 		});
 
-		// 解密协调器重建侧栏 TOC 后发出通知，刷新悬浮目录（覆盖面板已打开时解密完成的情况）
-		// Decrypted article content may mount after the controller cached its targets.
-		document.addEventListener("shirone:toc-synced", () => {
+		// Article content mounts independently from whether a TOC sidebar is configured.
+		document.addEventListener("shirone:post-content-mounted", () => {
 			this.refreshTextObstructionTargets();
 			this.resetMobileVisibility();
+		});
+		// The TOC event only updates the floating TOC after its source has been rebuilt.
+		document.addEventListener("shirone:toc-synced", () => {
 			this.syncFloatingToc();
 		});
 		// Keep endpoint overlap hidden until the scroll-return transform settles.
@@ -521,9 +523,45 @@ class FabController {
 		document
 			.querySelector("#fab-toc-btn button")
 			?.setAttribute("aria-expanded", "false");
-		if (this.previousFocus?.isConnected) this.previousFocus.focus();
+		const previousFocus = this.previousFocus;
 		this.previousFocus = null;
 		this.syncTextObstruction();
+		const controls = document.getElementById("floating-controls");
+		if (!previousFocus?.isConnected) return;
+		if (controls?.contains(previousFocus) && controls.hasAttribute("inert")) {
+			this.focusVisibleArticleText();
+		} else {
+			previousFocus.focus();
+		}
+	}
+
+	private focusVisibleArticleText(): void {
+		const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+		let target: HTMLElement | null = null;
+		for (const block of this.articleTextVisibleBlocks) {
+			if (!block.isConnected) continue;
+			const rect = block.getBoundingClientRect();
+			if (
+				block.getClientRects().length > 0 &&
+				getComputedStyle(block).visibility !== "hidden" &&
+				rect.bottom > 0 &&
+				rect.top < viewportHeight
+			) {
+				target = block;
+				break;
+			}
+		}
+		target ??= this.articleTextRoot;
+		if (!target) return;
+		if (!target.hasAttribute("tabindex")) {
+			target.setAttribute("tabindex", "-1");
+			target.addEventListener(
+				"blur",
+				() => target.removeAttribute("tabindex"),
+				{ once: true },
+			);
+		}
+		target.focus({ preventScroll: true });
 	}
 
 	public scrollToTop(): void {

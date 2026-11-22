@@ -25,6 +25,7 @@ export function initPostDecryption(container: HTMLElement): void {
 	void initMarkdownRuntime(container);
 
 	void initFancyboxRuntime(container);
+	document.dispatchEvent(new CustomEvent("shirone:post-content-mounted"));
 
 	syncTableOfContents(container);
 
