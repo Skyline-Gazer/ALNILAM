@@ -245,7 +245,8 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 			for (const block of content.querySelectorAll<HTMLElement>(selector)) {
 				if (block !== paragraph) block.style.display = "none";
 			}
-			paragraph.textContent = "x";
+			// Keep a horizontal margin if control transforms shift the button a few pixels.
+			paragraph.textContent = "x".repeat(24);
 			const baseRect = button.getBoundingClientRect();
 			const originalTransition = controls.style.transition;
 			const wasScrollHidden = controls.classList.contains("fab-scroll-hidden");
@@ -257,7 +258,7 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 			const travel = hiddenTop - baseRect.top;
 			if (travel <= 1) throw new Error("Scroll-hidden transform has no measurable travel");
 			paragraph.style.display = "none";
-			const fontSize = `${Math.max(1, Math.floor(travel / 2))}px`;
+			const fontSize = `${Math.max(1, Math.floor(travel / 3))}px`;
 			Object.assign(paragraph.style, {
 				margin: "0",
 				fontSize,
@@ -296,10 +297,11 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 			const range = document.createRange();
 			range.selectNodeContents(paragraph);
 			const textRect = range.getBoundingClientRect();
-			if (textRect.height >= travel - 1) throw new Error("Transition fixture text is taller than the control travel");
-			// Place the glyph inside the visible endpoint while the scroll-hidden endpoint stays clear.
+			const endpointInset = 4;
+			if (textRect.height >= travel - endpointInset) throw new Error("Transition fixture text is too tall for the control travel");
+			// Place the text inside the visible endpoint and clear of the scroll-hidden endpoint.
 			const visibleControlTop = hiddenTop - travel;
-			paragraph.style.top = `${visibleControlTop + 2 - window.scrollY - textRect.top}px`;
+			paragraph.style.top = `${visibleControlTop + endpointInset - window.scrollY - textRect.top}px`;
 			paragraph.style.left = `${baseLeft + 2 - textRect.left}px`;
 		}, { baseLeft: metrics.baseLeft, hiddenTop: metrics.hiddenTop, travel: metrics.travel });
 		await expect.poll(async () => {
