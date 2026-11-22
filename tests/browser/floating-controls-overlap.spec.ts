@@ -193,18 +193,6 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 		reducedMotion: "no-preference",
 	});
 	const page = await context.newPage();
-	const waitForTransformEnd = () => page.locator("#floating-controls").evaluate((element) =>
-		new Promise<void>((resolve) => {
-			const controls = element as HTMLElement;
-			const onTransitionEnd = (event: Event) => {
-				const transition = event as TransitionEvent;
-				if (transition.target !== controls || transition.propertyName !== "transform") return;
-				controls.removeEventListener("transitionend", onTransitionEnd);
-				resolve();
-			};
-			controls.addEventListener("transitionend", onTransitionEnd);
-		}),
-	);
 	try {
 		await page.goto(`${ROOT}${ARTICLE}`, { waitUntil: "load" });
 		await page.evaluate(() => document.fonts.ready);
@@ -216,7 +204,7 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 			if (!content || !controls || !button || !paragraph) throw new Error("Transition fixture elements are missing");
 
 			for (const block of content.querySelectorAll<HTMLElement>(selector)) {
-				if (block !== paragraph) block.style.visibility = "hidden";
+				if (block !== paragraph) block.style.display = "none";
 			}
 			paragraph.textContent = "x";
 			const baseRect = button.getBoundingClientRect();
@@ -229,10 +217,8 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 			controls.style.transition = originalTransition;
 			const travel = hiddenTop - baseRect.top;
 			if (travel <= 1) throw new Error("Scroll-hidden transform has no measurable travel");
+			paragraph.style.display = "none";
 			Object.assign(paragraph.style, {
-				position: "fixed",
-				top: `${baseRect.top + travel / 2}px`,
-				left: `${baseRect.left + 2}px`,
 				margin: "0",
 				fontSize: "1px",
 				lineHeight: "1px",
@@ -246,20 +232,37 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 				const duration = Number.parseFloat(value);
 				return Math.max(max, value.trim().endsWith("ms") ? duration : duration * 1000);
 			}, 0);
-			return { travel, durationMs };
+			return { travel, durationMs, baseTop: baseRect.top, baseLeft: baseRect.left, hiddenTop };
 		}, textBlockSelector);
 		expect(metrics.travel).toBeGreaterThan(1);
 		expect(metrics.durationMs).toBeGreaterThan(0);
-		await expect.poll(async () => (await inspectOverlap(page)).overlaps.length).toBeGreaterThan(0);
+		await page.evaluate(() => window.dispatchEvent(new Event("scroll")));
+		await expect.poll(async () => {
+			const state = await inspectOverlap(page);
+			return state.overlaps.length === 0 && !state.visuallyHidden && !state.textObscured;
+		}).toBe(true);
 
-		const hiddenTransition = waitForTransformEnd();
 		await page.evaluate(() => scrollTo(0, 120));
-		await expect.poll(async () => (await inspectOverlap(page)).scrollHidden).toBe(true);
-		await hiddenTransition;
+		await expect.poll(async () => {
+			const state = await inspectOverlap(page);
+			const top = await page.locator("#fab-toc-btn button").evaluate((button) => button.getBoundingClientRect().top);
+			return state.scrollHidden && Math.abs(top - metrics.hiddenTop) <= 1;
+		}).toBe(true);
+		await page.evaluate(({ baseTop, baseLeft }) => {
+			const paragraph = document.querySelector<HTMLElement>(".markdown-content[data-pagefind-body] p");
+			if (!paragraph) throw new Error("Transition fixture paragraph is missing");
+			paragraph.style.display = "";
+			const rect = paragraph.getBoundingClientRect();
+			paragraph.style.position = "relative";
+			paragraph.style.top = `${baseTop + 1 - window.scrollY - rect.top}px`;
+			paragraph.style.left = `${baseLeft + 2 - rect.left}px`;
+		}, { baseTop: metrics.baseTop, baseLeft: metrics.baseLeft });
+		await expect.poll(async () => {
+			const state = await inspectOverlap(page);
+			return state.scrollHidden && state.overlaps.length === 0 && !state.textObscured;
+		}).toBe(true);
 
-		const returnTransition = waitForTransformEnd();
 		await page.evaluate(() => scrollTo(0, 0));
-		await returnTransition;
 		await expect.poll(async () => {
 			const state = await inspectOverlap(page);
 			return state.overlaps.length > 0 && state.visuallyHidden && state.textObscured &&
