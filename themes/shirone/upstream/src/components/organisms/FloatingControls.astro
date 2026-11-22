@@ -51,6 +51,8 @@ const isHomeItemVisible = homeItem
 		{ "m3-floating-controls-container--start": fabConfig.align === "start" },
 	]}
 	data-banner-height={BANNER_HEIGHT}
+	data-fab-text-obstruction={page === "post" ? "true" : undefined}
+	data-fab-text-obstruction-pending={page === "post" ? "true" : undefined}
 	style={`--fab-bottom: ${fabConfig.offset?.bottom ?? "var(--m3e-space-8)"}; --fab-inline-offset: ${fabConfig.offset?.right ?? "var(--m3e-space-6)"}`}
 >
 	<!-- 1. TOC 悬浮目录项与弹窗 -->
@@ -150,9 +152,16 @@ const isHomeItemVisible = homeItem
 		transform: translateY(var(--m3e-space-3))
 		pointer-events: none
 
+	&.fab-text-obscured
+		visibility: hidden
+
 	&--start
 		right: auto
 		left: var(--fab-inline-offset)
+
+@media (max-width: 767.98px)
+	.m3-floating-controls-container[data-fab-text-obstruction-pending]
+		visibility: hidden
 
 @media (prefers-reduced-motion: reduce)
 	.m3-floating-controls-container
