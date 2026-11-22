@@ -245,7 +245,8 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 			for (const block of content.querySelectorAll<HTMLElement>(selector)) {
 				if (block !== paragraph) block.style.display = "none";
 			}
-			paragraph.textContent = "x";
+			// Keep the fixture wide enough that overlap does not depend on a few subpixels.
+			paragraph.textContent = "x".repeat(16);
 			const baseRect = button.getBoundingClientRect();
 			const originalTransition = controls.style.transition;
 			const wasScrollHidden = controls.classList.contains("fab-scroll-hidden");
