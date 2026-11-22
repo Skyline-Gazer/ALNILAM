@@ -13,6 +13,8 @@ let keywordDesktop = "";
 let keywordMobile = "";
 let result: SearchResult[] = [];
 let isSearching = false;
+let desktopSearchFailed = false;
+let mobileSearchFailed = false;
 let pagefindLoaded = false;
 let initialized = false;
 let requestGeneration = 0;
@@ -33,10 +35,14 @@ $: panelResults = result.map((r) => ({
 // A finished search that matched nothing is an answer, not a broken panel:
 // the panel states it instead of showing an empty box.
 $: visibleQuery = desktopLayout ? keywordDesktop : keywordMobile;
+$: visibleSearchFailed = desktopLayout ? desktopSearchFailed : mobileSearchFailed;
 $: showNoResults =
 	Boolean(visibleQuery.trim()) &&
 	panelResults.length === 0 &&
+	!visibleSearchFailed &&
 	!isSearching;
+$: showSearchError =
+	Boolean(visibleQuery.trim()) && visibleSearchFailed && !isSearching;
 
 const fakeResult: SearchResult[] = [
 	{
@@ -107,6 +113,8 @@ const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
 	if (!keyword) {
 		setPanelVisibility(false, isDesktop);
 		result = [];
+		if (isDesktop) desktopSearchFailed = false;
+		else mobileSearchFailed = false;
 		return;
 	}
 
@@ -115,6 +123,8 @@ const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
 	}
 
 	isSearching = true;
+	if (isDesktop) desktopSearchFailed = false;
+	else mobileSearchFailed = false;
 
 	try {
 		let searchResults: SearchResult[] = [];
@@ -137,8 +147,7 @@ const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
 					response.results.map((item) => item.data()),
 				);
 			} else {
-				searchResults = [];
-				console.error("Pagefind is not available in production environment.");
+				throw new Error("Pagefind is not available in production environment.");
 			}
 		} else if (import.meta.env.DEV) {
 			searchResults = fakeResult;
@@ -154,7 +163,9 @@ const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
 		if (!initialized || generation !== requestGeneration) return;
 		console.error("Search error:", error);
 		result = [];
-		setPanelVisibility(false, isDesktop);
+		if (isDesktop) desktopSearchFailed = true;
+		else mobileSearchFailed = true;
+		setPanelVisibility(true, isDesktop);
 	} finally {
 		if(generation === requestGeneration) isSearching = false;
 	}
@@ -265,5 +276,7 @@ $: if (initialized) {
     placeholder={t(I18nKey.search)}
     noResultsText={t(I18nKey.searchNoResults)}
     showNoResults={showNoResults}
+    errorText={t(I18nKey.searchUnavailable)}
+    showError={showSearchError}
     hideInputOnDesktop
 />

@@ -9,8 +9,8 @@ import { expect, test, type Page } from "@playwright/test";
  * click-through, and root + /ALNILAM/ deployments.
  */
 
-const ROOT = "http://127.0.0.1:4323";
-const NESTED = "http://127.0.0.1:4324/ALNILAM";
+const ROOT = process.env.ALNILAM_TEST_ROOT_URL ?? "http://127.0.0.1:4323";
+const NESTED = process.env.ALNILAM_TEST_NESTED_URL ?? "http://127.0.0.1:4324/ALNILAM";
 
 const deployments = [
 	["root", ROOT],
@@ -81,6 +81,37 @@ for (const [name, origin] of deployments) {
 			await link.click();
 			await expect(page).toHaveURL(`${origin}${path}`);
 			await expect(page.getByRole("searchbox", { name: label })).toBeVisible();
+		}
+	});
+	test(`searches visible English article titles ${name}`, async ({ browser }, info) => {
+		const testOrigin = name === "root"
+			? process.env.ALNILAM_TEST_ROOT_URL ?? ROOT
+			: process.env.ALNILAM_TEST_NESTED_URL ?? NESTED;
+		const base = new URL(testOrigin).pathname.replace(/\/$/, "");
+		const context = await browser.newContext({
+			viewport: { width: 390, height: 844 },
+			isMobile: true,
+			hasTouch: true,
+			reducedMotion: "reduce",
+		});
+		const page = await context.newPage();
+		try {
+			const response = await page.goto(`${testOrigin}/en/`, { waitUntil: "networkidle" });
+			expect(response?.status()).toBe(200);
+			const input = await openSearch(page, "mobile");
+			await input.click();
+			await input.fill("Pagination sample");
+			const result = page.locator("#search-panel").getByRole("link").filter({ hasText: "Pagination sample" }).first();
+			await expect(result).toBeVisible({ timeout: 15_000 });
+			await expect(result).toHaveAttribute("href", `${base}/en/posts/pagination-sample/`);
+			await info.attach(`pagefind-title-${name}-390x844.png`, {
+				body: await page.screenshot({ animations: "disabled" }),
+				contentType: "image/png",
+			});
+			await result.click();
+			await expect(page).toHaveURL(`${testOrigin}/en/posts/pagination-sample/`);
+		} finally {
+			await context.close();
 		}
 	});
 
@@ -165,6 +196,53 @@ for (const [name, origin] of deployments) {
 		await context.close();
 	});
 
+	test(`pagefind returns the visible English title ${name}`, async ({ browser }) => {
+		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
+		const page = await context.newPage();
+		const base = new URL(origin).pathname.replace(/\/$/, "");
+		await page.goto(`${origin}/en/`, { waitUntil: "networkidle" });
+		const input = await openSearch(page, "desktop");
+		const href = await searchAndClickFirstResult(page, input, "Pagination sample");
+		expect(href).toBe(`${base}/en/posts/pagination-sample/`);
+		await expect(page.locator("main h1")).toHaveText("Pagination sample");
+		await context.close();
+	});
+
+	test(`Pagefind retries without a worker after a transient metadata failure ${name}`, async ({ browser }) => {
+		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
+		let metadataRequests = 0;
+		await context.route("**/pagefind/pagefind-entry.json*", async (route) => {
+			metadataRequests += 1;
+			if (metadataRequests === 1) {
+				await route.fulfill({ status: 502, body: "temporary metadata failure" });
+				return;
+			}
+			await route.continue();
+		});
+		const page = await context.newPage();
+		const base = new URL(origin).pathname.replace(/\/$/, "");
+		await page.goto(`${origin}/en/`, { waitUntil: "networkidle" });
+		const input = await openSearch(page, "desktop");
+		const href = await searchAndClickFirstResult(page, input, "Pagination sample");
+		expect(metadataRequests).toBeGreaterThanOrEqual(2);
+		expect(href).toBe(`${base}/en/posts/pagination-sample/`);
+		await context.close();
+	});
+
+	test(`Pagefind reports unavailable indexes instead of no results ${name}`, async ({ browser }) => {
+		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
+		await context.route("**/pagefind/pagefind-entry.json*", async (route) => {
+			await route.fulfill({ status: 404, body: "missing index" });
+		});
+		const page = await context.newPage();
+		await page.goto(`${origin}/en/`, { waitUntil: "networkidle" });
+		const input = await openSearch(page, "desktop");
+		await input.fill("Pagination sample");
+		const panel = page.locator("#search-panel");
+		await expect(panel.getByRole("status")).toHaveText("Search is temporarily unavailable. Please try again.", { timeout: 15_000 });
+		await expect(panel.getByText("No results", { exact: true })).toHaveCount(0);
+		await context.close();
+	});
 	test(`drafts and fixtures stay out of pagefind index files ${name}`, async ({ browser }) => {
 		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
 		const page = await context.newPage();

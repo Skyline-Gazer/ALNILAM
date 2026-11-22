@@ -11,6 +11,7 @@ export const vi: Translation = {
 	[Key.archiveGroupTag]: "Theo thẻ",
 	[Key.search]: "Tìm kiếm",
 	[Key.searchNoResults]: "Không có kết quả",
+	[Key.searchUnavailable]: "Tìm kiếm tạm thời không khả dụng. Vui lòng thử lại sau.",
 	[Key.menu]: "Menu",
 	[Key.displaySettings]: "Cài đặt hiển thị",
 	[Key.mainNavigation]: "Điều hướng chính",

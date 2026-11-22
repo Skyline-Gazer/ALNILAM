@@ -363,18 +363,52 @@ if (import.meta.env.PROD) {
 		win.__pagefindLoadingPromise = (async () => {
 			try {
 				const pagefind = await import(/* @vite-ignore */ scriptUrl);
+				const pagefindOptions = {
+					excerptLength: 20,
+					baseUrl: import.meta.env.BASE_URL.replace(/\/?$/, "/"),
+				};
 				if (typeof pagefind.init === "function") {
 					await pagefind.init();
 				}
-				await pagefind.options({ excerptLength: 20, baseUrl: import.meta.env.BASE_URL.replace(/\/?$/, "/") });
-				window.pagefind = pagefind;
+				await pagefind.options(pagefindOptions);
+				type PagefindSearchApi = NonNullable<Window["pagefind"]>;
+				let inThreadPagefind: Promise<PagefindSearchApi> | undefined;
+				let workerSearchFailed = false;
+				const loadInThreadPagefind = (): Promise<PagefindSearchApi> => {
+					if (!inThreadPagefind) {
+						inThreadPagefind = (async () => {
+							const instance = pagefind.createInstance({ noWorker: true });
+							await instance.options(pagefindOptions);
+							await instance.init();
+							return instance as PagefindSearchApi;
+						})().catch((fallbackError: unknown) => {
+							inThreadPagefind = undefined;
+							throw fallbackError;
+						});
+					}
+					return inThreadPagefind;
+				};
+				const searchWithWorkerFallback = async (query: string) => {
+					if (workerSearchFailed) {
+						return (await loadInThreadPagefind()).search(query);
+					}
+					try {
+						return await pagefind.search(query);
+					} catch (error) {
+						workerSearchFailed = true;
+						console.warn("Pagefind worker search failed; retrying without a worker.", error);
+						return (await loadInThreadPagefind()).search(query);
+					}
+				};
+				window.pagefind = { search: searchWithWorkerFallback };
 				document.dispatchEvent(new CustomEvent("pagefindready"));
-				return pagefind;
+				return window.pagefind;
 			} catch (error) {
 				console.error("Failed to load Pagefind:", error);
 				window.pagefind = {
-					search: () => Promise.resolve({ results: [] }),
-					options: () => Promise.resolve(),
+					search: async () => {
+						throw error;
+					},
 				};
 				document.dispatchEvent(new CustomEvent("pagefindloaderror"));
 				return window.pagefind;

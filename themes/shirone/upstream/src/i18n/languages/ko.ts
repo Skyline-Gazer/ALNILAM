@@ -11,6 +11,7 @@ export const ko: Translation = {
 	[Key.archiveGroupTag]: "태그별",
 	[Key.search]: "검색",
 	[Key.searchNoResults]: "결과가 없습니다",
+	[Key.searchUnavailable]: "검색을 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.",
 	[Key.menu]: "메뉴",
 	[Key.displaySettings]: "표시 설정",
 	[Key.mainNavigation]: "주요 탐색",

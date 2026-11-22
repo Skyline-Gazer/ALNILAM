@@ -11,6 +11,7 @@ export const zh_TW: Translation = {
 	[Key.archiveGroupTag]: "依標籤",
 	[Key.search]: "搜尋",
 	[Key.searchNoResults]: "找不到結果",
+	[Key.searchUnavailable]: "搜尋暫時無法使用，請稍後再試。",
 	[Key.menu]: "選單",
 	[Key.displaySettings]: "顯示設定",
 	[Key.mainNavigation]: "主導航",

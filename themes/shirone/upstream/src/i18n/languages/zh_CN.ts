@@ -11,6 +11,7 @@ export const zh_CN: Translation = {
 	[Key.archiveGroupTag]: "按标签",
 	[Key.search]: "搜索",
 	[Key.searchNoResults]: "没有找到结果",
+	[Key.searchUnavailable]: "搜索暂时不可用，请稍后重试。",
 	[Key.menu]: "菜单",
 	[Key.displaySettings]: "显示设置",
 	[Key.mainNavigation]: "主导航",
