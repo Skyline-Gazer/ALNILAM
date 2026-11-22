@@ -13,6 +13,9 @@ interface FabControllerState {
 	tocOpen: boolean;
 	bannerHeight: number;
 }
+const ARTICLE_TEXT_BLOCK_SELECTOR =
+	"h1, h2, h3, h4, h5, h6, p, li, blockquote, pre, td, th, figcaption, dt, dd";
+
 
 class FabController {
 	private state: FabControllerState = {
@@ -29,6 +32,15 @@ class FabController {
 	private mobileScrollAnchor = window.scrollY;
 	private visualViewportHeight = window.visualViewport?.height ?? 0;
 	private visualViewportWidth = window.visualViewport?.width ?? 0;
+	private mobileScrollHidden = false;
+	private articleTextObscured = false;
+	private articleTextRoot: HTMLElement | null = null;
+	private articleTextBlocks: HTMLElement[] = [];
+	private articleTextResizeObserver: ResizeObserver | null = null;
+	private textObstructionFrame: number | null = null;
+	private readonly articleTextRange = document.createRange();
+	private readonly articleControlRects: DOMRect[] = [];
+
 
 	constructor() {
 		this.init();
@@ -42,6 +54,10 @@ class FabController {
 				this.state.bannerHeight = parsed;
 			}
 		}
+		if (document.fonts) {
+			void document.fonts.ready.then(() => this.syncTextObstruction());
+		}
+
 
 		if (this.bound) {
 			this.syncPageState();
@@ -83,12 +99,14 @@ class FabController {
 				}
 			}
 			this.syncMobileScrollVisibility(scrollTop);
+			this.scheduleTextObstructionSync();
 		};
 
 		window.addEventListener("scroll", handleScroll, { passive: true });
-		this.mobileViewport.addEventListener("change", () =>
-			this.resetMobileVisibility(),
-		);
+		this.mobileViewport.addEventListener("change", () => {
+			this.refreshTextObstructionTargets();
+			this.resetMobileVisibility();
+		});
 		handleScroll();
 	}
 
@@ -106,6 +124,9 @@ class FabController {
 
 	private bindMobileViewportListener(): void {
 		const viewport = window.visualViewport;
+		window.addEventListener("resize", () => this.scheduleTextObstructionSync(), {
+			passive: true,
+		});
 		if (!viewport) return;
 		const sync = () => {
 			const widthChanged =
@@ -127,28 +148,182 @@ class FabController {
 			}
 			this.visualViewportHeight = viewport.height;
 			this.visualViewportWidth = viewport.width;
+			this.scheduleTextObstructionSync();
 		};
 		viewport.addEventListener("resize", sync);
 		viewport.addEventListener("scroll", sync);
 	}
 
 	private setMobileControlsHidden(hidden: boolean): void {
+		const wasHidden = this.mobileScrollHidden;
+		this.mobileScrollHidden = hidden;
+		if (!hidden && wasHidden) {
+			document
+				.getElementById("floating-controls")
+				?.classList.remove("fab-scroll-hidden");
+			this.syncTextObstruction();
+		} else {
+			this.applyMobileControlsVisibility();
+		}
+	}
+	private refreshTextObstructionTargets(): void {
+		const controls = document.getElementById("floating-controls");
+		const content =
+			this.mobileViewport.matches &&
+			controls?.dataset.fabTextObstruction === "true"
+				? document.querySelector<HTMLElement>(
+						".markdown-content[data-pagefind-body]",
+					)
+				: null;
+		this.articleTextResizeObserver?.disconnect();
+		this.articleTextRoot = content;
+		const rangeRoot = content ?? document.body;
+		if (rangeRoot) this.articleTextRange.selectNodeContents(rangeRoot);
+		this.articleControlRects.length = 0;
+		this.articleTextBlocks = content
+			? Array.from(
+					content.querySelectorAll<HTMLElement>(ARTICLE_TEXT_BLOCK_SELECTOR),
+				)
+			: [];
+		if (content && controls) {
+			controls.setAttribute("data-fab-text-obstruction-pending", "true");
+			if (typeof ResizeObserver !== "undefined") {
+				const layout = document.getElementById("content-wrapper");
+				this.articleTextResizeObserver = new ResizeObserver(() =>
+					this.syncTextObstruction(),
+				);
+				this.articleTextResizeObserver.observe(content);
+				if (layout && layout !== content) {
+					this.articleTextResizeObserver.observe(layout);
+				}
+			}
+		} else {
+			controls?.removeAttribute("data-fab-text-obstruction-pending");
+		}
+		this.syncTextObstruction();
+	}
+
+	private scheduleTextObstructionSync(): void {
+		if (this.textObstructionFrame !== null) return;
+		this.textObstructionFrame = requestAnimationFrame(() => {
+			this.textObstructionFrame = null;
+			this.syncTextObstruction();
+		});
+	}
+
+	private syncTextObstruction(): void {
 		const controls = document.getElementById("floating-controls");
 		if (!controls) return;
+		const isMobileArticle =
+			this.mobileViewport.matches &&
+			controls.dataset.fabTextObstruction === "true" &&
+			!this.state.tocOpen;
+		if (!isMobileArticle) {
+			this.articleTextObscured = false;
+			controls.removeAttribute("data-fab-text-obstruction-pending");
+			this.applyMobileControlsVisibility(controls);
+			return;
+		}
+		if (this.mobileScrollHidden) {
+			this.applyMobileControlsVisibility(controls);
+			return;
+		}
+		this.articleTextObscured = this.hasArticleTextOverlap(controls);
+		controls.removeAttribute("data-fab-text-obstruction-pending");
+		this.applyMobileControlsVisibility(controls);
+	}
+
+	private hasArticleTextOverlap(controls: HTMLElement): boolean {
+		if (!this.articleTextRoot || this.articleTextBlocks.length === 0) return false;
+		const buttonRects = this.articleControlRects;
+		buttonRects.length = 0;
+		let left = Number.POSITIVE_INFINITY;
+		let right = Number.NEGATIVE_INFINITY;
+		let top = Number.POSITIVE_INFINITY;
+		let bottom = Number.NEGATIVE_INFINITY;
+		for (const item of controls.querySelectorAll<HTMLElement>("[data-fab-item]")) {
+			const slot = item.closest<HTMLElement>("[data-fab-slot]") ?? item;
+			const style = getComputedStyle(item);
+			if (
+				style.display === "none" ||
+				item.classList.contains("is-hidden") ||
+				item.classList.contains("is-page-hidden") ||
+				slot.classList.contains("hidden") ||
+				item.dataset.fabPageAllowed === "false" ||
+				item.dataset.fabScrollAllowed === "false"
+			) {
+				continue;
+			}
+			const button = item.querySelector<HTMLElement>("button") ?? item;
+			const rect = button.getBoundingClientRect();
+			if (rect.width <= 0 || rect.height <= 0) continue;
+			buttonRects.push(rect);
+			left = Math.min(left, rect.left);
+			right = Math.max(right, rect.right);
+			top = Math.min(top, rect.top);
+			bottom = Math.max(bottom, rect.bottom);
+		}
+		if (buttonRects.length === 0) return false;
+
+		for (const block of this.articleTextBlocks) {
+			const blockRect = block.getBoundingClientRect();
+			if (
+				blockRect.right <= left ||
+				blockRect.left >= right ||
+				blockRect.bottom <= top ||
+				blockRect.top >= bottom
+			) {
+				continue;
+			}
+			const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+			while (walker.nextNode()) {
+				const text = walker.currentNode;
+				if (!text.textContent?.trim()) continue;
+				this.articleTextRange.selectNodeContents(text);
+				for (const textRect of this.articleTextRange.getClientRects()) {
+					for (const buttonRect of buttonRects) {
+						if (
+							Math.min(textRect.right, buttonRect.right) >
+								Math.max(textRect.left, buttonRect.left) &&
+							Math.min(textRect.bottom, buttonRect.bottom) >
+								Math.max(textRect.top, buttonRect.top)
+						) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	private applyMobileControlsVisibility(
+		controls = document.getElementById("floating-controls"),
+	): void {
+		if (!controls) return;
+		const scrollHidden = this.mobileViewport.matches && this.mobileScrollHidden;
+		const textHidden =
+			this.mobileViewport.matches &&
+			(this.articleTextObscured ||
+				controls.hasAttribute("data-fab-text-obstruction-pending"));
+		const hidden = scrollHidden || textHidden;
 		if (hidden && controls.contains(document.activeElement)) {
 			(document.activeElement as HTMLElement).blur();
 		}
-		controls.classList.toggle("fab-scroll-hidden", hidden);
+		controls.classList.toggle("fab-scroll-hidden", scrollHidden);
+		controls.classList.toggle("fab-text-obscured", textHidden);
 		controls.toggleAttribute("inert", hidden);
 		if (hidden) controls.setAttribute("aria-hidden", "true");
 		else controls.removeAttribute("aria-hidden");
 	}
+
 
 	private resetMobileVisibility(): void {
 		this.mobileScrollAnchor = window.scrollY;
 		this.visualViewportHeight = window.visualViewport?.height ?? 0;
 		this.visualViewportWidth = window.visualViewport?.width ?? 0;
 		this.setMobileControlsHidden(false);
+		this.syncTextObstruction();
 	}
 
 	private bindEvents(): void {
@@ -237,6 +412,7 @@ class FabController {
 				? document.activeElement
 				: null;
 		this.state.tocOpen = true;
+		this.syncTextObstruction();
 		panel.classList.add("is-open");
 		panel.setAttribute("aria-hidden", "false");
 		document
@@ -257,6 +433,7 @@ class FabController {
 			?.setAttribute("aria-expanded", "false");
 		if (this.previousFocus?.isConnected) this.previousFocus.focus();
 		this.previousFocus = null;
+		this.syncTextObstruction();
 	}
 
 	public scrollToTop(): void {
@@ -295,9 +472,14 @@ class FabController {
 	}
 
 	public syncPageState(): void {
-		this.resetMobileVisibility();
 		const container = document.getElementById("swup-container");
 		const currentPage = container?.dataset.currentPage;
+		const controls = document.getElementById("floating-controls");
+		if (controls) {
+			controls.dataset.fabTextObstruction = String(currentPage === "post");
+		}
+		this.refreshTextObstructionTargets();
+		this.resetMobileVisibility();
 		const hasCommentsAttr = container?.dataset.hasComments;
 		const items = document.querySelectorAll<HTMLElement>("[data-fab-item]");
 
@@ -407,6 +589,7 @@ class FabController {
 				slot.classList.remove("hidden");
 			});
 			this.clearLegacyVisibilityClasses(slots);
+			this.syncTextObstruction();
 			return;
 		}
 		this.clearLegacyVisibilityClasses(slots);
@@ -418,15 +601,33 @@ class FabController {
 		enterers.forEach(({ slot }) => {
 			slot.classList.remove("hidden");
 		});
+		const settlingAnimations = new Set<Animation>();
 		visibleBefore
 			.filter((visible) => !exiters.some(({ slot }) => slot === visible))
 			.forEach((visible) => {
 				const rect = rects.get(visible);
-				if (rect) flipFromRect(visible, rect);
+				if (!rect) return;
+				const before = new Set(visible.getAnimations());
+				flipFromRect(visible, rect);
+				visible.getAnimations().forEach((animation) => {
+					if (!before.has(animation)) settlingAnimations.add(animation);
+				});
 			});
 		enterers.forEach(({ slot }) => {
+			const before = new Set(slot.getAnimations());
 			revealIn(slot);
+			slot.getAnimations().forEach((animation) => {
+				if (!before.has(animation)) settlingAnimations.add(animation);
+			});
 		});
+		this.syncTextObstruction();
+		if (settlingAnimations.size > 0) {
+			void Promise.all(
+				Array.from(settlingAnimations, (animation) =>
+					animation.finished.catch(() => undefined),
+				),
+			).then(() => this.syncTextObstruction());
+		}
 	}
 
 	private clearLegacyVisibilityClasses(
