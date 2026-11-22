@@ -14,7 +14,7 @@ const overlapCases = [
 
 async function inspectOverlap(page: Page) {
 	return page.evaluate((textSelector) => {
-		const content = document.querySelector<HTMLElement>(".markdown-content[data-pagefind-body]");
+		const content = document.querySelector<HTMLElement>(".markdown-content");
 		const controls = document.querySelector<HTMLElement>("#floating-controls");
 		if (!content || !controls) throw new Error("Article text or floating controls are missing");
 
@@ -262,7 +262,56 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 			return state.scrollHidden && state.overlaps.length === 0 && !state.textObscured;
 		}).toBe(true);
 
-		await page.evaluate(() => scrollTo(0, 0));
+		const midpoint = await page.evaluate((travel) => {
+			const controls = document.getElementById("floating-controls");
+			if (!controls) throw new Error("Floating controls are missing");
+			return new Promise<{
+				transformOffset: number;
+				visibility: string;
+				textObscured: boolean;
+				inert: boolean;
+				ariaHidden: string | null;
+			}>((resolve, reject) => {
+				let timeout: number;
+				const cleanup = () => {
+					window.clearTimeout(timeout);
+					controls.removeEventListener("transitionrun", onTransitionRun);
+				};
+				const sample = () => {
+					const transform = getComputedStyle(controls).transform;
+					const transformOffset =
+						transform === "none" ? 0 : new DOMMatrixReadOnly(transform).f;
+					if (transformOffset > 1 && transformOffset < travel - 1) {
+						cleanup();
+						resolve({
+							transformOffset,
+							visibility: getComputedStyle(controls).visibility,
+							textObscured: controls.classList.contains("fab-text-obscured"),
+							inert: controls.hasAttribute("inert"),
+							ariaHidden: controls.getAttribute("aria-hidden"),
+						});
+					} else {
+						requestAnimationFrame(sample);
+					}
+				};
+				const onTransitionRun = (event: TransitionEvent) => {
+					if (event.target !== controls || event.propertyName !== "transform") return;
+					requestAnimationFrame(sample);
+				};
+				controls.addEventListener("transitionrun", onTransitionRun);
+				timeout = window.setTimeout(() => {
+					cleanup();
+					reject(new Error("Control return transform did not reach its midpoint"));
+				}, 1500);
+				window.scrollTo(0, 0);
+			});
+		}, metrics.travel);
+		expect(midpoint.transformOffset).toBeGreaterThan(1);
+		expect(midpoint.transformOffset).toBeLessThan(metrics.travel - 1);
+		expect(midpoint.visibility).toBe("hidden");
+		expect(midpoint.textObscured).toBe(true);
+		expect(midpoint.inert).toBe(true);
+		expect(midpoint.ariaHidden).toBe("true");
 		await expect.poll(async () => {
 			const state = await inspectOverlap(page);
 			return state.overlaps.length > 0 && state.visuallyHidden && state.textObscured &&
@@ -313,7 +362,6 @@ test("rebuilds obstruction targets when protected content mounts after initializ
 				if (!placeholder?.parentElement) throw new Error("Protected article placeholder is missing");
 				const content = document.createElement("div");
 				content.className = "markdown-content";
-				content.setAttribute("data-pagefind-body", "");
 				const paragraph = document.createElement("p");
 				paragraph.textContent = "Decrypted article text must remain visible and unobstructed. ".repeat(100);
 				content.append(paragraph);
@@ -333,6 +381,81 @@ test("rebuilds obstruction targets when protected content mounts after initializ
 		} finally {
 			await context.close();
 		}
+	}
+});
+
+
+test("limits scroll obstruction reads to visible article blocks", async ({ browser }) => {
+	const context = await browser.newContext({
+		viewport: { width: 390, height: 844 },
+		isMobile: true,
+		hasTouch: true,
+		reducedMotion: "reduce",
+	});
+	const page = await context.newPage();
+	try {
+		const response = await page.goto(`${ROOT}${ARTICLE}`, { waitUntil: "load" });
+		expect(response?.status()).toBe(200);
+		await page.evaluate(() => document.fonts.ready);
+		await page.evaluate(() => {
+			const content = document.querySelector<HTMLElement>(".markdown-content");
+			if (!content) throw new Error("Article content is missing");
+			const paragraphs = document.createDocumentFragment();
+			for (let index = 0; index < 1200; index += 1) {
+				const paragraph = document.createElement("p");
+				paragraph.textContent = `Measured article paragraph ${index}.`;
+				paragraphs.append(paragraph);
+			}
+			content.append(paragraphs);
+			document.dispatchEvent(new CustomEvent("shirone:toc-synced"));
+		});
+		await expect(page.locator("#floating-controls")).not.toHaveAttribute(
+			"data-fab-text-obstruction-pending",
+		);
+		await page.evaluate(() => window.scrollTo(0, 3000));
+		await expect.poll(async () =>
+			page.locator("#floating-controls").evaluate((controls) =>
+				controls.classList.contains("fab-scroll-hidden"),
+			),
+		).toBe(true);
+
+		const measurements = await page.evaluate(async (selector) => {
+			const content = document.querySelector<HTMLElement>(".markdown-content");
+			if (!content) throw new Error("Article content is missing");
+			const totalBlocks = content.querySelectorAll(selector).length;
+			const original = Element.prototype.getBoundingClientRect;
+			let blockReads = 0;
+			Element.prototype.getBoundingClientRect = function (this: Element) {
+				if (
+					this instanceof HTMLElement &&
+					this.matches(selector) &&
+					this.closest(".markdown-content")
+				) {
+					blockReads += 1;
+				}
+				return original.call(this);
+			};
+			try {
+				window.scrollTo(0, Math.max(0, window.scrollY - 40));
+				window.dispatchEvent(new Event("scroll"));
+				await new Promise<void>((resolve) => {
+					let frames = 0;
+					const nextFrame = () => {
+						frames += 1;
+						if (frames === 4) resolve();
+						else requestAnimationFrame(nextFrame);
+					};
+					requestAnimationFrame(nextFrame);
+				});
+				return { totalBlocks, blockReads };
+			} finally {
+				Element.prototype.getBoundingClientRect = original;
+			}
+		}, textBlockSelector);
+		expect(measurements.totalBlocks).toBeGreaterThan(1000);
+		expect(measurements.blockReads).toBeLessThan(measurements.totalBlocks / 4);
+	} finally {
+		await context.close();
 	}
 });
 

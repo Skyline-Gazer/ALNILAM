@@ -37,6 +37,11 @@ class FabController {
 	private articleTextRoot: HTMLElement | null = null;
 	private articleTextBlocks: HTMLElement[] = [];
 	private articleTextResizeObserver: ResizeObserver | null = null;
+	private articleTextIntersectionObserver: IntersectionObserver | null = null;
+	private readonly articleTextVisibleBlocks = new Set<HTMLElement>();
+	private readonly articleTextPendingBlocks = new Set<HTMLElement>();
+	private articleTextVisibilityReady = false;
+	private controlsReturning = false;
 	private textObstructionFrame: number | null = null;
 	private readonly articleTextRange = document.createRange();
 	private readonly articleControlRects: DOMRect[] = [];
@@ -157,11 +162,24 @@ class FabController {
 	private setMobileControlsHidden(hidden: boolean): void {
 		const wasHidden = this.mobileScrollHidden;
 		this.mobileScrollHidden = hidden;
+		if (hidden) this.controlsReturning = false;
 		if (!hidden && wasHidden) {
-			document
-				.getElementById("floating-controls")
-				?.classList.remove("fab-scroll-hidden");
-			this.syncTextObstruction();
+			const controls = document.getElementById("floating-controls");
+			this.controlsReturning =
+				controls !== null && this.hasTransformTransition(controls);
+			if (controls && this.controlsReturning) {
+				const isMobileArticle =
+					this.mobileViewport.matches &&
+					controls.dataset.fabTextObstruction === "true" &&
+					!this.state.tocOpen;
+				this.articleTextObscured =
+					isMobileArticle &&
+					this.articleTextVisibilityReady &&
+					this.hasArticleTextOverlap(controls, true);
+			}
+			controls?.classList.remove("fab-scroll-hidden");
+			this.applyMobileControlsVisibility(controls);
+			if (!this.controlsReturning) this.syncTextObstruction();
 		} else {
 			this.applyMobileControlsVisibility();
 		}
@@ -171,11 +189,14 @@ class FabController {
 		const content =
 			this.mobileViewport.matches &&
 			controls?.dataset.fabTextObstruction === "true"
-				? document.querySelector<HTMLElement>(
-						".markdown-content[data-pagefind-body]",
-					)
+				? document.querySelector<HTMLElement>(".markdown-content")
 				: null;
 		this.articleTextResizeObserver?.disconnect();
+		this.articleTextIntersectionObserver?.disconnect();
+		this.articleTextIntersectionObserver = null;
+		this.articleTextVisibleBlocks.clear();
+		this.articleTextPendingBlocks.clear();
+		this.articleTextVisibilityReady = false;
 		this.articleTextRoot = content;
 		const rangeRoot = content ?? document.body;
 		if (rangeRoot) this.articleTextRange.selectNodeContents(rangeRoot);
@@ -197,7 +218,34 @@ class FabController {
 					this.articleTextResizeObserver.observe(layout);
 				}
 			}
+			if (typeof IntersectionObserver !== "undefined") {
+				const observer = new IntersectionObserver((entries) => {
+					for (const entry of entries) {
+						const block = entry.target as HTMLElement;
+						this.articleTextPendingBlocks.delete(block);
+						if (entry.isIntersecting) {
+							this.articleTextVisibleBlocks.add(block);
+						} else {
+							this.articleTextVisibleBlocks.delete(block);
+						}
+					}
+					if (this.articleTextPendingBlocks.size === 0) {
+						this.articleTextVisibilityReady = true;
+					}
+					this.scheduleTextObstructionSync();
+				});
+				this.articleTextIntersectionObserver = observer;
+				for (const block of this.articleTextBlocks) {
+					this.articleTextPendingBlocks.add(block);
+					observer.observe(block);
+				}
+				this.articleTextVisibilityReady =
+					this.articleTextPendingBlocks.size === 0;
+			} else {
+				this.articleTextVisibilityReady = true;
+			}
 		} else {
+			this.articleTextVisibilityReady = true;
 			controls?.removeAttribute("data-fab-text-obstruction-pending");
 		}
 		this.syncTextObstruction();
@@ -224,17 +272,46 @@ class FabController {
 			this.applyMobileControlsVisibility(controls);
 			return;
 		}
-		if (this.mobileScrollHidden) {
+		if (this.mobileScrollHidden || !this.articleTextVisibilityReady) {
 			this.applyMobileControlsVisibility(controls);
 			return;
 		}
-		this.articleTextObscured = this.hasArticleTextOverlap(controls);
+		this.articleTextObscured = this.hasArticleTextOverlap(
+			controls,
+			this.controlsReturning,
+		);
 		controls.removeAttribute("data-fab-text-obstruction-pending");
 		this.applyMobileControlsVisibility(controls);
 	}
 
-	private hasArticleTextOverlap(controls: HTMLElement): boolean {
+	private hasTransformTransition(controls: HTMLElement): boolean {
+		const style = getComputedStyle(controls);
+		const properties = style.transitionProperty.split(",");
+		const durations = style.transitionDuration.split(",");
+		return properties.some((property, index) => {
+			const name = property.trim();
+			return (
+				(name === "all" || name === "transform") &&
+				Number.parseFloat(durations[index % durations.length]) > 0
+			);
+		});
+	}
+
+	private hasArticleTextOverlap(
+		controls: HTMLElement,
+		atVisibleEndpoint = false,
+	): boolean {
 		if (!this.articleTextRoot || this.articleTextBlocks.length === 0) return false;
+		let controlOffsetX = 0;
+		let controlOffsetY = 0;
+		if (atVisibleEndpoint) {
+			const transform = getComputedStyle(controls).transform;
+			if (transform !== "none") {
+				const matrix = new DOMMatrixReadOnly(transform);
+				controlOffsetX = -matrix.e;
+				controlOffsetY = -matrix.f;
+			}
+		}
 		const buttonRects = this.articleControlRects;
 		buttonRects.length = 0;
 		let left = Number.POSITIVE_INFINITY;
@@ -258,35 +335,37 @@ class FabController {
 			const rect = button.getBoundingClientRect();
 			if (rect.width <= 0 || rect.height <= 0) continue;
 			buttonRects.push(rect);
-			left = Math.min(left, rect.left);
-			right = Math.max(right, rect.right);
-			top = Math.min(top, rect.top);
-			bottom = Math.max(bottom, rect.bottom);
+			left = Math.min(left, rect.left + controlOffsetX);
+			right = Math.max(right, rect.right + controlOffsetX);
+			top = Math.min(top, rect.top + controlOffsetY);
+			bottom = Math.max(bottom, rect.bottom + controlOffsetY);
 		}
 		if (buttonRects.length === 0) return false;
 
-		for (const block of this.articleTextBlocks) {
+		const candidateBlocks = this.articleTextIntersectionObserver
+			? this.articleTextVisibleBlocks
+			: this.articleTextBlocks;
+		for (const block of candidateBlocks) {
+			if (!block.isConnected) continue;
 			const blockRect = block.getBoundingClientRect();
 			if (
-				blockRect.right <= left ||
-				blockRect.left >= right ||
-				blockRect.bottom <= top ||
-				blockRect.top >= bottom
+				Math.min(blockRect.right, right) <= Math.max(blockRect.left, left) ||
+				Math.min(blockRect.bottom, bottom) <= Math.max(blockRect.top, top)
 			) {
 				continue;
 			}
 			const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
 			while (walker.nextNode()) {
-				const text = walker.currentNode;
-				if (!text.textContent?.trim()) continue;
-				this.articleTextRange.selectNodeContents(text);
+				const node = walker.currentNode;
+				if (!node.textContent?.trim()) continue;
+				this.articleTextRange.selectNodeContents(node);
 				for (const textRect of this.articleTextRange.getClientRects()) {
 					for (const buttonRect of buttonRects) {
 						if (
-							Math.min(textRect.right, buttonRect.right) >
-								Math.max(textRect.left, buttonRect.left) &&
-							Math.min(textRect.bottom, buttonRect.bottom) >
-								Math.max(textRect.top, buttonRect.top)
+							Math.min(textRect.right, buttonRect.right + controlOffsetX) >
+								Math.max(textRect.left, buttonRect.left + controlOffsetX) &&
+							Math.min(textRect.bottom, buttonRect.bottom + controlOffsetY) >
+								Math.max(textRect.top, buttonRect.top + controlOffsetY)
 						) {
 							return true;
 						}
@@ -365,10 +444,11 @@ class FabController {
 			this.resetMobileVisibility();
 			this.syncFloatingToc();
 		});
-		// Scroll-hidden removal starts a transform transition; recheck at its final geometry.
+		// Keep endpoint overlap hidden until the scroll-return transform settles.
 		const syncAfterControlsTransform = (event: TransitionEvent) => {
 			const controls = document.getElementById("floating-controls");
 			if (event.target !== controls || event.propertyName !== "transform") return;
+			this.controlsReturning = false;
 			this.syncTextObstruction();
 		};
 		document.addEventListener("transitionend", syncAfterControlsTransform);
