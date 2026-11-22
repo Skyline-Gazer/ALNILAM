@@ -377,10 +377,9 @@ export class FancyboxHandler {
 	};
 
 	private trapPhotoSwipeTab(event: KeyboardEvent, root: HTMLElement): void {
-		let first: HTMLElement | null = null;
-		let last: HTMLElement | null = null;
-		let activeIsFocusable = false;
+		const focusable: HTMLElement[] = [];
 		const active = document.activeElement;
+		let activeIndex = -1;
 		for (const element of root.querySelectorAll<HTMLElement>(PHOTOSWIPE_FOCUSABLE_SELECTOR)) {
 			const style = getComputedStyle(element);
 			if (
@@ -394,19 +393,20 @@ export class FancyboxHandler {
 			) {
 				continue;
 			}
-			first ??= element;
-			last = element;
-			activeIsFocusable ||= element === active;
+			if (element === active) activeIndex = focusable.length;
+			focusable.push(element);
 		}
-		if (!first || !last) {
-			event.preventDefault();
+		event.preventDefault();
+		if (focusable.length === 0) {
 			root.focus({ preventScroll: true });
 			return;
 		}
-		if (!activeIsFocusable || (event.shiftKey ? active === first : active === last)) {
-			event.preventDefault();
-			(event.shiftKey ? last : first).focus({ preventScroll: true });
-		}
+		const nextIndex =
+			activeIndex < 0
+				? event.shiftKey ? focusable.length - 1 : 0
+				: (activeIndex + (event.shiftKey ? -1 : 1) + focusable.length) %
+					focusable.length;
+		focusable[nextIndex]?.focus({ preventScroll: true });
 	}
 
 

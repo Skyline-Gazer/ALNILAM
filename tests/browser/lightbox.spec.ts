@@ -685,6 +685,88 @@ for (const [name, origin] of deployments) {
 			await context.close();
 		});
 
+		test(`keyboard trap skips inactive degraded slides ${name} ${width}`, async ({ browser }) => {
+			const context = await browser.newContext({
+				viewport: { width, height: 1000 },
+				reducedMotion: "reduce",
+			});
+			const page = await context.newPage();
+			await installFixtureRoutes(page);
+			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
+			await waitForLightboxReady(page);
+			await page.evaluate(() => {
+				const md = document.querySelector(".custom-md");
+				if (!md) throw new Error("missing .custom-md");
+				for (const [status, alt] of [["404", "first broken"], ["403", "second broken"]]) {
+					const img = document.createElement("img");
+					img.src = `https://lightbox-fixtures.local/status/${status}`;
+					img.alt = alt;
+					img.setAttribute("data-fancybox", "probe-fail-pair");
+					md.append(img);
+				}
+			});
+			await page.evaluate(() => document.dispatchEvent(new Event("swup:content:replace")));
+			await waitForLightboxReady(page);
+
+			const trigger = page.locator('img[data-fancybox="probe-fail-pair"]').first();
+			await trigger.scrollIntoViewIfNeeded();
+			await trigger.click();
+			const container = page.locator(".pswp");
+			await expect(container).toBeVisible();
+			await expect
+				.poll(() => container.locator(".pswp__original-link").count(), { timeout: 12_000 })
+				.toBeGreaterThanOrEqual(2);
+
+			const nativeNextTarget = await page.evaluate(() => {
+				const root = document.querySelector<HTMLElement>(".pswp");
+				if (!root) return null;
+				const visibleLink = root.querySelector<HTMLAnchorElement>(
+					'.pswp__item[aria-hidden="false"] .pswp__original-link',
+				);
+				const hiddenLink = root.querySelector<HTMLAnchorElement>(
+					'.pswp__item[aria-hidden="true"] .pswp__original-link',
+				);
+				if (!visibleLink || !hiddenLink) return null;
+				const nativeFocusable = Array.from(
+					root.querySelectorAll<HTMLElement>(
+						'a[href], area[href], button, input:not([type="hidden"]), select, textarea, [contenteditable="true"], [tabindex]',
+					),
+				).filter((element) => {
+					const style = getComputedStyle(element);
+					return (
+						element.tabIndex >= 0 &&
+						!element.matches(":disabled") &&
+						!element.hidden &&
+						style.display !== "none" &&
+						style.visibility !== "hidden" &&
+						element.getClientRects().length > 0
+					);
+				});
+				const visibleIndex = nativeFocusable.indexOf(visibleLink);
+				return {
+					nativeNextIsInactive: nativeFocusable[visibleIndex + 1] === hiddenLink,
+					hiddenLinkIsAriaHidden: Boolean(hiddenLink.closest('[aria-hidden="true"]')),
+				};
+			});
+			expect(nativeNextTarget).toEqual({
+				nativeNextIsInactive: true,
+				hiddenLinkIsAriaHidden: true,
+			});
+
+			await page.evaluate(() => {
+				document
+					.querySelector<HTMLAnchorElement>('.pswp__item[aria-hidden="false"] .pswp__original-link')
+					?.focus();
+			});
+			await page.keyboard.press("Tab");
+			const focusedInactiveSlide = await page.evaluate(() =>
+				Boolean(document.activeElement?.closest('.pswp__item[aria-hidden="true"]')),
+			);
+			expect(focusedInactiveSlide).toBe(false);
+			await closeWithEscape(page, container);
+			await context.close();
+		});
+
 		test(`swup mid-probe does not leak lightbox ${name} ${width}`, async ({ browser }) => {
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
