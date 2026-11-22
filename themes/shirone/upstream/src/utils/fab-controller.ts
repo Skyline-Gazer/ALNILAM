@@ -456,6 +456,28 @@ class FabController {
 		const syncAfterControlsTransform = (event: TransitionEvent) => {
 			const controls = document.getElementById("floating-controls");
 			if (event.target !== controls || event.propertyName !== "transform") return;
+			const sync = () => {
+				const replacementTransformRunning =
+					event.type === "transitioncancel" &&
+					this.controlsReturning &&
+					controls.getAnimations().some(
+						(animation) =>
+							"transitionProperty" in animation &&
+							animation.transitionProperty === "transform" &&
+							animation.playState !== "idle" &&
+							animation.playState !== "finished",
+					);
+				if (replacementTransformRunning) {
+					this.syncTextObstruction();
+					return;
+				}
+				this.controlsReturning = false;
+				this.syncTextObstruction();
+			};
+			if (event.type === "transitioncancel") {
+				requestAnimationFrame(sync);
+				return;
+			}
 			this.controlsReturning = false;
 			this.syncTextObstruction();
 		};
