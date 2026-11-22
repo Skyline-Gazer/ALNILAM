@@ -455,7 +455,7 @@ class FabController {
 		// Keep text intersecting the return path hidden until the transform settles.
 		const syncAfterControlsTransform = (event: TransitionEvent) => {
 			const controls = document.getElementById("floating-controls");
-			if (event.target !== controls || event.propertyName !== "transform") return;
+			if (!controls || event.target !== controls || event.propertyName !== "transform") return;
 			const sync = () => {
 				const replacementTransformRunning =
 					event.type === "transitioncancel" &&
