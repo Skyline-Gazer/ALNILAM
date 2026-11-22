@@ -257,10 +257,11 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 			const travel = hiddenTop - baseRect.top;
 			if (travel <= 1) throw new Error("Scroll-hidden transform has no measurable travel");
 			paragraph.style.display = "none";
+			const fontSize = `${Math.max(1, Math.floor(travel / 2))}px`;
 			Object.assign(paragraph.style, {
 				margin: "0",
-				fontSize: "16px",
-				lineHeight: "20px",
+				fontSize,
+				lineHeight: fontSize,
 				whiteSpace: "nowrap",
 			});
 			const spacer = document.createElement("div");
@@ -271,7 +272,7 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 				const duration = Number.parseFloat(value);
 				return Math.max(max, value.trim().endsWith("ms") ? duration : duration * 1000);
 			}, 0);
-			return { travel, durationMs, baseTop: baseRect.top, baseLeft: baseRect.left, hiddenTop };
+			return { travel, durationMs, baseLeft: baseRect.left, hiddenTop };
 		}, textBlockSelector);
 		expect(metrics.travel).toBeGreaterThan(1);
 		expect(metrics.durationMs).toBeGreaterThan(0);
@@ -287,15 +288,18 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 			const top = await page.locator("#fab-toc-btn button").evaluate((button) => button.getBoundingClientRect().top);
 			return state.scrollHidden && Math.abs(top - metrics.hiddenTop) <= 1;
 		}).toBe(true);
-		await page.evaluate(({ baseTop, baseLeft }) => {
+		await page.evaluate(({ baseLeft, hiddenTop, travel }) => {
 			const paragraph = document.querySelector<HTMLElement>(".markdown-content[data-pagefind-body] p");
 			if (!paragraph) throw new Error("Transition fixture paragraph is missing");
 			paragraph.style.display = "";
-			const rect = paragraph.getBoundingClientRect();
 			paragraph.style.position = "relative";
-			paragraph.style.top = `${baseTop + 1 - window.scrollY - rect.top}px`;
-			paragraph.style.left = `${baseLeft + 2 - rect.left}px`;
-		}, { baseTop: metrics.baseTop, baseLeft: metrics.baseLeft });
+			const range = document.createRange();
+			range.selectNodeContents(paragraph);
+			const textRect = range.getBoundingClientRect();
+			if (textRect.height >= travel - 1) throw new Error("Transition fixture text is taller than the control travel");
+			paragraph.style.top = `${hiddenTop - 1 - window.scrollY - textRect.bottom}px`;
+			paragraph.style.left = `${baseLeft + 2 - textRect.left}px`;
+		}, { baseLeft: metrics.baseLeft, hiddenTop: metrics.hiddenTop, travel: metrics.travel });
 		await expect.poll(async () => {
 			const state = await inspectOverlap(page);
 			return state.scrollHidden && state.overlaps.length === 0 && !state.textObscured;
