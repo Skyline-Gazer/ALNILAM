@@ -11,6 +11,7 @@ export const id: Translation = {
 	[Key.archiveGroupTag]: "Berdasarkan tag",
 	[Key.search]: "Cari",
 	[Key.searchNoResults]: "Tidak ada hasil",
+	[Key.searchUnavailable]: "Pencarian untuk sementara tidak tersedia. Silakan coba lagi nanti.",
 	[Key.menu]: "Menu",
 	[Key.displaySettings]: "Pengaturan tampilan",
 	[Key.mainNavigation]: "Navigasi utama",

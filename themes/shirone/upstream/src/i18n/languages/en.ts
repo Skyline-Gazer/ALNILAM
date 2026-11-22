@@ -11,6 +11,7 @@ export const en: Translation = {
 	[Key.archiveGroupTag]: "By Tag",
 	[Key.search]: "Search",
 	[Key.searchNoResults]: "No results",
+	[Key.searchUnavailable]: "Search is temporarily unavailable. Please try again.",
 	[Key.menu]: "Menu",
 	[Key.displaySettings]: "Display settings",
 	[Key.mainNavigation]: "Main navigation",

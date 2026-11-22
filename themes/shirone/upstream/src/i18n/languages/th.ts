@@ -11,6 +11,7 @@ export const th: Translation = {
 	[Key.archiveGroupTag]: "ตามแท็ก",
 	[Key.search]: "ค้นหา",
 	[Key.searchNoResults]: "ไม่พบผลลัพธ์",
+	[Key.searchUnavailable]: "การค้นหาไม่พร้อมใช้งานชั่วคราว โปรดลองอีกครั้ง",
 	[Key.menu]: "เมนู",
 	[Key.displaySettings]: "การตั้งค่าการแสดงผล",
 	[Key.mainNavigation]: "การนำทางหลัก",

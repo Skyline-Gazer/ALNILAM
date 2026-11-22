@@ -11,6 +11,7 @@ export const tr: Translation = {
 	[Key.archiveGroupTag]: "Etikete göre",
 	[Key.search]: "Ara",
 	[Key.searchNoResults]: "Sonuç bulunamadı",
+	[Key.searchUnavailable]: "Arama geçici olarak kullanılamıyor. Lütfen daha sonra tekrar deneyin.",
 	[Key.menu]: "Menü",
 	[Key.displaySettings]: "Görünüm ayarları",
 	[Key.mainNavigation]: "Ana gezinme",

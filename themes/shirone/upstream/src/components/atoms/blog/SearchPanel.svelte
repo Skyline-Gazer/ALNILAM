@@ -20,7 +20,9 @@ let {
 	placeholder = "",
 	hideInputOnDesktop = false,
 	noResultsText = "",
+	errorText = "",
 	showNoResults = false,
+	showError = false,
 	id = "",
 	class: className = "",
 }: {
@@ -30,6 +32,10 @@ let {
 	hideInputOnDesktop?: boolean;
 	/** Localized message shown when a finished search matched nothing. */
 	noResultsText?: string;
+	/** Localized message shown when search fails. */
+	errorText?: string;
+	/** The caller distinguishes a failed search from an empty result set. */
+	showError?: boolean;
 	/** The caller decides when an empty result set is a "no results" answer. */
 	showNoResults?: boolean;
 	id?: string;
@@ -56,7 +62,9 @@ let {
 			<span class="m3-blog-searchpanel__excerpt">{@html item.excerpt}</span>
 		</a>
 	{/each}
-	{#if showNoResults && noResultsText}
+	{#if showError && errorText}
+		<p class="m3-blog-searchpanel__status" role="status">{errorText}</p>
+	{:else if showNoResults && noResultsText}
 		<p class="m3-blog-searchpanel__status" role="status">{noResultsText}</p>
 	{/if}
 </div>

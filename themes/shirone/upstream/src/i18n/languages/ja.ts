@@ -11,6 +11,7 @@ export const ja: Translation = {
 	[Key.archiveGroupTag]: "タグ別",
 	[Key.search]: "検索",
 	[Key.searchNoResults]: "結果が見つかりません",
+	[Key.searchUnavailable]: "検索は一時的に利用できません。後でもう一度お試しください。",
 	[Key.menu]: "メニュー",
 	[Key.displaySettings]: "表示設定",
 	[Key.mainNavigation]: "メインナビゲーション",
