@@ -99,6 +99,12 @@ for (const origin of ["http://127.0.0.1:4323", "http://127.0.0.1:4324/ALNILAM"])
         const menu = page.locator("#nav-drawer-switch");
         for (let round = 0; round < 10; round++) {
           if (width === 390) {
+            // The SSR aria-expanded value is present before the click handler is installed.
+            await expect(page.locator("html")).toHaveAttribute(
+              "data-top-app-bar-nav-bound",
+              "true",
+              { timeout: 10_000 },
+            );
             await expect(menu).toHaveAttribute("aria-expanded", "false");
             await menu.click();
             await expect(menu).toHaveAttribute("aria-expanded", "true");
