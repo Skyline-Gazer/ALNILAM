@@ -245,8 +245,7 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 			for (const block of content.querySelectorAll<HTMLElement>(selector)) {
 				if (block !== paragraph) block.style.display = "none";
 			}
-			// Keep the fixture wide enough that overlap does not depend on a few subpixels.
-			paragraph.textContent = "x".repeat(16);
+			paragraph.textContent = "x";
 			const baseRect = button.getBoundingClientRect();
 			const originalTransition = controls.style.transition;
 			const wasScrollHidden = controls.classList.contains("fab-scroll-hidden");
@@ -298,7 +297,9 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 			range.selectNodeContents(paragraph);
 			const textRect = range.getBoundingClientRect();
 			if (textRect.height >= travel - 1) throw new Error("Transition fixture text is taller than the control travel");
-			paragraph.style.top = `${hiddenTop - 1 - window.scrollY - textRect.bottom}px`;
+			// Place the glyph inside the visible endpoint while the scroll-hidden endpoint stays clear.
+			const visibleControlTop = hiddenTop - travel;
+			paragraph.style.top = `${visibleControlTop + 2 - window.scrollY - textRect.top}px`;
 			paragraph.style.left = `${baseLeft + 2 - textRect.left}px`;
 		}, { baseLeft: metrics.baseLeft, hiddenTop: metrics.hiddenTop, travel: metrics.travel });
 		await expect.poll(async () => {
