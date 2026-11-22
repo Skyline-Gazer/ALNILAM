@@ -359,10 +359,20 @@ class FabController {
 		});
 
 		// 解密协调器重建侧栏 TOC 后发出通知，刷新悬浮目录（覆盖面板已打开时解密完成的情况）
+		// Decrypted article content may mount after the controller cached its targets.
 		document.addEventListener("shirone:toc-synced", () => {
+			this.refreshTextObstructionTargets();
 			this.resetMobileVisibility();
 			this.syncFloatingToc();
 		});
+		// Scroll-hidden removal starts a transform transition; recheck at its final geometry.
+		const syncAfterControlsTransform = (event: TransitionEvent) => {
+			const controls = document.getElementById("floating-controls");
+			if (event.target !== controls || event.propertyName !== "transform") return;
+			this.syncTextObstruction();
+		};
+		document.addEventListener("transitionend", syncAfterControlsTransform);
+		document.addEventListener("transitioncancel", syncAfterControlsTransform);
 
 		// 目录项点击平滑跳转并自动收起
 		panel?.addEventListener("click", (e) => {
