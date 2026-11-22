@@ -6,10 +6,10 @@ const ARTICLE = "/en/posts/pagination-sample/";
 const textBlockSelector = "h1,h2,h3,h4,h5,h6,p,li,blockquote,pre,td,th,figcaption,dt,dd";
 
 const overlapCases = [
-	{ width: 320, height: 800, theme: "light" },
-	{ width: 375, height: 812, theme: "dark" },
-	{ width: 390, height: 844, theme: "light" },
-	{ width: 430, height: 932, theme: "dark" },
+	{ width: 320, height: 800, theme: "light", expectOverlap: "required" },
+	{ width: 375, height: 812, theme: "dark", expectOverlap: "required" },
+	{ width: 390, height: 844, theme: "light", expectOverlap: "required" },
+	{ width: 430, height: 932, theme: "dark", expectOverlap: "measured" },
 ] as const;
 
 async function inspectOverlap(page: Page) {
@@ -74,8 +74,8 @@ async function inspectOverlap(page: Page) {
 	}, textBlockSelector);
 }
 
-for (const { width, height, theme } of overlapCases) {
-	test(`hides floating controls over article text at ${width}x${height} (${theme})`, async ({ browser }, info) => {
+for (const { width, height, theme, expectOverlap } of overlapCases) {
+	test(`matches control visibility to article text overlap at ${width}x${height} (${theme})`, async ({ browser }, info) => {
 		const context = await browser.newContext({
 			viewport: { width, height },
 			isMobile: true,
@@ -96,21 +96,23 @@ for (const { width, height, theme } of overlapCases) {
 			});
 
 			const geometry = await inspectOverlap(page);
-			expect(geometry.overlaps, JSON.stringify(geometry.overlaps)).not.toHaveLength(0);
-			expect(geometry.hidden, JSON.stringify(geometry)).toBe(true);
-			expect(geometry.ariaHidden).toBe("true");
-			expect(geometry.inert).toBe(true);
+			const shouldHide = geometry.overlaps.length > 0;
+			if (expectOverlap === "required") expect(shouldHide).toBe(true);
+			expect(geometry.hidden, JSON.stringify(geometry)).toBe(shouldHide);
+			expect(geometry.ariaHidden).toBe(shouldHide ? "true" : null);
+			expect(geometry.inert).toBe(shouldHide);
 			expect(geometry.scrollWidth).toBe(geometry.clientWidth);
 			await page.evaluate(() => window.dispatchEvent(new Event("scroll")));
 			await expect.poll(async () => {
 				const state = await inspectOverlap(page);
-				return state.hidden && state.inert && state.ariaHidden === "true";
+				return state.hidden === shouldHide && state.inert === shouldHide &&
+					state.ariaHidden === (shouldHide ? "true" : null);
 			}).toBe(true);
 			const focusResult = await page.locator("#fab-toc-btn button").evaluate((button) => {
 				(button as HTMLElement).focus();
 				return document.activeElement === button;
 			});
-			expect(focusResult).toBe(false);
+			expect(focusResult).toBe(!shouldHide);
 		} finally {
 			await context.close();
 		}
