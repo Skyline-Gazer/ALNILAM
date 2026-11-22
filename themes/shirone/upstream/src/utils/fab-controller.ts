@@ -527,10 +527,9 @@ class FabController {
 		this.previousFocus = null;
 		this.syncTextObstruction();
 		const controls = document.getElementById("floating-controls");
-		if (!previousFocus?.isConnected) return;
-		if (controls?.contains(previousFocus) && controls.hasAttribute("inert")) {
+		if (controls?.hasAttribute("inert")) {
 			this.focusVisibleArticleText();
-		} else {
+		} else if (previousFocus?.isConnected) {
 			previousFocus.focus();
 		}
 	}

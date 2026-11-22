@@ -74,6 +74,45 @@ async function inspectOverlap(page: Page) {
 	}, textBlockSelector);
 }
 
+async function overlapArticleTextWithTocButton(page: Page): Promise<void> {
+	await page.evaluate(() => {
+		const paragraph = document.querySelector<HTMLElement>(".markdown-content p");
+		const button = document.querySelector<HTMLElement>("#fab-toc-btn button");
+		if (!paragraph || !button) throw new Error("Article paragraph or TOC button is missing");
+		const buttonRect = button.getBoundingClientRect();
+		const paragraphRect = paragraph.getBoundingClientRect();
+		Object.assign(paragraph.style, {
+			position: "relative",
+			top: `${buttonRect.top + 1 - paragraphRect.top}px`,
+			left: `${buttonRect.left + 1 - paragraphRect.left}px`,
+			margin: "0",
+			fontSize: "16px",
+			lineHeight: "20px",
+			whiteSpace: "nowrap",
+		});
+	});
+	await expect.poll(async () => {
+		const state = await inspectOverlap(page);
+		return state.overlaps.length > 0 && !state.visuallyHidden && !state.inert;
+	}).toBe(true);
+}
+
+async function expectArticleTextFocused(page: Page): Promise<void> {
+	const focus = await page.evaluate(() => {
+		const active = document.activeElement;
+		return {
+			isBody: active === document.body,
+			inControls: Boolean(active && document.getElementById("floating-controls")?.contains(active)),
+			inArticle: active instanceof HTMLElement && Boolean(active.closest(".markdown-content")),
+			text: active?.textContent?.trim() ?? "",
+		};
+	});
+	expect(focus.isBody).toBe(false);
+	expect(focus.inControls).toBe(false);
+	expect(focus.inArticle).toBe(true);
+	expect(focus.text.length).toBeGreaterThan(0);
+}
+
 for (const { width, height, theme, expectOverlap } of overlapCases) {
 	test(`matches control visibility to article text overlap at ${width}x${height} (${theme})`, async ({ browser }, info) => {
 		const context = await browser.newContext({
@@ -482,43 +521,47 @@ test("moves focus to visible article text when closing TOC hides overlapping con
 		await page.keyboard.press("Enter");
 		const panel = page.locator("#floating-toc-panel");
 		await expect(panel).toHaveAttribute("aria-hidden", "false");
-		await page.evaluate(() => {
-			const paragraph = document.querySelector<HTMLElement>(".markdown-content p");
-			const button = document.querySelector<HTMLElement>("#fab-toc-btn button");
-			if (!paragraph || !button) throw new Error("Article paragraph or TOC button is missing");
-			const buttonRect = button.getBoundingClientRect();
-			const paragraphRect = paragraph.getBoundingClientRect();
-			Object.assign(paragraph.style, {
-				position: "relative",
-				top: `${buttonRect.top + 1 - paragraphRect.top}px`,
-				left: `${buttonRect.left + 1 - paragraphRect.left}px`,
-				margin: "0",
-				fontSize: "16px",
-				lineHeight: "20px",
-				whiteSpace: "nowrap",
-			});
-		});
-		await expect.poll(async () => {
-			const state = await inspectOverlap(page);
-			return state.overlaps.length > 0 && !state.visuallyHidden && !state.inert;
-		}).toBe(true);
+		await overlapArticleTextWithTocButton(page);
 
 		await page.keyboard.press("Escape");
 		await expect(panel).toHaveAttribute("aria-hidden", "true");
 		await expect(page.locator("#floating-controls")).toHaveAttribute("aria-hidden", "true");
-		const focus = await page.evaluate(() => {
+		await expectArticleTextFocused(page);
+	} finally {
+		await context.close();
+	}
+});
+
+test("moves focus to article text when click activation leaves focus on body", async ({ browser }) => {
+	const context = await browser.newContext({
+		viewport: { width: 390, height: 1000 },
+		isMobile: true,
+		hasTouch: true,
+		reducedMotion: "reduce",
+	});
+	const page = await context.newPage();
+	try {
+		const response = await page.goto(`${ROOT}${ARTICLE}`, { waitUntil: "load" });
+		expect(response?.status()).toBe(200);
+		await page.evaluate(() => document.fonts.ready);
+
+		const button = page.locator("#fab-toc-btn button");
+		await page.evaluate(() => {
 			const active = document.activeElement;
-			return {
-				isBody: active === document.body,
-				inControls: Boolean(active && document.getElementById("floating-controls")?.contains(active)),
-				inArticle: active instanceof HTMLElement && Boolean(active.closest(".markdown-content")),
-				text: active?.textContent?.trim() ?? "",
-			};
+			if (active instanceof HTMLElement) active.blur();
 		});
-		expect(focus.isBody).toBe(false);
-		expect(focus.inControls).toBe(false);
-		expect(focus.inArticle).toBe(true);
-		expect(focus.text.length).toBeGreaterThan(0);
+		expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+		// HTMLElement.click() activates the button without applying pointer focus.
+		await button.evaluate((element) => (element as HTMLButtonElement).click());
+		const panel = page.locator("#floating-toc-panel");
+		await expect(panel).toHaveAttribute("aria-hidden", "false");
+		expect(await button.evaluate((element) => document.activeElement !== element)).toBe(true);
+		await overlapArticleTextWithTocButton(page);
+
+		await page.keyboard.press("Escape");
+		await expect(panel).toHaveAttribute("aria-hidden", "true");
+		await expect(page.locator("#floating-controls")).toHaveAttribute("aria-hidden", "true");
+		await expectArticleTextFocused(page);
 	} finally {
 		await context.close();
 	}
