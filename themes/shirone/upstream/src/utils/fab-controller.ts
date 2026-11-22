@@ -299,17 +299,23 @@ class FabController {
 
 	private hasArticleTextOverlap(
 		controls: HTMLElement,
-		atVisibleEndpoint = false,
+		includeReturnPath = false,
 	): boolean {
 		if (!this.articleTextRoot || this.articleTextBlocks.length === 0) return false;
-		let controlOffsetX = 0;
-		let controlOffsetY = 0;
-		if (atVisibleEndpoint) {
+		let controlStartOffsetX = 0;
+		let controlEndOffsetX = 0;
+		let controlStartOffsetY = 0;
+		let controlEndOffsetY = 0;
+		if (includeReturnPath) {
 			const transform = getComputedStyle(controls).transform;
 			if (transform !== "none") {
 				const matrix = new DOMMatrixReadOnly(transform);
-				controlOffsetX = -matrix.e;
-				controlOffsetY = -matrix.f;
+				const offsetX = -matrix.e;
+				const offsetY = -matrix.f;
+				controlStartOffsetX = Math.min(0, offsetX);
+				controlEndOffsetX = Math.max(0, offsetX);
+				controlStartOffsetY = Math.min(0, offsetY);
+				controlEndOffsetY = Math.max(0, offsetY);
 			}
 		}
 		const buttonRects = this.articleControlRects;
@@ -335,10 +341,10 @@ class FabController {
 			const rect = button.getBoundingClientRect();
 			if (rect.width <= 0 || rect.height <= 0) continue;
 			buttonRects.push(rect);
-			left = Math.min(left, rect.left + controlOffsetX);
-			right = Math.max(right, rect.right + controlOffsetX);
-			top = Math.min(top, rect.top + controlOffsetY);
-			bottom = Math.max(bottom, rect.bottom + controlOffsetY);
+			left = Math.min(left, rect.left + controlStartOffsetX);
+			right = Math.max(right, rect.right + controlEndOffsetX);
+			top = Math.min(top, rect.top + controlStartOffsetY);
+			bottom = Math.max(bottom, rect.bottom + controlEndOffsetY);
 		}
 		if (buttonRects.length === 0) return false;
 
@@ -362,10 +368,10 @@ class FabController {
 				for (const textRect of this.articleTextRange.getClientRects()) {
 					for (const buttonRect of buttonRects) {
 						if (
-							Math.min(textRect.right, buttonRect.right + controlOffsetX) >
-								Math.max(textRect.left, buttonRect.left + controlOffsetX) &&
-							Math.min(textRect.bottom, buttonRect.bottom + controlOffsetY) >
-								Math.max(textRect.top, buttonRect.top + controlOffsetY)
+							Math.min(textRect.right, buttonRect.right + controlEndOffsetX) >
+								Math.max(textRect.left, buttonRect.left + controlStartOffsetX) &&
+							Math.min(textRect.bottom, buttonRect.bottom + controlEndOffsetY) >
+								Math.max(textRect.top, buttonRect.top + controlStartOffsetY)
 						) {
 							return true;
 						}
@@ -446,7 +452,7 @@ class FabController {
 		document.addEventListener("shirone:toc-synced", () => {
 			this.syncFloatingToc();
 		});
-		// Keep endpoint overlap hidden until the scroll-return transform settles.
+		// Keep text intersecting the return path hidden until the transform settles.
 		const syncAfterControlsTransform = (event: TransitionEvent) => {
 			const controls = document.getElementById("floating-controls");
 			if (event.target !== controls || event.propertyName !== "transform") return;
