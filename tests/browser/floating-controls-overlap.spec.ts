@@ -224,7 +224,7 @@ test("rechecks mobile article overlap after viewport and scroll changes", async 
 	}
 });
 
-test("rechecks overlap after scroll-hidden controls finish transitioning back", async ({ browser }, info) => {
+test("keeps overlapping controls hidden during the scroll-return transition", async ({ browser }, info) => {
 	const context = await browser.newContext({
 		viewport: { width: 390, height: 844 },
 		isMobile: true,
@@ -235,6 +235,9 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 	try {
 		await page.goto(`${ROOT}${ARTICLE}`, { waitUntil: "load" });
 		await page.evaluate(() => document.fonts.ready);
+		await expect(page.locator("#floating-controls")).not.toHaveAttribute(
+			"data-fab-text-obstruction-pending",
+		);
 		const metrics = await page.evaluate((selector) => {
 			const content = document.querySelector<HTMLElement>(".markdown-content[data-pagefind-body]");
 			const controls = document.querySelector<HTMLElement>("#floating-controls");
@@ -246,6 +249,8 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 				if (block !== paragraph) block.style.display = "none";
 			}
 			paragraph.textContent = "x";
+			// Keep the synthetic overlap measurable in Chromium; the production travel is only 12px.
+			controls.style.setProperty("--m3e-space-3", "64px");
 			const baseRect = button.getBoundingClientRect();
 			const originalTransition = controls.style.transition;
 			const wasScrollHidden = controls.classList.contains("fab-scroll-hidden");
@@ -272,7 +277,7 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 				const duration = Number.parseFloat(value);
 				return Math.max(max, value.trim().endsWith("ms") ? duration : duration * 1000);
 			}, 0);
-			return { travel, durationMs, baseLeft: baseRect.left, hiddenTop };
+			return { travel, durationMs, baseLeft: baseRect.left, baseTop: baseRect.top, hiddenTop };
 		}, textBlockSelector);
 		expect(metrics.travel).toBeGreaterThan(1);
 		expect(metrics.durationMs).toBeGreaterThan(0);
@@ -282,13 +287,13 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 			return state.overlaps.length === 0 && !state.visuallyHidden && !state.textObscured;
 		}).toBe(true);
 
-		await page.evaluate(() => scrollTo(0, 120));
+		await page.evaluate(() => window.scrollTo({ top: 120, behavior: "instant" }));
 		await expect.poll(async () => {
 			const state = await inspectOverlap(page);
 			const top = await page.locator("#fab-toc-btn button").evaluate((button) => button.getBoundingClientRect().top);
 			return state.scrollHidden && Math.abs(top - metrics.hiddenTop) <= 1;
 		}).toBe(true);
-		await page.evaluate(({ baseLeft, hiddenTop, travel }) => {
+		await page.evaluate(({ baseLeft, baseTop, travel }) => {
 			const paragraph = document.querySelector<HTMLElement>(".markdown-content[data-pagefind-body] p");
 			if (!paragraph) throw new Error("Transition fixture paragraph is missing");
 			paragraph.style.display = "";
@@ -297,64 +302,196 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 			range.selectNodeContents(paragraph);
 			const textRect = range.getBoundingClientRect();
 			if (textRect.height >= travel - 1) throw new Error("Transition fixture text is taller than the control travel");
-			paragraph.style.top = `${hiddenTop - 1 - window.scrollY - textRect.bottom}px`;
+			const targetTop = baseTop + travel / 2 - 2;
+			paragraph.style.top = `${targetTop - window.scrollY - textRect.top}px`;
 			paragraph.style.left = `${baseLeft + 2 - textRect.left}px`;
-		}, { baseLeft: metrics.baseLeft, hiddenTop: metrics.hiddenTop, travel: metrics.travel });
+		}, { baseLeft: metrics.baseLeft, baseTop: metrics.baseTop, travel: metrics.travel });
+		// Let the controller observe the repositioned paragraph before the return transition.
+		await page.evaluate(() => {
+			const paragraph = document.querySelector<HTMLElement>(".markdown-content[data-pagefind-body] p");
+			if (!paragraph) throw new Error("Transition fixture paragraph is missing");
+			return new Promise<void>((resolve, reject) => {
+				const observer = new IntersectionObserver((entries) => {
+					if (!entries.some((entry) => entry.target === paragraph && entry.isIntersecting)) return;
+					observer.disconnect();
+					window.clearTimeout(timeout);
+					requestAnimationFrame(() => resolve());
+				});
+				const timeout = window.setTimeout(() => {
+					observer.disconnect();
+					reject(new Error("Transition fixture paragraph never intersected the viewport"));
+				}, 1000);
+				observer.observe(paragraph);
+			});
+		});
 		await expect.poll(async () => {
 			const state = await inspectOverlap(page);
 			return state.scrollHidden && state.overlaps.length === 0 && !state.textObscured;
 		}).toBe(true);
+		const waitForTransformEndpoint = (expectedOffset: number) =>
+			page.evaluate((expectedOffset) => {
+				const controls = document.getElementById("floating-controls");
+				if (!controls) throw new Error("Floating controls are missing");
+				return new Promise<void>((resolve, reject) => {
+					let stableFrames = 0;
+					const deadline = performance.now() + 1500;
+					const sample = () => {
+						const transform = getComputedStyle(controls).transform;
+						const transformOffset =
+							transform === "none" ? 0 : new DOMMatrixReadOnly(transform).f;
+						const transformRunning = controls.getAnimations().some((animation) => {
+							if (
+								!("transitionProperty" in animation) ||
+								animation.transitionProperty !== "transform"
+							) return false;
+							return animation.playState === "running" || animation.pending;
+						});
+						if (!transformRunning && Math.abs(transformOffset - expectedOffset) <= 1) {
+							stableFrames += 1;
+						} else {
+							stableFrames = 0;
+						}
+						if (stableFrames >= 2) {
+							resolve();
+						} else if (performance.now() >= deadline) {
+							reject(new Error("Floating controls transform did not settle at its expected endpoint"));
+						} else {
+							requestAnimationFrame(sample);
+						}
+					};
+					requestAnimationFrame(sample);
+				});
+			}, expectedOffset);
+		await waitForTransformEndpoint(metrics.travel);
 
 		const midpoint = await page.evaluate((travel) => {
 			const controls = document.getElementById("floating-controls");
 			if (!controls) throw new Error("Floating controls are missing");
 			return new Promise<{
 				transformOffset: number;
+				overlaps: boolean;
 				visibility: string;
 				textObscured: boolean;
 				inert: boolean;
 				ariaHidden: string | null;
 			}>((resolve, reject) => {
 				let timeout: number;
+				let midpoint: {
+					transformOffset: number;
+					overlaps: boolean;
+					visibility: string;
+					textObscured: boolean;
+					inert: boolean;
+					ariaHidden: string | null;
+				} | null = null;
+				let samplingStopped = false;
 				const cleanup = () => {
+					samplingStopped = true;
 					window.clearTimeout(timeout);
 					controls.removeEventListener("transitionrun", onTransitionRun);
+					document.removeEventListener("transitionend", onTransitionSettled);
+					document.removeEventListener("transitioncancel", onTransitionSettled);
 				};
 				const sample = () => {
+					if (samplingStopped) return;
 					const transform = getComputedStyle(controls).transform;
 					const transformOffset =
 						transform === "none" ? 0 : new DOMMatrixReadOnly(transform).f;
-					if (transformOffset > 1 && transformOffset < travel - 1) {
+					const paragraph = document.querySelector<HTMLElement>(
+						".markdown-content[data-pagefind-body] p",
+					);
+					const button = controls.querySelector<HTMLElement>("#fab-toc-btn button");
+					if (!paragraph || !button) {
 						cleanup();
-						resolve({
-							transformOffset,
-							visibility: getComputedStyle(controls).visibility,
-							textObscured: controls.classList.contains("fab-text-obscured"),
-							inert: controls.hasAttribute("inert"),
-							ariaHidden: controls.getAttribute("aria-hidden"),
-						});
-					} else {
-						requestAnimationFrame(sample);
+						reject(new Error("Transition fixture text or TOC button is missing"));
+						return;
 					}
+					const range = document.createRange();
+					range.selectNodeContents(paragraph);
+					const buttonRect = button.getBoundingClientRect();
+					const overlaps = [...range.getClientRects()].some((textRect) =>
+						Math.min(textRect.right, buttonRect.right) > Math.max(textRect.left, buttonRect.left) &&
+						Math.min(textRect.bottom, buttonRect.bottom) > Math.max(textRect.top, buttonRect.top),
+					);
+					if (overlaps) {
+						const visibility = getComputedStyle(controls).visibility;
+						const textObscured = controls.classList.contains("fab-text-obscured");
+						const inert = controls.hasAttribute("inert");
+						const ariaHidden = controls.getAttribute("aria-hidden");
+						if (
+							visibility !== "hidden" ||
+							!textObscured ||
+							!inert ||
+							ariaHidden !== "true"
+						) {
+							cleanup();
+							reject(
+								new Error(
+									`Overlapping article text exposed floating controls: ${JSON.stringify({
+										transformOffset,
+										visibility,
+										textObscured,
+										inert,
+										ariaHidden,
+									})}`,
+								),
+							);
+							return;
+						}
+						if (
+							!midpoint &&
+							transformOffset > travel * 0.25 &&
+							transformOffset < travel * 0.75
+						) {
+							midpoint = {
+								transformOffset,
+								overlaps,
+								visibility,
+								textObscured,
+								inert,
+								ariaHidden,
+							};
+						}
+					}
+					requestAnimationFrame(sample);
 				};
 				const onTransitionRun = (event: TransitionEvent) => {
 					if (event.target !== controls || event.propertyName !== "transform") return;
 					requestAnimationFrame(sample);
 				};
+				const onTransitionSettled = (event: TransitionEvent) => {
+					if (event.target !== controls || event.propertyName !== "transform") return;
+					if (event.type === "transitioncancel") {
+						cleanup();
+						reject(new Error("Control return transform was cancelled"));
+						return;
+					}
+					if (!midpoint) {
+						cleanup();
+						reject(new Error("Control return ended before an overlapping hidden midpoint was observed"));
+						return;
+					}
+					cleanup();
+					resolve(midpoint);
+				};
 				controls.addEventListener("transitionrun", onTransitionRun);
+				document.addEventListener("transitionend", onTransitionSettled);
+				document.addEventListener("transitioncancel", onTransitionSettled);
 				timeout = window.setTimeout(() => {
 					cleanup();
-					reject(new Error("Control return transform did not reach its midpoint"));
+					reject(new Error("Control return transform did not settle"));
 				}, 1500);
-				window.scrollTo(0, 0);
+				window.scrollTo({ top: 0, behavior: "instant" });
 			});
 		}, metrics.travel);
-		expect(midpoint.transformOffset).toBeGreaterThan(1);
-		expect(midpoint.transformOffset).toBeLessThan(metrics.travel - 1);
+		expect(midpoint.transformOffset).toBeGreaterThan(metrics.travel * 0.25);
+		expect(midpoint.transformOffset).toBeLessThan(metrics.travel * 0.75);
+		expect(midpoint.overlaps).toBe(true);
 		expect(midpoint.visibility).toBe("hidden");
 		expect(midpoint.textObscured).toBe(true);
 		expect(midpoint.inert).toBe(true);
 		expect(midpoint.ariaHidden).toBe("true");
+		await waitForTransformEndpoint(0);
 		await expect.poll(async () => {
 			const state = await inspectOverlap(page);
 			return state.overlaps.length > 0 && state.visuallyHidden && state.textObscured &&
