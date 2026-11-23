@@ -249,6 +249,8 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 				if (block !== paragraph) block.style.display = "none";
 			}
 			paragraph.textContent = "x";
+			// Keep the synthetic overlap measurable in Chromium; the production travel is only 12px.
+			controls.style.setProperty("--m3e-space-3", "64px");
 			const baseRect = button.getBoundingClientRect();
 			const originalTransition = controls.style.transition;
 			const wasScrollHidden = controls.classList.contains("fab-scroll-hidden");
