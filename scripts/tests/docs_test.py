@@ -184,7 +184,7 @@ def plan_disclaims_implementation_status(text):
 
 def mutable_demo_fixture_count_errors(readme):
     if re.search(
-        r'\bdefault Site fixture\b[^\n]*\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+articles?\b',
+        r'\bdefault Site fixture\b[^\n]*\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(?:\s+[a-z][\w-]*){0,4}\s+articles?\b',
         readme,
         re.I,
     ):
@@ -230,6 +230,12 @@ class DocsTests(unittest.TestCase):
         self.assertEqual(
             mutable_demo_fixture_count_errors(
                 'The default Site fixture lives in `sites/demo` (three locales, two articles).'
+            ),
+            ['README: mutable Demo fixture article count must not be hard-coded'],
+        )
+        self.assertEqual(
+            mutable_demo_fixture_count_errors(
+                'The default Site fixture contains 13 published articles.'
             ),
             ['README: mutable Demo fixture article count must not be hard-coded'],
         )
