@@ -407,7 +407,7 @@ for (const [name, origin] of deployments) {
 
 		test(`keyboard a11y trap and caption ${name} ${width}`, async ({ browser }) => {
 			const context = await browser.newContext({
-				viewport: { width, height: 1000 },
+				viewport: { width, height: width === 390 ? 844 : 1000 },
 				reducedMotion: "reduce",
 			});
 			const page = await context.newPage();
@@ -434,22 +434,49 @@ for (const [name, origin] of deployments) {
 			await expect.poll(async () => page.locator(".pswp__counter").textContent()).not.toBe(before);
 			await assertSlideLoaded(page, responses);
 
-			await page.locator('.pswp__button--close, .pswp [title="Close"]').first().focus();
-			let trapped = 0;
-			for (let i = 0; i < 6; i += 1) {
-				await page.keyboard.press("Tab");
-				const inside = await page.evaluate(() =>
-					Boolean(document.activeElement?.closest(".pswp")),
-				);
-				if (inside) trapped += 1;
-			}
-			expect(trapped).toBeGreaterThan(0);
-			const underlyingFocused = await page.evaluate(() => {
-				const el = document.activeElement;
-				if (!el) return false;
-				return !el.closest(".pswp") && el !== document.body && el !== document.documentElement;
+			const closeButton = container.locator(".pswp__button--close");
+			const zoomButton = container.locator(".pswp__button--zoom");
+			await expect(closeButton).toBeVisible();
+			const zoomAvailable = await zoomButton.isVisible();
+			if (width === 390) await expect(zoomButton).toBeVisible();
+			await closeButton.focus();
+			await expect(closeButton).toBeFocused();
+			const focusState = () => page.evaluate(() => {
+				const active = document.activeElement;
+				return {
+					inside: Boolean(active?.closest(".pswp")),
+					close: active instanceof Element && active.matches(".pswp__button--close"),
+					zoom: active instanceof Element && active.matches(".pswp__button--zoom"),
+				};
 			});
-			expect(underlyingFocused).toBe(false);
+			let zoomReached = false;
+			let returnedToClose = false;
+			for (let i = 0; i < 12; i += 1) {
+				await page.keyboard.press("Tab");
+				const active = await focusState();
+				expect(active.inside).toBe(true);
+				zoomReached ||= active.zoom;
+				if (active.close) {
+					returnedToClose = true;
+					break;
+				}
+			}
+			expect(zoomReached).toBe(zoomAvailable);
+			expect(returnedToClose).toBe(true);
+			let reverseZoomReached = false;
+			returnedToClose = false;
+			for (let i = 0; i < 12; i += 1) {
+				await page.keyboard.press("Shift+Tab");
+				const active = await focusState();
+				expect(active.inside).toBe(true);
+				reverseZoomReached ||= active.zoom;
+				if (active.close) {
+					returnedToClose = true;
+					break;
+				}
+			}
+			expect(reverseZoomReached).toBe(zoomAvailable);
+			expect(returnedToClose).toBe(true);
 
 			const caption = page.locator(".pswp__custom-caption");
 			await expect(caption).toHaveCount(1);
@@ -461,6 +488,7 @@ for (const [name, origin] of deployments) {
 			expect(text).toMatch(/Lighthouse|fixture|Orion|External|Signed|Protocol|Thumb|Missing|Grid/i);
 
 			await closeLightbox(page, container, await page.evaluate(() => window.scrollY));
+			await expect(trigger).toBeFocused();
 			await context.close();
 		});
 
@@ -654,6 +682,93 @@ for (const [name, origin] of deployments) {
 				.toBeGreaterThan(0);
 			await closeWithEscape(page, page.locator(".pswp"));
 			expect(errors.filter((e) => /uncaught|TypeError/i.test(e))).toEqual([]);
+			await context.close();
+		});
+
+		test(`keyboard trap skips inactive degraded slides ${name} ${width}`, async ({ browser }) => {
+			const context = await browser.newContext({
+				viewport: { width, height: 1000 },
+				reducedMotion: "reduce",
+			});
+			const page = await context.newPage();
+			await installFixtureRoutes(page);
+			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
+			await waitForLightboxReady(page);
+			await page.evaluate(() => {
+				const md = document.querySelector(".custom-md");
+				if (!md) throw new Error("missing .custom-md");
+				for (const [status, alt] of [["404", "first broken"], ["403", "second broken"]]) {
+					const img = document.createElement("img");
+					img.src = `https://lightbox-fixtures.local/status/${status}`;
+					img.alt = alt;
+					img.setAttribute("data-fancybox", "probe-fail-pair");
+					md.append(img);
+				}
+			});
+			await page.evaluate(() => document.dispatchEvent(new Event("swup:content:replace")));
+			await waitForLightboxReady(page);
+
+			const trigger = page.locator('img[data-fancybox="probe-fail-pair"]').first();
+			await trigger.scrollIntoViewIfNeeded();
+			await trigger.click();
+			const container = page.locator(".pswp");
+			await expect(container).toBeVisible();
+			await expect
+				.poll(() => container.locator(".pswp__original-link").count(), { timeout: 12_000 })
+				.toBeGreaterThanOrEqual(2);
+
+			const nativeNextTarget = await page.evaluate(() => {
+				const root = document.querySelector<HTMLElement>(".pswp");
+				if (!root) return null;
+				const visibleLink = root.querySelector<HTMLAnchorElement>(
+					'.pswp__item[aria-hidden="false"] .pswp__original-link',
+				);
+				const hiddenLink = root.querySelector<HTMLAnchorElement>(
+					'.pswp__item[aria-hidden="true"] .pswp__original-link',
+				);
+				if (!visibleLink || !hiddenLink) return null;
+				const nativeFocusable = Array.from(
+					root.querySelectorAll<HTMLElement>(
+						'a[href], area[href], button, input:not([type="hidden"]), select, textarea, [contenteditable="true"], [tabindex]',
+					),
+				).filter((element) => {
+					const style = getComputedStyle(element);
+					return (
+						element.tabIndex >= 0 &&
+						!element.matches(":disabled") &&
+						!element.hidden &&
+						style.display !== "none" &&
+						style.visibility !== "hidden" &&
+						element.getClientRects().length > 0
+					);
+				});
+				const visibleIndex = nativeFocusable.indexOf(visibleLink);
+				return {
+					nativeNextIsInactive: nativeFocusable[visibleIndex + 1] === hiddenLink,
+					hiddenLinkIsAriaHidden: Boolean(hiddenLink.closest('[aria-hidden="true"]')),
+				};
+			});
+			expect(nativeNextTarget).toEqual({
+				nativeNextIsInactive: true,
+				hiddenLinkIsAriaHidden: true,
+			});
+
+			await page.evaluate(() => {
+				document
+					.querySelector<HTMLAnchorElement>('.pswp__item[aria-hidden="false"] .pswp__original-link')
+					?.focus();
+			});
+			await page.keyboard.press("Tab");
+			const focusAfterTab = await page.evaluate(() => {
+				const active = document.activeElement;
+				return {
+					inside: Boolean(active?.closest(".pswp")),
+					inactiveSlide: Boolean(active?.closest('.pswp__item[aria-hidden="true"]')),
+				};
+			});
+			expect(focusAfterTab.inside).toBe(true);
+			expect(focusAfterTab.inactiveSlide).toBe(false);
+			await closeWithEscape(page, container);
 			await context.close();
 		});
 
