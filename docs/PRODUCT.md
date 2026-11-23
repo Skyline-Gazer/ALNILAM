@@ -29,11 +29,16 @@
   staged composition, provenance (Core revision, Site ref and digest), atomic
   output swap, the documented upgrade/rollback procedure and a release artifact
   hygiene gate over final output.
-- Acceptance still open at this release: field p75 performance, manual macOS
+- At v0.2.0 release, acceptance still open: field p75 performance, manual macOS
   Safari/VoiceOver, reviewed onboarding by a real user from an independently
   owned Site, and Owner product/visual sign-off. Lab browser and Lighthouse
   evidence plus the public Test-Site regression are recorded in the
   [Handoff](HANDOFF.md).
+
+On 2026-11-20 the Owner deferred the independent real-user Site review to
+post-release stabilization. It remains **NOT VERIFIED**; the public Test-Site
+smoke is separate regression evidence, not that review. See the linked
+[Issue #81 decision receipt](https://github.com/Skyline-Gazer/ALNILAM/issues/81#issuecomment-7031165221).
 
 ## Minimal product v0.1
 - Static homepage, posts index and post detail.

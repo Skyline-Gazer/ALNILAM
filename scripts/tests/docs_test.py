@@ -182,6 +182,16 @@ def plan_disclaims_implementation_status(text):
     return any(re.search(pattern, header, re.I) for pattern in disclaimers)
 
 
+def mutable_demo_fixture_count_errors(readme):
+    if re.search(
+        r'\bdefault Site fixture\b[^\n]*\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+articles?\b',
+        readme,
+        re.I,
+    ):
+        return ['README: mutable Demo fixture article count must not be hard-coded']
+    return []
+
+
 
 def duplicate_adr_ids(root):
     seen = set()
@@ -213,6 +223,16 @@ class DocsTests(unittest.TestCase):
             root = Path(directory)
             (root / 'index.md').write_text('[bad](missing.md) [local](#anchor) [web](https://example.com)')
             self.assertEqual(broken_links(root, ['index.md']), ['index.md: missing.md'])
+
+    def test_demo_fixture_article_count_stays_out_of_readme(self):
+        readme = (ROOT / 'README.md').read_text()
+        self.assertEqual(mutable_demo_fixture_count_errors(readme), [])
+        self.assertEqual(
+            mutable_demo_fixture_count_errors(
+                'The default Site fixture lives in `sites/demo` (three locales, two articles).'
+            ),
+            ['README: mutable Demo fixture article count must not be hard-coded'],
+        )
 
     def test_adr_identifiers_are_unique_and_duplicate_ids_are_rejected(self):
         self.assertEqual(duplicate_adr_ids(ROOT), [])

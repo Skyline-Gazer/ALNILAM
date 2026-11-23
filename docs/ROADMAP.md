@@ -22,22 +22,31 @@ experimental Astro acceleration stay outside this release. The merged offline
 Pages CMS PoC remains available as-is and is not an active workstream. Any new
 scope needs a fresh Owner decision under [#136](https://github.com/Skyline-Gazer/ALNILAM/issues/136).
 
-Open acceptance at publication, approved by the Owner as post-release work:
+Acceptance still open at publication, recorded for post-release work:
 [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35) product/visual sign-off,
 [#74](https://github.com/Skyline-Gazer/ALNILAM/issues/74) field p75 and manual
 Safari/VoiceOver, and [#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81)
 reviewed real-user onboarding from an independently owned Site. They are
-**NOT VERIFIED** or **MANUAL_NOT_RUN**, never PASS. The public Demo remains on
-`dev`; public Production promotion is a separate Owner action.
+**NOT VERIFIED** or **MANUAL_NOT_RUN**, never PASS. On 2026-11-20 the Owner
+deferred the independent real-user Site review to post-release stabilization;
+the public Test-Site run remains regression evidence only. See the [Issue #81
+decision receipt](https://github.com/Skyline-Gazer/ALNILAM/issues/81#issuecomment-7031165221).
+The public Demo remains on `dev`; public Production promotion is a separate
+Owner action.
 
-The public Demo at Core `ad8e28c1cfe82724f45d0715265936de2d7ec9e8` passed the
-live PhotoSwipe focus check ([#184](https://github.com/Skyline-Gazer/ALNILAM/issues/184)).
-Desktop search obscures part of primary navigation on that deployment
-([#189](https://github.com/Skyline-Gazer/ALNILAM/issues/189)). Demo acceptance and
-the Owner's [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35) sign-off remain
-open. See [Handoff](HANDOFF.md) for deployment and Verify links.
+Current Demo acceptance passed on Core
+`9c77453cfc8da6ff5432aa8e61954b4b57c10f52`: required Verify and public Chromium
+checks at five viewports passed; the desktop search/navigation regression is
+closed. Owner product/visual sign-off under [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35)
+remains open. The earlier `ad8e28c` desktop-search failure is preserved in the
+[Handoff history](HANDOFF.md). Public Production promotion remains a separate
+Owner action.
 
 ## Foundation GA scope freeze — 2026-11-20
+
+This is the pre-release scope snapshot; the release and later decisions are
+recorded above. Its gate language is historical and does not override the
+published v0.2.0 state or the current Owner-linked follow-ups.
 
 Foundation targets `v0.2.0`. The release includes the existing Shirone-based
 blog, the YAML-only Site schema v2, Markdown/MDX posts and pages, search, i18n,
@@ -82,7 +91,7 @@ The following is **execution order and scope**, not blanket authorization for ev
 2. **#68 Moments**: Owner authorized implementation in [#68 comment](https://github.com/Skyline-Gazer/ALNILAM/issues/68#issuecomment-6859734794); GitHub PR #135 merged to `dev`. Verify post-merge Demo/provenance and retain formal product sign-off boundary.
 3. **[#138 Deployment split](https://github.com/Skyline-Gazer/ALNILAM/issues/138) + [#88 CMS](https://github.com/Skyline-Gazer/ALNILAM/issues/88)**: The Vercel Demo project `xxxx` remains linked to GitHub `dev`. On 2026-11-21, exact `dev` SHA `fd64c5decc49d56de91a7810d0951abdace4cb03` was deployed as `dpl_GzyqkyquuXH8sgauKA6NTAUAVQyX`, READY at the stable Demo alias; public provenance matches that Core SHA and Site digest `1761ca3abb68de22ddffc157b1763b20dd847ffa0fb9b9bfedb56d9f1d65c4db`. This was a Demo-only deployment; it was not a formal Production deployment or release. The prior READY deployment `dpl_Boj4fvzMayQuUXUu9F5RLYL4hKxf` remains available for rollback. The separate `alnilam-production-next` project retains its pre-existing SSO-gated Production-target deployment on `main`; pushing this PR branch triggered only Preview deployments `dpl_DrKciigUV3Vjj67SF2GfcieHQwoC` (Demo) and `dpl_5pzTaTynYDboyCCy7Ay5h3uKAgW9` (`alnilam-production-next`), not a new Production-target deployment. No Vercel configuration or domain changed. Keep #138 In Progress while the historical dev-to-Production anomaly remains unexplained and first formal Production release/custom-domain activation remain Owner-gated. Continue #88 only within its offline Pages CMS PoC.
 4. **[#69 Music](https://github.com/Skyline-Gazer/ALNILAM/issues/69)**: a post-launch feature, deferred until after the vNext first Production release and separate Owner product acceptance. Roadmap placement or audit inventory does not authorize implementation.
-5. **P6 [#42](https://github.com/Skyline-Gazer/ALNILAM/issues/42)**: close remaining relevant release/readiness tasks. **#73 is closed** after PR #156's post-merge Verify proved the current `dev` Demo output and retained browser-evidence artifact; #166 is Done after PR #171. #74 remains In Progress because field p75 is **NOT VERIFIED** and manual Safari/VoiceOver is **MANUAL_NOT_RUN**; #81 remains In Progress after PR #165 because real-user onboarding from an independently owned Site is unverified; #35 remains Owner-pending product/visual acceptance. Don't restart an unrelated broad UX audit. [#94](https://github.com/Skyline-Gazer/ALNILAM/issues/94) CNB remote Playwright pilot remains optional and must not recreate an obsolete CNB-primary provider/mirror workflow. Formal `main` / Release remains Owner-gated.
+5. **P6 [#42](https://github.com/Skyline-Gazer/ALNILAM/issues/42)**: close remaining relevant release/readiness tasks. **#73 is closed** after PR #156's post-merge Verify proved the current `dev` Demo output and retained browser-evidence artifact; #166 is Done after PR #171. #74 remains In Progress because field p75 is **NOT VERIFIED** and manual Safari/VoiceOver is **MANUAL_NOT_RUN**; #81 remains open after docs PRs #165 and #176 because real-user onboarding from an independently owned Site is unverified. The Owner deferred that review on 2026-11-20 to post-release stabilization; the Test-Site run is separate regression evidence. #35 remains Owner-pending product/visual acceptance. Don't restart an unrelated broad UX audit. [#94](https://github.com/Skyline-Gazer/ALNILAM/issues/94) CNB remote Playwright pilot remains optional and must not recreate an obsolete CNB-primary provider/mirror workflow. Formal `main` / Release remains Owner-gated.
 6. **FINAL PLANNING DELIVERABLE — [#136 Four-source differentiation audit → Roadmap Next](https://github.com/Skyline-Gazer/ALNILAM/issues/136)**: PR #169 merged normally to `dev` at `2c1939012c32facf59eb5753948cf2bcc6a4074e`, carrying the dated source comparison and next-version proposal based on snapshot `e1d0174be5cda5996b39fb59737eca55782b5cc2`. The source audit was not rerun against the pre-handoff GitHub `dev` base `6b26bdacf0dcaaf47dc29c947fa5579f91e38668`. Issue #136 remains Open / Project #17 `In Progress` pending Owner accept/revise/decline; no proposed implementation is authorized. Exclude #69 from the pre-launch sequence and retain the existing #88 boundary.
 
 [#89 WordPress/Ghost](https://github.com/Skyline-Gazer/ALNILAM/issues/89) remains an optional post-launch source adapter candidate, not a default requirement; #83 experimental Astro acceleration remains upstream-stability gated.
@@ -92,6 +101,8 @@ The following is **execution order and scope**, not blanket authorization for ev
 **[#166 Release Artifact Hygiene Gate](https://github.com/Skyline-Gazer/ALNILAM/issues/166)** is closed and Project #17 is `Done`. PR #171 merged normally to `dev` at `4e0e189453663837054e8134b9a2c196a8b48c6c`; post-merge Verify [44516145869](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/44516145869) passed. The gate checks final output in Verify, external-Site CI, GitHub Pages before upload, and `pnpm vercel-build`; the 9/9 artifact-check suite and root/nested output checks passed. No Production release or `main` change was made.
 
 **[#147 Repository credits, attribution and license notices](https://github.com/Skyline-Gazer/ALNILAM/issues/147)** remains Open / Project #17 `In Progress`. PR #172 added canonical notice distribution to the Vercel Demo; PR #173 extends its direct-runtime notice coverage with MIT texts for Svelte, Pagefind, PhotoSwipe and KaTeX plus the SIL OFL 1.1 notice for all 12 KaTeX font families. The 2026-11-21 Demo deployment exposes four canonical notice files at `/site-assets/alnilam-notices/` and 15 license texts under `/site-assets/alnilam-notices/LICENSES/`; all 19 URLs returned HTTP 200 and byte-matched their sources. `/credits/`, `/licenses/`, and `/alnilam-notices/` remain 404, with no Credits/Licenses route or navigation/footer link. Issue #147 continues to prohibit any ALNILAM Credits/Licenses page, route, component, navigation/footer link, or Site-template injection. The transitive dependency/source-license inventory, current-tree credential review, and historical raster rights remain incomplete. Keep the Issue open.
+
+**[#146 Contributor workflow](https://github.com/Skyline-Gazer/ALNILAM/issues/146)** tracks public contribution guidance separately from #81/#42 release acceptance. [CONTRIBUTING.md](../CONTRIBUTING.md) documents the Issue-linked PR and fork path; this community-doc follow-up adds no CI or security gate, as recorded in the [#81 scope note](https://github.com/Skyline-Gazer/ALNILAM/issues/81#issuecomment-6876577100).
 
 
 ### Long-running maintenance lane (starts independently; never closes with one release)
@@ -130,6 +141,7 @@ The P0–P4 sketch below is historical, not the current Issue phase numbering or
 ### P3 · Optional advanced features
 - **Shipped (v0.1.x)**: comments (giscus, feature-flagged), Bangumi collections (build-time fetch, static output).
 - **Declined by owner decision (2026-10-25)**: gallery/album, moments/dynamics, music player — will not be built unless the owner reopens them.
+- This is the historical 2026-10-25 decision; the Owner later reopened Gallery (#67) and authorized Moments (#68) for scoped `dev` engineering on 2026-11-13. Both implementations were included in Foundation v0.2.0; Music remains deferred. See the dated [current product/delivery lane](#owner-direction--2026-11-14--finish-current-roadmap-then-audit-maintain-upstream-continuously), [#67 decision](https://github.com/Skyline-Gazer/ALNILAM/issues/67#issuecomment-6854542688), and [#68 decision](https://github.com/Skyline-Gazer/ALNILAM/issues/68#issuecomment-6859734794).
 - Standing discipline: no disabled-module network calls or unused runtime bundles (enforced); per-file upstream provenance audit before any copied code/assets are accepted.
 
 ### P4 · Release readiness

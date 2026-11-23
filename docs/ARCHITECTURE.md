@@ -1,6 +1,8 @@
 # Architecture — Core / Site composition
 
-Status: v0.1 implementation baseline; not a framework-neutral CMS.
+Status: v0.2.0 Foundation architecture. This is a static Core/Site platform,
+not a framework-neutral CMS. Current branch, deployment and acceptance evidence
+is recorded in the [Handoff](HANDOFF.md).
 
 ## Invariants
 1. **Core is source-controlled software** in this Monorepo; Site is user-owned config, content, data and assets.
@@ -16,8 +18,8 @@ Status: v0.1 implementation baseline; not a framework-neutral CMS.
 apps/web/              # Astro assembly app, build & route entrypoints
 packages/core/         # shared site config contract; no Astro dependency
 packages/ui/           # Svelte UI islands
-themes/editorial/      # released visual layout + rollback surface
-themes/shirone/        # P1 Shirone-derived layout, tokens and Post card
+themes/editorial/      # v0.1.x visual layout + rollback surface
+themes/shirone/        # v0.2.0 Shirone-derived frontend, tokens and Post card
 sites/demo/            # Core-repo Site fixture (only for tests & preview)
 scripts/compose.mjs    # non-mutating external Site builder
 .ads/                  # optional private ADS gitlink (cnb/dev b8d9cfc); not cloned by public CI
@@ -68,7 +70,7 @@ inputs. Its `schema` field versions the **provenance document format** and is
 independent of the Site `schemaVersion`: changing the Site contract does not relabel
 already-published provenance records.
 
-**Current limits**: Do not treat this as an OS sandbox. Trusted MDX can execute build-time code. Post-relative image paths resolve in the build space only; the source Site stays read-only. Concurrent publishes to the same output path remain last-writer-wins by rename (the previous output is restored if the rename fails), and atomicity across power loss is not claimed. Browser/performance and cross-platform behavior are not verified until CI and browser tests complete.
+**Current limits**: Do not treat this as an OS sandbox. Trusted MDX can execute build-time code. Post-relative image paths resolve in the build space only; the source Site stays read-only. Concurrent publishes to the same output path remain last-writer-wins by rename (the previous output is restored if the rename fails), and atomicity across power loss is not claimed. Required Linux/Chromium CI and public Demo interaction acceptance have evidence on the exact SHAs in the [Handoff](HANDOFF.md); field p75 and manual macOS Safari/VoiceOver remain unverified under [Issue #74](https://github.com/Skyline-Gazer/ALNILAM/issues/74).
 
 ## Upgrade contract and user workflow
 - The Core Git SHA/tag and Site SHA/tag must be pinned separately in deployment configuration.

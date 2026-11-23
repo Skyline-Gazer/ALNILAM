@@ -2,7 +2,7 @@
 
 ## Start with an Issue
 
-Check the GitHub Issues and Project #17 before starting work. Link each change to its Issue and open the pull request against GitHub `dev`. Create a task branch from current `dev` using `feat/*`, `fix/*`, or `chore/*`. Do not push directly to protected `dev` or `main`, force-push, publish a release tag, or trigger a Production release. `main` is release-only.
+Check GitHub Issues and Project #17 before starting work. Use an existing Issue when one covers the change; otherwise open a focused Issue and link it from the pull request. Create a task branch from current `dev` using `feat/*`, `fix/*`, or `chore/*`; if you do not have write access, use a fork and open the pull request from that branch into upstream GitHub `dev`. Do not push directly to protected `dev` or `main`, force-push, publish a release tag, or trigger a Production release. `main` is release-only.
 
 ## Keep the Core/Site boundary
 
@@ -28,4 +28,4 @@ Use the [pull request template](.github/pull_request_template.md). Explain the u
 
 ## License, attribution, and secrets
 
-ALNILAM is Apache-2.0. Preserve upstream license files and record copied code, fonts, images, and other assets in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), [CREDITS.md](CREDITS.md), or the applicable file-level source record. Do not commit private Site content, credentials, tokens, or real provider secrets. The private `.ads` submodule is optional for public contributors; public CI does not fetch it. Vulnerability reporting limits are documented in [SECURITY.md](SECURITY.md); do not disclose sensitive details in public Issues or pull requests. See [maintainer guidance](docs/MAINTAINERS.md) for release and project boundaries.
+ALNILAM is Apache-2.0. Preserve upstream license files and record copied code, fonts, images, and other assets in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), [CREDITS.md](CREDITS.md), or the applicable file-level source record. These are repository-level records: do not add an ALNILAM Credits/Licenses page, route, component, footer/navigation link, or generated content to Core, Demo, or Site templates ([Issue #147](https://github.com/Skyline-Gazer/ALNILAM/issues/147)). A Site author decides whether to acknowledge material they use in their own Site. Do not commit private Site content, credentials, tokens, or real provider secrets. The private `.ads` submodule is optional for public contributors; public CI does not fetch it. Vulnerability reporting limits are documented in [SECURITY.md](SECURITY.md); do not disclose sensitive details in public Issues or pull requests. See [maintainer guidance](docs/MAINTAINERS.md) for release and project boundaries.
