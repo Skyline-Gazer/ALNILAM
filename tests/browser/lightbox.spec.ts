@@ -800,12 +800,11 @@ for (const [name, origin] of deployments) {
 			});
 			const page = await context.newPage();
 			const responses = await installFixtureRoutes(page);
+			// Keep the history contract (article -> /posts/) with the page that is
+			// built for the external-protocol fixture matrix.
 			await page.goto(`${origin}/posts/`, { waitUntil: "networkidle" });
-			await page
-				.locator('a.m3-blog-postcard__title[href$="/posts/getting-started/"]')
-				.first()
-				.click();
-			await expect(page).toHaveURL(new RegExp("/posts/getting-started/?$"));
+			await page.goto(`${origin}/posts/lightbox-fixtures/`, { waitUntil: "networkidle" });
+			await expect(page).toHaveURL(new RegExp("/posts/lightbox-fixtures/?$"));
 			// Swup remount can race readiness; force the same content:replace path Layout uses.
 			await page.evaluate(() => document.dispatchEvent(new Event("swup:content:replace")));
 			await waitForLightboxReady(page);
@@ -825,7 +824,7 @@ for (const [name, origin] of deployments) {
 			await page.goBack();
 			await expect(page).toHaveURL(new RegExp("/posts/?$"));
 			await page.goForward();
-			await expect(page).toHaveURL(new RegExp("/posts/getting-started/?$"));
+			await expect(page).toHaveURL(new RegExp("/posts/lightbox-fixtures/?$"));
 			await context.close();
 		});
 	}

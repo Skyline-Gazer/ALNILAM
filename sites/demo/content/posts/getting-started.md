@@ -14,6 +14,12 @@ translationKey: "getting-started"
 
 Site 拥有配置、文章和图片；ALNILAM Core 读取这些输入并生成静态网站。
 
+发布一篇文章只有三步：
+
+1. 在 Site 根目录写好 `alnilam.config.yaml`，声明站点信息与启用的语言。
+2. 在 `content/posts/` 下保存一个带 frontmatter 的 Markdown 文件，文件路径就是公开 URL 的 slug。
+3. 用 Compose 生成静态输出，并分别在根路径与 `/ALNILAM/` 子路径下检查链接。
+
 ## 创建 Site v2
 
 在 Site 根目录保存配置，并创建 `content/posts/`：

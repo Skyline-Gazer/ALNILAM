@@ -11,6 +11,12 @@ translationKey: "getting-started"
 
 設定、記事、画像は Site が所有します。ALNILAM Core はそれらを読み込んで静的サイトを生成します。
 
+記事の公開は三つの手順です。
+
+1. Site のルートに `alnilam.config.yaml` を置き、サイト情報と有効な言語を宣言します。
+2. `content/posts/` に frontmatter 付きの Markdown を保存します。ファイルのパスが公開 URL の slug になります。
+3. Compose で静的出力を生成し、ルートパスと `/ALNILAM/` サブパスの両方でリンクを確認します。
+
 ## Site v2 を作る
 
 Site のルートに保存し、`content/posts/` を用意します。

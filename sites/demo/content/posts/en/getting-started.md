@@ -11,6 +11,12 @@ translationKey: "getting-started"
 
 Your Site owns its configuration, posts, and images. ALNILAM Core reads them and builds a static website.
 
+Publishing takes three steps:
+
+1. Write `alnilam.config.yaml` at the Site root, declaring the site identity and the enabled locales.
+2. Save a Markdown file with frontmatter under `content/posts/`; the file path becomes the public slug.
+3. Build the static output with Compose and check the links under both the root path and the `/ALNILAM/` subpath.
+
 ## Create a Site v2
 
 Save this at the Site root, beside `content/posts/`:
