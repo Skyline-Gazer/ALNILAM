@@ -37,20 +37,22 @@ for (const [name, origin] of deployments) {
 	});
 
 	test(`taxonomy pagination navigates to page 2 and back ${name}`, async ({ page }) => {
-		await page.goto(`${origin}/categories/release/`, { waitUntil: "networkidle" });
+		// The guide category holds the published article set and is the slice that
+		// stays long enough to paginate as Demo content changes.
+		await page.goto(`${origin}/categories/guide/`, { waitUntil: "networkidle" });
 		await expectTimeline(page, 1);
 		const firstPageLinks = await page.locator(".m3-blog-archive__item").evaluateAll((items) =>
 			items.map((item) => item.getAttribute("href")),
 		);
-		await page.locator('.m3-blog-pagination a[href$="/categories/release/2/"]').filter({ visible: true }).first().click();
-		await expect(page).toHaveURL(`${origin}/categories/release/2/`);
+		await page.locator('.m3-blog-pagination a[href$="/categories/guide/2/"]').filter({ visible: true }).first().click();
+		await expect(page).toHaveURL(`${origin}/categories/guide/2/`);
 		await expectTimeline(page, 1);
 		const secondPageLinks = await page.locator(".m3-blog-archive__item").evaluateAll((items) =>
 			items.map((item) => item.getAttribute("href")),
 		);
 		expect(secondPageLinks.every((href) => !firstPageLinks.includes(href))).toBe(true);
-		await page.locator('.m3-blog-pagination a[href$="/categories/release/"]').filter({ visible: true }).first().click();
-		await expect(page).toHaveURL(`${origin}/categories/release/`);
+		await page.locator('.m3-blog-pagination a[href$="/categories/guide/"]').filter({ visible: true }).first().click();
+		await expect(page).toHaveURL(`${origin}/categories/guide/`);
 		await expectTimeline(page, 1);
 	});
 

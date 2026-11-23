@@ -1243,12 +1243,25 @@ test("taxonomy, series and pinned frontmatter compose category, tag and series r
   const memberOrder = [...seriesDetail.matchAll(/href="\/posts\/([^"/]+)\/"/g)].map((m) => m[1]);
   assert.deepEqual(memberOrder, ["series-part-one", "pinned-post"], "members follow seriesOrder, not pubDate");
 
-  // Pinned posts sort first on the paginated list even with an old pubDate:
-  // the pinned fixture must precede the newest regular post.
+  // Pinned posts sort first on the paginated list even with an old pubDate.
+  // The Demo may pin more than one article, so the invariant is that every
+  // pinned post precedes every unpinned one, not that one fixture is first.
   const postsPage = fs.readFileSync(path.join(out, "posts", "index.html"), "utf8");
-  const cardOrder = [...postsPage.matchAll(/href="\/posts\/([^"/]+)\/"/g)].map((m) => m[1]).filter((slug) => slug !== "page");
+  const cardOrder = [...postsPage.matchAll(/href="\/posts\/([^"/]+)\/"/g)]
+    .map((m) => m[1])
+    .filter((slug, index, all) => slug !== "page" && all.indexOf(slug) === index);
   assert.ok(cardOrder.length >= 2, "post list must render card links: " + cardOrder.join(","));
-  assert.equal(cardOrder[0], "pinned-post", "pinned fixture must lead the list");
+  const pinnedDir = path.join(site, "content", "posts");
+  const pinnedSlugs = fs.readdirSync(pinnedDir)
+    .filter((file) => /\.(?:md|mdx)$/.test(file))
+    .filter((file) => /^pinned: true$/m.test(fs.readFileSync(path.join(pinnedDir, file), "utf8")))
+    .map((file) => file.replace(/\.(?:md|mdx)$/, ""));
+  assert.ok(pinnedSlugs.includes("pinned-post"), "pinned fixture exists");
+  assert.deepEqual(
+    [...cardOrder.slice(0, pinnedSlugs.length)].sort(),
+    [...pinnedSlugs].sort(),
+    `every pinned post precedes every unpinned post: ${cardOrder.join(",")}`,
+  );
 
   // Article pages expose the resolved category as article:section.
   const article = fs.readFileSync(path.join(out, "posts", "pinned-post", "index.html"), "utf8");

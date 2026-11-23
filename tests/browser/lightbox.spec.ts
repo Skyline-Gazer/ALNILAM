@@ -802,10 +802,10 @@ for (const [name, origin] of deployments) {
 			const responses = await installFixtureRoutes(page);
 			await page.goto(`${origin}/posts/`, { waitUntil: "networkidle" });
 			await page
-				.locator('a.m3-blog-postcard__title[href$="/en/posts/pagination-sample/"]')
+				.locator('a.m3-blog-postcard__title[href$="/en/posts/getting-started/"]')
 				.first()
 				.click();
-			await expect(page).toHaveURL(new RegExp("/en/posts/pagination-sample/?$"));
+			await expect(page).toHaveURL(new RegExp("/en/posts/getting-started/?$"));
 			// Swup remount can race readiness; force the same content:replace path Layout uses.
 			await page.evaluate(() => document.dispatchEvent(new Event("swup:content:replace")));
 			await waitForLightboxReady(page);
@@ -825,7 +825,7 @@ for (const [name, origin] of deployments) {
 			await page.goBack();
 			await expect(page).toHaveURL(new RegExp("/posts/?$"));
 			await page.goForward();
-			await expect(page).toHaveURL(new RegExp("/en/posts/pagination-sample/?$"));
+			await expect(page).toHaveURL(new RegExp("/en/posts/getting-started/?$"));
 			await context.close();
 		});
 	}
