@@ -12,8 +12,12 @@ const overlapCases = [
 	{ width: 430, height: 932, theme: "dark", expectOverlap: "measured" },
 ] as const;
 
-async function inspectOverlap(page: Page) {
-	return page.evaluate((textSelector) => {
+async function inspectOverlap(
+	page: Page,
+	options: { includeScrollHiddenControls?: boolean } = {},
+) {
+	const { includeScrollHiddenControls = false } = options;
+	return page.evaluate(({ textSelector, includeScrollHiddenControls }) => {
 		const content = document.querySelector<HTMLElement>(".markdown-content");
 		const controls = document.querySelector<HTMLElement>("#floating-controls");
 		if (!content || !controls) throw new Error("Article text or floating controls are missing");
@@ -25,7 +29,7 @@ async function inspectOverlap(page: Page) {
 				!item.classList.contains("is-page-hidden") &&
 				!slot.classList.contains("hidden") &&
 				item.dataset.fabPageAllowed !== "false" &&
-				item.dataset.fabScrollAllowed !== "false";
+				(includeScrollHiddenControls || item.dataset.fabScrollAllowed !== "false");
 		});
 		const buttons = items.map((item) => {
 			const rect = (item.querySelector("button") ?? item).getBoundingClientRect();
@@ -71,7 +75,7 @@ async function inspectOverlap(page: Page) {
 			scrollWidth: document.documentElement.scrollWidth,
 			clientWidth: document.documentElement.clientWidth,
 		};
-	}, textBlockSelector);
+	}, { textSelector: textBlockSelector, includeScrollHiddenControls });
 }
 
 async function overlapArticleTextWithTocButton(page: Page): Promise<void> {
@@ -356,7 +360,7 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 		expect(midpoint.inert).toBe(true);
 		expect(midpoint.ariaHidden).toBe("true");
 		await expect.poll(async () => {
-			const state = await inspectOverlap(page);
+			const state = await inspectOverlap(page, { includeScrollHiddenControls: true });
 			return state.overlaps.length > 0 && state.visuallyHidden && state.textObscured &&
 				state.inert && state.ariaHidden === "true"
 				? "ready"
