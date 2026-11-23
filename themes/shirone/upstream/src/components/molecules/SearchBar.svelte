@@ -1,9 +1,9 @@
 <script lang="ts">
 /**
  * M3E SearchBar — 导航栏折叠式胶囊搜索条分子。
- * 折叠时为 40px 图标按钮，点击后展开为
- * w-48 胶囊输入条，失焦延迟自动折叠。value / expanded 可双向绑定，
- * 展开折叠交互细节全部内聚在此，Search 有机体只负责搜索与结果面板。
+ * 折叠时为 40px 图标按钮，点击后在顶栏布局内展开，失焦延迟自动折叠。
+ * value / expanded 可双向绑定，展开折叠交互在此处理。
+ * Search 有机体只负责搜索与结果面板。
  */
 import {onDestroy} from "svelte";
 import Icon from "@iconify/svelte";
@@ -52,10 +52,10 @@ const handleFocus = (): void => {
 };
 </script>
 
-<div class="hidden lg:block relative w-10 h-10 shrink-0">
+<div class="hidden lg:block h-10 shrink-0">
     <div
-        class="m3-state-layer absolute right-0 top-0 flex items-center overflow-hidden rounded-full h-10 top-app-bar__search-shell
-               {expanded ? 'top-app-bar__search-shell--expanded w-48 bg-(--surface-container-high)' : 'w-10 bg-transparent'}"
+        class="m3-state-layer relative flex items-center overflow-hidden rounded-full h-10 top-app-bar__search-shell
+               {expanded ? 'top-app-bar__search-shell--expanded w-40 xl:w-48 bg-(--surface-container-high)' : 'w-10 bg-transparent'}"
         onkeydown={(event) => { if(event.key === "Escape") {expanded=false; oncollapse(); document.getElementById(`${id}-switch`)?.focus();}}}
         style="transition: width var(--m3e-duration-medium) var(--m3e-easing-emphasized-decelerate), background-color var(--m3e-duration-short) var(--m3e-easing-standard);"
     >
@@ -79,7 +79,7 @@ const handleFocus = (): void => {
             onfocus={handleFocus}
             onblur={handleBlur}
             class="h-full bg-transparent outline-0 text-(--on-surface) caret-(--primary) transition-opacity duration-[var(--m3e-duration-short)]
-                   {expanded ? 'w-32 pl-2 opacity-100' : 'w-0 opacity-0'}"
+                   {expanded ? 'min-w-0 flex-1 pl-2 pr-1 opacity-100' : 'w-0 opacity-0'}"
         />
     </div>
 </div>

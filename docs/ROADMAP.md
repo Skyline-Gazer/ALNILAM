@@ -30,6 +30,13 @@ reviewed real-user onboarding from an independently owned Site. They are
 **NOT VERIFIED** or **MANUAL_NOT_RUN**, never PASS. The public Demo remains on
 `dev`; public Production promotion is a separate Owner action.
 
+The public Demo at Core `ad8e28c1cfe82724f45d0715265936de2d7ec9e8` passed the
+live PhotoSwipe focus check ([#184](https://github.com/Skyline-Gazer/ALNILAM/issues/184)).
+Desktop search obscures part of primary navigation on that deployment
+([#189](https://github.com/Skyline-Gazer/ALNILAM/issues/189)). Demo acceptance and
+the Owner's [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35) sign-off remain
+open. See [Handoff](HANDOFF.md) for deployment and Verify links.
+
 ## Foundation GA scope freeze — 2026-11-20
 
 Foundation targets `v0.2.0`. The release includes the existing Shirone-based

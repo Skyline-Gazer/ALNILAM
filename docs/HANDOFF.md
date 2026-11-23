@@ -1,5 +1,11 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-23 · P2 Demo acceptance
+
+- [PR #188](https://github.com/Skyline-Gazer/ALNILAM/pull/188) merged to `dev` at `ad8e28c1cfe82724f45d0715265936de2d7ec9e8`. Its parents are `b6df20ba9a8dbdd8a405d9d9d21e194ba4a8763c` and `22f0beea3d624d2caa4b9be9cbf64bb74e19ee0b`. The post-merge [Verify run](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/45127644460) passed, including root and nested browser acceptance.
+- The [public Demo](https://xxxx-beryl-theta.vercel.app/) serves that Core in READY deployment [`dpl_BZWDJMvvsmnoM3e8FU4dGzsTiY9n`](https://vercel.com/martyjstogner-2766s-projects/xxxx/BZWDJMvvsmnoM3e8FU4dGzsTiY9n). Its [provenance](https://xxxx-beryl-theta.vercel.app/alnilam-provenance.json) records Site digest `1761ca3abb68de22ddffc157b1763b20dd847ffa0fb9b9bfedb56d9f1d65c4db`. The previous READY deployment `dpl_9bG6bVpsXxWweHpxp7ggM13rbFsZ` is available for rollback.
+- Live Chromium covered 320×800, 375×812, 390×844, 430×932 and 1440×900. PhotoSwipe keyboard focus passed at all five sizes and [#184](https://github.com/Skyline-Gazer/ALNILAM/issues/184#issuecomment-7094618229) closed. The expanded desktop search capsule covered the Series link on that deployment. [#189](https://github.com/Skyline-Gazer/ALNILAM/issues/189) tracks the fix and blocks overall Demo acceptance. The Demo build gate still allows only the verified `dev` SHA above. [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35) retains the Owner product sign-off gate.
+
 ## Live-state update — 2026-11-21 · Development Demo distribution
 
 ### Demo deployment

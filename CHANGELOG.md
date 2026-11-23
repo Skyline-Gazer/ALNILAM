@@ -4,6 +4,12 @@ All notable changes to ALNILAM are documented here. Format: [Keep a Changelog](h
 
 Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the maintainer merging a release PR (`dev` → `main`). Every tag's commit must have passing CI on `main`.
 
+## [Unreleased]
+
+### Fixed
+
+- Keep desktop navigation links readable and clickable while the header search expands, including at the desktop breakpoint and with translated labels ([#189](https://github.com/Skyline-Gazer/ALNILAM/issues/189)).
+
 ## [0.2.0] - 2026-11-20
 
 ### Migration from v0.1.x
