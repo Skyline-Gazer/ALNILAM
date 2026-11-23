@@ -275,7 +275,7 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 				const duration = Number.parseFloat(value);
 				return Math.max(max, value.trim().endsWith("ms") ? duration : duration * 1000);
 			}, 0);
-			return { travel, durationMs, baseLeft: baseRect.left, hiddenTop };
+			return { travel, durationMs, baseLeft: baseRect.left, baseTop: baseRect.top, hiddenTop };
 		}, textBlockSelector);
 		expect(metrics.travel).toBeGreaterThan(1);
 		expect(metrics.durationMs).toBeGreaterThan(0);
@@ -291,7 +291,7 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 			const top = await page.locator("#fab-toc-btn button").evaluate((button) => button.getBoundingClientRect().top);
 			return state.scrollHidden && Math.abs(top - metrics.hiddenTop) <= 1;
 		}).toBe(true);
-		await page.evaluate(({ baseLeft, hiddenTop, travel }) => {
+		await page.evaluate(({ baseLeft, baseTop, travel }) => {
 			const paragraph = document.querySelector<HTMLElement>(".markdown-content[data-pagefind-body] p");
 			if (!paragraph) throw new Error("Transition fixture paragraph is missing");
 			paragraph.style.display = "";
@@ -300,9 +300,10 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 			range.selectNodeContents(paragraph);
 			const textRect = range.getBoundingClientRect();
 			if (textRect.height >= travel - 1) throw new Error("Transition fixture text is taller than the control travel");
-			paragraph.style.top = `${hiddenTop - 1 - window.scrollY - textRect.bottom}px`;
+			const targetTop = baseTop + travel / 2 - 2;
+			paragraph.style.top = `${targetTop - window.scrollY - textRect.top}px`;
 			paragraph.style.left = `${baseLeft + 2 - textRect.left}px`;
-		}, { baseLeft: metrics.baseLeft, hiddenTop: metrics.hiddenTop, travel: metrics.travel });
+		}, { baseLeft: metrics.baseLeft, baseTop: metrics.baseTop, travel: metrics.travel });
 		// Let the controller observe the repositioned paragraph before the return transition.
 		await page.evaluate(() => {
 			const paragraph = document.querySelector<HTMLElement>(".markdown-content[data-pagefind-body] p");
@@ -366,6 +367,7 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 			if (!controls) throw new Error("Floating controls are missing");
 			return new Promise<{
 				transformOffset: number;
+				overlaps: boolean;
 				visibility: string;
 				textObscured: boolean;
 				inert: boolean;
@@ -374,6 +376,7 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 				let timeout: number;
 				let midpoint: {
 					transformOffset: number;
+					overlaps: boolean;
 					visibility: string;
 					textObscured: boolean;
 					inert: boolean;
@@ -389,14 +392,30 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 					const transform = getComputedStyle(controls).transform;
 					const transformOffset =
 						transform === "none" ? 0 : new DOMMatrixReadOnly(transform).f;
-					if (transformOffset > 1 && transformOffset < travel - 1) {
-						midpoint = {
-							transformOffset,
-							visibility: getComputedStyle(controls).visibility,
-							textObscured: controls.classList.contains("fab-text-obscured"),
-							inert: controls.hasAttribute("inert"),
-							ariaHidden: controls.getAttribute("aria-hidden"),
-						};
+					if (transformOffset > travel * 0.25 && transformOffset < travel * 0.75) {
+						const paragraph = document.querySelector<HTMLElement>(
+							".markdown-content[data-pagefind-body] p",
+						);
+						const button = controls.querySelector<HTMLElement>("#fab-toc-btn button");
+						if (!paragraph || !button) {
+							cleanup();
+							reject(new Error("Transition fixture text or TOC button is missing"));
+							return;
+						}
+						const range = document.createRange();
+						range.selectNodeContents(paragraph);
+						const buttonRect = button.getBoundingClientRect();
+						const overlaps = [...range.getClientRects()].some((textRect) =>
+							Math.min(textRect.right, buttonRect.right) > Math.max(textRect.left, buttonRect.left) &&
+							Math.min(textRect.bottom, buttonRect.bottom) > Math.max(textRect.top, buttonRect.top),
+						);
+						const visibility = getComputedStyle(controls).visibility;
+						const textObscured = controls.classList.contains("fab-text-obscured");
+						const inert = controls.hasAttribute("inert");
+						const ariaHidden = controls.getAttribute("aria-hidden");
+						if (overlaps && visibility === "hidden" && textObscured && inert && ariaHidden === "true") {
+							midpoint = { transformOffset, overlaps, visibility, textObscured, inert, ariaHidden };
+						}
 					}
 					if (!midpoint) requestAnimationFrame(sample);
 				};
@@ -413,7 +432,7 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 					}
 					if (!midpoint) {
 						cleanup();
-						reject(new Error("Control return transform settled before its midpoint"));
+						reject(new Error("Control return ended before an overlapping hidden midpoint was observed"));
 						return;
 					}
 					cleanup();
@@ -429,8 +448,9 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 				window.scrollTo({ top: 0, behavior: "instant" });
 			});
 		}, metrics.travel);
-		expect(midpoint.transformOffset).toBeGreaterThan(1);
-		expect(midpoint.transformOffset).toBeLessThan(metrics.travel - 1);
+		expect(midpoint.transformOffset).toBeGreaterThan(metrics.travel * 0.25);
+		expect(midpoint.transformOffset).toBeLessThan(metrics.travel * 0.75);
+		expect(midpoint.overlaps).toBe(true);
 		expect(midpoint.visibility).toBe("hidden");
 		expect(midpoint.textObscured).toBe(true);
 		expect(midpoint.inert).toBe(true);
