@@ -12,12 +12,8 @@ const overlapCases = [
 	{ width: 430, height: 932, theme: "dark", expectOverlap: "measured" },
 ] as const;
 
-async function inspectOverlap(
-	page: Page,
-	options: { includeScrollHiddenControls?: boolean } = {},
-) {
-	const { includeScrollHiddenControls = false } = options;
-	return page.evaluate(({ textSelector, includeScrollHiddenControls }) => {
+async function inspectOverlap(page: Page) {
+	return page.evaluate((textSelector) => {
 		const content = document.querySelector<HTMLElement>(".markdown-content");
 		const controls = document.querySelector<HTMLElement>("#floating-controls");
 		if (!content || !controls) throw new Error("Article text or floating controls are missing");
@@ -29,7 +25,7 @@ async function inspectOverlap(
 				!item.classList.contains("is-page-hidden") &&
 				!slot.classList.contains("hidden") &&
 				item.dataset.fabPageAllowed !== "false" &&
-				(includeScrollHiddenControls || item.dataset.fabScrollAllowed !== "false");
+				item.dataset.fabScrollAllowed !== "false";
 		});
 		const buttons = items.map((item) => {
 			const rect = (item.querySelector("button") ?? item).getBoundingClientRect();
@@ -75,7 +71,7 @@ async function inspectOverlap(
 			scrollWidth: document.documentElement.scrollWidth,
 			clientWidth: document.documentElement.clientWidth,
 		};
-	}, { textSelector: textBlockSelector, includeScrollHiddenControls });
+	}, textBlockSelector);
 }
 
 async function overlapArticleTextWithTocButton(page: Page): Promise<void> {
@@ -228,7 +224,7 @@ test("rechecks mobile article overlap after viewport and scroll changes", async 
 	}
 });
 
-test("rechecks overlap after scroll-hidden controls finish transitioning back", async ({ browser }, info) => {
+test("keeps overlapping controls hidden during the scroll-return transition", async ({ browser }, info) => {
 	const context = await browser.newContext({
 		viewport: { width: 390, height: 844 },
 		isMobile: true,
@@ -239,6 +235,9 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 	try {
 		await page.goto(`${ROOT}${ARTICLE}`, { waitUntil: "load" });
 		await page.evaluate(() => document.fonts.ready);
+		await expect(page.locator("#floating-controls")).not.toHaveAttribute(
+			"data-fab-text-obstruction-pending",
+		);
 		const metrics = await page.evaluate((selector) => {
 			const content = document.querySelector<HTMLElement>(".markdown-content[data-pagefind-body]");
 			const controls = document.querySelector<HTMLElement>("#floating-controls");
@@ -304,6 +303,24 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 			paragraph.style.top = `${hiddenTop - 1 - window.scrollY - textRect.bottom}px`;
 			paragraph.style.left = `${baseLeft + 2 - textRect.left}px`;
 		}, { baseLeft: metrics.baseLeft, hiddenTop: metrics.hiddenTop, travel: metrics.travel });
+		// Let the controller observe the repositioned paragraph before the return transition.
+		await page.evaluate(() => {
+			const paragraph = document.querySelector<HTMLElement>(".markdown-content[data-pagefind-body] p");
+			if (!paragraph) throw new Error("Transition fixture paragraph is missing");
+			return new Promise<void>((resolve, reject) => {
+				const observer = new IntersectionObserver((entries) => {
+					if (!entries.some((entry) => entry.target === paragraph && entry.isIntersecting)) return;
+					observer.disconnect();
+					window.clearTimeout(timeout);
+					requestAnimationFrame(() => resolve());
+				});
+				const timeout = window.setTimeout(() => {
+					observer.disconnect();
+					reject(new Error("Transition fixture paragraph never intersected the viewport"));
+				}, 1000);
+				observer.observe(paragraph);
+			});
+		});
 		await expect.poll(async () => {
 			const state = await inspectOverlap(page);
 			return state.scrollHidden && state.overlaps.length === 0 && !state.textObscured;
@@ -318,6 +335,7 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 				textObscured: boolean;
 				inert: boolean;
 				ariaHidden: string | null;
+				overlapsText: boolean;
 			}>((resolve, reject) => {
 				let timeout: number;
 				const cleanup = () => {
@@ -329,6 +347,20 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 					const transformOffset =
 						transform === "none" ? 0 : new DOMMatrixReadOnly(transform).f;
 					if (transformOffset > 1 && transformOffset < travel - 1) {
+						const paragraph = document.querySelector<HTMLElement>(".markdown-content[data-pagefind-body] p");
+						const button = document.querySelector<HTMLElement>("#fab-toc-btn button");
+						if (!paragraph || !button) {
+							cleanup();
+							reject(new Error("Transition overlap targets are missing"));
+							return;
+						}
+						const buttonRect = button.getBoundingClientRect();
+						const range = document.createRange();
+						range.selectNodeContents(paragraph);
+						const overlapsText = Array.from(range.getClientRects()).some((textRect) =>
+							Math.min(textRect.right, buttonRect.right) > Math.max(textRect.left, buttonRect.left) &&
+							Math.min(textRect.bottom, buttonRect.bottom) > Math.max(textRect.top, buttonRect.top)
+						);
 						cleanup();
 						resolve({
 							transformOffset,
@@ -336,6 +368,7 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 							textObscured: controls.classList.contains("fab-text-obscured"),
 							inert: controls.hasAttribute("inert"),
 							ariaHidden: controls.getAttribute("aria-hidden"),
+							overlapsText,
 						});
 					} else {
 						requestAnimationFrame(sample);
@@ -359,13 +392,7 @@ test("rechecks overlap after scroll-hidden controls finish transitioning back", 
 		expect(midpoint.textObscured).toBe(true);
 		expect(midpoint.inert).toBe(true);
 		expect(midpoint.ariaHidden).toBe("true");
-		await expect.poll(async () => {
-			const state = await inspectOverlap(page, { includeScrollHiddenControls: true });
-			return state.overlaps.length > 0 && state.visuallyHidden && state.textObscured &&
-				state.inert && state.ariaHidden === "true"
-				? "ready"
-				: JSON.stringify(state);
-		}).toBe("ready");
+		expect(midpoint.overlapsText).toBe(true);
 		await info.attach("floating-controls-transform-return.png", {
 			body: await page.screenshot({ animations: "disabled" }),
 			contentType: "image/png",
