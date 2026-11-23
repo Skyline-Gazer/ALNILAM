@@ -55,3 +55,51 @@ tags:
       zh-CN: 测试
       en: Test
       ja: テスト
+  - id: markdown
+    slug: markdown
+    label:
+      zh-CN: Markdown
+      en: Markdown
+      ja: Markdown
+  - id: i18n
+    slug: i18n
+    label:
+      zh-CN: 国际化
+      en: i18n
+      ja: 国際化
+  - id: search
+    slug: search
+    label:
+      zh-CN: 搜索
+      en: Search
+      ja: 検索
+  - id: taxonomy
+    slug: taxonomy
+    label:
+      zh-CN: 分类与标签
+      en: Taxonomy
+      ja: 分類とタグ
+  - id: gallery
+    slug: gallery
+    label:
+      zh-CN: 相册
+      en: Albums
+      ja: アルバム
+  - id: moments
+    slug: moments
+    label:
+      zh-CN: 动态
+      en: Moments
+      ja: モーメンツ
+  - id: accessibility
+    slug: accessibility
+    label:
+      zh-CN: 无障碍
+      en: Accessibility
+      ja: アクセシビリティ
+  - id: performance
+    slug: performance
+    label:
+      zh-CN: 性能
+      en: Performance
+      ja: パフォーマンス

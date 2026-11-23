@@ -184,7 +184,7 @@ albums:
 
 Relative media paths resolve under the Site's `assets/` directory and are emitted under `/site-assets/`; `assets/gallery/photo.jpg` and `gallery/photo.jpg` both work. Root-relative paths such as `/site-assets/gallery/photo.jpg` and complete HTTPS URLs are also accepted. HTTPS queries and signatures are preserved. Core never downloads remote media during build, proxies images, or makes cross-origin pixel reads; ordinary browser image loading does not require CORS. The browser host must allow the remote image URL in its own CSP, if configured. No additional request is made to measure dimensions during build. Supplying `width` and `height` also lets PhotoSwipe avoid its on-open size probe; without them, the existing PhotoSwipe handler measures only when the viewer opens.
 
-Use media you have rights to publish. The Demo Site's remote samples are served by Unsplash under the [Unsplash License](https://unsplash.com/license); they are referenced by URL and are not copied into ALNILAM.
+Use media you have rights to publish. The Demo Site ships hand-authored SVG artwork under `sites/demo/assets/gallery/`, with provenance recorded in `sites/demo/assets/gallery/AUTHORSHIP.md`; no remote photo is referenced from the generated Demo markup. A Site may still configure remote HTTPS media, and that Site author carries the licensing responsibility for it.
 
 ### Moments (`moments`)
 
