@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Tidal pools on the outgoing tide</title><desc id="desc">Blue pools, warm sand, and curved strands of sea grass cross a broad shore.</desc>
+  <defs><linearGradient id="sand" x2="0" y2="1"><stop stop-color="#edcf9e"/><stop offset="1" stop-color="#b9896c"/></linearGradient><linearGradient id="pool" x2="0" y2="1"><stop stop-color="#78aaa0"/><stop offset="1" stop-color="#316576"/></linearGradient></defs>
+  <path fill="url(#sand)" d="M0 0h1600v1000H0z"/><path fill="#e8d5ab" d="M0 220q280-100 530-4t537-23 533 15v243q-282 82-568 3t-547 26T0 450z"/>
+  <path fill="url(#pool)" d="M105 330q119-124 272-18 72 49 37 123-35 72-150 59-118-14-194-65-72-49 35-99zm493 149q155-114 308-10 97 67 43 140-47 63-171 36-126-27-207-82-66-44 27-84zm431-247q128-80 236 2 74 55 36 113-39 61-142 34-113-29-167-73-44-36 37-76z"/>
+  <path fill="#627b68" d="M0 756q100-184 170-104t158 93q94 15 179-86t187-14q70 64 170 25t173-108q110-72 178 22t215 28v388H0z"/><path fill="none" stroke="#324f4b" stroke-width="13" stroke-linecap="round" d="M160 786q61-125 85-229m4 218q-7-139 38-221m531 191q-25-152 30-238m-4 240q78-132 161-174m287 205q-22-127 28-191"/>
+  <path fill="none" stroke="#f6e3b9" stroke-width="8" opacity=".8" d="M213 367q105-55 195 6m228 104q147-66 253 1m173-257q84-45 165 6M0 914q206-50 392 6t414 3 794-10"/>
+</svg>

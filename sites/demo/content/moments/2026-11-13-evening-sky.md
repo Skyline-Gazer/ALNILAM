@@ -1,15 +1,19 @@
 ---
 published: 2026-11-13T18:20:00Z
 mood: material-symbols:sentiment-satisfied-outline-rounded
-location: Observatory
-tags: [sky, notes]
+location: Ridge observatory
+tags: [sky]
 images:
-  - src: orion.svg
-    alt: Orion constellation illustration
-    width: 640
-    height: 360
-  - src: /site-assets/lighthouse.png
-    alt: A lighthouse under a clear night sky
+  - src: assets/gallery/cloud-study.svg
+    thumbnail: assets/gallery/cloud-study-thumb.svg
+    alt: Blue-gray cloud bands opening above the evening ridge
+    width: 1600
+    height: 1000
+  - src: assets/gallery/alpine-lake.svg
+    thumbnail: assets/gallery/alpine-lake-thumb.svg
+    alt: Alpine peaks reflected in the turquoise lake at first light
+    width: 1800
+    height: 1200
 ---
 
-A clear evening made it easy to pick out Orion. Two images reuse assets already owned by the Demo Site.
+A cloud opened above the ridge; the lake was still at first light.

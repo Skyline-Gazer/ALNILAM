@@ -1,7 +1,6 @@
 ---
 published: 2026-11-09T08:15:00Z
-location: Garden
-tags: [life]
+tags: [forest]
 ---
 
-A quiet morning before the next release.
+Wet pines and creek water carried the quiet morning.

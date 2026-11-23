@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Cloud study over the ridge</title><desc id="desc">Layered blue-gray cloud bands open above a quiet violet ridge and a small evening star.</desc>
+  <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#293e5c"/><stop offset=".58" stop-color="#687c8b"/><stop offset="1" stop-color="#e1ac8d"/></linearGradient></defs><path fill="url(#sky)" d="M0 0h1600v1000H0z"/>
+  <path fill="#435c73" d="M0 251q136-133 277-49 91-167 239-85 116-182 282-31 131-91 248 16 173-129 335 5 108-45 219 10v256q-173 84-323-7-147 77-293-8-187 132-358 9-145 84-283-19Q164 430 0 510z"/>
+  <path fill="#9cadad" opacity=".8" d="M0 402q156-110 302-30 113-118 229-6 118-145 237-36 147-64 263 35 180-89 333 7 126-35 236 23v115q-162 52-297-5-131 50-267-5-178 75-323 7-122 48-247-16Q116 546 0 596z"/>
+  <circle cx="1228" cy="172" r="18" fill="#fff0c5"/><path fill="#596176" d="M0 738q189-93 359-5t307 4 327-33 607 44v252H0z"/><path fill="#373f57" d="M0 847q224-100 428-8t418 7 362-33 392 27v160H0z"/><path stroke="#f4c69b" stroke-width="7" opacity=".75" d="M150 807h194m505-16h280m173 32h172"/>
+</svg>

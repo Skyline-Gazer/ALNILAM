@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Coast at the last light</title><desc id="desc">A rose sun rests above layered indigo headlands and a blue-green sea.</desc>
+  <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#243c5a"/><stop offset=".62" stop-color="#e58f79"/><stop offset="1" stop-color="#f4c99a"/></linearGradient><linearGradient id="water" x2="0" y2="1"><stop stop-color="#497f83"/><stop offset="1" stop-color="#173b50"/></linearGradient></defs>
+  <path fill="url(#sky)" d="M0 0h1600v650H0z"/><circle cx="1190" cy="300" r="112" fill="#ffd58e"/>
+  <path fill="#465a70" d="m0 610 190-110 130 36 210-194 150 95 150-160 185 210 136-94 204 130 245-70v353H0z"/><path fill="#293e59" d="m0 704 185-98 202 82 168-108 203 96 156-142 190 155 193-69 303 94v286H0z"/>
+  <path fill="url(#water)" d="M0 670h1600v330H0z"/><path fill="#f5bd87" opacity=".85" d="M1050 665h280l-78 35h-168zm-160 52h420l-106 22H970zm86 52h252l-60 18h-171z"/>
+  <path fill="#18384b" d="M0 839c170-46 282 51 445 4s266-23 389 20 220 3 349-27 274 20 417-14v178H0z"/><path fill="none" stroke="#b9d1ba" stroke-width="8" opacity=".72" d="M90 904h235m265-25h170m510 50h235"/>
+</svg>

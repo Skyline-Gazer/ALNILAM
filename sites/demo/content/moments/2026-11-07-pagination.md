@@ -1,6 +1,7 @@
 ---
 published: 2026-11-07T13:25:00Z
-tags: [work]
+location: South reach
+tags: [tide]
 ---
 
-The first ten entries are shown before the reader asks for more.
+The outgoing tide opened a second sand channel.

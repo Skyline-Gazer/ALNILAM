@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { normalizeSiteConfig } from "../../packages/core/src/index.mjs";
+import { normalizeSiteConfig, parseSiteConfigDocument } from "../../packages/core/src/index.mjs";
 import { momentsPath, momentsRouteLocales, normalizeMomentImageUrl } from "../../apps/web/src/lib/moments.mjs";
 import { validateSiteRoot } from "../site-contract.mjs";
 
@@ -44,6 +44,54 @@ test("Moments image references preserve Site paths and HTTPS query strings", () 
 test("Moments image references reject unsafe schemes and traversal", () => {
   for (const value of ["http://cdn.example/photo.jpg", "//cdn.example/photo.jpg", "javascript:alert(1)", "../private.jpg", "%2e%2e/private.jpg", "assets\\private.jpg"]) {
     assert.throws(() => normalizeMomentImageUrl(value), /content\/moments image/);
+  }
+});
+
+test("Demo Moments is a paginated local field timeline with isolated draft coverage", () => {
+  const site = path.resolve("sites/demo");
+  const momentsDir = path.join(site, "content/moments");
+  const files = fs.readdirSync(momentsDir).filter((file) => file.endsWith(".md")).sort();
+  const moments = files.map((file) => {
+    const absolute = path.join(momentsDir, file);
+    const source = fs.readFileSync(absolute, "utf8");
+    const match = source.match(/^---\s*\n([\s\S]*?)\n---(?:\s*\n|$)/);
+    assert.ok(match, `${file} must have frontmatter`);
+    return {
+      file,
+      body: source.slice(match[0].length),
+      data: parseSiteConfigDocument(match[1], { filename: `content/moments/${file}` }),
+    };
+  });
+  const published = moments.filter(({ data }) => data.draft !== true);
+  const drafts = moments.filter(({ data }) => data.draft === true);
+
+  assert.equal(published.length, 12, "the feed has more than the eight initially shown");
+  assert.equal(drafts.length, 1, "one realistic draft remains excluded");
+  assert.ok(published.some(({ data }) => !Array.isArray(data.images) || data.images.length === 0), "text-only entries remain part of the feed");
+  assert.equal(published.filter(({ data }) => data.images?.length > 0).length, 3);
+  assert.equal(published.filter(({ data }) => data.images?.length === 2).length, 1);
+  assert.equal(published.filter(({ data }) => data.pinned === true).length, 1);
+  assert.equal(published.filter(({ data }) => data.tags?.includes("tide")).length, 2);
+  assert.equal(published.filter(({ body }) => body.toLowerCase().includes("independent")).length, 1);
+
+  for (const { file, data } of moments) {
+    for (const image of data.images ?? []) {
+      for (const reference of [image.src, image.thumbnail].filter(Boolean)) {
+        const normalized = normalizeMomentImageUrl(reference);
+        assert.ok(normalized.startsWith("/site-assets/"), `${file} uses local media: ${reference}`);
+        const asset = path.join(site, "assets", normalized.slice("/site-assets/".length));
+        assert.equal(fs.existsSync(asset), true, `${file} references existing asset ${reference}`);
+      }
+      if (image.width !== undefined || image.height !== undefined) {
+        assert.ok(Number.isInteger(image.width) && Number.isInteger(image.height), `${file} supplies paired dimensions`);
+        const normalized = normalizeMomentImageUrl(image.src);
+        const asset = path.join(site, "assets", normalized.slice("/site-assets/".length));
+        const svg = fs.readFileSync(asset, "utf8");
+        const intrinsic = svg.match(/<svg\b[^>]*\bwidth="(\d+)"[^>]*\bheight="(\d+)"/);
+        assert.ok(intrinsic, `${file} points at SVG artwork with measured dimensions`);
+        assert.deepEqual([image.width, image.height], [Number(intrinsic[1]), Number(intrinsic[2])], `${file} dimensions match its original`);
+      }
+    }
   }
 });
 
