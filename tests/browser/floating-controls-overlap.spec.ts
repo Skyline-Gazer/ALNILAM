@@ -2,14 +2,18 @@ import { expect, test, type Page } from "@playwright/test";
 
 const ROOT = process.env.ALNILAM_TEST_ROOT_URL ?? "http://127.0.0.1:4323";
 const NESTED = process.env.ALNILAM_TEST_NESTED_URL ?? "http://127.0.0.1:4324/ALNILAM";
+const bases = [["root", ROOT], ["nested", NESTED]] as const;
 const ARTICLE = "/en/posts/internationalization/";
+const TOC_BUTTON = "#fab-toc-btn button";
+const TOC_PANEL = "#floating-toc-panel";
+const PROBE = "[data-fab-probe]";
 const textBlockSelector = "h1,h2,h3,h4,h5,h6,p,li,blockquote,pre,td,th,figcaption,dt,dd";
 
 const overlapCases = [
-	{ width: 320, height: 800, theme: "light", expectOverlap: "required" },
-	{ width: 375, height: 812, theme: "dark", expectOverlap: "required" },
-	{ width: 390, height: 844, theme: "light", expectOverlap: "required" },
-	{ width: 430, height: 932, theme: "dark", expectOverlap: "measured" },
+	{ width: 320, height: 800, theme: "light", article: ARTICLE },
+	{ width: 375, height: 812, theme: "dark", article: "/en/posts/markdown-and-mdx/" },
+	{ width: 390, height: 844, theme: "light", article: ARTICLE },
+	{ width: 430, height: 932, theme: "dark", article: "/en/posts/markdown-and-mdx/" },
 ] as const;
 
 async function inspectOverlap(page: Page) {
@@ -63,7 +67,9 @@ async function inspectOverlap(page: Page) {
 		const style = getComputedStyle(controls);
 		return {
 			overlaps,
-			visuallyHidden: style.display === "none" || style.visibility === "hidden",
+			activeButtons: buttons.filter(({ right, left, bottom, top }) => right > left && bottom > top).length,
+			visuallyHidden: style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0,
+			pending: controls.hasAttribute("data-fab-text-obstruction-pending"),
 			scrollHidden: controls.classList.contains("fab-scroll-hidden"),
 			textObscured: controls.classList.contains("fab-text-obscured"),
 			inert: controls.hasAttribute("inert"),
@@ -74,27 +80,101 @@ async function inspectOverlap(page: Page) {
 	}, textBlockSelector);
 }
 
-async function overlapArticleTextWithTocButton(page: Page): Promise<void> {
-	await page.evaluate(() => {
-		const paragraph = document.querySelector<HTMLElement>(".markdown-content p");
-		const button = document.querySelector<HTMLElement>("#fab-toc-btn button");
-		if (!paragraph || !button) throw new Error("Article paragraph or TOC button is missing");
-		const buttonRect = button.getBoundingClientRect();
-		const paragraphRect = paragraph.getBoundingClientRect();
-		Object.assign(paragraph.style, {
-			position: "relative",
-			top: `${buttonRect.top + 1 - paragraphRect.top}px`,
-			left: `${buttonRect.left + 1 - paragraphRect.left}px`,
-			margin: "0",
-			fontSize: "16px",
-			lineHeight: "20px",
-			whiteSpace: "nowrap",
-		});
-	});
+async function expectControls(
+	page: Page,
+	obstruction: "measured" | "clear" | "overlap",
+	{ scrollHidden = false, tocOpen = false } = {},
+) {
+	let geometry = await inspectOverlap(page);
+	// Sample geometry and state together after observer delivery and the queued controller frame.
 	await expect.poll(async () => {
-		const state = await inspectOverlap(page);
-		return state.overlaps.length > 0 && !state.visuallyHidden && !state.inert;
-	}).toBe(true);
+		await page.evaluate(() => new Promise<void>((resolve) =>
+			requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+		));
+		geometry = await inspectOverlap(page);
+		const overlaps = geometry.overlaps.length > 0;
+		const textHidden = !tocOpen && overlaps;
+		const hidden = scrollHidden || textHidden;
+		const matches = !geometry.pending && geometry.activeButtons > 0 &&
+			geometry.scrollHidden === scrollHidden && geometry.visuallyHidden === hidden &&
+			geometry.inert === hidden && geometry.ariaHidden === (hidden ? "true" : null) &&
+			(scrollHidden || geometry.textObscured === textHidden) &&
+			(obstruction === "measured" || overlaps === (obstruction === "overlap")) &&
+			geometry.scrollWidth === geometry.clientWidth;
+		return matches ? "ready" : geometry;
+	}).toBe("ready");
+	return geometry;
+}
+
+async function articleShellUrl(page: Page, origin: string) {
+	const response = await page.goto(`${origin}/posts/`);
+	expect(response?.status()).toBe(200);
+	// Reuse a production article shell for its controls, assets and event handlers.
+	// The fixture supplies its own geometry independently of the article and locale.
+	const article = page.locator(".m3-blog-postcard").filter({
+		hasNot: page.locator(".m3-blog-postcard__encrypted, .m3-blog-postcard__pin-lock"),
+	}).locator("a.m3-blog-postcard__title").first();
+	return article.evaluate((link: HTMLAnchorElement) => link.href);
+}
+
+async function openArticle(page: Page, url: string) {
+	const response = await page.goto(url, { waitUntil: "load" });
+	expect(response?.status()).toBe(200);
+	await expect(page.locator(".markdown-content[data-pagefind-body]")).toBeVisible();
+	await page.evaluate(() => document.fonts.ready);
+	await expect(page.locator("#floating-controls")).not.toHaveAttribute("data-fab-text-obstruction-pending");
+}
+
+async function openGeometryFixture(page: Page, origin: string) {
+	await openArticle(page, await articleShellUrl(page, origin));
+	await page.locator(".markdown-content[data-pagefind-body]").evaluate((content) => {
+		const probe = document.createElement("p");
+		probe.dataset.fabProbe = "";
+		probe.textContent = "Text";
+		Object.assign(probe.style, {
+			position: "fixed", margin: "0", font: "16px/20px monospace", whiteSpace: "nowrap",
+		});
+		content.style.minHeight = "1600px";
+		content.replaceChildren(probe);
+		document.dispatchEvent(new CustomEvent("shirone:post-content-mounted"));
+	});
+	await placeProbe(page, "clear");
+	await expectControls(page, "clear");
+}
+
+async function placeProbe(page: Page, position: "clear" | "overlap") {
+	await page.locator(PROBE).evaluate((probe, { position, buttonSelector }) => {
+		const button = document.querySelector(buttonSelector);
+		if (!button || !probe.parentElement) throw new Error("Fixture button or article is missing");
+		const buttonRect = button.getBoundingClientRect();
+		probe.style.top = "0px";
+		probe.style.left = "0px";
+		const range = document.createRange();
+		range.selectNodeContents(probe);
+		const text = range.getBoundingClientRect();
+		probe.style.top = `${(position === "overlap" ? buttonRect.top + 4 : 180) - text.top}px`;
+		probe.style.left = `${(position === "overlap" ? buttonRect.left + 4 : 12) - text.left}px`;
+		// Changing height delivers a ResizeObserver notification just as a content reflow would.
+		probe.parentElement.style.minHeight = position === "overlap" ? "1700px" : "1600px";
+	}, { position, buttonSelector: TOC_BUTTON });
+}
+
+async function scrollTo(page: Page, top: number) {
+	await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), top);
+	await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(top);
+}
+
+async function expectOpenToc(page: Page) {
+	const panel = page.locator(TOC_PANEL);
+	await expect(panel).toHaveAttribute("aria-hidden", "false");
+	await expect(page.locator(TOC_BUTTON)).toHaveAttribute("aria-expanded", "true");
+	await expect(panel).toBeVisible();
+}
+
+async function closeTocWithEscape(page: Page) {
+	await page.keyboard.press("Escape");
+	await expect(page.locator(TOC_PANEL)).toHaveAttribute("aria-hidden", "true");
+	await expect(page.locator(TOC_BUTTON)).toHaveAttribute("aria-expanded", "false");
 }
 
 async function expectArticleTextFocused(page: Page): Promise<void> {
@@ -103,126 +183,89 @@ async function expectArticleTextFocused(page: Page): Promise<void> {
 		return {
 			isBody: active === document.body,
 			inControls: Boolean(active && document.getElementById("floating-controls")?.contains(active)),
-			inArticle: active instanceof HTMLElement && Boolean(active.closest(".markdown-content")),
-			text: active?.textContent?.trim() ?? "",
+			isVisibleArticleText: active instanceof HTMLElement && active.matches(".markdown-content [data-fab-probe]") &&
+				getComputedStyle(active).visibility === "visible" && active.getBoundingClientRect().bottom > 0 &&
+				active.getBoundingClientRect().top < innerHeight,
 		};
 	});
-	expect(focus.isBody).toBe(false);
-	expect(focus.inControls).toBe(false);
-	expect(focus.inArticle).toBe(true);
-	expect(focus.text.length).toBeGreaterThan(0);
+	expect(focus).toEqual({ isBody: false, inControls: false, isVisibleArticleText: true });
 }
 
-for (const { width, height, theme, expectOverlap } of overlapCases) {
-	test(`matches control visibility to article text overlap at ${width}x${height} (${theme})`, async ({ browser }, info) => {
-		const context = await browser.newContext({
-			viewport: { width, height },
-			isMobile: true,
-			hasTouch: true,
-			reducedMotion: "reduce",
+for (const [base, origin] of bases) {
+	for (const { width, height, theme, article } of overlapCases) {
+		test(`matches published article geometry on ${base} at ${width}x${height} (${theme})`, async ({ browser }, info) => {
+			const context = await browser.newContext({
+				viewport: { width, height }, isMobile: true, hasTouch: true, reducedMotion: "reduce",
+			});
+			await context.addInitScript((selectedTheme) => localStorage.setItem("theme", selectedTheme), theme);
+			const page = await context.newPage();
+			try {
+				await openArticle(page, `${origin}${article}`);
+				expect(await page.locator("html").evaluate((html) => html.classList.contains("dark"))).toBe(theme === "dark");
+				const initial = await expectControls(page, "measured");
+				await page.setViewportSize({ width, height: height + 156 });
+				const resized = await expectControls(page, "measured");
+				await scrollTo(page, 160);
+				const scrollingDown = await expectControls(page, "measured", { scrollHidden: true });
+				await scrollTo(page, 120);
+				const returned = await expectControls(page, "measured");
+
+				const focusable = await page.locator(TOC_BUTTON).evaluate((element) => {
+					(element as HTMLElement).focus({ preventScroll: true });
+					return document.activeElement === element;
+				});
+				expect(focusable).toBe(returned.overlaps.length === 0);
+				await info.attach("published-geometry.json", {
+					body: JSON.stringify({ initial, resized, scrollingDown, returned }), contentType: "application/json",
+				});
+				await info.attach(`floating-controls-${base}-${width}x${height}-${theme}.png`, {
+					body: await page.screenshot({ animations: "disabled" }), contentType: "image/png",
+				});
+			} finally {
+				await context.close();
+			}
 		});
-		await context.addInitScript((selectedTheme) => localStorage.setItem("theme", selectedTheme), theme);
+	}
+}
+
+for (const [base, origin] of bases) {
+	test(`rechecks mobile article overlap after viewport and scroll changes (${base})`, async ({ browser }) => {
+		const context = await browser.newContext({
+			viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce",
+		});
 		const page = await context.newPage();
 		try {
-			const response = await page.goto(`${ROOT}${ARTICLE}`, { waitUntil: "load" });
-			expect(response?.status()).toBe(200);
-			await expect(page.locator(".markdown-content[data-pagefind-body]")).toBeVisible();
-			await page.evaluate(() => document.fonts.ready);
-			expect(await page.locator("html").evaluate((html) => html.classList.contains("dark"))).toBe(theme === "dark");
-			await info.attach(`floating-controls-${width}x${height}-${theme}.png`, {
-				body: await page.screenshot({ animations: "disabled" }),
-				contentType: "image/png",
-			});
+			await openGeometryFixture(page, origin);
+			const button = page.locator(TOC_BUTTON);
+			await button.focus();
+			await expect(button).toBeFocused();
+			await placeProbe(page, "overlap");
+			await expectControls(page, "overlap");
+			await expect(button).not.toBeFocused();
+			await button.focus();
+			await expect(button).not.toBeFocused();
 
-			const geometry = await inspectOverlap(page);
-			const shouldHide = geometry.overlaps.length > 0;
-			if (expectOverlap === "required") expect(shouldHide).toBe(true);
-			expect(geometry.visuallyHidden, JSON.stringify(geometry)).toBe(shouldHide);
-			expect(geometry.textObscured, JSON.stringify(geometry)).toBe(shouldHide);
-			expect(geometry.scrollHidden, JSON.stringify(geometry)).toBe(false);
-			expect(geometry.ariaHidden).toBe(shouldHide ? "true" : null);
-			expect(geometry.inert).toBe(shouldHide);
-			expect(geometry.scrollWidth).toBe(geometry.clientWidth);
-			await page.evaluate(() => window.dispatchEvent(new Event("scroll")));
-			await expect.poll(async () => {
-				const state = await inspectOverlap(page);
-				return state.visuallyHidden === shouldHide && state.textObscured === shouldHide &&
-					!state.scrollHidden && state.inert === shouldHide &&
-					state.ariaHidden === (shouldHide ? "true" : null);
-			}).toBe(true);
-			const focusResult = await page.locator("#fab-toc-btn button").evaluate((button) => {
-				(button as HTMLElement).focus();
-				return document.activeElement === button;
-			});
-			expect(focusResult).toBe(!shouldHide);
+			// The probe stays put while the bottom-aligned buttons move on resize.
+			await page.setViewportSize({ width: 390, height: 1000 });
+			await expectControls(page, "clear");
+			await page.setViewportSize({ width: 390, height: 844 });
+			await expectControls(page, "overlap");
+
+			await placeProbe(page, "clear");
+			await expectControls(page, "clear");
+			await scrollTo(page, 160);
+			await expectControls(page, "clear", { scrollHidden: true });
+			await button.focus();
+			await expect(button).not.toBeFocused();
+			await scrollTo(page, 120);
+			await expectControls(page, "clear");
+			await button.focus();
+			await expect(button).toBeFocused();
 		} finally {
 			await context.close();
 		}
 	});
 }
-
-test("rechecks mobile article overlap after viewport and scroll changes", async ({ browser }) => {
-	const context = await browser.newContext({
-		viewport: { width: 390, height: 844 },
-		isMobile: true,
-		hasTouch: true,
-		reducedMotion: "reduce",
-	});
-	const page = await context.newPage();
-	const nextFrame = () => page.evaluate(() => new Promise<void>((resolve) =>
-		requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-	));
-	try {
-		await page.goto(`${ROOT}${ARTICLE}`, { waitUntil: "load" });
-		await page.evaluate(() => document.fonts.ready);
-		let geometry = await inspectOverlap(page);
-		expect(geometry.overlaps.length).toBeGreaterThan(0);
-		expect(geometry.visuallyHidden).toBe(true);
-		expect(geometry.textObscured).toBe(true);
-
-		await page.setViewportSize({ width: 390, height: 1000 });
-		await expect.poll(async () => {
-			const state = await inspectOverlap(page);
-			return !state.visuallyHidden && !state.textObscured;
-		}).toBe(true);
-		geometry = await inspectOverlap(page);
-		expect(geometry.overlaps).toHaveLength(0);
-		expect(geometry.inert).toBe(false);
-		expect(geometry.ariaHidden).toBeNull();
-
-		await page.setViewportSize({ width: 390, height: 844 });
-		await expect.poll(async () => {
-			const state = await inspectOverlap(page);
-			return state.visuallyHidden && state.textObscured;
-		}).toBe(true);
-
-		const maxScroll = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
-		await page.evaluate((top) => scrollTo(0, top), maxScroll);
-		await expect.poll(async () => (await inspectOverlap(page)).scrollHidden).toBe(true);
-		geometry = await inspectOverlap(page);
-		expect(geometry.scrollHidden).toBe(true);
-		expect(geometry.inert).toBe(true);
-		expect(geometry.ariaHidden).toBe("true");
-
-		await page.evaluate((top) => scrollTo(0, top - 40), maxScroll);
-		await expect.poll(async () => {
-			const state = await inspectOverlap(page);
-			return !state.scrollHidden && !state.visuallyHidden && !state.textObscured;
-		}).toBe(true);
-		geometry = await inspectOverlap(page);
-		expect(geometry.overlaps).toHaveLength(0);
-		expect(geometry.inert).toBe(false);
-		expect(geometry.ariaHidden).toBeNull();
-
-		await page.evaluate(() => scrollTo(0, 120));
-		await expect.poll(async () => {
-			const state = await inspectOverlap(page);
-			return state.visuallyHidden || state.overlaps.length === 0;
-		}).toBe(true);
-	} finally {
-		await context.close();
-	}
-});
 
 test("keeps overlapping controls hidden during the scroll-return transition", async ({ browser }, info) => {
 	const context = await browser.newContext({
@@ -233,82 +276,35 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 	});
 	const page = await context.newPage();
 	try {
-		await page.goto(`${ROOT}${ARTICLE}`, { waitUntil: "load" });
-		await page.evaluate(() => document.fonts.ready);
-		await expect(page.locator("#floating-controls")).not.toHaveAttribute(
-			"data-fab-text-obstruction-pending",
-		);
-		const metrics = await page.evaluate((selector) => {
-			const content = document.querySelector<HTMLElement>(".markdown-content[data-pagefind-body]");
-			const controls = document.querySelector<HTMLElement>("#floating-controls");
-			const button = document.querySelector<HTMLElement>("#fab-toc-btn button");
-			const paragraph = content?.querySelector<HTMLElement>("p");
-			if (!content || !controls || !button || !paragraph) throw new Error("Transition fixture elements are missing");
-
-			for (const block of content.querySelectorAll<HTMLElement>(selector)) {
-				if (block !== paragraph) block.style.display = "none";
-			}
-			paragraph.textContent = "x";
-			// Keep the synthetic overlap measurable in Chromium; the production travel is only 12px.
-			controls.style.setProperty("--m3e-space-3", "64px");
-			const baseRect = button.getBoundingClientRect();
-			const originalTransition = controls.style.transition;
-			const wasScrollHidden = controls.classList.contains("fab-scroll-hidden");
-			controls.style.transition = "none";
-			controls.classList.add("fab-scroll-hidden");
-			const hiddenTop = button.getBoundingClientRect().top;
-			controls.classList.toggle("fab-scroll-hidden", wasScrollHidden);
-			controls.style.transition = originalTransition;
-			const travel = hiddenTop - baseRect.top;
-			if (travel <= 1) throw new Error("Scroll-hidden transform has no measurable travel");
-			paragraph.style.display = "none";
-			const fontSize = `${Math.max(1, Math.floor(travel / 2))}px`;
-			Object.assign(paragraph.style, {
-				margin: "0",
-				fontSize,
-				lineHeight: fontSize,
-				whiteSpace: "nowrap",
-			});
-			const spacer = document.createElement("div");
-			spacer.setAttribute("aria-hidden", "true");
-			spacer.style.height = "1600px";
-			document.body.append(spacer);
-			const durationMs = getComputedStyle(controls).transitionDuration.split(",").reduce((max, value) => {
-				const duration = Number.parseFloat(value);
-				return Math.max(max, value.trim().endsWith("ms") ? duration : duration * 1000);
-			}, 0);
-			return { travel, durationMs, baseLeft: baseRect.left, baseTop: baseRect.top, hiddenTop };
-		}, textBlockSelector);
-		expect(metrics.travel).toBeGreaterThan(1);
-		expect(metrics.durationMs).toBeGreaterThan(0);
-		await page.evaluate(() => window.dispatchEvent(new Event("scroll")));
-		await expect.poll(async () => {
-			const state = await inspectOverlap(page);
-			return state.overlaps.length === 0 && !state.visuallyHidden && !state.textObscured;
-		}).toBe(true);
-
-		await page.evaluate(() => window.scrollTo({ top: 120, behavior: "instant" }));
-		await expect.poll(async () => {
-			const state = await inspectOverlap(page);
-			const top = await page.locator("#fab-toc-btn button").evaluate((button) => button.getBoundingClientRect().top);
-			return state.scrollHidden && Math.abs(top - metrics.hiddenTop) <= 1;
-		}).toBe(true);
-		await page.evaluate(({ baseLeft, baseTop, travel }) => {
-			const paragraph = document.querySelector<HTMLElement>(".markdown-content[data-pagefind-body] p");
-			if (!paragraph) throw new Error("Transition fixture paragraph is missing");
-			paragraph.style.display = "";
+		await openGeometryFixture(page, ROOT);
+		// Give the sampled text room to fit between the scroll-transform endpoints.
+		const travel = 64;
+		await page.locator("#floating-controls").evaluate((element, distance) => {
+			element.style.setProperty("--m3e-space-3", `${distance}px`);
+		}, travel);
+		const base = await page.locator(TOC_BUTTON).evaluate((element) => {
+			const { left, top } = element.getBoundingClientRect();
+			return { left, top };
+		});
+		await scrollTo(page, 120);
+		await expectControls(page, "clear", { scrollHidden: true });
+		await expect.poll(() => page.locator(TOC_BUTTON).evaluate((element) => element.getBoundingClientRect().top))
+			.toBeCloseTo(base.top + travel, 0);
+		await page.locator(PROBE).evaluate((paragraph, { base, travel }) => {
 			paragraph.style.position = "relative";
+			paragraph.style.top = "0px";
+			paragraph.style.left = "0px";
 			const range = document.createRange();
 			range.selectNodeContents(paragraph);
 			const textRect = range.getBoundingClientRect();
-			if (textRect.height >= travel - 1) throw new Error("Transition fixture text is taller than the control travel");
-			const targetTop = baseTop + travel / 2 - 2;
+			const targetTop = base.top + travel / 2 - 2;
+			if (textRect.height >= travel / 2) throw new Error("Transition text does not fit between endpoints");
 			paragraph.style.top = `${targetTop - window.scrollY - textRect.top}px`;
-			paragraph.style.left = `${baseLeft + 2 - textRect.left}px`;
-		}, { baseLeft: metrics.baseLeft, baseTop: metrics.baseTop, travel: metrics.travel });
+			paragraph.style.left = `${base.left + 2 - textRect.left}px`;
+		}, { base, travel });
 		// Let the controller observe the repositioned paragraph before the return transition.
 		await page.evaluate(() => {
-			const paragraph = document.querySelector<HTMLElement>(".markdown-content[data-pagefind-body] p");
+			const paragraph = document.querySelector("[data-fab-probe]");
 			if (!paragraph) throw new Error("Transition fixture paragraph is missing");
 			return new Promise<void>((resolve, reject) => {
 				const observer = new IntersectionObserver((entries) => {
@@ -362,7 +358,7 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 					requestAnimationFrame(sample);
 				});
 			}, expectedOffset);
-		await waitForTransformEndpoint(metrics.travel);
+		await waitForTransformEndpoint(travel);
 
 		const midpoint = await page.evaluate((travel) => {
 			const controls = document.getElementById("floating-controls");
@@ -397,9 +393,7 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 					const transform = getComputedStyle(controls).transform;
 					const transformOffset =
 						transform === "none" ? 0 : new DOMMatrixReadOnly(transform).f;
-					const paragraph = document.querySelector<HTMLElement>(
-						".markdown-content[data-pagefind-body] p",
-					);
+					const paragraph = document.querySelector("[data-fab-probe]");
 					const button = controls.querySelector<HTMLElement>("#fab-toc-btn button");
 					if (!paragraph || !button) {
 						cleanup();
@@ -483,9 +477,9 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 				}, 1500);
 				window.scrollTo({ top: 0, behavior: "instant" });
 			});
-		}, metrics.travel);
-		expect(midpoint.transformOffset).toBeGreaterThan(metrics.travel * 0.25);
-		expect(midpoint.transformOffset).toBeLessThan(metrics.travel * 0.75);
+		}, travel);
+		expect(midpoint.transformOffset).toBeGreaterThan(travel * 0.25);
+		expect(midpoint.transformOffset).toBeLessThan(travel * 0.75);
 		expect(midpoint.overlaps).toBe(true);
 		expect(midpoint.visibility).toBe("hidden");
 		expect(midpoint.textObscured).toBe(true);
@@ -509,7 +503,7 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 });
 
 test("rebuilds obstruction targets for decrypted content without a TOC", async ({ browser }, info) => {
-	for (const [name, origin] of [["root", ROOT], ["nested", NESTED]] as const) {
+	for (const [name, origin] of bases) {
 		const context = await browser.newContext({
 			viewport: { width: 390, height: 844 },
 			isMobile: true,
@@ -518,7 +512,8 @@ test("rebuilds obstruction targets for decrypted content without a TOC", async (
 		});
 		const page = await context.newPage();
 		try {
-			await page.route("**/en/posts/internationalization/", async (route) => {
+			const url = await articleShellUrl(page, origin);
+			await page.route(url, async (route) => {
 				const response = await route.fetch();
 				const html = await response.text();
 				const rewritten = html.replace(
@@ -533,14 +528,13 @@ test("rebuilds obstruction targets for decrypted content without a TOC", async (
 				delete headers.etag;
 				await route.fulfill({ status: response.status(), headers, body: rewritten });
 			});
-			const response = await page.goto(`${origin}${ARTICLE}`, { waitUntil: "load" });
+			const response = await page.goto(url, { waitUntil: "load" });
 			expect(response?.status()).toBe(200);
 			await expect(page.locator(".markdown-content[data-pagefind-body]")).toHaveCount(0);
 			await page.evaluate(() => {
 				document.querySelectorAll("table-of-contents").forEach((toc) => toc.remove());
 			});
 			await expect(page.locator("table-of-contents")).toHaveCount(0);
-
 
 			await page.evaluate(() => {
 				const placeholder = document.querySelector<HTMLElement>(".encrypted-post-placeholder");
@@ -579,9 +573,7 @@ test("limits scroll obstruction reads to visible article blocks", async ({ brows
 	});
 	const page = await context.newPage();
 	try {
-		const response = await page.goto(`${ROOT}${ARTICLE}`, { waitUntil: "load" });
-		expect(response?.status()).toBe(200);
-		await page.evaluate(() => document.fonts.ready);
+		await openGeometryFixture(page, ROOT);
 		await page.evaluate(() => {
 			const content = document.querySelector<HTMLElement>(".markdown-content");
 			if (!content) throw new Error("Article content is missing");
@@ -653,21 +645,20 @@ test("moves focus to visible article text when closing TOC hides overlapping con
 	});
 	const page = await context.newPage();
 	try {
-		const response = await page.goto(`${ROOT}${ARTICLE}`, { waitUntil: "load" });
-		expect(response?.status()).toBe(200);
-		await page.evaluate(() => document.fonts.ready);
-
-		const button = page.locator("#fab-toc-btn button");
+		await openGeometryFixture(page, ROOT);
+		const button = page.locator(TOC_BUTTON);
 		await button.focus();
+		await expect(button).toBeFocused();
 		await page.keyboard.press("Enter");
-		const panel = page.locator("#floating-toc-panel");
-		await expect(panel).toHaveAttribute("aria-hidden", "false");
-		await overlapArticleTextWithTocButton(page);
+		await expectOpenToc(page);
+		await placeProbe(page, "overlap");
+		await expectControls(page, "overlap", { tocOpen: true });
 
-		await page.keyboard.press("Escape");
-		await expect(panel).toHaveAttribute("aria-hidden", "true");
-		await expect(page.locator("#floating-controls")).toHaveAttribute("aria-hidden", "true");
+		await closeTocWithEscape(page);
+		await expectControls(page, "overlap");
 		await expectArticleTextFocused(page);
+		await page.keyboard.press("Tab");
+		await expect(page.locator("#floating-controls :focus")).toHaveCount(0);
 	} finally {
 		await context.close();
 	}
@@ -682,11 +673,8 @@ test("moves focus to article text when click activation leaves focus on body", a
 	});
 	const page = await context.newPage();
 	try {
-		const response = await page.goto(`${ROOT}${ARTICLE}`, { waitUntil: "load" });
-		expect(response?.status()).toBe(200);
-		await page.evaluate(() => document.fonts.ready);
-
-		const button = page.locator("#fab-toc-btn button");
+		await openGeometryFixture(page, ROOT);
+		const button = page.locator(TOC_BUTTON);
 		await page.evaluate(() => {
 			const active = document.activeElement;
 			if (active instanceof HTMLElement) active.blur();
@@ -694,22 +682,20 @@ test("moves focus to article text when click activation leaves focus on body", a
 		expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
 		// HTMLElement.click() activates the button without applying pointer focus.
 		await button.evaluate((element) => (element as HTMLButtonElement).click());
-		const panel = page.locator("#floating-toc-panel");
-		await expect(panel).toHaveAttribute("aria-hidden", "false");
-		expect(await button.evaluate((element) => document.activeElement !== element)).toBe(true);
-		await overlapArticleTextWithTocButton(page);
+		await expectOpenToc(page);
+		await placeProbe(page, "overlap");
+		await expectControls(page, "overlap", { tocOpen: true });
 
-		await page.keyboard.press("Escape");
-		await expect(panel).toHaveAttribute("aria-hidden", "true");
-		await expect(page.locator("#floating-controls")).toHaveAttribute("aria-hidden", "true");
+		await closeTocWithEscape(page);
+		await expectControls(page, "overlap");
 		await expectArticleTextFocused(page);
 	} finally {
 		await context.close();
 	}
 });
 
-test("keeps clear controls discoverable to keyboard and touch on root and nested paths", async ({ browser }) => {
-	for (const origin of [ROOT, NESTED]) {
+for (const [base, origin] of bases) {
+	test(`keeps clear controls discoverable to keyboard and touch (${base})`, async ({ browser }) => {
 		const context = await browser.newContext({
 			viewport: { width: 390, height: 1000 },
 			isMobile: true,
@@ -718,30 +704,36 @@ test("keeps clear controls discoverable to keyboard and touch on root and nested
 		});
 		const page = await context.newPage();
 		try {
-			const response = await page.goto(`${origin}${ARTICLE}`, { waitUntil: "load" });
-			expect(response?.status()).toBe(200);
-			await page.evaluate(() => document.fonts.ready);
-			const geometry = await inspectOverlap(page);
-			expect(geometry.overlaps).toHaveLength(0);
-			expect(geometry.visuallyHidden).toBe(false);
-
-			const button = page.locator("#fab-toc-btn button");
-			await button.focus();
+			await openGeometryFixture(page, origin);
+			const button = page.locator(TOC_BUTTON);
+			// Start the tab sequence in the same fixed slot as the TOC trigger.
+			const start = page.locator("[data-fab-keyboard-start]");
+			await button.evaluate((trigger) => {
+				const start = document.createElement("a");
+				start.dataset.fabKeyboardStart = "";
+				start.href = "#floating-controls";
+				start.textContent = "Keyboard start";
+				start.style.position = "absolute";
+				trigger.before(start);
+			});
+			await start.focus();
+			await expect(start).toBeFocused();
+			await page.keyboard.press("Tab");
+			await expect(button).toBeFocused();
+			await start.evaluate((element) => element.remove());
 			await page.keyboard.press("Enter");
-			await expect(page.locator("#floating-toc-panel")).toHaveAttribute("aria-hidden", "false");
-			await page.keyboard.press("Escape");
-			await expect(page.locator("#floating-toc-panel")).toHaveAttribute("aria-hidden", "true");
+			await expectOpenToc(page);
+			await closeTocWithEscape(page);
+			await expectControls(page, "clear");
 			await expect(button).toBeFocused();
 
-			const box = await button.boundingBox();
-			expect(box).not.toBeNull();
-			await page.touchscreen.tap(box!.x + box!.width / 2, box!.y + box!.height / 2);
-			await expect(page.locator("#floating-toc-panel")).toHaveAttribute("aria-hidden", "false");
+			await button.tap();
+			await expectOpenToc(page);
 		} finally {
 			await context.close();
 		}
-	}
-});
+	});
+}
 
 test("keeps floating controls unchanged at the 768px breakpoint", async ({ browser }, info) => {
 	const context = await browser.newContext({

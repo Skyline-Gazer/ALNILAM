@@ -66,6 +66,11 @@ GitHub Project #17 remains the live work tracker. Read its state and the linked
 Issues before choosing work. Historical status and cutover decisions below remain
 records of their original dates; they do not override this current authority.
 
+The Demo content review [#205](https://github.com/Skyline-Gazer/ALNILAM/pull/205)
+depends on the floating-controls regression stabilization under
+[#194](https://github.com/Skyline-Gazer/ALNILAM/issues/194) and a green Verify on the
+resulting Demo PR head.
+
 ### Product scope update — 2026-11-13
 
 Owner authorization on [Issue #67](https://github.com/Skyline-Gazer/ALNILAM/issues/67#issuecomment-6854542688) reopens Gallery/Album for scoped engineering on GitHub `dev` before vNext launch. #35 and unfinished P6 work are not engineering prerequisites. Gallery remains Site-owned, optional and default OFF; this does not grant formal release acceptance. #68, #69, #88 and #89 remain outside this authorization. See the [decision addendum](next/08-G0-F-DECISION.md).
