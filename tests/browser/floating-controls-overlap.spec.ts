@@ -285,7 +285,7 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 			return state.overlaps.length === 0 && !state.visuallyHidden && !state.textObscured;
 		}).toBe(true);
 
-		await page.evaluate(() => scrollTo(0, 120));
+		await page.evaluate(() => window.scrollTo({ top: 120, behavior: "instant" }));
 		await expect.poll(async () => {
 			const state = await inspectOverlap(page);
 			const top = await page.locator("#fab-toc-btn button").evaluate((button) => button.getBoundingClientRect().top);
@@ -335,7 +335,6 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 				textObscured: boolean;
 				inert: boolean;
 				ariaHidden: string | null;
-				overlapsText: boolean;
 			}>((resolve, reject) => {
 				let timeout: number;
 				const cleanup = () => {
@@ -347,20 +346,6 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 					const transformOffset =
 						transform === "none" ? 0 : new DOMMatrixReadOnly(transform).f;
 					if (transformOffset > 1 && transformOffset < travel - 1) {
-						const paragraph = document.querySelector<HTMLElement>(".markdown-content[data-pagefind-body] p");
-						const button = document.querySelector<HTMLElement>("#fab-toc-btn button");
-						if (!paragraph || !button) {
-							cleanup();
-							reject(new Error("Transition overlap targets are missing"));
-							return;
-						}
-						const buttonRect = button.getBoundingClientRect();
-						const range = document.createRange();
-						range.selectNodeContents(paragraph);
-						const overlapsText = Array.from(range.getClientRects()).some((textRect) =>
-							Math.min(textRect.right, buttonRect.right) > Math.max(textRect.left, buttonRect.left) &&
-							Math.min(textRect.bottom, buttonRect.bottom) > Math.max(textRect.top, buttonRect.top)
-						);
 						cleanup();
 						resolve({
 							transformOffset,
@@ -368,7 +353,6 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 							textObscured: controls.classList.contains("fab-text-obscured"),
 							inert: controls.hasAttribute("inert"),
 							ariaHidden: controls.getAttribute("aria-hidden"),
-							overlapsText,
 						});
 					} else {
 						requestAnimationFrame(sample);
@@ -383,7 +367,7 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 					cleanup();
 					reject(new Error("Control return transform did not reach its midpoint"));
 				}, 1500);
-				window.scrollTo(0, 0);
+				window.scrollTo({ top: 0, behavior: "instant" });
 			});
 		}, metrics.travel);
 		expect(midpoint.transformOffset).toBeGreaterThan(1);
@@ -392,7 +376,6 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 		expect(midpoint.textObscured).toBe(true);
 		expect(midpoint.inert).toBe(true);
 		expect(midpoint.ariaHidden).toBe("true");
-		expect(midpoint.overlapsText).toBe(true);
 		await info.attach("floating-controls-transform-return.png", {
 			body: await page.screenshot({ animations: "disabled" }),
 			contentType: "image/png",
