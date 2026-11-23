@@ -114,18 +114,21 @@ function isActive(link: (typeof links)[number]): boolean {
 		className,
 	]}
 >
-	<div class="relative max-w-[var(--page-width)] mx-auto h-16 px-3 md:px-5 flex items-center gap-1">
+	<div class:list={[
+		"top-app-bar__row relative max-w-[var(--page-width)] mx-auto h-16 px-3 md:px-5 flex items-center gap-1",
+		siteConfig.topAppBar.contentAlign === "left" && "top-app-bar__row--left",
+	]}>
 		<IconButton id="nav-drawer-switch" label={t(I18nKey.menu)} ariaExpanded={false} ariaControls="site-drawer-panel" class="shrink-0 lg:!hidden">
 			<Icon icon="material-symbols:menu-rounded" class="text-[1.25rem]"></Icon>
 		</IconButton>
 		<a
 			href={hrefFor("/")}
-			class="group flex h-10 items-center gap-2 px-2 text-[var(--on-surface)] transition whitespace-nowrap"
+			class="group flex h-10 min-w-0 max-w-full items-center gap-2 justify-self-start px-2 text-[var(--on-surface)] transition"
 		>
-			<span class="h-5 w-1 rounded-full bg-[var(--primary)] transition-all group-hover:h-7"></span>
-			<span class="text-lg font-bold group-hover:text-[var(--primary)]">{siteConfig.title}</span>
+			<span class="h-5 w-1 shrink-0 rounded-full bg-[var(--primary)] transition-all group-hover:h-7"></span>
+			<span class="truncate text-lg font-bold group-hover:text-[var(--primary)]">{siteConfig.title}</span>
 		</a>
-		<nav id="main-navigation" class:list={["top-app-bar__nav hidden h-full items-center gap-1 lg:flex", siteConfig.topAppBar.contentAlign === "center" ? "lg:absolute lg:left-1/2 lg:-translate-x-1/2" : "ml-4"]} aria-label={t(I18nKey.mainNavigation)}>
+		<nav id="main-navigation" class="top-app-bar__nav hidden h-full items-center gap-1 lg:flex" aria-label={t(I18nKey.mainNavigation)}>
 			{links.map((link) => {
 				const href = link.external ? link.url : hrefFor(link.url);
 				const active = isActive(link);
@@ -168,15 +171,16 @@ function isActive(link: (typeof links)[number]): boolean {
 				);
 			})}
 		</nav>
-		<div class="flex-1"></div>
-		<Search client:only="svelte"></Search>
-		<LangSwitch targets={switchTargets} />
-		{!siteConfig.themeColor.fixed && (
-			<IconButton id="display-settings-switch" label={t(I18nKey.displaySettings)} ariaExpanded={false} ariaControls="display-setting" class="shrink-0">
-				<Icon icon="material-symbols:palette-outline" class="text-[1.25rem]"></Icon>
-			</IconButton>
-		)}
-		<LightDarkSwitch client:only="svelte"></LightDarkSwitch>
+		<div class="ml-auto flex shrink-0 items-center gap-1">
+			<Search client:only="svelte"></Search>
+			<LangSwitch targets={switchTargets} />
+			{!siteConfig.themeColor.fixed && (
+				<IconButton id="display-settings-switch" label={t(I18nKey.displaySettings)} ariaExpanded={false} ariaControls="display-setting" class="shrink-0">
+					<Icon icon="material-symbols:palette-outline" class="text-[1.25rem]"></Icon>
+				</IconButton>
+			)}
+			<LightDarkSwitch client:only="svelte"></LightDarkSwitch>
+		</div>
 		{!siteConfig.themeColor.fixed && (
 			<DisplaySettings client:only="svelte" class="top-full right-4 max-w-[calc(100vw-2rem)] md:right-0"></DisplaySettings>
 		)}
@@ -192,6 +196,21 @@ function isActive(link: (typeof links)[number]): boolean {
 			background-color var(--m3e-duration-medium) var(--m3e-easing-standard),
 			box-shadow var(--m3e-duration-medium) var(--m3e-easing-standard),
 			color var(--m3e-duration-short) var(--m3e-easing-standard);
+	}
+
+	@media (min-width: 64rem) {
+		.top-app-bar__row {
+			display: grid;
+			/* Center the nav when both sides fit. Reserve the right rail's
+			   full width as the search expands near the desktop breakpoint. */
+			grid-template-columns: minmax(0, 1fr) max-content minmax(max-content, 1fr);
+		}
+		.top-app-bar__row--left {
+			grid-template-columns: minmax(0, max-content) max-content minmax(max-content, 1fr);
+		}
+		.top-app-bar__row--left .top-app-bar__nav {
+			margin-inline-start: 1rem;
+		}
 	}
 
 	.top-app-bar--scrolled:not(.top-app-bar--transparent) {
@@ -252,6 +271,14 @@ function isActive(link: (typeof links)[number]): boolean {
 		line-height: 1.25rem;
 		color: var(--on-surface-variant);
 		transition: color var(--m3e-duration-short) var(--m3e-easing-standard);
+	}
+	@media (64rem <= width < 80rem) {
+		.top-app-bar__nav {
+			gap: 1px;
+		}
+		.top-app-bar__nav-link {
+			padding-inline: 0.375rem;
+		}
 	}
 	.top-app-bar__nav-link:hover {
 		color: var(--on-surface);

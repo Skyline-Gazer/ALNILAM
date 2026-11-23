@@ -169,6 +169,52 @@ for (const [name, origin] of deployments) {
 		await context.close();
 	});
 
+	for (const { width, locale, query } of [
+		{ width: 1024, locale: "en", query: "comet-locator" },
+		{ width: 1440, locale: "en", query: "comet-locator" },
+		{ width: 1024, locale: "ja", query: "ページネーション" },
+	]) {
+		test(`desktop search keeps ${locale} navigation usable at ${width}px ${name}`, async ({ page }) => {
+			await page.setViewportSize({ width, height: 900 });
+			await page.goto(`${origin}/${locale}/`, { waitUntil: "networkidle" });
+			const trigger = page.locator("#search-input-desktop-switch");
+			await trigger.focus();
+			await trigger.press("Enter");
+			const input = page.locator("#search-input-desktop");
+			await expect(input).toBeFocused();
+			await expect(trigger).toHaveAttribute("aria-expanded", "true");
+			await input.fill(query);
+			const result = page.locator("#search-panel").getByRole("link").first();
+			await expect(result).toBeVisible({ timeout: 15_000 });
+			await expect(result).toHaveAttribute("href", new URL(`${origin}/${locale}/posts/pagination-sample/`).pathname);
+			const capsule = page.locator(".top-app-bar__search-shell");
+			await capsule.evaluate(async (element) => {
+				await Promise.all(element.getAnimations().map((animation) => animation.finished));
+			});
+
+			// The whole capsule (including the icon) must clear the nav, and
+			// each link must receive pointer hits near both edges of its hit box.
+			await expect(page.locator('#main-navigation [data-nav-key="series"]')).toBeVisible();
+			await expect.poll(() => page.locator("#main-navigation").evaluate((nav) => {
+				const capsule = document.querySelector(".top-app-bar__search-shell")!.getBoundingClientRect();
+				const links = Array.from(nav.querySelectorAll<HTMLAnchorElement>(":scope > a"));
+				return {
+					overlap: nav.getBoundingClientRect().right > capsule.left,
+					obscured: links.filter((link) => {
+						const { left, right, top, height } = link.getBoundingClientRect();
+						const y = top + height / 2;
+						return [left + 1, right - 1].some((x) => !link.contains(document.elementFromPoint(x, y)));
+					}).map((link) => link.textContent?.trim()),
+				};
+			})).toEqual({ overlap: false, obscured: [] });
+
+			await input.press("Escape");
+			await expect(trigger).toBeFocused();
+			await expect(trigger).toHaveAttribute("aria-expanded", "false");
+			await expect(page.locator("#search-panel")).toBeHidden();
+		});
+	}
+
 	test(`pagefind en unique keyword finds and opens the en article ${name}`, async ({ browser }) => {
 		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
 		const page = await context.newPage();
