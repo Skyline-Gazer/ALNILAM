@@ -77,9 +77,14 @@ for (const deployment of deployments) {
         await expect(page.locator("main h1").first()).toHaveText(route.title);
         await expect(page.locator('#main-navigation [data-nav-key="albums"]')).toHaveText(route.title);
         const search = page.locator(".album-section__search input");
-        await expect(search).toHaveAttribute("placeholder", route.locale === "en" ? "Search" : "検索");
+        const searchPlaceholder = { "zh-CN": "搜索", en: "Search", ja: "検索" }[route.locale];
+        await expect(search).toHaveAttribute("placeholder", searchPlaceholder);
         await search.fill("no-such-album-matches-this-query");
-        const noResultsText = route.locale === "en" ? "No albums matched your filters" : "条件に合うアルバムがありません";
+        const noResultsText = {
+          "zh-CN": "没有符合条件的相册",
+          en: "No albums matched your filters",
+          ja: "条件に合うアルバムがありません",
+        }[route.locale];
         await expect(page.locator(".album-section__empty")).toContainText(noResultsText);
         await search.fill("");
         const mountainFilter = page.getByRole("button", { name: "mountains", exact: true });

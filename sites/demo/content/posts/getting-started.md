@@ -4,6 +4,7 @@ description: "用 Site v2 配置并发布第一篇文章。"
 pubDate: 2026-11-23
 category: "guide"
 tags: ["alnilam"]
+cover: "/site-assets/lighthouse-artwork.svg"
 pinned: true
 series: "alnilam-introduction"
 seriesOrder: 2

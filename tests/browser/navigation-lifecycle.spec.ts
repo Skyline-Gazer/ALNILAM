@@ -119,7 +119,10 @@ for (const origin of ["http://127.0.0.1:4323", "http://127.0.0.1:4324/ALNILAM"])
             await expect(page.locator("#top-row")).not.toHaveAttribute("inert", "");
           }
           if (round === 0) {
-            const image = page.locator('.m3-blog-postcard img[loading="lazy"]').first();
+            // Card covers decode whether the card is above the fold (eager) or
+            // below it (lazy), so assert the decode rather than the hint.
+            const image = page.locator(".m3-blog-postcard img").first();
+            await expect(image).toBeVisible();
             await image.scrollIntoViewIfNeeded();
             await expect
               .poll(() =>
