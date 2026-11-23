@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1500" viewBox="0 0 1000 1500" role="img" aria-labelledby="title desc">
+  <title id="title">Sea stack after rain</title><desc id="desc">A tall basalt sea stack rises from blue water beneath a break in the clouds.</desc>
+  <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#29455f"/><stop offset=".68" stop-color="#9db2ad"/><stop offset="1" stop-color="#eac69c"/></linearGradient><linearGradient id="sea" x2="0" y2="1"><stop stop-color="#4d8183"/><stop offset="1" stop-color="#163c52"/></linearGradient></defs>
+  <path fill="url(#sky)" d="M0 0h1000v970H0z"/><circle cx="790" cy="410" r="78" fill="#f8d19a" opacity=".9"/><path fill="#d5d8c8" opacity=".62" d="M0 353q170-130 336-18t342-10 322-28v154q-220 78-430-4T0 497z"/>
+  <path fill="#273f55" d="M0 885q222-82 414-12t586-3v137H0z"/><path fill="url(#sea)" d="M0 980h1000v520H0z"/><path fill="#3e5058" d="m450 1020 38-396 58-119 61 93 29 422z"/><path fill="#283d4c" d="m431 1020 44-330 69-182 54 119 78 393z"/><path fill="#87948a" d="m486 634 60-126 55 119-31-19-22 28-26-20-18 31z"/>
+  <path fill="#f0bd8d" opacity=".8" d="M0 1100h370l-70 20H0zm652 58h348l-88 20H715zm-580 94h334l-91 18H0zm566 76h362l-124 20H596z"/><path stroke="#b6cec3" stroke-width="7" opacity=".6" d="M123 1308h132m590-92h100M340 1431h211"/>
+</svg>

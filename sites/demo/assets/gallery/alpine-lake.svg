@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1200" viewBox="0 0 1800 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Alpine lake in the morning</title><desc id="desc">Pale peaks and dark pines reflect in still turquoise water.</desc>
+  <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#b8d5d3"/><stop offset="1" stop-color="#f1dfbe"/></linearGradient><linearGradient id="lake" x2="0" y2="1"><stop stop-color="#5b9a96"/><stop offset="1" stop-color="#254d5d"/></linearGradient></defs>
+  <path fill="url(#sky)" d="M0 0h1800v670H0z"/><circle cx="1400" cy="195" r="72" fill="#f8d69b"/>
+  <path fill="#657b82" d="m0 610 205-193 138 94 284-369 191 297 151-158 268 279 208-209 355 266v193H0z"/><path fill="#e6e4d6" d="m470 511 157-369 102 159-56-28-47 48-41-15-62 101zm523 68 149-179 181 198-101-54-76 21-61-41-45 53z"/>
+  <path fill="#324f59" d="m0 650 213-129 134 76 159-89 177 80 159-96 149 100 159-86 152 90 184-118 217 131v202H0z"/><path fill="url(#lake)" d="M0 738h1800v462H0z"/>
+  <path fill="#d8c99f" opacity=".7" d="M620 751h595l-94 19H718zm-122 51h820l-155 18H632zm223 57h520l-86 18H777zm-310 88h1057l-143 18H506z"/><path fill="#1d414e" d="M0 1035q220-55 440 5t445 0 470 2 445-5v163H0z"/>
+</svg>

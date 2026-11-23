@@ -88,18 +88,47 @@ test("Gallery photo descriptions survive Site data normalization", () => {
   assert.equal(loadSiteGallery(site)[0].photos[0].description, "View across the lake");
 });
 
-test("Demo Gallery loads independent local, remote, thumbnail and empty album data", () => {
+test("Demo Gallery loads authored local originals, previews, layouts and a cover-free album", () => {
   const albums = loadSiteGallery(demo);
-  assert.equal(albums.length, 4);
-  assert.equal(albums[0].photos.length, 3);
-  assert.notEqual(albums[0].photos[0].src, albums[0].photos[0].thumbnail);
-  assert.equal(albums[0].photos[0].location, "Alpine lake");
-  assert.equal(albums[0].photos[0].width, 2400);
-  assert.equal(albums[0].photos[2].src, "/site-assets/lighthouse.png");
-  assert.equal(albums[1].cover, "/site-assets/orion.svg");
-  assert.equal(albums[1].photos[0].src, "/site-assets/orion.svg?variant=gallery#nebula");
+  assert.equal(albums.length, 3);
+  assert.equal(albums[0].id, "coast-and-mountains");
+  assert.equal(albums[0].layout, "grid");
+  assert.equal(albums[0].photos.length, 4);
+  assert.equal(albums[0].photos[0].src, "/site-assets/gallery/coast-dusk.svg");
+  assert.equal(albums[0].photos[0].thumbnail, "/site-assets/gallery/coast-dusk-thumb.svg");
+  assert.equal(albums[0].photos[0].location, "Gull Point");
+  assert.equal(albums[0].photos[0].width, 1600);
+  assert.equal(albums[0].photos[0].height, 1000);
+  assert.deepEqual(
+    [albums[0].photos[2].width, albums[0].photos[2].height],
+    [1000, 1500],
+    "the grid contains a measured portrait original",
+  );
+  assert.equal(albums[1].id, "tidal-sketchbook");
+  assert.equal(albums[1].layout, "masonry");
+  assert.equal(albums[1].photos.length, 3);
+  assert.equal(albums[1].photos[0].thumbnail, "/site-assets/gallery/tidal-flat-thumb.svg");
+  assert.equal(albums[2].id, "forest-field-notes");
   assert.equal(albums[2].cover, "");
-  assert.equal(albums[3].photos.length, 0);
+
+  for (const album of albums) {
+    for (const photo of album.photos) {
+      for (const url of [photo.src, photo.thumbnail].filter(Boolean)) {
+        const asset = path.join(demo, "assets", url.slice("/site-assets/".length));
+        assert.equal(fs.existsSync(asset), true, `missing local Gallery asset ${url}`);
+      }
+    }
+  }
+});
+
+test("Gallery empty albums remain valid in isolated synthetic Site data", () => {
+  const site = path.join(scratch, "empty-album");
+  fs.mkdirSync(path.join(site, "data"), { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "data", "albums.yaml"),
+    "schemaVersion: 1\nalbums:\n  - id: empty\n    title: Empty album\n    photos: []\n",
+  );
+  assert.equal(loadSiteGallery(site)[0].photos.length, 0);
 });
 
 test("Gallery data rejects duplicate album IDs, unknown fields and invalid image paths", () => {

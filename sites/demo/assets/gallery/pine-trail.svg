@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1400" viewBox="0 0 1000 1400" role="img" aria-labelledby="title desc">
+  <title id="title">Pine trail in late afternoon</title><desc id="desc">A pale trail winds between deep green pines toward a warm opening in the forest.</desc>
+  <defs><linearGradient id="forest" x2="0" y2="1"><stop stop-color="#b7c8a0"/><stop offset=".45" stop-color="#637e67"/><stop offset="1" stop-color="#1b444a"/></linearGradient><linearGradient id="path" x2="0" y2="1"><stop stop-color="#e6d2a7"/><stop offset="1" stop-color="#ad8e6b"/></linearGradient></defs>
+  <path fill="url(#forest)" d="M0 0h1000v1400H0z"/><circle cx="510" cy="430" r="132" fill="#f5ce91" opacity=".75"/><path fill="#263f45" d="M0 0h213l92 271-55 112 49 122-41 895H0zm1000 0H789l-92 271 55 112-49 122 41 895h256z"/>
+  <path fill="#315649" d="m56 447 97-168 99 168zm-10 275 116-213 119 213zm705-274 96-169 98 169zm-15 295 120-218 121 218z"/><path fill="#e1cfaa" d="M438 552h124l-12 212q-22 118-16 243 5 175 150 393H317q145-218 150-393 6-125-16-243z"/><path fill="#b59b77" opacity=".6" d="M460 765h80q-24 144-8 243H468q16-99-8-243zm-47 359h174l40 83H373z"/>
+  <g fill="#203e43"><path d="m153 695 95-174 96 174zm522-5 96-174 96 174zM83 1004l103-195 104 195zm524-8 103-196 104 196z"/></g><path fill="#f7dda8" opacity=".45" d="M450 515h100v35H450z"/>
+</svg>

@@ -2,10 +2,11 @@
 published: 2026-11-08T19:10:00Z
 tags: [sky]
 images:
-  - src: orion.svg
-    alt: Orion illustration, first view
-  - src: orion.svg?view=second
-    alt: Orion illustration, second view
+  - src: assets/gallery/coast-dusk.svg
+    thumbnail: assets/gallery/coast-dusk-thumb.svg
+    alt: The last light settling on the headland and sea
+    width: 1600
+    height: 1000
 ---
 
-Two images exercise the inline viewer and keyboard navigation.
+Last light held above the headland before the tide turned.
