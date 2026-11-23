@@ -759,10 +759,15 @@ for (const [name, origin] of deployments) {
 					?.focus();
 			});
 			await page.keyboard.press("Tab");
-			const focusedInactiveSlide = await page.evaluate(() =>
-				Boolean(document.activeElement?.closest('.pswp__item[aria-hidden="true"]')),
-			);
-			expect(focusedInactiveSlide).toBe(false);
+			const focusAfterTab = await page.evaluate(() => {
+				const active = document.activeElement;
+				return {
+					inside: Boolean(active?.closest(".pswp")),
+					inactiveSlide: Boolean(active?.closest('.pswp__item[aria-hidden="true"]')),
+				};
+			});
+			expect(focusAfterTab.inside).toBe(true);
+			expect(focusAfterTab.inactiveSlide).toBe(false);
 			await closeWithEscape(page, container);
 			await context.close();
 		});
