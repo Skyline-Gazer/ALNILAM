@@ -382,42 +382,76 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 					inert: boolean;
 					ariaHidden: string | null;
 				} | null = null;
+				let samplingStopped = false;
 				const cleanup = () => {
+					samplingStopped = true;
 					window.clearTimeout(timeout);
 					controls.removeEventListener("transitionrun", onTransitionRun);
 					document.removeEventListener("transitionend", onTransitionSettled);
 					document.removeEventListener("transitioncancel", onTransitionSettled);
 				};
 				const sample = () => {
+					if (samplingStopped) return;
 					const transform = getComputedStyle(controls).transform;
 					const transformOffset =
 						transform === "none" ? 0 : new DOMMatrixReadOnly(transform).f;
-					if (transformOffset > travel * 0.25 && transformOffset < travel * 0.75) {
-						const paragraph = document.querySelector<HTMLElement>(
-							".markdown-content[data-pagefind-body] p",
-						);
-						const button = controls.querySelector<HTMLElement>("#fab-toc-btn button");
-						if (!paragraph || !button) {
-							cleanup();
-							reject(new Error("Transition fixture text or TOC button is missing"));
-							return;
-						}
-						const range = document.createRange();
-						range.selectNodeContents(paragraph);
-						const buttonRect = button.getBoundingClientRect();
-						const overlaps = [...range.getClientRects()].some((textRect) =>
-							Math.min(textRect.right, buttonRect.right) > Math.max(textRect.left, buttonRect.left) &&
-							Math.min(textRect.bottom, buttonRect.bottom) > Math.max(textRect.top, buttonRect.top),
-						);
+					const paragraph = document.querySelector<HTMLElement>(
+						".markdown-content[data-pagefind-body] p",
+					);
+					const button = controls.querySelector<HTMLElement>("#fab-toc-btn button");
+					if (!paragraph || !button) {
+						cleanup();
+						reject(new Error("Transition fixture text or TOC button is missing"));
+						return;
+					}
+					const range = document.createRange();
+					range.selectNodeContents(paragraph);
+					const buttonRect = button.getBoundingClientRect();
+					const overlaps = [...range.getClientRects()].some((textRect) =>
+						Math.min(textRect.right, buttonRect.right) > Math.max(textRect.left, buttonRect.left) &&
+						Math.min(textRect.bottom, buttonRect.bottom) > Math.max(textRect.top, buttonRect.top),
+					);
+					if (overlaps) {
 						const visibility = getComputedStyle(controls).visibility;
 						const textObscured = controls.classList.contains("fab-text-obscured");
 						const inert = controls.hasAttribute("inert");
 						const ariaHidden = controls.getAttribute("aria-hidden");
-						if (overlaps && visibility === "hidden" && textObscured && inert && ariaHidden === "true") {
-							midpoint = { transformOffset, overlaps, visibility, textObscured, inert, ariaHidden };
+						if (
+							visibility !== "hidden" ||
+							!textObscured ||
+							!inert ||
+							ariaHidden !== "true"
+						) {
+							cleanup();
+							reject(
+								new Error(
+									`Overlapping article text exposed floating controls: ${JSON.stringify({
+										transformOffset,
+										visibility,
+										textObscured,
+										inert,
+										ariaHidden,
+									})}`,
+								),
+							);
+							return;
+						}
+						if (
+							!midpoint &&
+							transformOffset > travel * 0.25 &&
+							transformOffset < travel * 0.75
+						) {
+							midpoint = {
+								transformOffset,
+								overlaps,
+								visibility,
+								textObscured,
+								inert,
+								ariaHidden,
+							};
 						}
 					}
-					if (!midpoint) requestAnimationFrame(sample);
+					requestAnimationFrame(sample);
 				};
 				const onTransitionRun = (event: TransitionEvent) => {
 					if (event.target !== controls || event.propertyName !== "transform") return;
