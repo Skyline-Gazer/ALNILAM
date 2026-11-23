@@ -337,35 +337,54 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 				ariaHidden: string | null;
 			}>((resolve, reject) => {
 				let timeout: number;
+				let midpoint: {
+					transformOffset: number;
+					visibility: string;
+					textObscured: boolean;
+					inert: boolean;
+					ariaHidden: string | null;
+				} | null = null;
 				const cleanup = () => {
 					window.clearTimeout(timeout);
 					controls.removeEventListener("transitionrun", onTransitionRun);
+					document.removeEventListener("transitionend", onTransitionSettled);
+					document.removeEventListener("transitioncancel", onTransitionSettled);
 				};
 				const sample = () => {
 					const transform = getComputedStyle(controls).transform;
 					const transformOffset =
 						transform === "none" ? 0 : new DOMMatrixReadOnly(transform).f;
 					if (transformOffset > 1 && transformOffset < travel - 1) {
-						cleanup();
-						resolve({
+						midpoint = {
 							transformOffset,
 							visibility: getComputedStyle(controls).visibility,
 							textObscured: controls.classList.contains("fab-text-obscured"),
 							inert: controls.hasAttribute("inert"),
 							ariaHidden: controls.getAttribute("aria-hidden"),
-						});
-					} else {
-						requestAnimationFrame(sample);
+						};
 					}
+					if (!midpoint) requestAnimationFrame(sample);
 				};
 				const onTransitionRun = (event: TransitionEvent) => {
 					if (event.target !== controls || event.propertyName !== "transform") return;
 					requestAnimationFrame(sample);
 				};
+				const onTransitionSettled = (event: TransitionEvent) => {
+					if (event.target !== controls || event.propertyName !== "transform") return;
+					if (!midpoint) {
+						cleanup();
+						reject(new Error("Control return transform settled before its midpoint"));
+						return;
+					}
+					cleanup();
+					resolve(midpoint);
+				};
 				controls.addEventListener("transitionrun", onTransitionRun);
+				document.addEventListener("transitionend", onTransitionSettled);
+				document.addEventListener("transitioncancel", onTransitionSettled);
 				timeout = window.setTimeout(() => {
 					cleanup();
-					reject(new Error("Control return transform did not reach its midpoint"));
+					reject(new Error("Control return transform did not settle"));
 				}, 1500);
 				window.scrollTo({ top: 0, behavior: "instant" });
 			});
@@ -376,6 +395,13 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 		expect(midpoint.textObscured).toBe(true);
 		expect(midpoint.inert).toBe(true);
 		expect(midpoint.ariaHidden).toBe("true");
+		await expect.poll(async () => {
+			const state = await inspectOverlap(page);
+			return state.overlaps.length > 0 && state.visuallyHidden && state.textObscured &&
+				state.inert && state.ariaHidden === "true"
+				? "ready"
+				: JSON.stringify(state);
+		}).toBe("ready");
 		await info.attach("floating-controls-transform-return.png", {
 			body: await page.screenshot({ animations: "disabled" }),
 			contentType: "image/png",
