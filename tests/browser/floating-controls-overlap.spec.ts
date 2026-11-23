@@ -325,6 +325,41 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 			const state = await inspectOverlap(page);
 			return state.scrollHidden && state.overlaps.length === 0 && !state.textObscured;
 		}).toBe(true);
+		const waitForTransformEndpoint = (expectedOffset: number) =>
+			page.evaluate((expectedOffset) => {
+				const controls = document.getElementById("floating-controls");
+				if (!controls) throw new Error("Floating controls are missing");
+				return new Promise<void>((resolve, reject) => {
+					let stableFrames = 0;
+					const deadline = performance.now() + 1500;
+					const sample = () => {
+						const transform = getComputedStyle(controls).transform;
+						const transformOffset =
+							transform === "none" ? 0 : new DOMMatrixReadOnly(transform).f;
+						const transformRunning = controls.getAnimations().some((animation) => {
+							if (
+								!("transitionProperty" in animation) ||
+								animation.transitionProperty !== "transform"
+							) return false;
+							return animation.playState === "running" || animation.pending;
+						});
+						if (!transformRunning && Math.abs(transformOffset - expectedOffset) <= 1) {
+							stableFrames += 1;
+						} else {
+							stableFrames = 0;
+						}
+						if (stableFrames >= 2) {
+							resolve();
+						} else if (performance.now() >= deadline) {
+							reject(new Error("Floating controls transform did not settle at its expected endpoint"));
+						} else {
+							requestAnimationFrame(sample);
+						}
+					};
+					requestAnimationFrame(sample);
+				});
+			}, expectedOffset);
+		await waitForTransformEndpoint(metrics.travel);
 
 		const midpoint = await page.evaluate((travel) => {
 			const controls = document.getElementById("floating-controls");
@@ -371,6 +406,11 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 				};
 				const onTransitionSettled = (event: TransitionEvent) => {
 					if (event.target !== controls || event.propertyName !== "transform") return;
+					if (event.type === "transitioncancel") {
+						cleanup();
+						reject(new Error("Control return transform was cancelled"));
+						return;
+					}
 					if (!midpoint) {
 						cleanup();
 						reject(new Error("Control return transform settled before its midpoint"));
@@ -395,6 +435,7 @@ test("keeps overlapping controls hidden during the scroll-return transition", as
 		expect(midpoint.textObscured).toBe(true);
 		expect(midpoint.inert).toBe(true);
 		expect(midpoint.ariaHidden).toBe("true");
+		await waitForTransformEndpoint(0);
 		await expect.poll(async () => {
 			const state = await inspectOverlap(page);
 			return state.overlaps.length > 0 && state.visuallyHidden && state.textObscured &&
