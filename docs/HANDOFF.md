@@ -8,9 +8,12 @@ change that exposed geometry assumptions in three browser tests. The
 records four intersections at the size where the tests expected a clear trigger.
 The [#194](https://github.com/Skyline-Gazer/ALNILAM/issues/194) stabilization measures
 published article geometry on both bases and drives fixed obstruction and focus
-transitions in an isolated DOM fixture using the shipped controller. Review and
-CI evidence belong to the stacked PR. #205 requires its own Verify run after
-integration. Track product focus behavior separately in [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35).
+transitions in an isolated DOM fixture using the shipped controller. After #208
+merged into #205, [PR Verify](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/45301914801)
+passed, while [push Verify](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/45301907630)
+failed before Enter because the TOC trigger did not acquire focus. The trace
+shows clear, non-inert controls before the focus call. The cause remains open
+under #194. Track focus escaping an already open TOC under [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35).
 
 ## Live-state update — 2026-11-23 · P2 Demo acceptance
 

@@ -67,9 +67,11 @@ Issues before choosing work. Historical status and cutover decisions below remai
 records of their original dates; they do not override this current authority.
 
 The Demo content review [#205](https://github.com/Skyline-Gazer/ALNILAM/pull/205)
-depends on the floating-controls regression stabilization under
-[#194](https://github.com/Skyline-Gazer/ALNILAM/issues/194) and a green Verify on the
-resulting Demo PR head.
+requires all Verify checks on the candidate and resolution of the remaining
+regression findings under [#194](https://github.com/Skyline-Gazer/ALNILAM/issues/194).
+The independent Demo audit also covers the Gallery and Moments scope decision
+in [#203](https://github.com/Skyline-Gazer/ALNILAM/issues/203) and the CategoryBar
+visibility policy in [#204](https://github.com/Skyline-Gazer/ALNILAM/issues/204).
 
 ### Product scope update — 2026-11-13
 

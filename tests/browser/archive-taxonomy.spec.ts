@@ -74,6 +74,21 @@ for (const [name, origin] of deployments) {
 		}
 	});
 
+	test(`organization guide links open the selected category locale ${name}`, async ({ page }) => {
+		const base = new URL(origin).pathname.replace(/\/$/, "");
+		for (const [label, locale] of [["Guide 分类", "en"], ["ガイド分类", "ja"]] as const) {
+			await page.goto(`${origin}/posts/organize-your-blog/`);
+			await page.locator(".markdown-content").getByRole("link", { name: label, exact: true }).click();
+			await expect(page).toHaveURL(`${origin}/${locale}/categories/guide/`);
+			await expect(page.locator("html")).toHaveAttribute("lang", locale);
+			await expectTimeline(page, 1);
+			const hrefs = await page.locator(".m3-blog-archive__item").evaluateAll((items) =>
+				items.map((item) => item.getAttribute("href")),
+			);
+			expect(hrefs.every((href) => href?.startsWith(`${base}/${locale}/posts/`))).toBe(true);
+		}
+	});
+
 	test(`category detail renders pre-scoped timeline ${name}`, async ({ browser }) => {
 		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
 		const page = await context.newPage();

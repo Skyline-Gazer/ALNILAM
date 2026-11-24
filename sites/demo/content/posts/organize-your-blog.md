@@ -18,7 +18,7 @@ Site 分类目录声明了 `guide` id，中文显示名是“指南”。三种�
 category: "guide"
 ```
 
-中文页面可从[指南分类](../../categories/guide/)查看相关文章；英语版本使用[Guide 分类](../../categories/guide/)；日文版本也通过[ガイド分类](../../categories/guide/)查看。分类标签会根据当前语言显示，而分类路径保留同一个 slug。
+中文页面可从[指南分类](../../categories/guide/)查看相关文章；英语版本使用[Guide 分类](../../en/categories/guide/)；日文版本也通过[ガイド分类](../../ja/categories/guide/)查看。分类标签会根据当前语言显示，而分类路径保留同一个 slug。
 
 ## 标签可以跨越不同主题
 

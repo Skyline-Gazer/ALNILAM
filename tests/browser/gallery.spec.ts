@@ -158,6 +158,9 @@ for (const deployment of deployments) {
       const masonry = page.locator(".album-gallery--masonry");
       await expect(masonry).toBeVisible();
       await expect(masonry.locator(".album-gallery__item")).toHaveCount(3);
+      const masonryIsland = page.locator("astro-island").filter({ has: masonry });
+      await expect(masonryIsland).toHaveCount(1);
+      await expect(masonryIsland).not.toHaveAttribute("ssr", "");
       const portraitTile = masonry.locator(".album-gallery__item").first();
       await expect(portraitTile.locator("img")).toHaveAttribute("src", /sea-stack-thumb\.svg/);
       await expect.poll(() => portraitTile.locator("img").evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(400);
