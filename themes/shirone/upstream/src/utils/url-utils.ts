@@ -102,7 +102,7 @@ export function getTagUrl(tag: string, locale?: string): string {
 // ALNILAM (#35): taxonomy links are locale-scoped like article links, so a tag rendered on an
 // English page points at the English tag route instead of the default-locale one. The default
 // locale keeps its unprefixed URLs, matching getPostUrl.
-const localePrefix = (locale?: string): string => {
+export const localePrefix = (locale?: string): string => {
 	const site = siteConfig.lang.replace("_", "-");
 	return locale && locale !== site ? `/${locale}/` : "/";
 };

@@ -8,6 +8,7 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { formatDateToYYYYMMDD } from "@utils/date-utils";
 import { getCategoryUrl, getTagUrl } from "@utils/url-utils";
+import { siteConfig } from "../../config/siteConfig.ts";
 
 interface Props {
 	class?: string;
@@ -16,6 +17,8 @@ interface Props {
 	tags: string[];
 	category: string | null;
 	hideUpdateDate?: boolean;
+	/** ALNILAM (#35): the article's own locale, so its chips link that locale's taxonomy routes. */
+	locale?: string;
 }
 const {
 	class: className,
@@ -24,12 +27,15 @@ const {
 	tags,
 	category,
 	hideUpdateDate = false,
+	locale,
 } = Astro.props;
 
+// An unset locale is the site default, never "every language" (#35).
+const metaLocale = locale ?? siteConfig.lang.replace("_", "-");
 const categoryLink = category
-	? { name: category, href: getCategoryUrl(category) }
+	? { name: category, href: getCategoryUrl(category, metaLocale) }
 	: null;
-const tagLinks = tags.map((t) => ({ name: t.trim(), href: getTagUrl(t) }));
+const tagLinks = tags.map((t) => ({ name: t.trim(), href: getTagUrl(t, metaLocale) }));
 ---
 
 <PostMeta

@@ -10,7 +10,7 @@ import { i18n } from "@i18n/translation";
  */
 import Icon from "@iconify/svelte";
 import { getTagList } from "@utils/content-utils";
-import { getTagUrl, url } from "@utils/url-utils";
+import { getTagUrl, localePrefix, url } from "@utils/url-utils";
 import { siteConfig } from "../../config/siteConfig.ts";
 import type { TagsWidget } from "@/types/sidebarConfig";
 import WidgetLayout from "./WidgetLayout.astro";
@@ -45,11 +45,7 @@ const tagItems = tags.slice(0, DISPLAY_LIMIT).map((t) => ({
 	{hasOverflow && (
 		<div slot="footer" class="widget-index-link">
 			<a
-			href={url(
-				widgetLocale !== siteConfig.lang.replace("_", "-")
-					? `/${widgetLocale}/tags/`
-					: "/tags/",
-			)}
+			href={url(`${localePrefix(widgetLocale)}tags/`)}
 			class="m3-state-layer"
 		>
 				{i18n(I18nKey.tagsViewAll)}

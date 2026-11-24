@@ -128,7 +128,7 @@ const hasVisibleSticky = visibleStickyWidgets.length > 0;
 					>
 						<Component
 							widget={widget}
-							locale={widget.type === "tags" ? locale : undefined}
+							locale={widget.type === "tags" || widget.type === "categories" ? locale : undefined}
 							headings={widget.type === "toc" ? headings : undefined}
 							priority={widget.type === "profile" && currentPage === "about"}
 						/>
@@ -156,7 +156,7 @@ const hasVisibleSticky = visibleStickyWidgets.length > 0;
 					>
 						<Component
 							widget={widget}
-							locale={widget.type === "tags" ? locale : undefined}
+							locale={widget.type === "tags" || widget.type === "categories" ? locale : undefined}
 							headings={widget.type === "toc" ? headings : undefined}
 							priority={widget.type === "profile" && currentPage === "about"}
 							class="onload-animation"

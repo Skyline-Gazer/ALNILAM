@@ -11,7 +11,8 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import Icon from "@iconify/svelte";
 import { getCategoryList } from "@utils/content-utils";
-import { pathsEqual, url } from "@utils/url-utils";
+import { localePrefix, pathsEqual, url } from "@utils/url-utils";
+import { siteConfig } from "../../config/siteConfig.ts";
 import { siteLocales } from "../../user/user-config";
 
 interface Props {
@@ -21,21 +22,8 @@ interface Props {
 
 const { currentPostCategory } = Astro.props;
 
-const categories = await getCategoryList();
-const homeUrl = url("/");
-const archiveUrl = url("/archives/");
-
 const pathname = Astro.url.pathname;
-const isHome = pathsEqual(pathname, homeUrl);
-const isArchive = pathsEqual(pathname, archiveUrl);
 const postCategory = (currentPostCategory || "").trim();
-
-// SSR 初始高亮：
-// - 首页 → home 强高亮；归档 → archive 强高亮；
-// - 文章页 → 所属分类弱高亮（soft）；
-// - 其它（关于等）→ 无高亮。
-// query 分类（?category=）在静态站点构建期不可知，由客户端校正。
-const softCategory = !isHome && !isArchive && postCategory ? postCategory : "";
 
 // 嵌套部署（如 /ALNILAM/categories/…）下 Astro.url.pathname 以 base 开头，
 // 直接 startsWith("/categories") 永远不命中。
@@ -46,6 +34,23 @@ const rootRelativePath =
 		? pathname.slice(normalizedBase.length - 1)
 		: pathname;
 const firstSegment = rootRelativePath.split("/")[1];
+// ALNILAM (#35): the bar follows the route's own locale — /en/… shows and links English
+// categories, an unprefixed route shows the site default. Derived from the URL rather than a
+// prop because the rendered route is what decides the corpus, and default pages leave `lang`
+// unset.
+const urlLocale = siteLocales.includes(firstSegment) ? firstSegment : undefined;
+const barLocale = urlLocale ?? siteConfig.lang.replace("_", "-");
+const categories = await getCategoryList(barLocale);
+const homeUrl = url(localePrefix(barLocale));
+const archiveUrl = url(`${localePrefix(barLocale)}archives/`);
+const isHome = pathsEqual(pathname, homeUrl);
+const isArchive = pathsEqual(pathname, archiveUrl);
+// SSR 初始高亮：
+// - 首页 → home 强高亮；归档 → archive 强高亮；
+// - 文章页 → 所属分类弱高亮（soft）；
+// - 其它（关于等）→ 无高亮。
+// query 分类（?category=）在静态站点构建期不可知，由客户端校正。
+const softCategory = !isHome && !isArchive && postCategory ? postCategory : "";
 const unlocalizedPath = siteLocales.includes(firstSegment)
 	? rootRelativePath.slice(firstSegment.length + 1) || "/"
 	: rootRelativePath;
