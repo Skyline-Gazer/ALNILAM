@@ -70,11 +70,13 @@ export interface SiteConfig {
   consent: Readonly<ConsentConfig>;
   analytics: Readonly<{ googleAnalytics: Readonly<GoogleAnalyticsConfig> }>;
   ads: Readonly<{ adsense: Readonly<AdSenseConfig> }>;
-  /** Optional Site-owned Gallery module; absent means disabled. */
-  gallery: Readonly<{ enabled: boolean }>;
-  /** Optional Site-owned Moments module; absent means disabled. */
-  moments: Readonly<{ enabled: boolean }>;
+  /** Retired (Issue #203). The key is still accepted; this is always `{ enabled: false }`. */
+  gallery: Readonly<{ enabled: false }>;
+  /** Retired (Issue #203). The key is still accepted; this is always `{ enabled: false }`. */
+  moments: Readonly<{ enabled: false }>;
 }
+/** Site config keys kept for compatibility but no longer enabling any feature. */
+export declare const RETIRED_SITE_FEATURES: readonly ("gallery" | "moments")[];
 export declare function normalizeSiteConfig(input: unknown): Readonly<SiteConfig>;
 export declare const SITE_CONFIG_FILENAME: "alnilam.config.yaml";
 /** Parses a Site YAML document; throws unless the root document is a YAML mapping. */
