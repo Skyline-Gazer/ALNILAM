@@ -1,5 +1,11 @@
 # ALNILAM — Current Agent Handoff
 
+## Web engineering capability pilot — #209
+
+- The pilot baseline is GitHub `dev` `9c77453cfc8da6ff5432aa8e61954b4b57c10f52`, which passed [Verify](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/45151400441/job/137613413772). The public Demo reported that Core and Site digest `1761ca3abb68de22ddffc157b1763b20dd847ffa0fb9b9bfedb56d9f1d65c4db`.
+- The optional [Web Evidence Skill](../.agents/skills/alnilam-web-evidence/SKILL.md) reuses the project's browser commands. OMP resolved it from the pilot branch and the focused Pagefind and pagination suite passed 30 cases across the root and `/ALNILAM/` builds.
+- [#209](https://github.com/Skyline-Gazer/ALNILAM/issues/209) owns pilot evidence and adoption. [#148](https://github.com/Skyline-Gazer/ALNILAM/issues/148) owns observation of naturally completed deliveries. The Demo content audit under [#194](https://github.com/Skyline-Gazer/ALNILAM/issues/194) depends on the eventual reconciled content and is still open.
+
 ## Live-state update — 2026-11-23 · P2 Demo acceptance
 
 - [PR #188](https://github.com/Skyline-Gazer/ALNILAM/pull/188) merged to `dev` at `ad8e28c1cfe82724f45d0715265936de2d7ec9e8`. Its parents are `b6df20ba9a8dbdd8a405d9d9d21e194ba4a8763c` and `22f0beea3d624d2caa4b9be9cbf64bb74e19ee0b`. The post-merge [Verify run](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/45127644460) passed, including root and nested browser acceptance.
