@@ -24,7 +24,7 @@ interface Props {
 }
 const { locale } = Astro.props;
 // Same rule as the tag widget: an unset locale means the site default, never "every language".
-const widgetLocale = locale ?? siteConfig.lang.replace("_", "-");
+const widgetLocale = locale || siteConfig.lang.replace("_", "-");
 const categories = await getCategoryList(widgetLocale);
 
 const className = Astro.props.class;

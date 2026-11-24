@@ -31,7 +31,7 @@ const {
 } = Astro.props;
 
 // An unset locale is the site default, never "every language" (#35).
-const metaLocale = locale ?? siteConfig.lang.replace("_", "-");
+const metaLocale = locale || siteConfig.lang.replace("_", "-");
 const categoryLink = category
 	? { name: category, href: getCategoryUrl(category, metaLocale) }
 	: null;

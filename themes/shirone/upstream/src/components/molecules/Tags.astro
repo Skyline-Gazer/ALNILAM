@@ -26,7 +26,7 @@ const { locale } = Astro.props;
 // Default-locale pages may leave `lang` unset (MainGridLayout forwards it as given), so the
 // widget resolves the site locale itself: an unset locale must not fall back to counting every
 // language's posts, which would advertise tag routes the reader cannot resolve.
-const widgetLocale = locale ?? siteConfig.lang.replace("_", "-");
+const widgetLocale = locale || siteConfig.lang.replace("_", "-");
 const tags = await getTagList(widgetLocale);
 
 const className = Astro.props.class;
