@@ -23,8 +23,10 @@
 - Delivered surfaces: homepage, posts index and detail, pagination, archives,
   categories, tags, series, localized routes for enabled locales, Pagefind
   search, RSS/sitemap/robots, canonical/hreflang/JSON-LD metadata, opt-in
-  llms.txt v2, Giscus comments, Bangumi snapshots, Site-owned Gallery and
-  Moments, static Site pages, Markdown and trusted MDX.
+  llms.txt v2, Giscus comments, Bangumi snapshots, static Site pages,
+  Markdown and trusted MDX. Gallery/Albums, Moments and Music are retired
+  product features ([#203](https://github.com/Skyline-Gazer/ALNILAM/issues/203))
+  and ship nothing; article images keep the existing lightbox.
 - Core/Site contract: YAML schema v2 with fail-closed validation, non-mutating
   staged composition, provenance (Core revision, Site ref and digest), atomic
   output swap, the documented upgrade/rollback procedure and a release artifact

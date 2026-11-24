@@ -26,8 +26,11 @@ const ROOT_KEYS = new Set([
   "ads",
 ]);
 const SITE_KEYS = new Set(["title", "description", "url", "locale"]);
-const GALLERY_KEYS = new Set(["enabled"]);
-const MOMENTS_KEYS = new Set(["enabled"]);
+// Gallery and Moments are retired product features (Issue #203). The keys stay accepted so
+// existing Sites keep loading, but only `enabled` is validated and its value is ignored.
+export const RETIRED_SITE_FEATURES = Object.freeze(["gallery", "moments"]);
+const RETIRED_FEATURE_KEYS = new Set(["enabled"]);
+const RETIRED_FEATURE_STATE = Object.freeze({ enabled: false });
 const THEME_KEYS = new Set(["appearance"]);
 const ROUTING_KEYS = new Set(["prefixDefaultLocale"]);
 const COMMENT_KEYS = new Set([
@@ -389,15 +392,12 @@ export function normalizeSiteConfig(input) {
       throw new Error("ALNILAM: bangumi.limit must be an integer between 1 and 50");
     }
   }
-  assertPlainObject(input.gallery ?? {}, "gallery");
-  rejectUnknownKeys(input.gallery ?? {}, GALLERY_KEYS, "gallery");
-  if (input.gallery?.enabled !== undefined && typeof input.gallery.enabled !== "boolean") {
-    throw new Error("ALNILAM: gallery.enabled must be a boolean");
-  }
-  assertPlainObject(input.moments ?? {}, "moments");
-  rejectUnknownKeys(input.moments ?? {}, MOMENTS_KEYS, "moments");
-  if (input.moments?.enabled !== undefined && typeof input.moments.enabled !== "boolean") {
-    throw new Error("ALNILAM: moments.enabled must be a boolean");
+  for (const key of RETIRED_SITE_FEATURES) {
+    assertPlainObject(input[key] ?? {}, key);
+    rejectUnknownKeys(input[key] ?? {}, RETIRED_FEATURE_KEYS, key);
+    if (input[key]?.enabled !== undefined && typeof input[key].enabled !== "boolean") {
+      throw new Error(`ALNILAM: ${key}.enabled must be a boolean`);
+    }
   }
 
 
@@ -428,8 +428,8 @@ export function normalizeSiteConfig(input) {
     consent: normalizeConsent(input.consent),
     analytics: normalizeAnalytics(input.analytics),
     ads: normalizeAds(input.ads),
-    gallery: Object.freeze({ enabled: input.gallery?.enabled === true }),
-    moments: Object.freeze({ enabled: input.moments?.enabled === true }),
+    gallery: RETIRED_FEATURE_STATE,
+    moments: RETIRED_FEATURE_STATE,
     llms: Object.freeze({ enabled: input.llms?.enabled === true, full: input.llms?.full === true }),
     bangumi: Object.freeze({
       enabled: bangumi.enabled === true,

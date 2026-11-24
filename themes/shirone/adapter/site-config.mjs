@@ -35,13 +35,13 @@ export const userConfigOverrides = {
     {name: '分类', url: '/categories/', pageKey: 'categories'},
     {name: '归档', url: '/archives/', pageKey: 'archive'},
     {name: '标签', url: '/tags/', pageKey: 'tags'},
-    ...(config.gallery.enabled ? [{name: 'Albums', url: '/albums/', pageKey: 'albums'}] : []),
-    ...(config.moments.enabled ? [{name: 'Moments', url: '/moments/', pageKey: 'moments'}] : []),
     ...(hasSeries ? [{name: '系列', url: '/series/', pageKey: 'series'}] : []),
     ...(config.bangumi.enabled ? [{name: '番组', url: '/bangumi/', pageKey: 'bangumi'}] : []),
   ]},
-  music: disabled, umami: disabled, contextMenu: disabled, albums: {enable: config.gallery.enabled},
-  moments: {enable: config.moments.enabled}, anime: disabled, friends: disabled, projects: disabled,
+  // Gallery (albums), Moments and Music are retired product features (Issue #203). The
+  // upstream modules stay disabled here so the vendored theme keeps resolving its config.
+  music: disabled, umami: disabled, contextMenu: disabled, albums: disabled,
+  moments: disabled, anime: disabled, friends: disabled, projects: disabled,
   skills: disabled, games: disabled, timeline: disabled, devices: disabled,
   compass: disabled, about: disabled, series: {enable: hasSeries},
   // Upstream CommentSection is disabled because ALNILAM mounts its Core Giscus Comments island via slot="comments".
