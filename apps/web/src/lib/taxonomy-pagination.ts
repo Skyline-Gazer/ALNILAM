@@ -15,7 +15,7 @@ export async function taxonomyPaths(paginate: Paginate, kind: Kind, localized: b
   const posts = await getCollection("posts", ({ data }) => !data.draft);
   const series = await getCollection("series");
   const seriesCategories = new Map(series.map((entry) => [entry.id, entry.data.defaultCategory]));
-  const groups = new Map<string, { all: Post[]; byLocale: Map<string, Post[]> }>();
+  const groups = new Map<string, Map<string, Post[]>>();
   for (const post of posts) {
     const locale = postLang(post, config.site.locale);
     const category = post.data.category?.trim() || seriesCategories.get(post.data.series?.trim())?.trim();
@@ -24,23 +24,28 @@ export async function taxonomyPaths(paginate: Paginate, kind: Kind, localized: b
       : [...new Set(post.data.tags.map((tag) => canonicalTagSlug(tag, taxonomy.tags)))];
     for (const key of keys) {
       if (!key || key.includes("/")) continue;
-      if (!groups.has(key)) groups.set(key, { all: [], byLocale: new Map() });
-      const group = groups.get(key)!;
-      group.all.push(post);
-      if (locale !== config.site.locale && config.locales.includes(locale)) {
-        if (!group.byLocale.has(locale)) group.byLocale.set(locale, []);
-        group.byLocale.get(locale)!.push(post);
-      }
+      // Locale content policy (#35): each group is bucketed per locale, the default locale
+      // included, so no taxonomy route lists another language's articles inside its chrome.
+      // A post whose `lang` is not a configured locale keeps its article URL but appears in
+      // no taxonomy listing.
+      if (!config.locales.includes(locale)) continue;
+      if (!groups.has(key)) groups.set(key, new Map());
+      const byLocale = groups.get(key)!;
+      if (!byLocale.has(locale)) byLocale.set(locale, []);
+      byLocale.get(locale)!.push(post);
     }
   }
-  return [...groups].flatMap(([slug, { all, byLocale }]) => {
+  return [...groups].flatMap(([slug, byLocale]) => {
     const activeLocales = [
       config.site.locale,
       ...config.locales.filter((loc) => loc !== config.site.locale && byLocale.has(loc)),
     ];
-    const targets: Array<[string, Post[]]> = localized
-      ? [...byLocale.entries()]
-      : [[config.site.locale, all]];
+    // A locale only gets a taxonomy route when that locale has articles in the group; an
+    // empty default-locale group means the unlocalized route is not generated at all.
+    const targets: Array<[string, Post[]]> = (localized
+      ? [...byLocale.entries()].filter(([locale]) => locale !== config.site.locale)
+      : [[config.site.locale, byLocale.get(config.site.locale)] as [string, Post[] | undefined]]
+    ).filter((entry): entry is [string, Post[]] => (entry[1]?.length ?? 0) > 0);
     return targets.flatMap(([locale, list]) => {
       const label = kind === "categories"
         ? categoryDisplayLabel(slug, taxonomy.categories, locale)

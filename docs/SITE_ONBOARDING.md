@@ -70,6 +70,23 @@ tags are Site-owned catalogs; tag pages also use post frontmatter.
   noindex static page linking to the canonical article; this is not an HTTP redirect.
   All paths include the configured deployment base when hosted under a subpath.
 
+#### Locale listings
+
+Every listing surface is scoped to one locale's corpus: `/`, `/posts/`, `/archives/`,
+`/categories/`, `/tags/` and the taxonomy detail routes list only posts whose resolved `lang`
+equals the **default** locale, while `/<lang>/…` lists only that locale's posts. Resolved `lang` is
+the frontmatter `lang` value, falling back to `site.locale` when absent — the file path never
+decides it. Per-locale RSS feeds and Pagefind (whose index is sliced by each page's `<html lang>`)
+already behaved this way, so a page, its feed and its search results now agree.
+
+- A translation is reachable through its article URL, `hreflang` alternates, the language switch and
+  its own locale listing — never inside another locale's list.
+- Listing counts and pagination boundaries are per locale; a locale with no post in a category or
+  tag gets no route for it, rather than an empty page.
+- A post whose `lang` is not listed in `locales` keeps its article URL but appears in no listing,
+  taxonomy route or feed; add the locale if you want it listed.
+- Series pages stay corpus-wide in this release and are localized by a follow-up change.
+
 #### Post visibility
 
 `draft`, `private` and `unlisted` are build-time exclusions: the post publishes

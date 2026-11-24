@@ -59,7 +59,9 @@ for (const [kind, slug] of [["categories", "ja-series-only"], ["tags", "taxonomy
     for (const { out, base } of builds) {
       for (const locale of ["", "en/"]) {
         const route = `${locale}${kind}/${slug}/`;
-        const total = locale ? 6 : kind === "categories" ? 13 : 12;
+        // Locale content policy (#35): the fixture writes 6 default-locale and 6 en members,
+        // so every locale route paginates over exactly its own six.
+        const total = 6;
         const pages = Math.ceil(total / 5);
         const members = [];
         const url = (page) => `${base}${route}${page === 1 ? "" : `${page}/`}`;
@@ -87,10 +89,8 @@ for (const [kind, slug] of [["categories", "ja-series-only"], ["tags", "taxonomy
         }
         const expected = [];
         for (let n = 1; n <= 6; n++) {
-          if (!locale) expected.push(`posts/taxonomy-page-${n}/`);
-          expected.push(`en/posts/taxonomy-page-${n}/`);
+          expected.push(`${locale ? "en/" : ""}posts/taxonomy-page-${n}/`);
         }
-        if (!locale && kind === "categories") expected.push("ja/posts/series-overview-ja/");
         assert.deepEqual(members.sort(), expected.sort(), `${base}${route} members`);
       }
       assert.equal(fs.existsSync(path.join(out, "fr", kind, slug)), false, `empty French ${kind} must not have a detail route`);

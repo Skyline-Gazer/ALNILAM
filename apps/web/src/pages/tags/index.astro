@@ -2,14 +2,22 @@
 import { getCollection } from "astro:content";
 import NativeTags from "@alnilam/theme-shirone/Tags.astro";
 import { activeContentLocales, canonicalUrl, routeAlternates } from "../../lib/i18n.mjs";
+import { loadSiteTaxonomy, tagListing } from "../../lib/taxonomy";
 import { loadSite } from "../../lib/site-source.mjs";
-const { config } = loadSite();
+const { root, config } = loadSite();
+const taxonomy = loadSiteTaxonomy(root, config);
 const posts = await getCollection("posts", ({ data }) => !data.draft);
 const pages = await getCollection("pages", ({ data }) => !data.draft);
 const activeLocales = activeContentLocales(posts, pages, config.site.locale, config.locales);
+// Locale content policy (#35): tag counts cover the default-locale corpus only.
+const tags = tagListing(posts, {
+  locale: config.site.locale,
+  defaultLocale: config.site.locale,
+  taxonomy,
+});
 const alts = routeAlternates(activeLocales, config.site.locale, config.locales, "tags");
 const alternates = alts
   ? [...alts].map(([lang, path]) => ({ lang, href: canonicalUrl(path, config.site.url) }))
   : undefined;
 ---
-<NativeTags alternates={alternates} />
+<NativeTags tags={tags} alternates={alternates} />
