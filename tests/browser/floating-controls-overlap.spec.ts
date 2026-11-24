@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 const ROOT = process.env.ALNILAM_TEST_ROOT_URL ?? "http://127.0.0.1:4323";
 const NESTED = process.env.ALNILAM_TEST_NESTED_URL ?? "http://127.0.0.1:4324/ALNILAM";
-const ARTICLE = "/en/posts/pagination-sample/";
+const ARTICLE = "/en/posts/internationalization/";
 const textBlockSelector = "h1,h2,h3,h4,h5,h6,p,li,blockquote,pre,td,th,figcaption,dt,dd";
 
 const overlapCases = [
@@ -518,7 +518,7 @@ test("rebuilds obstruction targets for decrypted content without a TOC", async (
 		});
 		const page = await context.newPage();
 		try {
-			await page.route("**/en/posts/pagination-sample/", async (route) => {
+			await page.route("**/en/posts/internationalization/", async (route) => {
 				const response = await route.fetch();
 				const html = await response.text();
 				const rewritten = html.replace(
