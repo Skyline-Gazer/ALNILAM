@@ -1,5 +1,17 @@
 # ALNILAM — Current Agent Handoff
 
+## Floating-controls browser regression — 2026-11-23
+
+[PR #205](https://github.com/Skyline-Gazer/ALNILAM/pull/205) introduced a Demo content
+change that exposed geometry assumptions in three browser tests. The
+[failed Verify run](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/45196547531)
+records four intersections at the size where the tests expected a clear trigger.
+The [#194](https://github.com/Skyline-Gazer/ALNILAM/issues/194) stabilization measures
+published article geometry on both bases and drives fixed obstruction and focus
+transitions in an isolated DOM fixture using the shipped controller. Review and
+CI evidence belong to the stacked PR. #205 requires its own Verify run after
+integration. Track product focus behavior separately in [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35).
+
 ## Live-state update — 2026-11-23 · P2 Demo acceptance
 
 - [PR #188](https://github.com/Skyline-Gazer/ALNILAM/pull/188) merged to `dev` at `ad8e28c1cfe82724f45d0715265936de2d7ec9e8`. Its parents are `b6df20ba9a8dbdd8a405d9d9d21e194ba4a8763c` and `22f0beea3d624d2caa4b9be9cbf64bb74e19ee0b`. The post-merge [Verify run](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/45127644460) passed, including root and nested browser acceptance.
