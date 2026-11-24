@@ -1,5 +1,9 @@
 # ALNILAM roadmap (Issue-driven)
 
+## Web engineering capability pilot — #209
+
+Use the optional [Web Evidence Skill](../.agents/skills/alnilam-web-evidence/SKILL.md) for browser audits, timing comparisons and flaky UI scenarios. [#209](https://github.com/Skyline-Gazer/ALNILAM/issues/209) tracks the pilot and its disposition after the next 3–5 naturally completed frontend deliveries. [#148](https://github.com/Skyline-Gazer/ALNILAM/issues/148) tracks the existing Learning Loop independently.
+
 ## Foundation v0.2.0 released — 2026-11-20
 
 Foundation is published from `main` at `e8239cf4f2272c7cb9429f8c740aa6677f9ed040`
