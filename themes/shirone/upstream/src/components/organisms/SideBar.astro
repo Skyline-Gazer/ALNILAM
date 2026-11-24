@@ -38,6 +38,9 @@ interface Props {
 	/** 当前页面标识符，用于 widget 的 pages 过滤 */
 	currentPage?: SidebarPage;
 	headings?: import("astro").MarkdownHeading[];
+	/** ALNILAM (#35): locale used by taxonomy widgets, so a tag cloud never advertises a
+	 *  tag route the reader cannot resolve in their own language. */
+	locale?: string;
 }
 
 const {
@@ -46,6 +49,7 @@ const {
 	id = "sidebar",
 	currentPage,
 	headings = [],
+	locale,
 } = Astro.props;
 
 // 双栏时页面存在两个 complementary landmark，axe landmark-unique
@@ -124,6 +128,7 @@ const hasVisibleSticky = visibleStickyWidgets.length > 0;
 					>
 						<Component
 							widget={widget}
+							locale={widget.type === "tags" ? locale : undefined}
 							headings={widget.type === "toc" ? headings : undefined}
 							priority={widget.type === "profile" && currentPage === "about"}
 						/>
@@ -151,6 +156,7 @@ const hasVisibleSticky = visibleStickyWidgets.length > 0;
 					>
 						<Component
 							widget={widget}
+							locale={widget.type === "tags" ? locale : undefined}
 							headings={widget.type === "toc" ? headings : undefined}
 							priority={widget.type === "profile" && currentPage === "about"}
 							class="onload-animation"

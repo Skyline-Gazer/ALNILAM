@@ -219,6 +219,9 @@ export function tagListing(
     const seenInPost = new Set<string>();
     for (const rawTag of post.data.tags) {
       const slug = canonicalTagSlug(rawTag, taxonomy.tags);
+      // Same key-admission rule as taxonomyPaths: a slug containing "/" gets no route, so
+      // the index must not offer a tile that links to a missing page.
+      if (!slug || slug.includes("/")) continue;
       if (seenInPost.has(slug)) continue;
       seenInPost.add(slug);
       countMap.set(slug, (countMap.get(slug) ?? 0) + 1);

@@ -36,8 +36,11 @@ export async function taxonomyPaths(paginate: Paginate, kind: Kind, localized: b
     }
   }
   return [...groups].flatMap(([slug, byLocale]) => {
+    // Alternates may only name a locale whose route is actually generated: a group with no
+    // default-locale member has no unlocalized route, so claiming one would emit a hreflang
+    // target and a sitemap alternate that 404.
     const activeLocales = [
-      config.site.locale,
+      ...(byLocale.has(config.site.locale) ? [config.site.locale] : []),
       ...config.locales.filter((loc) => loc !== config.site.locale && byLocale.has(loc)),
     ];
     // A locale only gets a taxonomy route when that locale has articles in the group; an

@@ -115,10 +115,16 @@ if (image) {
 	}
 }
 
+// ALNILAM (#35): the card links to the taxonomy route of the article's own locale, so an
+// English card never points a reader at the default-locale category/tag page.
+const postLocale =
+	typeof entry.data.lang === "string" && entry.data.lang
+		? entry.data.lang
+		: undefined;
 const categoryLink = category
-	? { name: category, href: getCategoryUrl(category) }
+	? { name: category, href: getCategoryUrl(category, postLocale) }
 	: null;
-const tagLinks = tags.map((t) => ({ name: t.trim(), href: getTagUrl(t) }));
+const tagLinks = tags.map((t) => ({ name: t.trim(), href: getTagUrl(t, postLocale) }));
 
 const isEncrypted = isEncryptedPost(entry.data);
 const words = remarkPluginFrontmatter.words ?? 0;

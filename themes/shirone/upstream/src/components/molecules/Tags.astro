@@ -11,16 +11,20 @@ import { i18n } from "@i18n/translation";
 import Icon from "@iconify/svelte";
 import { getTagList } from "@utils/content-utils";
 import { getTagUrl, url } from "@utils/url-utils";
+import { siteConfig } from "../../config/siteConfig.ts";
 import type { TagsWidget } from "@/types/sidebarConfig";
 import WidgetLayout from "./WidgetLayout.astro";
-
-const tags = await getTagList();
 
 interface Props {
 	class?: string;
 	style?: string;
 	widget?: TagsWidget;
+	/** ALNILAM (#35): the sidebar tag cloud covers this locale's corpus only. */
+	locale?: string;
 }
+const { locale } = Astro.props;
+const tags = await getTagList(locale);
+
 const className = Astro.props.class;
 const style = Astro.props.style;
 
@@ -29,14 +33,21 @@ const hasOverflow = tags.length > DISPLAY_LIMIT;
 
 const tagItems = tags.slice(0, DISPLAY_LIMIT).map((t) => ({
 	name: t.name.trim(),
-	href: getTagUrl(t.name),
+	href: getTagUrl(t.name, locale),
 }));
 ---
 <WidgetLayout name={i18n(I18nKey.tags)} id="tags" class={className} style={style}>
 	<TagList tags={tagItems} />
 	{hasOverflow && (
 		<div slot="footer" class="widget-index-link">
-			<a href={url("/tags/")} class="m3-state-layer">
+			<a
+			href={url(
+				locale && locale !== siteConfig.lang.replace("_", "-")
+					? `/${locale}/tags/`
+					: "/tags/",
+			)}
+			class="m3-state-layer"
+		>
 				{i18n(I18nKey.tagsViewAll)}
 				<Icon icon="material-symbols:chevron-right-rounded" />
 			</a>

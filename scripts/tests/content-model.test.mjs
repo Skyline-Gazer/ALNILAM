@@ -35,6 +35,12 @@ const EXPECTED_PAGES = Math.ceil(EXPECTED_TOTAL / FIXTURE_PAGE_SIZE);
 const FOREIGN_SLUGS = publishedPosts
   .filter((rel) => localeOf(rel) !== DEFAULT_LOCALE)
   .map((rel) => rel.replace(/^content\/posts\//, "").replace(/\.md$/, ""));
+// The locale of every listing slug, read from that post's own frontmatter: a nested
+// default-locale post such as `content/posts/2026/hello.md` lists as `2026/hello`, whose first
+// segment is a directory, not a locale. The path never decides the locale (#35).
+const LOCALE_BY_SLUG = new Map(
+  publishedPosts.map((rel) => [rel.replace(/^content\/posts\//, "").replace(/\.md$/, ""), localeOf(rel)]),
+);
 
 const read = (out, rel) => fs.readFileSync(path.join(out, rel), "utf8");
 /** Concatenate the official sitemap chunks referenced by sitemap-index.xml. */
@@ -167,8 +173,14 @@ test("each locale listing carries exactly its own corpus", () => {
   for (const [rel, locale] of surfaces) {
     const links = postLinks(read(out, rel));
     assert.ok(links.length > 0, `${rel} must list its own locale articles`);
-    for (const slug of links) {
-      const slugLocale = slug.includes("/") ? slug.split("/")[0] : DEFAULT_LOCALE;
+    // postLinks() also matches pagination hrefs like /en/posts/2/, whose slug ends in a bare
+    // page number. Those are skipped; every remaining href must name a fixture article, so an
+    // unexpected slug fails instead of passing silently.
+    const listed = links.filter((slug) => !/^\d+$/.test(slug.split("/").at(-1) ?? ""));
+    assert.ok(listed.length > 0, `${rel} must link at least one article`);
+    for (const slug of listed) {
+      const slugLocale = LOCALE_BY_SLUG.get(slug);
+      assert.ok(slugLocale !== undefined, `${rel} links the unknown article slug ${slug}`);
       assert.equal(slugLocale, locale, `${rel} (${locale}) must not link the ${slugLocale} article ${slug}`);
     }
   }
