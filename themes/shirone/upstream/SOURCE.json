@@ -30,7 +30,7 @@
     },
     {
       "path": "src/layouts/MainGridLayout.astro",
-      "sha256": "02850ffd62db16c0d61de7c0c3235d686a80cb08c1d9454ed8f118dcaed17958"
+      "sha256": "af315ee15848b1e0f403790fe4e7272981185e3a1692a19a0142685167c9ce29"
     },
     {
       "path": "src/layouts/Layout.astro",
@@ -1026,7 +1026,7 @@
     },
     {
       "path": "src/components/organisms/CategoryBar.astro",
-      "sha256": "24007b71ef34860db32b57a3ac5f76ef120fad029eb5f29426babfae8c8c12f9"
+      "sha256": "38ada8b9b6d7254dc4c8d52a9660d52cd306de18a69fc8cbb4002e422eed9883"
     },
     {
       "path": "src/components/organisms/Footer.astro",
@@ -1976,7 +1976,7 @@
     "src/components/molecules/SidebarTOC.astro": "Respect prefers-reduced-motion when scrolling to TOC anchors.",
     "src/styles/markdown/generic.styl": "Ensure unbroken prose URLs wrap and wide code/table blocks scroll horizontally within .custom-md.",
     "src/components/atoms/blog/PostCard.astro": "Allow long unbroken card titles to wrap within .m3-blog-postcard__title.",
-    "src/styles/transition.css": "Disable onload-animation initial translateY/opacity under prefers-reduced-motion and motion-reduced.",
+    "src/styles/transition.css": "Disable onload-animation initial translateY/opacity under prefers-reduced-motion and motion-reduced; the component entry animation is opacity-only (no translate) and the reading content carries no delay, because a translated target cancels a press whose release lands after the shift starts (measured 4/8 lost taps on the category listing before the change, 0/8 after).",
     "src/utils/fancybox-handler.ts": "ALNILAM: replace @fancyapps/ui with MIT photoswipe@5.4.4 behind FancyboxHandler public API; prefetch CSS+PhotoSwipe ctor at init for sync open; treat Markdown image-only original links (thumb→full) as lightbox triggers while leaving text links alone; HTTPS/site-path URL policy; parallel neighbor probes; generation-token abort; dimension probe with 8s timeout and original-link degrade; PhotoSwipe caption via textContent; trap Tab and Shift+Tab within the open PhotoSwipe dialog, wrapping its focusable controls at both boundaries; LIGHTBOX_DEFAULTS inlined (#75).",
     "src/styles/fancybox-custom.css": "ALNILAM: rewrite Fancybox/Panzoom skin to PhotoSwipe .pswp toolbar/counter/caption skin; drop #123 .is-fullsize patch; leave .pswp__bg opacity to PhotoSwipe bgOpacity; prefers-reduced-motion disables non-essential transitions.",
     "src/components/organisms/ArchivePanel.svelte": "ALNILAM addition: SSR initial filter props (initialCategory/initialTag/initialUncategorized/initialGroupBy), explicit-params-only onMount override so detail routes without query keep their SSR filter, preScoped flag so host pages that pre-filter members (alias/series fallback) skip panel-side re-filtering, optional breadcrumb override, and categoryLabels/tagLabels display maps so localized names never participate in filter matching (#124). Translate panel controls and counts using the active page locale.",

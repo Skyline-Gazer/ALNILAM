@@ -65,7 +65,8 @@ after(() => {
 
 test("every emitted route kind is exercised by the Demo build", () => {
   const seen = new Set(kinds.values());
-  for (const expected of ["home", "post", "archive", "categories", "tags", "series", "module", "search", "other"]) {
+  // Gallery (`/albums/`) and Moments (`/moments/`) were retired in #203, and Bangumi is disabled by default in Demo.
+  for (const expected of ["home", "post", "archive", "categories", "tags", "series", "search", "other"]) {
     assert.ok(seen.has(expected), `Demo build must emit a ${expected} route; saw ${[...seen].join(", ")}`);
   }
 });

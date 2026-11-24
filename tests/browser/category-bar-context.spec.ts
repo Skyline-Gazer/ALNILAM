@@ -41,14 +41,12 @@ const withoutBar = [
 	"/tags/",
 	"/tags/alnilam/",
 	"/series/",
-	"/albums/",
-	"/moments/",
 	"/search/",
 	"/404.html",
 ] as const;
 
 const withTagWidget = [...withBar, "/posts/", "/archives/", "/categories/", "/tags/"] as const;
-const withoutTagWidget = ["/series/", "/albums/", "/moments/", "/search/", "/404.html"] as const;
+const withoutTagWidget = ["/series/", "/search/", "/404.html"] as const;
 
 for (const [name, origin] of [
 	["root", ROOT],
@@ -124,7 +122,7 @@ for (const [name, origin] of [
 		await expect(page.locator(CATEGORY_BAR)).toBeVisible();
 		await page.goto(`${origin}/archives/`, { waitUntil: "networkidle" });
 		await expect(page.locator(CATEGORY_BAR)).toHaveCount(0);
-		await page.goto(`${origin}/moments/`, { waitUntil: "networkidle" });
+		await page.goto(`${origin}/series/`, { waitUntil: "networkidle" });
 		await expect(page.locator(CATEGORY_BAR)).toHaveCount(0);
 		await expect(page.locator(TAG_WIDGET)).toHaveCount(0);
 		await context.close();
