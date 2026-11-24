@@ -88,6 +88,27 @@ marketplace or plugin SDK. Runtime theme switching, authenticated comments,
 server adapters, CLI install/update flows and rich Firefly/Mizuki functionality
 are not implemented.
 
+## Navigation context policy (Issue #204)
+
+Article-taxonomy controls are opt-in per declared page capability, never global chrome. The
+layout `page` prop (`SidebarPage`) is the single authority; ALNILAM adds no pathname denylist.
+
+| Page capability | Category bar | Article tag widget | Profile | TOC |
+| --- | --- | --- | --- | --- |
+| `home` | yes | yes | yes | no |
+| `post` | yes — the article's own category is soft-highlighted | yes | yes | yes |
+| `archive` (`/posts/`, its pagination, `/archives/`, the legacy `/posts/<lang>/<slug>/` fallback) | no | yes | yes | no |
+| `categories`, `tags` | no | yes | yes | no |
+| `series`, `albums`, `moments`, `bangumi`, `pages`, `search`, `notFound`, and any route without a declared capability | no | no | yes | no |
+
+`themes/shirone/adapter/site-config.mjs` supplies the widget scopes and
+`upstream/src/components/organisms/CategoryBar.astro` holds the `CATEGORY_BAR_CONTEXTS` allowlist
+(`home`, `post`); both are recorded in `upstream/SOURCE.json` `modified`. An undeclared capability
+means "render nothing", so a new route cannot inherit blog taxonomy by accident, and Profile stays
+visible everywhere because it is site identity rather than article taxonomy. Visibility is decided
+during static rendering, which matches the native-MPA model in ADR 0002: there is no client filter
+that can go stale, double-apply or shift layout after navigation.
+
 ## Comments boundary
 Comments are an optional Site module, not a Core platform service. The Site owns
 `comments.enabled`, the Giscus public identifiers and the identity policy

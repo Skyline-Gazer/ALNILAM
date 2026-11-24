@@ -114,7 +114,7 @@ const hasBanner =
 			<!-- 主内容列：分类导航栏静态渲染（位于 Swup 容器外），
 			     页面切换时保持固定不重渲染；仅内容区随导航替换 -->
 			<div id="main-content-column" class={mainContentClasses.replace("transition-swup-fade", "").trim()}>
-                <CategoryBar currentPostCategory={postCategory}></CategoryBar>
+                <CategoryBar page={page} currentPostCategory={postCategory}></CategoryBar>
                 <main
                     id="swup-container"
                     data-current-post-category={postCategory || ""}

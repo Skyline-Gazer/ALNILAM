@@ -24,3 +24,4 @@ __pycache__/
 # Native Shirone integration cache (Core-owned derived output).
 .shirones/
 apps/web/src/generated/
+/apps/web/.alnilam-compose-astro-build.lock

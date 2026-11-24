@@ -6,6 +6,10 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 
 ## [Unreleased]
 
+### Changed
+
+- The article category bar and the sidebar tag widget are now contextual opt-in decided by the layout page capability instead of a global default with a route denylist: the bar renders only on home and article pages, the tag cloud only in blog contexts (home, article, listing, category and tag routes), and any route that declares no capability — series, module pages, static Site pages, search, 404 — inherits no article taxonomy controls. Site-identity Profile stays on every page, and the 404 page now declares `notFound` rather than impersonating the home context ([#204](https://github.com/Skyline-Gazer/ALNILAM/issues/204)).
+
 ### Fixed
 
 - Keep desktop navigation links readable and clickable while the header search expands, including at the desktop breakpoint and with translated labels ([#189](https://github.com/Skyline-Gazer/ALNILAM/issues/189)).
