@@ -1,5 +1,14 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-24 · Product consolidation · Demo authoring guides (#190)
+
+- Base GitHub `dev` `77c0eb0f598d967c6b6071b023a5e774029ec72d`. Branch `feat/190-demo-guides-v2`: implementation `5b40b81`, pull request [#215](https://github.com/Skyline-Gazer/ALNILAM/pull/215). Not merged; Owner merge authorization required.
+- [#205](https://github.com/Skyline-Gazer/ALNILAM/pull/205) is closed unmerged: its required pull-request `verify` failed in the browser step with `FLOATING_CONTROLS_ROOT_CAUSE = UNCONFIRMED` (pull run 45306806964 vs branch-push run 45306799546 PASS), and its head predates #210/#211 and documents Gallery/Moments, which #203 retires in #212. The disposition and the valid/obsolete split are recorded in #205's thread (comment 7125344133).
+- Carried over: the six trilingual guide groups (`getting-started`, `markdown-and-mdx`, `organize-your-blog`, `internationalization`, `pagefind-basics`, `pagination-sample`) replacing six placeholder/test-only articles, the Pagefind per-locale body/segment coverage, category-link resolution through the Site taxonomy, list image/masonry hydration assertions, the `contract.test.mjs` pinned-ordering fix (pages 1 and 2 previously agreed only because every candidate shared one `pubDate`), the `docs_test.py` Site-content link rule, notices and `.gitignore` entries.
+- Not carried over: Gallery/Moments articles, assets, Demo config and their spec/test edits (obsolete under #203), and #205's 546-line rewrite of `tests/browser/floating-controls-overlap.spec.ts` — this branch keeps the current `dev` version containing #211's TOC regression cases and only retargets its `ARTICLE` and route mock from the deleted `en/pagination-sample.md` to `/en/posts/internationalization/`, the same article #205 chose. No assertion was added, weakened or removed.
+- Verified: `pnpm test` 336/336 pass; `python3 -m unittest discover -s scripts/tests -p '*_test.py'` 21 tests OK; `pnpm browser:local` over `markdown-render`, `lightbox`, `archive-taxonomy`, `pagination-pagefind`, `navigation-lifecycle`, `floating-controls-overlap`, `i18n`, `nav-labels`, `a11y`, `search-empty-state` for root and `/ALNILAM/` → 168 passed (9.8 m), exit 0.
+- Open on this slice: required GitHub Actions `verify` on the exact pushed head (reported on #215). `pnpm check` was not re-run locally for a content-only change set beyond the suites above.
+
 ## Web engineering capability pilot — #209
 
 - The pilot baseline is GitHub `dev` `9c77453cfc8da6ff5432aa8e61954b4b57c10f52`, which passed [Verify](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/45151400441/job/137613413772). The public Demo reported that Core and Site digest `1761ca3abb68de22ddffc157b1763b20dd847ffa0fb9b9bfedb56d9f1d65c4db`.
