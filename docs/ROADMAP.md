@@ -1,5 +1,16 @@
 # ALNILAM roadmap (Issue-driven)
 
+## Navigation context policy — 2026-11-24
+
+[#204](https://github.com/Skyline-Gazer/ALNILAM/issues/204) replaces the global-default taxonomy strip
+with a declared page capability: the category bar renders only for `home` and `post`, the article
+tag widget only for `home`, `post`, `archive`, `categories` and `tags`, Profile stays site identity,
+and any route without a declared capability — series, module pages, static Site pages, search,
+404 — inherits nothing. Undeclared means off, so new routes cannot leak article taxonomy by
+accident. Implemented in [#213](https://github.com/Skyline-Gazer/ALNILAM/pull/213) (not merged, Owner
+authorization required). The visibility matrix is documented in
+[docs/ARCHITECTURE.md](ARCHITECTURE.md#navigation-context-policy-issue-204).
+
 ## Web engineering capability pilot — #209
 
 Use the optional [Web Evidence Skill](../.agents/skills/alnilam-web-evidence/SKILL.md) for browser audits, timing comparisons and flaky UI scenarios. [#209](https://github.com/Skyline-Gazer/ALNILAM/issues/209) tracks the pilot and its disposition after the next 3–5 naturally completed frontend deliveries. [#148](https://github.com/Skyline-Gazer/ALNILAM/issues/148) tracks the existing Learning Loop independently.
