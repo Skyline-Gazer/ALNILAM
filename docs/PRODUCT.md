@@ -23,10 +23,8 @@
 - Delivered surfaces: homepage, posts index and detail, pagination, archives,
   categories, tags, series, localized routes for enabled locales, Pagefind
   search, RSS/sitemap/robots, canonical/hreflang/JSON-LD metadata, opt-in
-  llms.txt v2, Giscus comments, Bangumi snapshots, static Site pages,
-  Markdown and trusted MDX. Gallery/Albums, Moments and Music are retired
-  product features ([#203](https://github.com/Skyline-Gazer/ALNILAM/issues/203))
-  and ship nothing; article images keep the existing lightbox.
+  llms.txt v2, Giscus comments, Bangumi snapshots, Site-owned Gallery and
+  Moments, static Site pages, Markdown and trusted MDX.
 - Core/Site contract: YAML schema v2 with fail-closed validation, non-mutating
   staged composition, provenance (Core revision, Site ref and digest), atomic
   output swap, the documented upgrade/rollback procedure and a release artifact
@@ -36,6 +34,17 @@
   owned Site, and Owner product/visual sign-off. Lab browser and Lighthouse
   evidence plus the public Test-Site regression are recorded in the
   [Handoff](HANDOFF.md).
+
+## Post-v0.2.0 product scope
+
+- The Owner product-scope decision of 2026-11-23, recorded in
+  [#203](https://github.com/Skyline-Gazer/ALNILAM/issues/203), deprecates Gallery/Albums, Moments and
+  site-wide Music for a focused static-blogging product and retains Bangumi as one small optional
+  capability. That Issue authorized the plan only; the code, route, content-collection, Demo
+  fixture and test removals arrived later under separate Owner implementation direction in
+  [#212](https://github.com/Skyline-Gazer/ALNILAM/pull/212). They ship nothing: the `gallery` and
+  `moments` Site keys stay accepted but ignored, and article images keep the existing lightbox.
+- The v0.2.0 surface list above is the released history and is deliberately left unchanged.
 
 ## Minimal product v0.1
 - Static homepage, posts index and post detail.

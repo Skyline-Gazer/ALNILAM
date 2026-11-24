@@ -2,14 +2,19 @@
 
 ## Product scope reconciliation — 2026-11-24
 
-[Issue #203](https://github.com/Skyline-Gazer/ALNILAM/issues/203) retires Gallery/Albums, Moments and
-Music as product features. The retirement removes their injected routes, page modules, components,
-Moments content collection, Demo fixtures, packaged exports and browser coverage. The `gallery`
-and `moments` Site config keys stay accepted and are ignored, so an existing Site keeps building
-while the build names each retired key; `data/albums.yaml` and `content/moments/` are no longer
-read. Vendored Shirone Gallery/Moments sources stay in the theme tree but are unreachable from
-ALNILAM, keeping upstream tracking cheap. Article images keep the existing PhotoSwipe lightbox;
-no Music code has ever shipped.
+[Issue #203](https://github.com/Skyline-Gazer/ALNILAM/issues/203) records the Owner product-scope
+decision of 2026-11-23: Gallery/Albums, Moments and site-wide Music are deprecated for a focused
+static-blogging product while Bangumi is retained. That Issue authorized the plan, not the removal,
+so the implementation below was executed later under separate Owner direction
+([#212](https://github.com/Skyline-Gazer/ALNILAM/pull/212)). The retirement removes the injected routes,
+page modules, components, Moments content collection, Demo fixtures, packaged exports and browser
+coverage. The `gallery` and `moments` Site config keys stay accepted and are ignored, so an
+existing Site keeps building while the build names each retired key; `data/albums.yaml` and
+`content/moments/` are no longer read. Vendored Shirone Gallery/Moments sources stay in the theme
+tree but are unreachable from ALNILAM, keeping upstream tracking cheap. Article images keep the
+existing PhotoSwipe lightbox; no Music code ever shipped. Historical #67/#68 records of delivered
+Gallery and Moments work, and the v0.2.0 release surface that included them, remain accurate as
+history and are not rewritten.
 
 Remaining product-consolidation slices, each in its own Issue-linked pull request:
 [#204](https://github.com/Skyline-Gazer/ALNILAM/issues/204) optional-component policy (page-context
