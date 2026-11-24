@@ -40,6 +40,17 @@ post-release stabilization. It remains **NOT VERIFIED**; the public Test-Site
 smoke is separate regression evidence, not that review. See the linked
 [Issue #81 decision receipt](https://github.com/Skyline-Gazer/ALNILAM/issues/81#issuecomment-7031165221).
 
+## Post-v0.2.0 product scope
+
+- The Owner product-scope decision of 2026-11-23, recorded in
+  [#203](https://github.com/Skyline-Gazer/ALNILAM/issues/203), deprecates Gallery/Albums, Moments and
+  site-wide Music for a focused static-blogging product and retains Bangumi as one small optional
+  capability. That Issue authorized the plan only; the code, route, content-collection, Demo
+  fixture and test removals arrived later under separate Owner implementation direction in
+  [#212](https://github.com/Skyline-Gazer/ALNILAM/pull/212). They ship nothing: the `gallery` and
+  `moments` Site keys stay accepted but ignored, and article images keep the existing lightbox.
+- The v0.2.0 surface list above is the released history and is deliberately left unchanged.
+
 ## Minimal product v0.1
 - Static homepage, posts index and post detail.
 - Demo Markdown post with Site-controlled frontmatter and image.

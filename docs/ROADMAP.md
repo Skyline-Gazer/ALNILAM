@@ -1,5 +1,33 @@
 # ALNILAM roadmap (Issue-driven)
 
+## Product scope reconciliation — 2026-11-24
+
+[Issue #203](https://github.com/Skyline-Gazer/ALNILAM/issues/203) records the Owner product-scope
+decision of 2026-11-23: Gallery/Albums, Moments and site-wide Music are deprecated for a focused
+static-blogging product while Bangumi is retained. That Issue authorized the plan, not the removal,
+so the implementation below was executed later under separate Owner direction
+([#212](https://github.com/Skyline-Gazer/ALNILAM/pull/212)). The retirement removes the injected routes,
+page modules, components, Moments content collection, Demo fixtures, packaged exports and browser
+coverage. The `gallery` and `moments` Site config keys stay accepted and are ignored, so an
+existing Site keeps building while the build names each retired key; `data/albums.yaml` and
+`content/moments/` are no longer read. Vendored Shirone Gallery/Moments sources stay in the theme
+tree but are unreachable from ALNILAM, keeping upstream tracking cheap. Article images keep the
+existing PhotoSwipe lightbox; no Music code ever shipped. Historical #67/#68 records of delivered
+Gallery and Moments work, and the v0.2.0 release surface that included them, remain accurate as
+history and are not rewritten.
+
+Remaining product-consolidation slices, each in its own Issue-linked pull request:
+[#204](https://github.com/Skyline-Gazer/ALNILAM/issues/204) optional-component policy (page-context
+opt-in for the category filter bar), the mixed-locale content policy behind
+[#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35), navigation responsiveness root-cause work,
+[#206](https://github.com/Skyline-Gazer/ALNILAM/issues/206) Bangumi thumbnail and progress semantics,
+and [#207](https://github.com/Skyline-Gazer/ALNILAM/issues/207) GHCard cache semantics. None of them
+blocks the retirement slice.
+
+## Web engineering capability pilot — #209
+
+Use the optional [Web Evidence Skill](../.agents/skills/alnilam-web-evidence/SKILL.md) for browser audits, timing comparisons and flaky UI scenarios. [#209](https://github.com/Skyline-Gazer/ALNILAM/issues/209) tracks the pilot and its disposition after the next 3–5 naturally completed frontend deliveries. [#148](https://github.com/Skyline-Gazer/ALNILAM/issues/148) tracks the existing Learning Loop independently.
+
 ## Foundation v0.2.0 released — 2026-11-20
 
 Foundation is published from `main` at `e8239cf4f2272c7cb9429f8c740aa6677f9ed040`
@@ -50,8 +78,9 @@ published v0.2.0 state or the current Owner-linked follow-ups.
 
 Foundation targets `v0.2.0`. The release includes the existing Shirone-based
 blog, the YAML-only Site schema v2, Markdown/MDX posts and pages, search, i18n,
-SEO, root and nested builds, and the existing opt-in Gallery, Moments,
-Comments, Bangumi and LLM discovery modules. The Core/Site contract and
+SEO, root and nested builds, and the opt-in modules enabled at that time —
+Gallery and Moments (both retired on 2026-11-24, see below), plus Comments,
+Bangumi and LLM discovery. The Core/Site contract and
 upgrade/rollback guidance are release requirements.
 
 Only fixes for release blockers are in scope until GA. [#42](https://github.com/Skyline-Gazer/ALNILAM/issues/42) tracks the release gate, including the applicable [#74](https://github.com/Skyline-Gazer/ALNILAM/issues/74) field and manual accessibility evidence, [#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81) independent Site onboarding, [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35) product sign-off, and [#147](https://github.com/Skyline-Gazer/ALNILAM/issues/147) obligations for distributed materials. Keep unmet requirements open pending evidence or an explicit Owner change to the acceptance contract. First public Production deployment requires separate authorization under [#138](https://github.com/Skyline-Gazer/ALNILAM/issues/138).

@@ -44,6 +44,7 @@ const tocHeadings = headings.map((h) => ({
 	aria-modal="true"
 	aria-label={i18n(I18nKey.tableOfContents)}
 	aria-hidden="true"
+	inert
 	tabindex="-1"
 	data-toc-close-on-select={closeOnSelect ? "true" : "false"}
 	data-toc-max-depth={maxDepth}
@@ -110,6 +111,8 @@ const tocHeadings = headings.map((h) => ({
 	&.is-open
 		opacity: 1
 		visibility: visible
+		// Focus enters in the same task as opening. Fade and slide independently.
+		transition-property: transform, opacity
 		transform: translateY(0) scale(1)
 		pointer-events: auto
 

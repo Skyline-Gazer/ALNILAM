@@ -51,6 +51,9 @@ GitHub Actions `verify` is the required PR check. Vercel's existing Git integrat
 builds the `dev` branch. CNB is a frozen source snapshot, not a current validation
 or development provider. See README for setup and evidence locations.
 
+For UI audits, browser regressions and navigation diagnostics, use the optional
+[Web Evidence Skill](.agents/skills/alnilam-web-evidence/SKILL.md).
+
 - Production deployment, release tags, changes to `main`, and branch-protection
   changes require explicit Owner authorization. Do not write new development work
   to frozen CNB `dev` or start a recurring CNB mirror.
