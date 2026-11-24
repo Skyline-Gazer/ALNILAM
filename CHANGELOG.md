@@ -6,6 +6,10 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 
 ## [Unreleased]
 
+### Removed
+
+- Retire the Gallery/Albums, Moments and Music product features: no `/albums/` or `/moments/` route, navigation link, client module, content collection or Demo fixture is emitted any more. The `gallery` and `moments` Site config keys remain accepted so existing Sites keep building, are ignored, and now print a one-line build warning; remove them from `alnilam.config.yaml`. Article image lightboxes are unchanged ([#203](https://github.com/Skyline-Gazer/ALNILAM/issues/203)).
+
 ### Fixed
 
 - Keep desktop navigation links readable and clickable while the header search expands, including at the desktop breakpoint and with translated labels ([#189](https://github.com/Skyline-Gazer/ALNILAM/issues/189)).

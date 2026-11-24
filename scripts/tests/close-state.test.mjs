@@ -77,7 +77,20 @@ function seedBangumiSnapshot(cacheRoot, { userId, subjectType, limit }) {
   fs.writeFileSync(path.join(snapshots, `${key}.json`), `${JSON.stringify(payload, null, 2)}\n`);
 }
 
-function compose(name, options, { seedBangumi = false } = {}) {
+function seedRetiredFixtures(site) {
+  fs.mkdirSync(path.join(site, "data"), { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "data/albums.yaml"),
+    "schemaVersion: 1\nalbums:\n  - id: retired\n    title: Retired album\n    photos: []\n",
+  );
+  fs.mkdirSync(path.join(site, "content/moments"), { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "content/moments/2026-01-01.md"),
+    "---\npublished: 2026-01-01T00:00:00+08:00\nimages: []\n---\n\nRetired moment body.\n",
+  );
+}
+
+function compose(name, options, { seedBangumi = false, seedRetiredFixtures: seed = false } = {}) {
   const site = path.join(root, `site-${name}`);
   const out = path.join(root, `out-${name}`);
   const cache = path.join(root, `cache-${name}`);
@@ -92,6 +105,7 @@ function compose(name, options, { seedBangumi = false } = {}) {
   if (seedBangumi) {
     seedBangumiSnapshot(cache, { userId: "close-state", subjectType: "anime", limit: 1 });
   }
+  if (seed) seedRetiredFixtures(site);
   const digest = validateSiteRoot(site).digest;
   const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", out], {
     cwd: repo,
@@ -105,7 +119,7 @@ function compose(name, options, { seedBangumi = false } = {}) {
   });
   assert.equal(result.status, 0, `compose ${name} failed:\n${result.stderr}\n${result.stdout}`);
   assert.equal(validateSiteRoot(site).digest, digest, "composition must not change Site source");
-  return { out, emitted: files(out) };
+  return { out, emitted: files(out), stderr: result.stderr };
 }
 
 before(() => {
@@ -120,6 +134,11 @@ before(() => {
     { seedBangumi: true },
   );
   builds.llmsOn = compose("llms-on", "\nllms:\n  enabled: true\n  full: true\n");
+  builds.retiredOn = compose(
+    "retired-on",
+    "\ngallery:\n  enabled: true\nmoments:\n  enabled: true\n",
+    { seedRetiredFixtures: true },
+  );
 });
 
 after(() => {
@@ -134,6 +153,24 @@ test("disabled Gallery emits no routes, navigation, module assets, or image-host
       assert.doesNotMatch(text, /href=["'][^"']*\/albums\//i, file);
       assert.doesNotMatch(text, /album-gallery__item|images\.unsplash\.com/i, file);
     }
+  }
+});
+
+test("retired Gallery and Moments keys still build, warn, and ship nothing", () => {
+  const { out, emitted, stderr } = builds.retiredOn;
+  const notice = stderr.split("\n").filter((line) => /\(Issue #203\)/.test(line));
+  assert.equal(notice.length, 1, stderr);
+  assert.match(notice[0], /"gallery", "moments"/, notice[0]);
+  // A Site that never mentions the retired keys gets no notice; one that keeps
+  // `gallery.enabled: false` still builds and is only told the key is dead config.
+  assert.match(builds.off.stderr, /\(Issue #203\)/);
+  for (const name of ["defaults", "bangumiOn", "llmsOn"]) {
+    assert.doesNotMatch(builds[name].stderr, /\(Issue #203\)/, name);
+  }
+  assert.deepEqual(emitted.filter((file) => /(^|\/)(?:albums|moments)\//.test(file)), [], out);
+  for (const html of emitted.filter((file) => file.endsWith(".html"))) {
+    const text = read(out, html);
+    assert.doesNotMatch(text, /href=["'][^"']*\/(?:albums|moments)\//i, html);
   }
 });
 
