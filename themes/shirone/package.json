@@ -11,9 +11,6 @@
     "./PageHeader.astro": "./upstream/src/components/atoms/display/PageHeader.astro",
     "./Card.svelte": "./upstream/src/components/atoms/display/Card.svelte",
     "./Pagination.astro": "./upstream/src/components/molecules/Pagination.astro",
-    "./AlbumSection.svelte": "./upstream/src/components/organisms/AlbumSection.svelte",
-    "./AlbumGallery.svelte": "./upstream/src/components/organisms/AlbumGallery.svelte",
-    "./album-types": "./upstream/src/types/album.ts",
     "./Article.astro": "./upstream/src/pages/posts/[...slug].astro",
     "./Markdown.astro": "./upstream/src/components/content/Markdown.astro",
     "./markdown-assets": "./upstream/src/utils/markdown-assets.ts",
@@ -23,9 +20,7 @@
     "./Series.astro": "./upstream/src/pages/series.astro",
     "./SeriesDetail.astro": "./upstream/src/pages/series/[slug]/index.astro",
     "./series-utils": "./upstream/src/utils/series-utils.ts",
-    "./Tags.astro": "./upstream/src/pages/tags.astro",
-    "./MomentSection.svelte": "./upstream/src/components/organisms/MomentSection.svelte",
-    "./moments-utils": "./upstream/src/utils/content-utils.ts"
+    "./Tags.astro": "./upstream/src/pages/tags.astro"
   },
   "dependencies": {
     "@alnilam/ui": "workspace:*",

@@ -1,7 +1,25 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync } from "node:fs";
-import { normalizeSiteConfig, parseSiteConfigDocument, SITE_CONFIG_FILENAME } from "@alnilam/core";
+import { normalizeSiteConfig, parseSiteConfigDocument, RETIRED_SITE_FEATURES, SITE_CONFIG_FILENAME } from "@alnilam/core";
+
+// A composed build loads the Site contract in several processes. The first loader records the
+// keys it warned about in this variable and child builds inherit it, so one build logs one notice.
+const RETIRED_WARN_ENV = "ALNILAM_WARNED_RETIRED";
+
+function warnRetiredKeys(document) {
+  const alreadyWarned = new Set((process.env[RETIRED_WARN_ENV] ?? "").split(",").filter(Boolean));
+  const keys = RETIRED_SITE_FEATURES.filter(
+    (key) => document?.[key] !== undefined && !alreadyWarned.has(key),
+  );
+  if (keys.length === 0) return;
+  process.env[RETIRED_WARN_ENV] = [...alreadyWarned, ...keys].join(",");
+  const quoted = keys.map((key) => `"${key}"`).join(", ");
+  const plural = keys.length > 1;
+  console.warn(
+    `ALNILAM: the retired ${SITE_CONFIG_FILENAME} option${plural ? "s" : ""} ${quoted} ${plural ? "are" : "is"} ignored (Issue #203). Remove ${plural ? "them" : "it"}; see docs/SITE_ONBOARDING.md`,
+  );
+}
 
 const fromModule = fileURLToPath(new URL("../../../../sites/demo/", import.meta.url));
 const defaultSite = existsSync(path.join(fromModule, SITE_CONFIG_FILENAME))
@@ -17,7 +35,9 @@ export function loadSite() {
     );
   }
   const raw = readFileSync(configPath, "utf8");
-  let config = normalizeSiteConfig(parseSiteConfigDocument(raw, { filename: SITE_CONFIG_FILENAME }));
+  const document = parseSiteConfigDocument(raw, { filename: SITE_CONFIG_FILENAME });
+  warnRetiredKeys(document);
+  let config = normalizeSiteConfig(document);
   const urlOverride = process.env.ALNILAM_SITE_URL;
   if (urlOverride) {
     const u = new URL(urlOverride);

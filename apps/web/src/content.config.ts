@@ -5,13 +5,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { loadSite } from "./lib/site-source.mjs";
 import { loadSiteTaxonomy, resolvePostCategory } from "./lib/taxonomy";
-import { normalizeMomentImageUrl } from "./lib/moments.mjs";
 
 const { root, config } = loadSite();
 const taxonomy = loadSiteTaxonomy(root, config);
 const base = new URL(config.site.url).pathname.replace(/\/$/, "");
 const seriesDir = path.join(root, "content/series");
-const momentsDir = path.join(root, "content/moments");
 const pagesDir = path.join(root, "content/pages");
 
 function resolveCover(cover: string | undefined, basePath: string): string {
@@ -80,35 +78,6 @@ const series = defineCollection({
   schema: seriesSchema,
 });
 
-const moments = defineCollection({
-  loader: config.moments.enabled && fs.existsSync(momentsDir)
-    ? glob({ pattern: "**/*.md", base: momentsDir })
-    : async () => [],
-  schema: z.object({
-    published: z.coerce.date(),
-    pinned: z.boolean().default(false),
-    location: z.string().default(""),
-    mood: z.string().default(""),
-    tags: z.array(z.string()).default([]),
-    images: z.array(z.object({
-      src: z.string().min(1),
-      thumbnail: z.string().min(1).optional(),
-      alt: z.string().default(""),
-      width: z.number().int().positive().optional(),
-      height: z.number().int().positive().optional(),
-    }).superRefine((image, context) => {
-      if ((image.width === undefined) !== (image.height === undefined)) {
-        context.addIssue({ code: "custom", message: "width and height must be provided together" });
-      }
-    }).transform(({ src, thumbnail, alt, width, height }) => ({
-      src: normalizeMomentImageUrl(src),
-      ...(thumbnail ? { thumbnailSrc: normalizeMomentImageUrl(thumbnail) } : {}),
-      ...(width !== undefined && height !== undefined ? { width, height } : {}),
-      alt,
-    }))).default([]),
-    draft: z.boolean().default(false),
-  }),
-});
 const pages = defineCollection({
   loader: fs.existsSync(pagesDir)
     ? glob({
@@ -136,5 +105,5 @@ const pages = defineCollection({
   })),
 });
 const emptyCollection = (schema = z.object({title: z.string().default('')})) => defineCollection({loader: async () => [], schema});
-export const collections = { posts, series, pages, moments, spec: emptyCollection() };
+export const collections = { posts, series, pages, spec: emptyCollection() };
 
