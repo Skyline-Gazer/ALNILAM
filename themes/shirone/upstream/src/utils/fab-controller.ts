@@ -261,8 +261,9 @@ class FabController {
 
 	private syncTextObstruction(): void {
 		const controls = document.getElementById("floating-controls");
-		// #194: below md the cluster is not rendered at all — the article carries its own in-flow
-		// contents disclosure — so there is nothing to measure, hide or release.
+		// #194: below lg (1024 px) the cluster is not rendered at all — the article carries its own
+		// in-flow contents disclosure — so there is nothing to measure, hide or release.
+		if (!controls) return;
 		if (getComputedStyle(controls).display === "none") {
 			this.articleTextObscured = false;
 			controls.removeAttribute("data-fab-text-obstruction-pending");

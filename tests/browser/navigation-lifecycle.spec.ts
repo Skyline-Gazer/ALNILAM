@@ -59,7 +59,7 @@ for (const origin of ["http://127.0.0.1:4323", "http://127.0.0.1:4324/ALNILAM"])
           await expect(menu).toBeFocused();
         }
         if (width === 390) {
-          // #194: below 768 px the contents are an in-flow disclosure, not a floating panel.
+          // #194: below 1024 px (`lg`) the contents are an in-flow disclosure, not a floating panel.
           const disclosure = page.locator("[data-mobile-article-toc]");
           await expect(disclosure).toBeVisible();
           const articleY = await page.locator(".markdown-content").evaluate((el) => el.getBoundingClientRect().top);

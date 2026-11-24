@@ -9,17 +9,17 @@ import { expect, test, type Page } from "@playwright/test";
 // the same head measured 248 passed / 7 failed in CI and 255 passed locally.
 //
 // Revised contract, asserted here:
-//   · below 768 px: no floating control is rendered at all; the article carries an in-flow
+//   · below 1024 px (`lg`): no floating control is rendered at all; the article carries an in-flow
 //     contents disclosure and an in-flow back-to-top; both are ≥44 px targets and keyboard operable
-//   · at 768 px and above: the floating cluster is unchanged, including #211's TOC panel focus
+//   · at 1024 px (`lg`) and above: the floating cluster is unchanged, including #211's TOC panel focus
 //     behaviour (open → focus inside → Tab/Shift+Tab contained → Escape restores the trigger)
 const ROOT = process.env.ALNILAM_TEST_ROOT_URL ?? "http://127.0.0.1:4323";
 const NESTED = process.env.ALNILAM_TEST_NESTED_URL ?? "http://127.0.0.1:4324/ALNILAM";
 const ARTICLE = "/en/posts/getting-started/";
 const TOUCH_TARGET = 44;
 
-const mobileWidths = [320, 375, 390, 430, 768, 900];
-const desktopWidths = [1024, 1200, 1440];
+const mobileWidths = [320, 375, 390, 430, 767, 768, 900, 1023];
+const desktopWidths = [1024, 1200, 1280, 1440];
 
 async function openArticle(page: Page, origin: string) {
   const response = await page.goto(`${origin}${ARTICLE}`, { waitUntil: "load" });
@@ -113,7 +113,7 @@ for (const [base, origin] of [
     }
   });
 
-  test(`the 1024px breakpoint is the exact switch (${base})`, async ({ browser }) => {
+  test(`the 1024px breakpoint is the exact switch and desktop TOC preserves #211 focus containment (${base})`, async ({ browser }) => {
     const context = await browser.newContext({ viewport: { width: 1024, height: 900 }, reducedMotion: "reduce" });
     const page = await context.newPage();
     try {
@@ -174,3 +174,73 @@ for (const width of desktopWidths) {
     }
   });
 }
+
+test("desktop-enabled floating TOC preserves #211 keyboard focus containment and mobile/desktop handoff", async ({ browser }) => {
+  // The bundled Demo configures `toc` for `["mobile", "tablet"]` (desktop uses the sidebar TOC), so
+  // FloatingControls omits the unreachable mobile floating TOC DOM. Verify #211's desktop floating
+  // TOC dialog focus trap, Escape return, and 1023px <-> 1024px handoff by serving an article page
+  // with the desktop floating TOC slot active.
+  const context = await browser.newContext({ viewport: { width: 1024, height: 900 }, reducedMotion: "reduce" });
+  const page = await context.newPage();
+  try {
+    await openArticle(page, ROOT);
+    // Inject the desktop-enabled floating TOC slot into #floating-controls and re-bind FabController
+    // so a Site that enables `toc` on `desktop` is exercised end-to-end at >=1024px.
+    await page.evaluate(() => {
+      const controls = document.getElementById("floating-controls");
+      if (!controls) throw new Error("missing #floating-controls");
+      const slot = document.createElement("div");
+      slot.setAttribute("data-fab-slot", "");
+      slot.className = "relative flex";
+      slot.innerHTML = `
+        <div id="floating-toc-panel" class="m3-floating-toc-panel" role="dialog" aria-modal="true" aria-label="Table of Contents" aria-hidden="true" inert tabindex="-1" data-toc-close-on-select="true" data-toc-max-depth="3" data-empty-label="No data">
+          <div class="m3-floating-toc-panel__header">
+            <h3 class="m3-floating-toc-panel__title">Table of Contents</h3>
+            <button id="floating-toc-close-btn" type="button" class="m3-floating-toc-close m3-state-layer" aria-label="Close">×</button>
+          </div>
+          <div id="floating-toc-scroll-content" class="m3-floating-toc-panel__content">
+            <div id="floating-toc-tree" class="m3-floating-toc-tree"></div>
+          </div>
+        </div>
+        <div id="fab-toc-btn" data-fab-item data-fab-slot data-fab-type="toc" data-fab-pages="post" class="m3-fab-item items-center justify-center flex">
+          <button type="button" class="m3-fab m3-fab--primary m3-fab--regular m3-state-layer" aria-label="Table of Contents" aria-expanded="false" aria-controls="floating-toc-panel">TOC</button>
+        </div>
+      `;
+      controls.prepend(slot);
+      const fab = (window as unknown as { __shironeFab?: { bound?: boolean; init?: () => void } }).__shironeFab;
+      if (fab) {
+        fab.bound = false;
+        fab.init?.();
+      }
+    });
+
+    const button = page.locator("#fab-toc-btn button");
+    const panel = page.locator("#floating-toc-panel");
+    await expect(button).toBeVisible();
+    await button.focus();
+    await page.keyboard.press("Enter");
+    await expect(panel).toHaveAttribute("aria-hidden", "false");
+    expect(await panel.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+
+    // #211 focus containment: Shift+Tab wraps to last link, Tab wraps back to first button
+    await page.keyboard.press("Shift+Tab");
+    await expect(panel.getByRole("link").last()).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(panel.getByRole("button").first()).toBeFocused();
+
+    // Escape closes and returns focus to trigger button
+    await page.keyboard.press("Escape");
+    await expect(panel).toHaveAttribute("aria-hidden", "true");
+    await expect(button).toBeFocused();
+
+    // Handoff across 1024px -> 1023px -> 1024px
+    await page.setViewportSize({ width: 1023, height: 900 });
+    await expect(page.locator("#floating-controls")).toBeHidden();
+    await expect(page.locator("[data-mobile-article-toc]")).toBeVisible();
+    await page.setViewportSize({ width: 1024, height: 900 });
+    await expect(page.locator("#floating-controls")).toBeVisible();
+    await expect(page.locator("[data-mobile-article-toc]")).toBeHidden();
+  } finally {
+    await context.close();
+  }
+});

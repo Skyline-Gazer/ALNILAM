@@ -41,6 +41,8 @@ const isHomeItemVisible = homeItem
 	? isWidgetVisibleOnPage(homeItem.pages, page) &&
 		(!homeItem.onlySubPages || page !== "home")
 	: false;
+const tocDevices = tocItem?.devices ?? ["mobile", "tablet", "desktop"];
+const isTocVisibleOnDesktop = tocDevices.includes("desktop");
 ---
 
 <aside
@@ -55,8 +57,8 @@ const isHomeItemVisible = homeItem
 	data-fab-text-obstruction-pending={page === "post" ? "true" : undefined}
 	style={`--fab-bottom: ${fabConfig.offset?.bottom ?? "var(--m3e-space-8)"}; --fab-inline-offset: ${fabConfig.offset?.right ?? "var(--m3e-space-6)"}`}
 >
-	<!-- 1. TOC 悬浮目录项与弹窗 -->
-	{tocItem && isWidgetVisibleOnPage(tocItem.pages, page) && (
+	<!-- 1. TOC 悬浮目录项与弹窗：#194 在 <1024px 隐藏整组悬浮控件，因此仅在 desktop 可见时输出 DOM -->
+	{tocItem && isTocVisibleOnDesktop && isWidgetVisibleOnPage(tocItem.pages, page) && (
 		<div
 			data-fab-slot
 			class:list={[
@@ -159,7 +161,7 @@ const isHomeItemVisible = homeItem
 		right: auto
 		left: var(--fab-inline-offset)
 
-/* #194: below md the article carries its own in-flow contents disclosure
+/* #194: below lg (1024 px) the article carries its own in-flow contents disclosure
  * (`MobileArticleTOC`) and the reading column keeps its full width, so no floating control is
  * rendered there at all. The desktop cluster — and #211's TOC panel and focus behaviour — is
  * unchanged. */
