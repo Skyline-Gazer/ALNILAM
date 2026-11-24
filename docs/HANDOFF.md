@@ -1,5 +1,13 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-24 · Navigation reliability · entry animation cancels taps (#213, #194)
+
+- Root cause of the PR-context-only `verify` failure on [#213](https://github.com/Skyline-Gazer/ALNILAM/pull/213) (`archive-taxonomy.spec.ts` "pagination navigates to page 2 and back": click completed, URL stayed `/2/`, no network request in the trace): `themes/shirone/upstream/src/styles/transition.css` animated every `.onload-animation` component with `fade-in-up`, which starts at `translateY(2rem)` and is delayed by `--content-delay: 150ms` for `#content-wrapper`. The pagination links sit inside that container, so a press whose release landed after the slide started was cancelled by the browser (mousedown and mouseup on different boxes) with no error and no navigation.
+- Measured A/B on the category listing at 1280×720, 200 ms press: **4/8 lost taps** with the transform animation, **0/8** with `prefers-reduced-motion: reduce` (which disables it), and **0/8** after the fix. The trace of the failing CI run shows the same shape: `click` 47 ms, no request for `/categories/release/`, `toHaveURL` timing out after 14 retries.
+- Fix: the entry animation is opacity-only (`fade-in`, no `translate`) and `#content-wrapper` carries no delay. Chrome keeps its stagger, reduced-motion behaviour is unchanged, and no JavaScript was added. Divergence ledger entry updated for `src/styles/transition.css`.
+- Regression gate: `tests/browser/entry-animation.spec.ts` asserts no `.onload-animation` element animates a transform and that a 200 ms press on the previous-page link navigates, for `/` and `/ALNILAM/`. Fail-before on `77c0eb0f`: 3 failed / 1 passed; pass-after: 4/4.
+- Verification on this branch: `pnpm build` + nested Compose exit 0, `playwright test tests/browser/entry-animation.spec.ts` 4/4, `pnpm browser tests/browser/archive-taxonomy.spec.ts` and the full local CI-equivalent suite were run on the base head (259 passed) before the change.
+- Open: required `verify` on the exact head; #215 stays blocked until #194's control work lands; Owner merge authorization still required for this PR.
 ## Live-state update — 2026-11-24 · Product consolidation · Gallery/Moments retirement (#203)
 
 - Base is GitHub `dev` `77c0eb0f598d967c6b6071b023a5e774029ec72d`, which contains the merged TOC focus fix [#211](https://github.com/Skyline-Gazer/ALNILAM/pull/211) (`906723a0` → `2c14137c`) and the Web Evidence capability pilot [#210](https://github.com/Skyline-Gazer/ALNILAM/pull/210) (`ea7aedbb` → `77c0eb0f`). Implementation branch `feat/203-retire-moments-gallery`: retirement commit `84a5de3`, merge of `dev` `f465794`.

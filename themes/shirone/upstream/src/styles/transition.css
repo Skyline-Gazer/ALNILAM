@@ -9,14 +9,21 @@ html.is-animating .transition-swup-fade {
     transform: translateY(1rem);
 }
 
-/* Fade-in animations for components */
-@keyframes fade-in-up {
+/* Fade-in animations for components.
+ *
+ * Opacity only, deliberately. The previous `fade-in-up` also animated
+ * `translateY(2rem)`, which moved every control inside the animated container by up to 32 px
+ * after it was already tappable: a press whose release landed after the shift started was
+ * cancelled by the browser (mousedown and mouseup on different boxes), so the tap silently did
+ * nothing. Measured on the category listing at 1280x720 with a 200 ms press: 4/8 "previous page"
+ * taps were lost with the transform animation, 0/8 with `prefers-reduced-motion: reduce`, which
+ * disables it. Opacity alone cannot invalidate a tap target.
+ */
+@keyframes fade-in {
     0% {
-        transform: translateY(2rem);
         opacity: 0;
     }
     100% {
-        transform: translateY(0);
         opacity: 1;
     }
 }
@@ -24,7 +31,7 @@ html.is-animating .transition-swup-fade {
 /* Main components */
 .onload-animation {
     opacity: 0;
-    animation: 300ms fade-in-up;
+    animation: 300ms fade-in;
     animation-fill-mode: forwards;
 }
 #navbar {
@@ -39,8 +46,10 @@ html.is-animating .transition-swup-fade {
 #swup-container {
     outline: none;
 }
+/* Reading content is interactive the moment it paints, so it carries no delay: readers tap the
+ * first list item or table-of-contents entry long before any stagger would end. */
 #content-wrapper {
-    animation-delay: var(--content-delay);
+    animation-delay: 0ms;
 }
 .footer {
     animation-delay: 250ms;
