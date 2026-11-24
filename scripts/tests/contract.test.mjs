@@ -95,6 +95,19 @@ test("reserved routing and taxonomy catalogs are validated", () => {
   assert.throws(() => parseConfig(`${validYaml}\nrouting:\n  prefixDefaultLocale: maybe\n`), /prefixDefaultLocale must be a boolean/);
 });
 
+test("retired gallery and moments keys load but enable nothing", () => {
+  const declared = parseConfig(`${validYaml}\ngallery:\n  enabled: true\nmoments:\n  enabled: true\n`);
+  assert.deepEqual({ ...declared.gallery }, { enabled: false });
+  assert.deepEqual({ ...declared.moments }, { enabled: false });
+  assert.ok(Object.isFrozen(declared.gallery) && Object.isFrozen(declared.moments));
+  const absent = parseConfig(validYaml);
+  assert.equal(absent.gallery.enabled, false);
+  assert.equal(absent.moments.enabled, false);
+  // Values are ignored, the block still has to be well-formed.
+  assert.throws(() => parseConfig(`${validYaml}\ngallery:\n  enabled: "yes"\n`), /gallery\.enabled must be a boolean/);
+  assert.throws(() => parseConfig(`${validYaml}\nmoments:\n  albums: 1\n`), /unknown moments field "albums"/);
+});
+
 test("comments module: disabled by default, giscus fields validated when enabled", () => {
   const off = parseConfig(validYaml);
   assert.equal(off.comments.enabled, false);

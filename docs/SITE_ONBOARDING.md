@@ -15,7 +15,7 @@ yoursite/
 ├── content/posts/           # required — Markdown/MDX posts
 ├── content/pages/           # optional — Site-authored Markdown/MDX pages
 ├── assets/                  # optional — copied verbatim to /site-assets/ in output
-└── data/                     # optional — Site data such as taxonomy.yaml and albums.yaml
+└── data/                     # optional — Site data such as taxonomy.yaml
 ```
 
 ### `alnilam.config.yaml` (schema v2)
@@ -34,20 +34,24 @@ locales:                      # optional, defaults to [site.locale]; list every 
 
 theme:
   appearance: "dark"          # "dark" | "light", default dark
-
-gallery:
-  enabled: false             # default false; enable only when this Site owns albums.yaml
 ```
 
 Unknown top-level or nested keys fail the build, and so do malformed YAML, duplicate
-keys, unresolved YAML tags and non-plain YAML values. The `gallery`, `moments`, `comments`,
+keys, unresolved YAML tags and non-plain YAML values. The `comments`,
 `bangumi` and `llms` module blocks are documented below. Omit keys your target Core does not yet
 know — an older Core fails closed on unknown fields even when the current Core accepts
 them.
 
+**Retired keys:** `gallery` and `moments` are retired product features
+([Issue #203](https://github.com/Skyline-Gazer/ALNILAM/issues/203)). They stay in the accepted key
+list so an existing Site keeps building, but their values are ignored, the normalized config
+always reports `enabled: false`, and the build logs one notice naming every retired key it finds —
+including a block left at `enabled: false`, which is now dead config. Remove both blocks
+from `alnilam.config.yaml`; `data/albums.yaml` and `content/moments/` are no longer read.
+
 **Routing:** `routing` is accepted and validated. `routing.prefixDefaultLocale`
-controls whether default-locale Gallery and Moments routes include the locale
-prefix; post and taxonomy routes retain their existing URL policy. Categories and
+controls whether default-locale localized routes include the locale prefix; post and taxonomy
+routes retain their existing URL policy. Categories and
 tags are Site-owned catalogs; tag pages also use post frontmatter.
 
 ### Posts and slugs
@@ -151,61 +155,20 @@ it preserves files and directories whose contents do not have verified ownership
 
 Optional modules are feature-flagged: **disabled modules ship nothing** — no page, no 404 stub, no client JS, no third-party requests.
 
-### Gallery (`gallery`)
+### Retired modules (`gallery`, `moments`)
 
-Gallery is off by default. When enabled, Core emits `/albums/` and one detail route per album, adds the navigation link, and loads the Shirone Gallery components. It also emits localized index/detail routes for each configured locale with a URL prefix, respecting `routing.prefixDefaultLocale`. When disabled, the build emits no Gallery route, Gallery-specific client module or Gallery image requests.
+Gallery/Albums and Moments were optional Site-owned modules. They are retired
+([Issue #203](https://github.com/Skyline-Gazer/ALNILAM/issues/203)) and now ship nothing: no `/albums/`
+or `/moments/` route, no navigation link, no Gallery/Moments client module and no related image
+requests. Article images keep their existing lightbox, so PhotoSwipe remains a dependency for
+that feature.
 
-The Site owns `data/albums.yaml` (schemaVersion 1). Missing data is an empty album list; `photos: []` is a valid empty album. Each album requires a URL-safe `id`, a `title` and a `photos` array; `description`, `cover`, `date`, `location`, `tags`, `layout` (`grid` or `masonry`) and `columns` (2–4) are optional. A cover may be omitted. Each photo requires `src` and descriptive `alt`; `thumbnail`, `title`, `description`, `tags`, `date`, `location`, and paired positive `width`/`height` are optional. Cards reserve a 4:3 cover box; gallery photos without dimensions reserve a 4:3 tile.
+`data/albums.yaml` and `content/moments/` are no longer read; leftover files are ignored and are
+never published. Keep the `gallery` and `moments` blocks out of `alnilam.config.yaml` — while the
+keys stay accepted, each one prints a build warning and cannot re-enable a retired module.
 
-```yaml
-# alnilam.config.yaml
-gallery:
-  enabled: true
-
-# data/albums.yaml
-schemaVersion: 1
-albums:
-  - id: coast
-    title: Coast
-    description: A Site-owned album.
-    cover: gallery/coast-thumb.jpg
-    photos:
-      - src: gallery/coast-full.jpg
-        thumbnail: gallery/coast-thumb.jpg
-        alt: Coast at sunset
-        width: 2400
-        height: 1600
-      - src: https://images.example.org/signed/photo.jpg?signature=...
-        alt: A remotely hosted photo
-  - id: empty
-    title: Empty album
-    photos: []
-```
-
-Relative media paths resolve under the Site's `assets/` directory and are emitted under `/site-assets/`; `assets/gallery/photo.jpg` and `gallery/photo.jpg` both work. Root-relative paths such as `/site-assets/gallery/photo.jpg` and complete HTTPS URLs are also accepted. HTTPS queries and signatures are preserved. Core never downloads remote media during build, proxies images, or makes cross-origin pixel reads; ordinary browser image loading does not require CORS. The browser host must allow the remote image URL in its own CSP, if configured. No additional request is made to measure dimensions during build. Supplying `width` and `height` also lets PhotoSwipe avoid its on-open size probe; without them, the existing PhotoSwipe handler measures only when the viewer opens.
-
-Use media you have rights to publish. The Demo Site's remote samples are served by Unsplash under the [Unsplash License](https://unsplash.com/license); they are referenced by URL and are not copied into ALNILAM.
-
-### Moments (`moments`)
-
-Moments is off by default. Set `moments.enabled: true` to emit the `/moments/`
-timeline, localized routes for configured non-default locales, its navigation
-link and its interactive image viewer. When `routing.prefixDefaultLocale` is
-true, every configured locale, including the default locale, uses a prefixed
-Moments route. With Moments disabled, its content collection loads no entries
-and the build emits no Moments route or navigation link.
-
-Each entry is a Markdown file under `content/moments/`. Its frontmatter accepts
-`published` (required date), `draft` and `pinned` (booleans), `location` and
-`mood` (string), `tags` (string list), and `images` (list of
-`{ src, alt, thumbnail, width, height }`). The body uses the Site Markdown
-renderer. Drafts are omitted from production output. Image paths may be Site-relative
-(`assets/photo.jpg` or `photo.jpg`), `/site-assets/...`, or absolute HTTPS URLs; external images are
-never downloaded by Core. `thumbnail` is optional and is used for the timeline
-tile while `src` remains the original image in the viewer. `width` and `height`
-are an optional pair; absent values reserve a 4:3 ratio. The timeline shows eight
-entries initially and reveals the next eight on request; filters and search
-operate on the build-time dataset without a runtime data service.
+Previously published URLs return 404 until the Site owner removes or redirects them in their own
+host configuration. ALNILAM does not rewrite Site content or emit redirects for retired routes.
 
 ### Comments (`[comments]`)
 
