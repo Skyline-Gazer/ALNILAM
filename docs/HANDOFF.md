@@ -9,6 +9,15 @@
 - Verification on this branch: `pnpm build` + nested Compose exit 0, `playwright test tests/browser/entry-animation.spec.ts` 4/4, `pnpm browser tests/browser/archive-taxonomy.spec.ts` and the full local CI-equivalent suite were run on the base head (259 passed) before the change.
 - Open: required `verify` on the exact head; #215 stays blocked until #194's control work lands; Owner merge authorization still required for this PR.
 
+## Live-state update — 2026-11-24 · Mobile reading controls (#194)
+
+- Contract revised: below the `lg` breakpoint the article renders **no** floating controls. It carries an in-flow contents disclosure (`details`/`summary`, APG disclosure pattern, top-level headings, 44 px summary and rows, logical padding) and an in-flow back-to-top link at the end. Desktop keeps the cluster, `#211`'s panel and its focus behaviour.
+- Why the breakpoint is `lg`, not `md`: measured on the built Demo, at 768 px the layout is still single-column and the 49 px cluster overlaps article text (4 text blocks); at 1024/1200/1440 the column is narrower than the viewport and the cluster sits in the margin (0 overlaps). The old contract could not be satisfied at phone widths at all: the cluster intrudes 45 px into a 264–374 px column, and "no text under a control" versus "control always discoverable" was decided by host text metrics — the same head measured 248 passed / 7 failed in CI and 255 passed locally.
+- Implementation: `MobileArticleTOC.astro` (new, ALNILAM-only), `FloatingControls.astro` (`display: none` below 1024 px), `fab-controller.ts` (obstruction sync returns early when the cluster is not displayed), `MainGridLayout.astro` (mount + `scroll-mt-20`), `posts/[...slug].astro` (in-flow back-to-top). Divergence ledger: 81 modified entries, `files` hashes refreshed; no upstream code was copied, so no new third-party licence obligation.
+- Page budget forced the disclosure to list top-level headings only: the heaviest Demo article is 64,495 B against the enforced 65,536 B, and the trimmed markup lands at 65,374 B.
+- Tests rewritten to the revised contract, with every replaced assertion named in the PR: `floating-controls-overlap.spec.ts` now asserts no overlay and a 44 px disclosure at 320/375/390/430/768/900 on both bases, unchanged cluster plus `#211` focus containment at 1024, the exact `lg` switch, and zero text overlap at 1024/1200/1440. `navigation-lifecycle.spec.ts` mobile branch drives the disclosure instead of the removed FAB.
+- Open: `axe` run, the remaining validation-matrix cells (dark theme, zh-CN/en/ja, resize/orientation, nested base, external Site composition), screenshots in the PR, required `verify` on the exact head. Screen-reader and Safari validation are **NOT_VERIFIED** (no such runtime in this environment).
+
 ## Web engineering capability pilot — #209
 
 - The pilot baseline is GitHub `dev` `9c77453cfc8da6ff5432aa8e61954b4b57c10f52`, which passed [Verify](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/45151400441/job/137613413772). The public Demo reported that Core and Site digest `1761ca3abb68de22ddffc157b1763b20dd847ffa0fb9b9bfedb56d9f1d65c4db`.

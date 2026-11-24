@@ -30,7 +30,7 @@
     },
     {
       "path": "src/layouts/MainGridLayout.astro",
-      "sha256": "02850ffd62db16c0d61de7c0c3235d686a80cb08c1d9454ed8f118dcaed17958"
+      "sha256": "d8dada0cb4ae34c3d6911c0daaaa45843633f4334cc2e7f27ba90c91eb3843a0"
     },
     {
       "path": "src/layouts/Layout.astro",
@@ -354,7 +354,7 @@
     },
     {
       "path": "src/utils/fab-controller.ts",
-      "sha256": "09ac3b6932fa4d80133a8710f722cc8f946f9d930746a1c4c5d7b5af78e228c6"
+      "sha256": "bc003215dcfac9a5d46aa7bd3f0771023f67ba594dabfd6f2a2302b8798cb558"
     },
     {
       "path": "src/utils/bilibili.ts",
@@ -666,7 +666,7 @@
     },
     {
       "path": "src/styles/main.css",
-      "sha256": "b37a2e42cb93e3ec8bfb6789e094ba5b0abcb50f4757901902320932af8c3c49"
+      "sha256": "aedf6313af3d3709a004d8661b701ea767c175abd76d52d5f1eceefd5a1b6cc4"
     },
     {
       "path": "src/styles/font-faces.css",
@@ -1002,7 +1002,7 @@
     },
     {
       "path": "src/components/organisms/FloatingControls.astro",
-      "sha256": "b6622b64f8b04083da47fbcb384d01e6d69779cf423c46e1faa8eac472e35b7c"
+      "sha256": "fa807cd290c1df611c5cd8f1efb4cefec28596780b264859187494daa002aa57"
     },
     {
       "path": "src/components/organisms/BackToTop.astro",
@@ -1235,6 +1235,10 @@
     {
       "path": "src/components/molecules/SidebarTOC.astro",
       "sha256": "50159ff71cdee6eeac470e5e894d5637bf6b3c43f8686b402e52a4699c027eda"
+    },
+    {
+      "path": "src/components/molecules/MobileArticleTOC.astro",
+      "sha256": "5833f9d61eeb0ea0148b680e0db2f397ecc66729249949b29e60f8e3b139fbc4"
     },
     {
       "path": "src/components/system/ConfigCarrier.astro",
@@ -1594,7 +1598,7 @@
     },
     {
       "path": "src/pages/posts/[...slug].astro",
-      "sha256": "3807557b3cb1ce141d988b1c0c3b32de67314d7a7409790661f76b9cccd69a96"
+      "sha256": "0b17cfba57b0c0a1162a1e8e9497aa27fc917bacd406d4b8cdbb1f337bddeed2"
     },
     {
       "path": "src/pages/series/[slug]/index.astro",
@@ -1938,7 +1942,7 @@
     "src/components/organisms/PostCard.astro": "Retain 640x360 layout dimensions for pass-through Site covers, with metadata dimensions overriding when available.",
     "src/components/organisms/BannerStage.astro": "Give banner placeholders intrinsic layout dimensions; disabled banner still has no Site asset request.",
     "src/utils/url-utils.ts": "Preserve existing ALNILAM language-prefixed post URLs, /categories/<category>/, /tags/<tag>/ and plural /archives/ paths.",
-    "src/pages/posts/[...slug].astro": "Semantic article h1; forward Core hreflang/published metadata and optional existing lazy Comments slot; emit Markdown feature stylesheets as Swup-optional links; omit upstream CommentSection mount so disabled Sites emit no Twikoo/Waline/Giscus provider chunks (Core comments remain slot-only).",
+    "src/pages/posts/[...slug].astro": "Semantic article h1; forward Core hreflang/published metadata and optional existing lazy Comments slot; emit Markdown feature stylesheets as Swup-optional links; omit upstream CommentSection mount so disabled Sites emit no Twikoo/Waline/Giscus provider chunks (Core comments remain slot-only). Renders the in-flow back-to-top action below md (#194).",
     "src/pages/archive.astro": "Add native PageHeader for one semantic page h1; serialize only fields used by ArchivePanel to reduce archive HTML size.",
     "src/components/molecules/ImageWrapper.astro": "Preserve explicit 640x360 layout dimensions for public/remote Site covers.",
     "src/utils/setting-utils.ts": "Default to Site appearance when no stored visitor choice; keep native theme state and controls.",
@@ -1967,12 +1971,12 @@
     "src/components/molecules/FloatingActionButton.astro": "Render static FAB button shell without redundant per-button client:load island hydration.",
     "src/components/molecules/SeriesCard.astro": "Keep the visible series title and part count in the accessible name by using visually hidden direction text instead of an overriding aria-label.",
     "src/components/organisms/TopAppBar.astro": "Gate DisplaySettings island on !siteConfig.themeColor.fixed and consolidate TopAppBar navigation runtime into Layout. Add server-rendered aria-expanded/aria-controls to the menu button so the drawer disclosure is announced before hydration. Add aria-expanded/aria-controls to the display-settings toggle. Add the stable #main-navigation id so browser contracts select the navigation landmark without depending on its accessible name. Localize the navigation landmark name with the page language and resolve the Moments link label from the active locale. Keep desktop navigation in a grid track separate from the search and other actions.",
-    "src/layouts/MainGridLayout.astro": "Gate BannerStage when banner images and homeText are disabled; render RouteProgress without redundant island hydration; move the sidebar elements after the main content column so mobile DOM/parse order matches the visual order (content → sidebar → footer) and the already-painted aside is no longer pushed down by late-parsed article blocks (real mobile CLS); desktop columns stay on explicit lg:/xl: col-start/row-start.",
+    "src/layouts/MainGridLayout.astro": "Gate BannerStage when banner images and homeText are disabled; render RouteProgress without redundant island hydration; move the sidebar elements after the main content column so mobile DOM/parse order matches the visual order (content → sidebar → footer) and the already-painted aside is no longer pushed down by late-parsed article blocks (real mobile CLS); desktop columns stay on explicit lg:/xl: col-start/row-start. Mounts MobileArticleTOC above the slot for post pages, and gives #content-wrapper scroll-mt-20 so the in-flow back-to-top anchor lands below the fixed app bar (#194).",
     "src/components/organisms/SideBar.astro": "Render only widgets visible on the current page in static MPA mode and omit unused Swup polling script.",
-    "src/components/organisms/FloatingControls.astro": "Render TOC floating panel/button only on pages where TOC is visible and consolidate FAB init into Layout.",
+    "src/components/organisms/FloatingControls.astro": "Render TOC floating panel/button only on pages where TOC is visible and consolidate FAB init into Layout. Below 768 px the cluster is display:none: #194 moved the contents into the in-flow disclosure and the end-of-article back-to-top link, so no floating control may cover the reading column.",
     "src/components/organisms/PostPage.astro": "Consolidate post-list masonry initialization into Layout runtime script.",
     "src/components/organisms/SiteNavigationDrawer.svelte": "Sync aria-expanded on #nav-drawer-switch, replay a drawer tap recorded before the island mounted, trap Tab focus inside the aria-modal panel while open, dismiss on outside press or Escape with focus restored, and close mobile drawer on desktop viewport resize. Focus the first drawer item only once the open class makes the panel visible. Expose aria-expanded only after the panel is visible and focused, and keep Tab inside while the opening frame precedes computed visibility. Mark non-drawer body children inert while the modal is open (restored on close, resize and unmount). Localize the drawer navigation landmark name with the page language and resolve the Moments link label from the active locale.",
-    "src/utils/fab-controller.ts": "Respect prefers-reduced-motion when scrolling to TOC anchors and keep mobile FAB controls visible across TOC anchor jumps.",
+    "src/utils/fab-controller.ts": "Respect prefers-reduced-motion when scrolling to TOC anchors and keep mobile FAB controls visible across TOC anchor jumps. Text-obstruction sync returns early when #floating-controls is display:none, so the mobile breakpoint does no geometry or observer work (#194).",
     "src/components/molecules/SidebarTOC.astro": "Respect prefers-reduced-motion when scrolling to TOC anchors.",
     "src/styles/markdown/generic.styl": "Ensure unbroken prose URLs wrap and wide code/table blocks scroll horizontally within .custom-md.",
     "src/components/atoms/blog/PostCard.astro": "Allow long unbroken card titles to wrap within .m3-blog-postcard__title.",
@@ -2009,6 +2013,7 @@
     "src/components/organisms/AlbumGallery.svelte": "Use authored aspect ratios, open the selected image in PhotoSwipe, and handle failed thumbnails without changing the layout.",
     "src/components/organisms/AlbumSection.svelte": "Accept localized headings and album paths, and localize search, counts, and empty states.",
     "src/components/molecules/AlbumCard.svelte": "Accept an explicit detail route and use the fallback when the cover fails to load.",
-    "src/styles/main.css": "Closed float panels are hidden from the accessibility tree and tab order (opacity alone left invisible controls focusable)."
+    "src/styles/main.css": "Closed float panels are hidden from the accessibility tree and tab order (opacity alone left invisible controls focusable). Adds .mtc-row (min-height 44px) for the mobile article contents rows so the row height is one class, not per-element inline style (#194).",
+    "src/components/molecules/MobileArticleTOC.astro": "ALNILAM addition (#194): in-flow mobile contents disclosure (native details/summary, APG disclosure pattern) rendered at the top of article pages below md, with 44 px summary and row targets and logical padding. Replaces the floating TOC button on phones, which overlapped the article column."
   }
 }
