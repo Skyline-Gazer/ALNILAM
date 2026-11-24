@@ -506,6 +506,7 @@ class FabController {
 		this.state.tocOpen = true;
 		this.syncTextObstruction();
 		panel.classList.add("is-open");
+		panel.inert = false;
 		panel.setAttribute("aria-hidden", "false");
 		document
 			.querySelector("#fab-toc-btn button")
@@ -518,6 +519,7 @@ class FabController {
 		this.state.tocOpen = false;
 		if (panel) {
 			panel.classList.remove("is-open");
+			panel.inert = true;
 			panel.setAttribute("aria-hidden", "true");
 		}
 		document
@@ -810,7 +812,7 @@ class FabController {
 		}
 		const first = focusable[0];
 		const last = focusable[focusable.length - 1];
-		if (event.shiftKey && document.activeElement === first) {
+		if (event.shiftKey && (document.activeElement === panel || document.activeElement === first)) {
 			event.preventDefault();
 			last.focus();
 		} else if (!event.shiftKey && document.activeElement === last) {

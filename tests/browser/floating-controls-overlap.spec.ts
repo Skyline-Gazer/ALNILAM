@@ -743,6 +743,44 @@ test("keeps clear controls discoverable to keyboard and touch on root and nested
 	}
 });
 
+for (const [base, origin] of [["root", ROOT], ["nested", NESTED]] as const) {
+	for (const reducedMotion of ["reduce", "no-preference"] as const) {
+		test(`keeps keyboard focus inside the opening TOC (${base}, ${reducedMotion})`, async ({ browser }) => {
+			const page = await browser.newPage({
+				viewport: { width: 390, height: 844 },
+				isMobile: true,
+				hasTouch: true,
+				reducedMotion,
+			});
+			try {
+				const response = await page.goto(`${origin}${ARTICLE}`);
+				expect(response?.status()).toBe(200);
+				await page.evaluate(() => document.fonts.ready);
+				await page.setViewportSize({ width: 390, height: 1000 });
+				const button = page.locator("#fab-toc-btn button");
+				const panel = page.locator("#floating-toc-panel");
+				await expect(button).toBeVisible();
+				await expect(page.locator("#floating-controls")).not.toHaveAttribute("inert");
+				await button.focus();
+				await page.keyboard.press("Enter");
+				await expect(panel).toHaveAttribute("aria-hidden", "false");
+				expect(await panel.evaluate((element) => element.contains(document.activeElement))).toBe(true);
+				await page.keyboard.press("Shift+Tab");
+				await expect(panel.getByRole("link").last()).toBeFocused();
+				await page.keyboard.press("Tab");
+				await expect(panel.getByRole("button").first()).toBeFocused();
+				await page.keyboard.press("Tab");
+				expect(await panel.evaluate((element) => element.contains(document.activeElement))).toBe(true);
+				await page.keyboard.press("Escape");
+				await expect(panel).toHaveAttribute("aria-hidden", "true");
+				await expect(button).toBeFocused();
+			} finally {
+				await page.close();
+			}
+		});
+	}
+}
+
 test("keeps floating controls unchanged at the 768px breakpoint", async ({ browser }, info) => {
 	const context = await browser.newContext({
 		viewport: { width: 768, height: 900 },
