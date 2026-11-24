@@ -31,6 +31,8 @@ const withBar = [
 	"/en/posts/getting-started/",
 ] as const;
 
+// The app's own 404 document is `/404.html`; an unknown path is the preview server's bare
+// "Not found" response, which is not a rendered ALNILAM page.
 const withoutBar = [
 	"/posts/",
 	"/archives/",
@@ -42,11 +44,11 @@ const withoutBar = [
 	"/albums/",
 	"/moments/",
 	"/search/",
-	"/page-not-here/",
+	"/404.html",
 ] as const;
 
 const withTagWidget = [...withBar, "/posts/", "/archives/", "/categories/", "/tags/"] as const;
-const withoutTagWidget = ["/series/", "/albums/", "/moments/", "/search/", "/page-not-here/"] as const;
+const withoutTagWidget = ["/series/", "/albums/", "/moments/", "/search/", "/404.html"] as const;
 
 for (const [name, origin] of [
 	["root", ROOT],
@@ -95,10 +97,6 @@ for (const [name, origin] of [
 			await page.goto(`${origin}${hops[index]}`, { waitUntil: "networkidle" });
 			await check(index);
 		}
-		// A real in-app header hop must apply the same server-rendered policy.
-		await page.click('header a[data-nav-key="archive"]');
-		await page.waitForLoadState("networkidle");
-		await expect(bar).toHaveCount(0);
 		// Reverse and forward traversal of the recorded history.
 		for (let index = hops.length - 2; index >= 0; index -= 1) {
 			await page.goBack();
@@ -110,6 +108,10 @@ for (const [name, origin] of [
 			await page.waitForLoadState("networkidle");
 			await check(index);
 		}
+		// A real in-app header hop must apply the same server-rendered policy.
+		await page.click('header a[data-nav-key="archive"]');
+		await page.waitForLoadState("networkidle");
+		await expect(bar).toHaveCount(0);
 	});
 
 	test(`mobile uses the same page capability ${name}`, async ({ browser }) => {
