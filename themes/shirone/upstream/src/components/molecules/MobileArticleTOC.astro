@@ -1,0 +1,85 @@
+---
+/**
+ * ALNILAM mobile article contents (#194).
+ *
+ * A native disclosure shown below `md` only, replacing the floating TOC button on phones: the
+ * 49 px floating cluster intruded 45 px into a 264–374 px article column, and the previous
+ * implementation answered the resulting text overlap by hiding the controls with
+ * `visibility: hidden` — removing the affordance exactly where a long article needs it. An
+ * in-flow disclosure cannot cover anything, needs no geometry measurement, and keeps native
+ * keyboard and screen reader behaviour (`details`/`summary`, APG disclosure pattern).
+ *
+ * Top-level headings only: the heaviest Demo article sits ~1 KiB under the enforced 64 KiB page
+ * budget (`scripts/artifact-check.mjs`), so a second full nested list does not fit; the desktop
+ * sidebar and floating panel remain the full-depth views.
+ */
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+
+interface TocHeading {
+	depth: number;
+	text: string;
+	slug: string;
+}
+
+interface Props {
+	headings?: TocHeading[];
+	class?: string;
+}
+
+const { headings = [], class: className } = Astro.props;
+const visible = headings.filter((heading) => heading.depth === Math.min(...headings.map((h) => h.depth)));
+---
+
+{
+	visible.length >= 2 && (
+		<details class:list={["mobile-toc", className]} data-mobile-article-toc>
+			<summary class="mobile-toc__summary">{i18n(I18nKey.tableOfContents)}</summary>
+			<nav class="mobile-toc__list" aria-label={i18n(I18nKey.tableOfContents)}>
+				{visible.map((heading) => (
+					<a class="mobile-toc__item" href={`#${heading.slug}`}>{heading.text}</a>
+				))}
+			</nav>
+		</details>
+	)
+}
+
+<style lang="stylus">
+.mobile-toc
+	display none
+	margin 0 0 1rem
+	border-radius var(--m3e-shape-corner-medium, 0.75rem)
+	background var(--m3e-color-surface-container, var(--m3e-color-surface))
+
+@media (max-width 767.98px)
+	.mobile-toc
+		display block
+
+.mobile-toc__summary
+	display flex
+	min-height 44px
+	align-items center
+	padding 0.5rem 1rem
+	cursor pointer
+	font-weight 500
+
+.mobile-toc__summary:focus-visible
+	outline 2px solid var(--m3e-color-primary)
+	outline-offset 2px
+
+.mobile-toc__list
+	display flex
+	flex-direction column
+	padding 0 0.5rem 0.5rem
+
+.mobile-toc__item
+	display flex
+	min-height 44px
+	align-items center
+	padding-inline 0.5rem
+	border-radius var(--m3e-shape-corner-small, 0.5rem)
+
+.mobile-toc__item:focus-visible
+	outline 2px solid var(--m3e-color-primary)
+	outline-offset -2px
+</style>
