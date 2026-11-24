@@ -34,7 +34,7 @@
     },
     {
       "path": "src/layouts/Layout.astro",
-      "sha256": "49a4183e6caeb1514455fde02abdff0a71d3befff4f7021b9b5c95d2e76a7fcb"
+      "sha256": "6bc22148ba320fe3c785747721f0597cdef770808caf656aef074d5b4daa838b"
     },
     {
       "path": "src/i18n/i18nKey.ts",
@@ -950,7 +950,7 @@
     },
     {
       "path": "src/components/organisms/TopAppBar.astro",
-      "sha256": "5b0d8e3f452cac862fe26b247604591e1e6b2896b57d205175f5262074d0855b"
+      "sha256": "b794c57b64030ec952f6afe94f4643432145d80d3cb87e3576701e856ce137b1"
     },
     {
       "path": "src/components/organisms/BannerStage.astro",
@@ -1050,7 +1050,7 @@
     },
     {
       "path": "src/components/organisms/PostCard.astro",
-      "sha256": "d7162b75f07ff738a00a7870a973beabf97111cf2d1c1ef623e3c246867454db"
+      "sha256": "0c17e408789537dce509c63a5716fb3d3ee27f847ef969631311bc679b332c1d"
     },
     {
       "path": "src/components/organisms/ArchivePanel.svelte",
@@ -1106,7 +1106,7 @@
     },
     {
       "path": "src/components/molecules/PostMeta.astro",
-      "sha256": "02c588b405b749912908b824d6ad806a6812d9d5725d8de713eefa0769844082"
+      "sha256": "4a0fde83baa00190cab2cf84ef66fbeb04dd2e7511369d44ade4116a7f131134"
     },
     {
       "path": "src/components/molecules/PageHeader.svelte",
@@ -1174,7 +1174,7 @@
     },
     {
       "path": "src/components/molecules/Categories.astro",
-      "sha256": "3a88c4bb651291f0662d98add360a84817210fc8b31f138818760380a6c7b1d6"
+      "sha256": "550ac3c778b203a39ca5857693da584bd79245608fd4070caeca0c6cff881001"
     },
     {
       "path": "src/components/molecules/MermaidDiagramViewer.svelte",
@@ -1190,7 +1190,7 @@
     },
     {
       "path": "src/components/molecules/Tags.astro",
-      "sha256": "9d7d1b903fed9b5f0723a96e1c57b061acc5f091f8080e653f966b0e886fbc08"
+      "sha256": "768aeac7e86137a9517b08628e96abd22b700850c235ccc2fca8999577e3b7ef"
     },
     {
       "path": "src/components/molecules/LastUpdatedNotice.astro",
@@ -1474,7 +1474,7 @@
     },
     {
       "path": "src/components/atoms/blog/PostMeta.astro",
-      "sha256": "fb30e424ee709385c832e3ac28e368b5df8c67e1f3581b8c4902446df1bc6fb7"
+      "sha256": "1c7e13514f819ad40dd477059411e786eb3418425833fccff4d8bc25a84cee82"
     },
     {
       "path": "src/components/atoms/blog/PagePagination.astro",
@@ -1935,7 +1935,7 @@
     "src/layouts/Layout.astro": "Retain ALNILAM canonical and keyboard skip-link contracts in actual upstream layout. Default appearance from validated Site; omit unimplemented Atom feed link; consolidate Pagefind loader, WidgetLayout custom element and pagination jump handler into the Layout runtime script. Configure Pagefind result URLs with Astro's base. Initialize shared Markdown and Expressive Code runtimes for navigation from pages without Markdown. Emit layout variables once and omit disabled texture initialization to reduce per-page HTML. Record a pre-hydration drawer tap on documentElement so the island can replay it. Keep the display-settings toggle's aria-expanded in sync on toggle and outside-click close. Keep the localized pagination action label when the mobile jump button becomes its input.",
     "src/components/content/Markdown.astro": "Retain a separate Markdown runtime binding and share the generated Expressive Code client modules with Layout to preserve code block behavior within script budgets.",
     "src/env.d.ts": "Declare the adapter-provided Expressive Code runtime virtual module used by Layout and Markdown.",
-    "src/components/organisms/PostCard.astro": "Retain 640x360 layout dimensions for pass-through Site covers, with metadata dimensions overriding when available; Category and tag links use the article's own locale (#35).",
+    "src/components/organisms/PostCard.astro": "Retain 640x360 layout dimensions for pass-through Site covers, with metadata dimensions overriding when available; Category and tag links use the article's own locale when configured, or render as plain text for unconfigured locales (#35).",
     "src/components/organisms/BannerStage.astro": "Give banner placeholders intrinsic layout dimensions; disabled banner still has no Site asset request.",
     "src/utils/url-utils.ts": "Preserve existing ALNILAM language-prefixed post URLs, /categories/<category>/, /tags/<tag>/ and plural /archives/ paths; getTagUrl/getCategoryUrl take the article or page locale and emit the locale-prefixed taxonomy route (#35 locale content policy), so a tag or category link on an English page resolves in English instead of the default-locale route; localePrefix is exported so the category bar scopes its Home/Archive links with the same rule.",
     "src/pages/posts/[...slug].astro": "Semantic article h1; forward Core hreflang/published metadata and optional existing lazy Comments slot; emit Markdown feature stylesheets as Swup-optional links; omit upstream CommentSection mount so disabled Sites emit no Twikoo/Waline/Giscus provider chunks (Core comments remain slot-only); pass the article's own locale to PostMeta so its taxonomy chips resolve in that locale (#35).",
@@ -1976,12 +1976,12 @@
     "src/components/molecules/SidebarTOC.astro": "Respect prefers-reduced-motion when scrolling to TOC anchors.",
     "src/styles/markdown/generic.styl": "Ensure unbroken prose URLs wrap and wide code/table blocks scroll horizontally within .custom-md.",
     "src/components/atoms/blog/PostCard.astro": "Allow long unbroken card titles to wrap within .m3-blog-postcard__title.",
-    "src/styles/transition.css": "Disable onload-animation initial translateY/opacity under prefers-reduced-motion and motion-reduced.",
+    "src/styles/transition.css": "Disable onload-animation initial translateY/opacity under prefers-reduced-motion and motion-reduced; the component entry animation is opacity-only (no translate) and the reading content carries no delay, because a translated target cancels a press whose release lands after the shift starts (measured 4/8 lost taps on the category listing before the change, 0/8 after).",
     "src/utils/fancybox-handler.ts": "ALNILAM: replace @fancyapps/ui with MIT photoswipe@5.4.4 behind FancyboxHandler public API; prefetch CSS+PhotoSwipe ctor at init for sync open; treat Markdown image-only original links (thumb→full) as lightbox triggers while leaving text links alone; HTTPS/site-path URL policy; parallel neighbor probes; generation-token abort; dimension probe with 8s timeout and original-link degrade; PhotoSwipe caption via textContent; trap Tab and Shift+Tab within the open PhotoSwipe dialog, wrapping its focusable controls at both boundaries; LIGHTBOX_DEFAULTS inlined (#75).",
     "src/styles/fancybox-custom.css": "ALNILAM: rewrite Fancybox/Panzoom skin to PhotoSwipe .pswp toolbar/counter/caption skin; drop #123 .is-fullsize patch; leave .pswp__bg opacity to PhotoSwipe bgOpacity; prefers-reduced-motion disables non-essential transitions.",
     "src/components/organisms/ArchivePanel.svelte": "ALNILAM addition (#35): breadcrumb links to the categories/tags index of the page locale instead of the default-locale index.",
     "src/utils/markdown-assets.ts": "Resolve each Markdown feature stylesheet to an externally emitted, base-aware URL instead of inlining CSS.",
-    "src/pages/[...permalink].astro": "Emit Markdown feature stylesheets as Swup-optional links; omit upstream CommentSection mount so disabled Sites emit no Twikoo/Waline/Giscus provider chunks.",
+    "src/pages/[...permalink].astro": "ALNILAM addition (#35): pass the article's own locale to PostMeta, matching the posts route.",
     "src/pages/about.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
     "src/pages/series/[slug]/index.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
     "src/pages/tags.astro": "Use the visible tag name and count as the content-derived link name; avoid an overriding aria-label.",
@@ -2010,9 +2010,9 @@
     "src/components/organisms/AlbumSection.svelte": "Accept localized headings and album paths, and localize search, counts, and empty states.",
     "src/components/molecules/AlbumCard.svelte": "Accept an explicit detail route and use the fallback when the cover fails to load.",
     "src/styles/main.css": "Closed float panels are hidden from the accessibility tree and tab order (opacity alone left invisible controls focusable).",
-    "src/components/molecules/Tags.astro": "ALNILAM addition (#35): the sidebar tag cloud takes a locale prop, counts that locale's corpus and links to its tag routes, including the 'view all' index link; an unset prop resolves to the site default locale rather than counting every language, because default-locale pages leave `lang` unset.",
-    "src/components/molecules/Categories.astro": "ALNILAM addition (#35): the sidebar category widget takes a locale prop (site default when unset), counts that locale's corpus and scopes the 'view all' index link to that locale.",
-    "src/components/molecules/PostMeta.astro": "ALNILAM addition (#35): the article meta chips take the article's locale (site default when unset) so category and tag links resolve in the reader's own language.",
-    "src/pages/[...permalink].astro": "ALNILAM addition (#35): pass the article's own locale to PostMeta, matching the posts route."
+    "src/components/molecules/Tags.astro": "ALNILAM addition (#35): the sidebar tag cloud takes a locale prop, falls back to the site default locale when unset or unconfigured, counts that locale's corpus and links to its tag routes.",
+    "src/components/molecules/Categories.astro": "ALNILAM addition (#35): the sidebar category widget takes a locale prop (site default when unset or unconfigured), counts that locale's corpus and scopes the 'view all' index link to that locale.",
+    "src/components/molecules/PostMeta.astro": "ALNILAM addition (#35): the article meta chips take the article's locale (site default when unset) so category and tag links resolve in the reader's own language, or render as plain text when the article's locale is not in config.locales.",
+    "src/components/atoms/blog/PostMeta.astro": "ALNILAM addition (#35): allow optional BlogMetaLink.href so unconfigured-locale articles render category and tag badges as plain text instead of dead taxonomy links."
   }
 }

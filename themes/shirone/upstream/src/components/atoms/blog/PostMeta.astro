@@ -11,7 +11,7 @@ import { i18n } from "@i18n/translation";
 
 export interface BlogMetaLink {
 	name: string;
-	href: string;
+	href?: string;
 }
 
 interface Props {
@@ -66,11 +66,15 @@ const {
 	<span class="m3-blog-postmeta__item">
 		<MetaIcon icon="material-symbols:book-2-outline-rounded" />
 		{category ? (
-			<a
-				class="m3-blog-postmeta__link"
-				href={category.href}
-				aria-label={`View all posts in the ${category.name} category`}
-			>{category.name}</a>
+			category.href ? (
+				<a
+					class="m3-blog-postmeta__link"
+					href={category.href}
+					aria-label={`View all posts in the ${category.name} category`}
+				>{category.name}</a>
+			) : (
+				<span class="m3-blog-postmeta__text">{category.name}</span>
+			)
 		) : (
 			<span class="m3-blog-postmeta__text">{uncategorizedLabel}</span>
 		)}
@@ -91,11 +95,15 @@ const {
 					{tags.map((t, i) => (
 						<Fragment>
 							{i > 0 && <span class="m3-blog-postmeta__sep" aria-hidden="true">/</span>}
-							<a
-								class="m3-blog-postmeta__link"
-								href={t.href}
-								aria-label={`View all posts with the ${t.name} tag`}
-							>{t.name}</a>
+							{t.href ? (
+								<a
+									class="m3-blog-postmeta__link"
+									href={t.href}
+									aria-label={`View all posts with the ${t.name} tag`}
+								>{t.name}</a>
+							) : (
+								<span class="m3-blog-postmeta__text">{t.name}</span>
+							)}
 						</Fragment>
 					))}
 				</span>

@@ -16,7 +16,7 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 ### Fixed
 
 - Keep desktop navigation links readable and clickable while the header search expands, including at the desktop breakpoint and with translated labels ([#189](https://github.com/Skyline-Gazer/ALNILAM/issues/189)).
-- Move keyboard focus into the floating article table of contents as it opens and keep the closing panel out of the tab order ([#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35)).
+- Stop the component entry animation from moving interactive content ([#213](https://github.com/Skyline-Gazer/ALNILAM/pull/213), [#194](https://github.com/Skyline-Gazer/ALNILAM/issues/194)): components now fade opacity only, and the reading column carries no animation delay. The old slide moved every link inside the animated container by up to 32 px after it was already tappable, so a press whose release landed during the slide was cancelled by the browser and the tap silently did nothing. Measured on `/categories/release/`: 4 of 8 slow "previous page" taps lost before, 0 of 8 after; the new `tests/browser/entry-animation.spec.ts` fails 3 of 4 on the previous animation and passes 4 of 4 after.
 
 ## [0.2.0] - 2026-11-20
 

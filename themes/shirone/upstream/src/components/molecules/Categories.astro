@@ -12,6 +12,7 @@ import Icon from "@iconify/svelte";
 import { getCategoryList } from "@utils/content-utils";
 import { localePrefix, url } from "@utils/url-utils";
 import { siteConfig } from "../../config/siteConfig.ts";
+import { siteLocales } from "../../user/user-config";
 import type { CategoriesWidget } from "@/types/sidebarConfig";
 import WidgetLayout from "./WidgetLayout.astro";
 
@@ -23,8 +24,10 @@ interface Props {
 	locale?: string;
 }
 const { locale } = Astro.props;
-// Same rule as the tag widget: an unset locale means the site default, never "every language".
-const widgetLocale = locale || siteConfig.lang.replace("_", "-");
+// Same rule as the tag widget: an unset or unconfigured locale uses the site default, never
+// "every language" or an ungenerated `/<lang>/categories/...` route.
+const siteLocale = siteConfig.lang.replace("_", "-");
+const widgetLocale = locale && siteLocales.includes(locale) ? locale : siteLocale;
 const categories = await getCategoryList(widgetLocale);
 
 const className = Astro.props.class;

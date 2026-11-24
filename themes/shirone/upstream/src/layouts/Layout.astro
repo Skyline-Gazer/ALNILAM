@@ -1,5 +1,5 @@
 ---
-import { siteAppearance as DEFAULT_THEME } from "../user/user-config";
+import { siteAppearance as DEFAULT_THEME, siteLocales } from "../user/user-config";
 import { Font } from "astro:assets";
 import Snackbar from "@components/atoms/overlay/Snackbar.svelte";
 import ConfigCarrier from "@components/system/ConfigCarrier.astro";
@@ -115,8 +115,9 @@ const absoluteOgImage = socialImage
 	? toAbsoluteUrl(socialImage, canonicalUrl)
 	: "";
 const pageLocale = (lang || siteConfig.lang).replace("_", "-");
-// Locales with posts have their own feed; page-only locales omit feed discovery.
-const resolvedFeedUrl = feedUrl === null
+// Locales with posts have their own feed; page-only or unconfigured locales omit feed discovery
+// because only configured locales emit `/<locale>/rss.xml` (or `/rss.xml` for the default locale).
+const resolvedFeedUrl = feedUrl === null || !siteLocales.includes(pageLocale)
 	? null
 	: feedUrl
 		? new URL(feedUrl, Astro.site ?? Astro.url)

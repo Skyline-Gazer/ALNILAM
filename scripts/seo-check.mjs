@@ -310,8 +310,7 @@ for (const page of pages) {
   }
   const feedLink = page.head.alternates.find((alternate) => alternate.feed);
   const hasLocaleFeed = htmlLang === defaultFeedLanguage || localizedFeedLanguages.has(htmlLang);
-  const hasPublishedPosts = publishedPostLanguages.has(htmlLang);
-  if (!hasLocaleFeed && !hasPublishedPosts) {
+  if (!hasLocaleFeed) {
     if (feedLink) fail(`${page.relative}: RSS discovery link exists without a published locale feed`);
     continue;
   }

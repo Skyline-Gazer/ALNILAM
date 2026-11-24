@@ -12,6 +12,7 @@ import Icon from "@iconify/svelte";
 import { getTagList } from "@utils/content-utils";
 import { getTagUrl, localePrefix, url } from "@utils/url-utils";
 import { siteConfig } from "../../config/siteConfig.ts";
+import { siteLocales } from "../../user/user-config";
 import type { TagsWidget } from "@/types/sidebarConfig";
 import WidgetLayout from "./WidgetLayout.astro";
 
@@ -25,8 +26,11 @@ interface Props {
 const { locale } = Astro.props;
 // Default-locale pages may leave `lang` unset (MainGridLayout forwards it as given), so the
 // widget resolves the site locale itself: an unset locale must not fall back to counting every
-// language's posts, which would advertise tag routes the reader cannot resolve.
-const widgetLocale = locale || siteConfig.lang.replace("_", "-");
+// language's posts, which would advertise tag routes the reader cannot resolve. An article in an
+// unconfigured locale has no taxonomy routes of its own, so its sidebar falls back to the site
+// default locale rather than linking missing `/<lang>/tags/...` routes.
+const siteLocale = siteConfig.lang.replace("_", "-");
+const widgetLocale = locale && siteLocales.includes(locale) ? locale : siteLocale;
 const tags = await getTagList(widgetLocale);
 
 const className = Astro.props.class;
