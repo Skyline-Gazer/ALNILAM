@@ -9,6 +9,7 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 ### Fixed
 
 - Keep desktop navigation links readable and clickable while the header search expands, including at the desktop breakpoint and with translated labels ([#189](https://github.com/Skyline-Gazer/ALNILAM/issues/189)).
+- Move keyboard focus into the floating article table of contents as it opens and keep the closing panel out of the tab order ([#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35)).
 
 ## [0.2.0] - 2026-11-20
 
