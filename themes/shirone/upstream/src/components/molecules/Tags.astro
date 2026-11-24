@@ -23,7 +23,11 @@ interface Props {
 	locale?: string;
 }
 const { locale } = Astro.props;
-const tags = await getTagList(locale);
+// Default-locale pages may leave `lang` unset (MainGridLayout forwards it as given), so the
+// widget resolves the site locale itself: an unset locale must not fall back to counting every
+// language's posts, which would advertise tag routes the reader cannot resolve.
+const widgetLocale = locale ?? siteConfig.lang.replace("_", "-");
+const tags = await getTagList(widgetLocale);
 
 const className = Astro.props.class;
 const style = Astro.props.style;
@@ -33,7 +37,7 @@ const hasOverflow = tags.length > DISPLAY_LIMIT;
 
 const tagItems = tags.slice(0, DISPLAY_LIMIT).map((t) => ({
 	name: t.name.trim(),
-	href: getTagUrl(t.name, locale),
+	href: getTagUrl(t.name, widgetLocale),
 }));
 ---
 <WidgetLayout name={i18n(I18nKey.tags)} id="tags" class={className} style={style}>
@@ -42,8 +46,8 @@ const tagItems = tags.slice(0, DISPLAY_LIMIT).map((t) => ({
 		<div slot="footer" class="widget-index-link">
 			<a
 			href={url(
-				locale && locale !== siteConfig.lang.replace("_", "-")
-					? `/${locale}/tags/`
+				widgetLocale !== siteConfig.lang.replace("_", "-")
+					? `/${widgetLocale}/tags/`
 					: "/tags/",
 			)}
 			class="m3-state-layer"

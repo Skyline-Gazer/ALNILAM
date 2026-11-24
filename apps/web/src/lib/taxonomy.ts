@@ -179,7 +179,10 @@ export function archiveListing(
   posts: CollectionEntry<"posts">[],
   { locale, defaultLocale }: Pick<ListingOptions, "locale" | "defaultLocale">,
 ): { slug: string; url: string; data: CollectionEntry<"posts">["data"] }[] {
-  return filterPostsByLocale(posts, locale, defaultLocale)
+  // `filterPostsByLocale` lives in untyped `i18n.mjs`, so the corpus is pinned here rather than
+  // left to an implicit `any` that would hide a wrong field name from `astro check`.
+  const corpus: CollectionEntry<"posts">[] = filterPostsByLocale(posts, locale, defaultLocale);
+  return corpus
     .sort(comparePosts)
     .map((post) => ({
       slug: post.id,
@@ -194,7 +197,8 @@ export function categoryListing(
   { locale, defaultLocale, taxonomy, seriesCategories }: CategoryListingOptions,
 ): ListingTile[] {
   const countMap = new Map<string, number>();
-  for (const post of filterPostsByLocale(posts, locale, defaultLocale)) {
+  const corpus: CollectionEntry<"posts">[] = filterPostsByLocale(posts, locale, defaultLocale);
+  for (const post of corpus) {
     const category =
       post.data.category?.trim() || seriesCategories.get(post.data.series?.trim())?.trim();
     if (!category || category.includes("/")) continue;
@@ -215,7 +219,8 @@ export function tagListing(
   { locale, defaultLocale, taxonomy }: ListingOptions,
 ): ListingTile[] {
   const countMap = new Map<string, number>();
-  for (const post of filterPostsByLocale(posts, locale, defaultLocale)) {
+  const corpus: CollectionEntry<"posts">[] = filterPostsByLocale(posts, locale, defaultLocale);
+  for (const post of corpus) {
     const seenInPost = new Set<string>();
     for (const rawTag of post.data.tags) {
       const slug = canonicalTagSlug(rawTag, taxonomy.tags);
