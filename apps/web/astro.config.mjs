@@ -120,20 +120,7 @@ export default defineConfig({
             injectRoute({ pattern: "/series/", entrypoint: "./src/modules/series.astro", prerender: true });
             injectRoute({ pattern: "/series/[slug]/", entrypoint: "./src/modules/series-detail.astro", prerender: true });
           }
-          if (config.gallery.enabled) {
-            injectRoute({ pattern: "/albums/", entrypoint: "./src/modules/albums.astro", prerender: true });
-            injectRoute({ pattern: "/albums/[id]/", entrypoint: "./src/modules/album-detail.astro", prerender: true });
-            injectRoute({ pattern: "/[lang]/albums/", entrypoint: "./src/modules/albums-localized.astro", prerender: true });
-            injectRoute({ pattern: "/[lang]/albums/[id]/", entrypoint: "./src/modules/album-detail-localized.astro", prerender: true });
-          }
-          if (config.moments.enabled) {
-            if (config.routing.prefixDefaultLocale) {
-              injectRoute({ pattern: "/[lang]/moments/", entrypoint: "./src/modules/moments-localized.astro", prerender: true });
-            } else {
-              injectRoute({ pattern: "/moments/", entrypoint: "./src/modules/moments.astro", prerender: true });
-              injectRoute({ pattern: "/[lang]/moments/", entrypoint: "./src/modules/moments-localized.astro", prerender: true });
-            }
-          }
+
         },
         "astro:build:setup": ({ vite }) => {
           if (process.env.ALNILAM_ASTRO_CACHE && vite.environments) {

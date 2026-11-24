@@ -9,6 +9,9 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 ### Changed
 
 - Listings are now scoped to one locale's corpus ([#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35)): the default-locale home, `/posts/`, `/archives/`, `/categories/`, `/tags/` and the taxonomy detail routes list only default-locale articles instead of the whole multilingual corpus, matching the per-locale RSS feeds and the language-sliced Pagefind index that were already locale-scoped. Page counts, pagination boundaries and taxonomy routes are per locale, and a locale without members in a category or tag no longer gets a route. Site pages, article URLs and `hreflang` alternates are unchanged; series pages stay corpus-wide until their own localization change.
+### Removed
+
+- Retire the Gallery/Albums, Moments and Music product features: no `/albums/` or `/moments/` route, navigation link, client module, content collection or Demo fixture is emitted any more. The `gallery` and `moments` Site config keys remain accepted so existing Sites keep building, are ignored, and now print a one-line build warning; remove them from `alnilam.config.yaml`. Article image lightboxes are unchanged ([#203](https://github.com/Skyline-Gazer/ALNILAM/issues/203)).
 
 ### Fixed
 
