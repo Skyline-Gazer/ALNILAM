@@ -48,4 +48,4 @@ Save it as `content/posts/en/first-note.md`; it becomes `/en/posts/first-note/`.
 
 Without an exclusion flag, a post generates a page and appears in public lists, feeds, and the sitemap. `draft: true`, `private: true`, and `unlisted: true` exclude article HTML at build time; they are not access control and cannot protect secrets.
 
-Compose outside the Site, then repeat with the subpath URL: `ALNILAM_SITE_URL=https://blog.example.org/ pnpm compose --site ./my-site --out ./dist/root` and `https://blog.example.org/ALNILAM/`. Check both outputs' links. This guide is pinned in every language and uses the Demo's declared taxonomy. Continue with [Markdown and MDX](../markdown-and-mdx/).
+Compose outside the Site into two separate outputs, because Compose replaces the output directory it publishes: `ALNILAM_SITE_URL=https://blog.example.org/ pnpm compose --site ./my-site --out ./dist/root` and then the same command with `--out ./dist/subpath` plus `ALNILAM_SITE_URL=https://blog.example.org/ALNILAM/`. Check both outputs' links. This guide is pinned in every language and uses the Demo's declared taxonomy. Continue with [Markdown and MDX](../markdown-and-mdx/).

@@ -51,4 +51,4 @@ translationKey: "first-note"
 
 没有排除标记的文章会生成页面并进入公开列表、Feed 和 Sitemap。`draft: true`、`private: true`、`unlisted: true` 会在构建时排除文章 HTML；它们不是访问控制，不能保护秘密。
 
-用 Compose 将输出写在 Site 之外：`ALNILAM_SITE_URL=https://blog.example.org/ pnpm compose --site ./my-site --out ./dist/root`；将 URL 改为 `https://blog.example.org/ALNILAM/` 再构建一次，并检查两种 base 的链接。本文在三种语言中置顶，使用 Demo 已声明的 Guide 分类与 ALNILAM 标签。继续读[Markdown 与 MDX 指南](../markdown-and-mdx/)。
+用 Compose 将输出写在 Site 之外，并使用两个互不覆盖的输出目录：`ALNILAM_SITE_URL=https://blog.example.org/ pnpm compose --site ./my-site --out ./dist/root`；随后把 `ALNILAM_SITE_URL` 改为 `https://blog.example.org/ALNILAM/` 且 `--out ./dist/subpath` 再构建一次（Compose 会替换已发布的输出目录），并检查两种 base 的链接。本文在三种语言中置顶，使用 Demo 已声明的 Guide 分类与 ALNILAM 标签。继续读[Markdown 与 MDX 指南](../markdown-and-mdx/)。

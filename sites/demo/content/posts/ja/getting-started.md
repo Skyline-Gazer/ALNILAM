@@ -48,4 +48,4 @@ translationKey: "first-note"
 
 通常の記事はページになり、公開一覧、Feed、Sitemap に入ります。`draft: true`、`private: true`、`unlisted: true` はビルド時に記事 HTML を除外します。アクセス制御ではなく、秘密を守る機能でもありません。
 
-出力先を Site の外にして Compose します：`ALNILAM_SITE_URL=https://blog.example.org/ pnpm compose --site ./my-site --out ./dist/root`。`https://blog.example.org/ALNILAM/` でもう一度ビルドし、両方のリンクを確認してください。この記事は各言語で優先表示されます。次は[Markdown と MDX](../markdown-and-mdx/)を読んでみましょう。
+出力先を Site の外に、しかも互いに上書きされない二つに分けて Compose します：`ALNILAM_SITE_URL=https://blog.example.org/ pnpm compose --site ./my-site --out ./dist/root`。次に `ALNILAM_SITE_URL` を `https://blog.example.org/ALNILAM/`、`--out` を `./dist/subpath` 変えて再ビルドします（Compose は公開済みの出力ディレクトリを置き換えるため）。両方のリンクを確認してください。この記事は各言語で優先表示されます。次は[Markdown と MDX](../markdown-and-mdx/)を読んでみましょう。

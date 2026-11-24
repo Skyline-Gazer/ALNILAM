@@ -109,9 +109,7 @@ without an HTML page, navigation entry, footer link, or Site source changes.
 The Demo packages the self-contained `orion.svg` introduced in `802e804`,
 the lighthouse illustration and its PNG render, and the default social card PNG
 rendered from vector markup in `apps/web/src/pages/og-default.png.js`. The latter
-contains no font or external image. The Demo Gallery ships hand-authored SVG
-artwork under `sites/demo/assets/gallery/`, with its provenance recorded in
-`sites/demo/assets/gallery/AUTHORSHIP.md`. No remote image bytes are present in
+contains no font or external image. No remote image bytes are present in
 the artifact and no Unsplash source is referenced from generated HTML. Sites may
 still configure remote HTTPS media at their own licensing responsibility.
 
