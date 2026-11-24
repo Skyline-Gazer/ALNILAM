@@ -201,3 +201,9 @@ html.motion-reduced *::after {
 .mtc-row {
     min-height: 44px;
 }
+
+/* #194: heading anchors must not land under the fixed app bar (deep links and the mobile contents
+ * disclosure both use plain `#slug` anchors). */
+.markdown-content :is(h1, h2, h3, h4, h5, h6) {
+    scroll-margin-top: 5rem;
+}

@@ -666,7 +666,7 @@
     },
     {
       "path": "src/styles/main.css",
-      "sha256": "aedf6313af3d3709a004d8661b701ea767c175abd76d52d5f1eceefd5a1b6cc4"
+      "sha256": "c94c685121a511fc987299c4f9c802d8e23afaea9b2f78ff36c93a81ee4a51a4"
     },
     {
       "path": "src/styles/font-faces.css",
@@ -2013,7 +2013,7 @@
     "src/components/organisms/AlbumGallery.svelte": "Use authored aspect ratios, open the selected image in PhotoSwipe, and handle failed thumbnails without changing the layout.",
     "src/components/organisms/AlbumSection.svelte": "Accept localized headings and album paths, and localize search, counts, and empty states.",
     "src/components/molecules/AlbumCard.svelte": "Accept an explicit detail route and use the fallback when the cover fails to load.",
-    "src/styles/main.css": "Closed float panels are hidden from the accessibility tree and tab order (opacity alone left invisible controls focusable). Adds .mtc-row (min-height 44px) for the mobile article contents rows so the row height is one class, not per-element inline style (#194).",
+    "src/styles/main.css": "Closed float panels are hidden from the accessibility tree and tab order (opacity alone left invisible controls focusable). Adds .mtc-row (min-height 44px) for the mobile article contents rows and scroll-margin-top on article headings so plain #slug anchors (deep links and the mobile contents disclosure) do not land under the fixed app bar (#194).",
     "src/components/molecules/MobileArticleTOC.astro": "ALNILAM addition (#194): in-flow mobile contents disclosure (native details/summary, APG disclosure pattern) rendered at the top of article pages below md, with 44 px summary and row targets and logical padding. Replaces the floating TOC button on phones, which overlapped the article column."
   }
 }
