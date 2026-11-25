@@ -24,6 +24,4 @@ __pycache__/
 # Native Shirone integration cache (Core-owned derived output).
 .shirones/
 apps/web/src/generated/
-
-# Transient per-worktree compose guard; never commit build state.
-apps/web/.alnilam-compose-astro-build.lock
+/apps/web/.alnilam-compose-astro-build.lock

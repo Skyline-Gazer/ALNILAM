@@ -12,14 +12,16 @@ import { i18n } from "@i18n/translation";
 import Icon from "@iconify/svelte";
 import { getCategoryList } from "@utils/content-utils";
 import { pathsEqual, url } from "@utils/url-utils";
-import { siteLocales } from "../../user/user-config";
+import type { SidebarPage } from "../../types/sidebarConfig";
 
 interface Props {
 	/** 文章页所属分类名：非首页/归档时对该分类做弱高亮 */
 	currentPostCategory?: string;
+	/** ALNILAM (#204): page capability declared by the layout, e.g. `"post"`. */
+	page?: SidebarPage;
 }
 
-const { currentPostCategory } = Astro.props;
+const { currentPostCategory, page } = Astro.props;
 
 const categories = await getCategoryList();
 const homeUrl = url("/");
@@ -37,32 +39,24 @@ const postCategory = (currentPostCategory || "").trim();
 // query 分类（?category=）在静态站点构建期不可知，由客户端校正。
 const softCategory = !isHome && !isArchive && postCategory ? postCategory : "";
 
-// 嵌套部署（如 /ALNILAM/categories/…）下 Astro.url.pathname 以 base 开头，
-// 直接 startsWith("/categories") 永远不命中。
-const basePath = import.meta.env?.BASE_URL ?? "/";
-const normalizedBase = basePath.endsWith("/") ? basePath : `${basePath}/`;
-const rootRelativePath =
-	normalizedBase !== "/" && pathname.startsWith(normalizedBase)
-		? pathname.slice(normalizedBase.length - 1)
-		: pathname;
-const firstSegment = rootRelativePath.split("/")[1];
-const unlocalizedPath = siteLocales.includes(firstSegment)
-	? rootRelativePath.slice(firstSegment.length + 1) || "/"
-	: rootRelativePath;
-const hideOnTaxonomy =
-	unlocalizedPath.startsWith("/categories") || unlocalizedPath.startsWith("/tags");
+// ALNILAM (#204): the category bar is article-taxonomy context navigation, not global site
+// chrome. It renders only for the blog contexts listed below; every other page has to opt in
+// deliberately. The previous behavior was visible-everywhere with a pathname denylist, so a
+// route that was never considered inherited blog taxonomy silently, and locale/base prefixes
+// had to be stripped here a second time. Archive, category/tag indexes, series, static Site
+// pages, search, 404 and module pages are intentionally absent.
+const CATEGORY_BAR_CONTEXTS: readonly SidebarPage[] = ["home", "post"];
+const showCategoryBar = page !== undefined && CATEGORY_BAR_CONTEXTS.includes(page);
 
 ---
 
 <!-- nav landmark：分类栏静态渲染在 Swup 容器外，需要独立 landmark 才能通过
      axe region 规则（内容必须处于某个 landmark 区域内） -->
-<!-- 分类栏在分类/标签详情页隐藏。比较必须用剥离 base 的路径：
-     嵌套部署（如 /ALNILAM/…）下 pathname 以 base 开头，
-     直接 startsWith("/categories") 永远不命中，栏不会隐藏。 -->
+<!-- ALNILAM (#204): 只有显式选择加入的博客上下文才渲染分类栏；其余页面不输出该 landmark。 -->
+{showCategoryBar && (
 <nav
 	id="category-bar-region"
 	aria-label={i18n(I18nKey.categories)}
-	class:list={{ hidden: hideOnTaxonomy }}
 >
 	<Card color="var(--card-bg)" radius="l" class="category-bar onload-animation mb-4 p-2" id="category-bar">
 		<div class="category-bar-inner flex gap-2 items-center">
@@ -102,6 +96,7 @@ const hideOnTaxonomy =
 		</div>
 	</Card>
 </nav>
+)}
 
 <style lang="stylus">
 	.category-bar__count
