@@ -156,6 +156,20 @@ test("posts paginate the default-locale corpus with the pinned post first", () =
   assert.ok(!/rel="next"/.test(last), "the last page must not offer a next link");
 });
 
+test("home page 1 exposes continuation to posts pagination when corpus spans pages", () => {
+  const { out } = ctx;
+  if (EXPECTED_PAGES < 2) {
+    assert.fail(`fixture must span >1 page to test #200 continuation (EXPECTED_PAGES=${EXPECTED_PAGES})`);
+  }
+  const home = read(out, "index.html");
+  const cards = postLinks(home);
+  assert.equal(cards.length, FIXTURE_PAGE_SIZE, "home lists first page size only");
+  for (const slug of FOREIGN_SLUGS) {
+    assert.ok(!cards.includes(slug), `home must not list ${slug}`);
+  }
+  assert.match(home, /href="\/posts\/2\/" rel="next"/, "home must link the next listing page");
+});
+
 test("each locale listing carries exactly its own corpus", () => {
   const { out } = ctx;
   const surfaces = [
