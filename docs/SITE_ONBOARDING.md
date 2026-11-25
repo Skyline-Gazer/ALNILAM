@@ -495,7 +495,12 @@ owner action and is never triggered by pushes or pull requests.
 
 Vercel builds serve `dist/site` directly (`outputDirectory` in `vercel.json`).
 Set `ALNILAM_SITE_URL` in the project environment to pin a custom domain; the
-derived deployment host is used only when it is absent.
+derived deployment host is used only when it is absent. `vercel.json` marks
+`/_astro/*` as `public, max-age=31536000, immutable`: every file there is a
+build output whose name carries its content hash, so a changed file always has a
+new URL. HTML, feeds, Pagefind and `site-assets/` keep Vercel's revalidating
+default. Other hosts serving `dist/site` should apply the same rule to `_astro/`
+only.
 
 The publishing workflows also run `scripts/artifact-check.mjs` against the
 composed output. Git tracking and `.gitignore` do not filter files copied from
