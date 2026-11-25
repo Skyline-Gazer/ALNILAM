@@ -65,6 +65,14 @@ export function validateLighthouseReports(manifest, load, urls, started, count) 
     return report;
   });
 }
+export function assertLighthouseCLSBudget(reports, budget) {
+  if (!Array.isArray(reports) || !Number.isFinite(budget) || budget < 0) throw Error('Invalid Lighthouse CLS budget');
+  for (const report of reports) {
+    const cls = report.audits?.['cumulative-layout-shift']?.numericValue;
+    if (!Number.isFinite(cls) || report.audits['cumulative-layout-shift'].errorMessage) throw Error('Missing or failed CLS audit');
+    if (cls > budget) throw Error(`Lighthouse CLS ${cls} exceeds budget ${budget}: ${report.requestedUrl}`);
+  }
+}
 export function validateLighthouseRegression(reports, assertions, url, count, budget) {
   if (!Number.isSafeInteger(count) || count < 1 || !Number.isFinite(budget) || budget < 0) throw Error('Invalid Lighthouse regression expectation');
   if (reports.length !== count || reports.some(report => report.requestedUrl !== url || !Number.isFinite(report.audits?.['cumulative-layout-shift']?.numericValue) || report.audits['cumulative-layout-shift'].errorMessage || report.audits['cumulative-layout-shift'].numericValue <= budget)) throw Error(`Regression needs ${count} genuine excessive CLS measurements`);
