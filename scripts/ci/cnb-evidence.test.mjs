@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
-import {trackChild, stopChildren, assertSuccessfulResponses, validateLighthouseReports, validateLighthouseRegression, validateBrowserNegative, failureTail} from './cnb-evidence.mjs';
+import {trackChild, stopChildren, assertSuccessfulResponses, validateLighthouseReports, assertLighthouseCLSBudget, validateLighthouseRegression, validateBrowserNegative, failureTail} from './cnb-evidence.mjs';
 
 test('teardown handles an already-signalled child without waiting for a past event', async () => {
   const child = Object.assign(new EventEmitter(), {exitCode: null, signalCode: 'SIGKILL', kill() {throw Error('Already ended');}});
@@ -16,11 +16,15 @@ test('Lighthouse preflight rejects missing demo routes before measuring them', a
   await assert.rejects(assertSuccessfulResponses(['http://fixture/missing/'], async () => ({ok: false, status: 404})), /HTTP 404/);
   await assert.rejects(assertSuccessfulResponses(['http://fixture/offline/'], async () => {throw Error('offline');}), /Target unavailable/);
 });
-test('Lighthouse rejects old exports, missing audits and unbalanced per-URL counts', () => {
+test('Lighthouse validates reports and enforces the normal CLS budget', () => {
   const now = Date.now(), url = 'http://fixture/';
   const lhr = {requestedUrl: url, fetchTime: new Date(now).toISOString(), audits: {'cumulative-layout-shift': {numericValue: 0.5}}};
   const manifest = Array.from({length: 3}, () => ({url}));
-  assert.equal(validateLighthouseReports(manifest, () => lhr, [url], now, 3).length, 3);
+  const reports = validateLighthouseReports(manifest, () => lhr, [url], now, 3);
+  assert.equal(reports.length, 3);
+  assert.throws(() => assertLighthouseCLSBudget(reports, 0.1), /Lighthouse CLS 0.5 exceeds budget 0.1/);
+  assert.throws(() => assertLighthouseCLSBudget(reports, -1), /Invalid Lighthouse CLS budget/);
+  assert.doesNotThrow(() => assertLighthouseCLSBudget(reports.map(report => ({...report, audits: {'cumulative-layout-shift': {numericValue: 0.1}}})), 0.1));
   assert.throws(() => validateLighthouseReports(manifest, () => ({...lhr, fetchTime: new Date(now - 1).toISOString()}), [url], now, 3), /Stale/);
   assert.throws(() => validateLighthouseReports(manifest, () => ({...lhr, audits: {}}), [url], now, 3), /CLS/);
   const other = 'http://other/';
