@@ -225,14 +225,23 @@ for (const action of ["delayed-image", "font", "lazy", "menu", "comments", "ad",
   });
 }
 
+// Self-test of the gate, not a Demo measurement. Prepending a slot to the themed Home's <main> is
+// not a reliable shift source: in the CI Playwright image Chromium emitted no LayoutShift entry for
+// that mutation in 3/24 root and 24/24 /en/ runs although the cards moved 600px. Use the same
+// deterministic fixture as the attribution tests above; real-page CLS stays covered by the
+// navigation samples and Lighthouse.
 test("large shift is detected and the CLS gate rejects it", async ({ page }) => {
-  await page.addInitScript(observeLayoutShifts);
   await page.goto(`${origins[0]}/`);
-  await page.waitForTimeout(1000);
+  await page.setContent(
+    '<style>body{margin:0}main{font:24px sans-serif}#moved{height:400px;background:#888}</style><main><h1>Layout fixture</h1><div id="moved">Visible block that must move when a slot is inserted above it.</div></main>',
+  );
+  await page.evaluate(observeLayoutShifts);
+  await page.waitForTimeout(650);
+  await page.evaluate("window.__cnbShifts = []");
   await page.evaluate(() => {
     const slot = document.createElement("div");
     slot.style.height = "600px";
-    (document.querySelector("main") ?? document.body).prepend(slot);
+    document.querySelector("main")!.prepend(slot);
   });
   await page.waitForTimeout(500);
   const events = await page.evaluate("window.__cnbShifts || []");
