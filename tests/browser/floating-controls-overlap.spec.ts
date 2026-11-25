@@ -58,6 +58,10 @@ for (const [base, origin] of [
         await expect(disclosure).toHaveAttribute("open", "");
         const anchors = disclosure.locator("nav a");
         expect(await anchors.count()).toBeGreaterThan(0);
+        // Labels are the heading text, without the autolink `#` the sidebar/panel also strip.
+        for (const label of await anchors.allTextContents()) {
+          expect(label.trim()).not.toMatch(/#$/);
+        }
         const anchorHeights = await anchors.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height));
         for (const height of anchorHeights) {
           expect(height, "TOC anchors must meet the 44 px target").toBeGreaterThanOrEqual(TOUCH_TARGET);
@@ -132,6 +136,24 @@ for (const [base, origin] of [
       await context.close();
     }
   });
+
+  // #194 removed the floating cluster only where its in-flow replacement exists (articles).
+  // Listing pages have no in-flow back-to-top, so their configured mobile/tablet controls stay.
+  for (const width of [390, 1023]) {
+    test(`non-article pages keep their configured floating controls below lg (${base}, ${width}px)`, async ({ browser }) => {
+      const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: true, hasTouch: true });
+      const page = await context.newPage();
+      try {
+        const response = await page.goto(`${origin}/archives/`, { waitUntil: "load" });
+        expect(response?.status()).toBe(200);
+        const controls = page.locator("#floating-controls");
+        expect(await controls.evaluate((el) => getComputedStyle(el).display)).not.toBe("none");
+        await expect(page.locator("#fab-home-btn")).toBeVisible();
+      } finally {
+        await context.close();
+      }
+    });
+  }
 }
 
 for (const width of desktopWidths) {

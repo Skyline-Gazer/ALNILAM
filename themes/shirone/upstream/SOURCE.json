@@ -1002,7 +1002,7 @@
     },
     {
       "path": "src/components/organisms/FloatingControls.astro",
-      "sha256": "05b690016063d3c9957f06f1086137e530b082b909d4a8df56fef4b43b389b38"
+      "sha256": "b336af35ceccc291fc9037881ac63accea67b1e4ca5d4470157e5148a6666286"
     },
     {
       "path": "src/components/organisms/BackToTop.astro",
@@ -1238,7 +1238,7 @@
     },
     {
       "path": "src/components/molecules/MobileArticleTOC.astro",
-      "sha256": "935737a71f568242106edc89616a2dedef2be449e8646f68ee458cde03cbf9b2"
+      "sha256": "1099e69555c1346e4065e6365b212f8289d3492e9fc357c67cf0788973941583"
     },
     {
       "path": "src/components/system/ConfigCarrier.astro",
@@ -1973,7 +1973,7 @@
     "src/components/organisms/TopAppBar.astro": "Gate DisplaySettings island on !siteConfig.themeColor.fixed and consolidate TopAppBar navigation runtime into Layout. Add server-rendered aria-expanded/aria-controls to the menu button so the drawer disclosure is announced before hydration. Add aria-expanded/aria-controls to the display-settings toggle. Add the stable #main-navigation id so browser contracts select the navigation landmark without depending on its accessible name. Localize the navigation landmark name with the page language and resolve the Moments link label from the active locale. Keep desktop navigation in a grid track separate from the search and other actions.",
     "src/layouts/MainGridLayout.astro": "Gate BannerStage when banner images and homeText are disabled; render RouteProgress without redundant island hydration; move the sidebar elements after the main content column so mobile DOM/parse order matches the visual order (content → sidebar → footer) and the already-painted aside is no longer pushed down by late-parsed article blocks (real mobile CLS); desktop columns stay on explicit lg:/xl: col-start/row-start; forward the layout `page` capability to CategoryBar so the taxonomy bar is opt-in per page context (#204). Mounts MobileArticleTOC above the slot for post pages, and gives #content-wrapper scroll-mt-20 so the in-flow back-to-top anchor lands below the fixed app bar (#194).",
     "src/components/organisms/SideBar.astro": "Render only widgets visible on the current page in static MPA mode and omit unused Swup polling script.",
-    "src/components/organisms/FloatingControls.astro": "Render TOC floating panel/button only on pages where TOC is visible on desktop and consolidate FAB init into Layout. Below 1024 px (lg) the cluster is display:none: #194 moved the contents into the in-flow disclosure and the end-of-article back-to-top link, so no floating control may cover the reading column.",
+    "src/components/organisms/FloatingControls.astro": "Render TOC floating panel/button only on pages where TOC is visible on desktop and consolidate FAB init into Layout. Below 1024 px (lg) the cluster is display:none on article pages only (data-fab-text-obstruction): #194 moved their contents into the in-flow disclosure and the end-of-article back-to-top link, so no floating control may cover the reading column; listing and other pages keep their configured mobile/tablet controls.",
     "src/components/organisms/PostPage.astro": "Consolidate post-list masonry initialization into Layout runtime script.",
     "src/components/organisms/SiteNavigationDrawer.svelte": "Sync aria-expanded on #nav-drawer-switch, replay a drawer tap recorded before the island mounted, trap Tab focus inside the aria-modal panel while open, dismiss on outside press or Escape with focus restored, and close mobile drawer on desktop viewport resize. Focus the first drawer item only once the open class makes the panel visible. Expose aria-expanded only after the panel is visible and focused, and keep Tab inside while the opening frame precedes computed visibility. Mark non-drawer body children inert while the modal is open (restored on close, resize and unmount). Localize the drawer navigation landmark name with the page language and resolve the Moments link label from the active locale.",
     "src/utils/fab-controller.ts": "Respect prefers-reduced-motion when scrolling to TOC anchors and keep mobile FAB controls visible across TOC anchor jumps. Text-obstruction sync returns early when #floating-controls is display:none, so the mobile breakpoint does no geometry or observer work (#194).",
@@ -2014,7 +2014,7 @@
     "src/components/organisms/AlbumSection.svelte": "Accept localized headings and album paths, and localize search, counts, and empty states.",
     "src/components/molecules/AlbumCard.svelte": "Accept an explicit detail route and use the fallback when the cover fails to load.",
     "src/styles/main.css": "Closed float panels are hidden from the accessibility tree and tab order (opacity alone left invisible controls focusable). Adds .mtc-row (min-height 44px) for the mobile article contents rows and scroll-margin-top on article headings so plain #slug anchors (deep links and the mobile contents disclosure) do not land under the fixed app bar (#194).",
-    "src/components/molecules/MobileArticleTOC.astro": "ALNILAM addition (#194): in-flow mobile contents disclosure (native details/summary, APG disclosure pattern) rendered at the top of article pages below lg (1024 px), with 44 px summary and row targets and logical padding. Replaces the floating TOC button on phones and single-column viewports, which overlapped the article column.",
+    "src/components/molecules/MobileArticleTOC.astro": "ALNILAM addition (#194): in-flow mobile contents disclosure (native details/summary, APG disclosure pattern) rendered at the top of article pages below lg (1024 px), with 44 px summary and row targets and logical padding. Replaces the floating TOC button on phones and single-column viewports, which overlapped the article column. Labels strip the trailing autolink `#` like SidebarTOC and FloatingTOCPanel.",
     "src/utils/post-decryption.ts": "ALNILAM addition (#194): populate and unhide the in-flow mobile contents disclosure ([data-mobile-article-toc]) after article decryption."
   }
 }
