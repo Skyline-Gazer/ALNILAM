@@ -3,9 +3,10 @@ import { expect, test, type Page } from "@playwright/test";
 /**
  * Pagination + Pagefind end-to-end regression (Issue #63, P4/T02).
  *
- * The demo Site ships 14 published articles across zh-CN / en / ja, so the
- * posts list paginates (pageSize 5 -> 3 pages) and Pagefind builds per-language
- * indexes. Cover page-2 access, per-locale unique-keyword search with real
+ * The demo Site ships 14 published articles across zh-CN / en / ja, but each
+ * listing is scoped to one locale's corpus (#35): the default zh-CN list holds 7
+ * articles (pageSize 5 -> 2 pages) and Pagefind builds per-language indexes.
+ * Cover page-2 access, per-locale unique-keyword search with real
  * click-through, and root + /ALNILAM/ deployments.
  */
 
@@ -142,13 +143,19 @@ for (const [name, origin] of deployments) {
 		await page.goto(`${origin}/posts/`, { waitUntil: "networkidle" });
 
 		await expect(page.locator(".m3-blog-postcard")).toHaveCount(5);
+		// Locale content policy (#35): the unlocalized list contains no locale-prefixed article.
+		const firstPageHrefs = await page.locator(".m3-blog-postcard a[href*='/posts/']").evaluateAll((links) =>
+			links.map((link) => link.getAttribute("href") ?? ""),
+		);
+		expect(firstPageHrefs.length).toBeGreaterThan(0);
+		expect(firstPageHrefs.some((href) => /\/(?:en|ja)\/posts\//.test(href))).toBe(false);
 		// The mobile pagination block precedes the desktop one in the DOM but is
 		// hidden at this viewport; only click a visible control.
 		const page2 = page.locator('a[href$="/posts/2/"]').filter({ visible: true }).first();
 		await expect(page2).toBeVisible();
 		await page2.click();
 		await expect(page).toHaveURL(new RegExp("/posts/2/?$"));
-		await expect(page.locator("main")).toContainText("第 2/3 页");
+		await expect(page.locator("main")).toContainText("第 2/2 页");
 		await expect(page.locator(".m3-blog-postcard").first()).toBeVisible();
 		// Back to page 1 via the visible pagination control.
 		const page1 = page.locator('a[href$="/posts/"]').filter({ visible: true }).first();

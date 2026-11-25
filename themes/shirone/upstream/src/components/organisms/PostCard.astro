@@ -14,6 +14,8 @@ import { formatDateToYYYYMMDD } from "@utils/date-utils";
 import { isEncryptedPost } from "@utils/post-encryption";
 import { getProjectImageLoader } from "@utils/project-images";
 import { getCategoryUrl, getDir, getTagUrl } from "@utils/url-utils";
+import { siteConfig } from "../../config/siteConfig.ts";
+import { siteLocales } from "../../user/user-config";
 
 interface Props {
 	class?: string;
@@ -115,10 +117,22 @@ if (image) {
 	}
 }
 
+// ALNILAM (#35): the card links to the taxonomy route of the article's own locale, so an
+// English card never points a reader at the default-locale category/tag page. Articles in
+// unconfigured locales have no generated taxonomy routes, so their labels stay unlinked.
+const postLocale =
+	typeof entry.data.lang === "string" && entry.data.lang
+		? entry.data.lang
+		: undefined;
+const effectiveLocale = postLocale || siteConfig.lang.replace("_", "-");
+const hasTaxonomyRoutes = siteLocales.includes(effectiveLocale);
 const categoryLink = category
-	? { name: category, href: getCategoryUrl(category) }
+	? { name: category, href: hasTaxonomyRoutes ? getCategoryUrl(category, postLocale) : undefined }
 	: null;
-const tagLinks = tags.map((t) => ({ name: t.trim(), href: getTagUrl(t) }));
+const tagLinks = tags.map((t) => ({
+	name: t.trim(),
+	href: hasTaxonomyRoutes ? getTagUrl(t, postLocale) : undefined,
+}));
 
 const isEncrypted = isEncryptedPost(entry.data);
 const words = remarkPluginFrontmatter.words ?? 0;

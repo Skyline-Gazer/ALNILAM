@@ -4,13 +4,17 @@ import MainGridLayout from '@alnilam/theme-shirone/MainGridLayout.astro';
 import PostPage from '@alnilam/theme-shirone/PostPage.astro';
 import {getCollection} from 'astro:content';
 import {comparePosts} from '../lib/taxonomy';
-import { activeContentLocales, canonicalUrl, routeAlternates } from '../lib/i18n.mjs';
+import { activeContentLocales, canonicalUrl, filterPostsByLocale, routeAlternates } from '../lib/i18n.mjs';
 import {loadSite} from '../lib/site-source.mjs';
 import {websiteJsonLd} from '../lib/seo.mjs';
 const {config} = loadSite();
-const posts = (await getCollection('posts', ({data}) => !data.draft)).sort(comparePosts);
+const allPosts = (await getCollection('posts', ({data}) => !data.draft)).sort(comparePosts);
 const pages = await getCollection('pages', ({data}) => !data.draft);
-const activeLocales = activeContentLocales(posts, pages, config.site.locale, config.locales);
+const activeLocales = activeContentLocales(allPosts, pages, config.site.locale, config.locales);
+// Locale content policy (#35): the default-locale home lists the default-locale corpus —
+// the same rule as /<lang>/, /<lang>/posts/ and the per-locale RSS feed. Translations stay
+// reachable through hreflang, the language switch and their own locale listings.
+const posts = filterPostsByLocale(allPosts, config.site.locale, config.site.locale);
 const alts = routeAlternates(activeLocales, config.site.locale, config.locales, '');
 const alternates = alts
   ? [...alts].map(([lang, path]) => ({lang, href: canonicalUrl(path, config.site.url)}))

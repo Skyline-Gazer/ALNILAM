@@ -11,8 +11,10 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import Icon from "@iconify/svelte";
 import { getCategoryList } from "@utils/content-utils";
-import { pathsEqual, url } from "@utils/url-utils";
+import { localePrefix, pathsEqual, url } from "@utils/url-utils";
+import { siteConfig } from "../../config/siteConfig.ts";
 import type { SidebarPage } from "../../types/sidebarConfig";
+import { siteLocales } from "../../user/user-config";
 
 interface Props {
 	/** 文章页所属分类名：非首页/归档时对该分类做弱高亮 */
@@ -23,15 +25,28 @@ interface Props {
 
 const { currentPostCategory, page } = Astro.props;
 
-const categories = await getCategoryList();
-const homeUrl = url("/");
-const archiveUrl = url("/archives/");
-
 const pathname = Astro.url.pathname;
-const isHome = pathsEqual(pathname, homeUrl);
-const isArchive = pathsEqual(pathname, archiveUrl);
 const postCategory = (currentPostCategory || "").trim();
 
+// 嵌套部署（如 /ALNILAM/en/…）下 Astro.url.pathname 以 base 开头；先去掉 base 再取首段判断路由语言。
+const basePath = import.meta.env?.BASE_URL ?? "/";
+const normalizedBase = basePath.endsWith("/") ? basePath : `${basePath}/`;
+const rootRelativePath =
+	normalizedBase !== "/" && pathname.startsWith(normalizedBase)
+		? pathname.slice(normalizedBase.length - 1)
+		: pathname;
+const firstSegment = rootRelativePath.split("/")[1];
+// ALNILAM (#35): the bar follows the route's own locale — /en/… shows and links English
+// categories, an unprefixed route shows the site default. Derived from the URL rather than a
+// prop because the rendered route is what decides the corpus, and default pages leave `lang`
+// unset.
+const urlLocale = siteLocales.includes(firstSegment) ? firstSegment : undefined;
+const barLocale = urlLocale ?? siteConfig.lang.replace("_", "-");
+const categories = await getCategoryList(barLocale);
+const homeUrl = url(localePrefix(barLocale));
+const archiveUrl = url(`${localePrefix(barLocale)}archives/`);
+const isHome = pathsEqual(pathname, homeUrl);
+const isArchive = pathsEqual(pathname, archiveUrl);
 // SSR 初始高亮：
 // - 首页 → home 强高亮；归档 → archive 强高亮；
 // - 文章页 → 所属分类弱高亮（soft）；
