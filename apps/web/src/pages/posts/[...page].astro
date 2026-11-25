@@ -6,14 +6,17 @@ import Pagination from "@alnilam/theme-shirone/Pagination.astro";
 import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
 import { POSTS_PAGE_SIZE } from "../../lib/pagination.mjs";
 import { comparePosts } from "../../lib/taxonomy";
-import { activeContentLocales, canonicalUrl, routeAlternates } from "../../lib/i18n.mjs";
+import { activeContentLocales, canonicalUrl, filterPostsByLocale, routeAlternates } from "../../lib/i18n.mjs";
 import { loadSite } from "../../lib/site-source.mjs";
 import type { GetStaticPaths } from "astro";
 export const getStaticPaths = (async ({paginate}) => {
   const { config } = loadSite();
-  const posts = (await getCollection("posts", ({data}) => !data.draft)).sort(comparePosts);
+  const allPosts = (await getCollection("posts", ({data}) => !data.draft)).sort(comparePosts);
   const pages = await getCollection("pages", ({data}) => !data.draft);
-  const activeLocales = activeContentLocales(posts, pages, config.site.locale, config.locales);
+  const activeLocales = activeContentLocales(allPosts, pages, config.site.locale, config.locales);
+  // Locale content policy (#35): /posts/ is the default-locale listing, so page boundaries
+  // count only default-locale articles, exactly like /<lang>/posts/ and /<lang>/rss.xml.
+  const posts = filterPostsByLocale(allPosts, config.site.locale, config.site.locale);
   return paginate(posts, {pageSize: POSTS_PAGE_SIZE, props: {activeLocales}});
 }) satisfies GetStaticPaths;
 const {page, activeLocales} = Astro.props;

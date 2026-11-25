@@ -10,17 +10,29 @@ import { i18n } from "@i18n/translation";
  */
 import Icon from "@iconify/svelte";
 import { getTagList } from "@utils/content-utils";
-import { getTagUrl, url } from "@utils/url-utils";
+import { getTagUrl, localePrefix, url } from "@utils/url-utils";
+import { siteConfig } from "../../config/siteConfig.ts";
+import { siteLocales } from "../../user/user-config";
 import type { TagsWidget } from "@/types/sidebarConfig";
 import WidgetLayout from "./WidgetLayout.astro";
-
-const tags = await getTagList();
 
 interface Props {
 	class?: string;
 	style?: string;
 	widget?: TagsWidget;
+	/** ALNILAM (#35): the sidebar tag cloud covers this locale's corpus only. */
+	locale?: string;
 }
+const { locale } = Astro.props;
+// Default-locale pages may leave `lang` unset (MainGridLayout forwards it as given), so the
+// widget resolves the site locale itself: an unset locale must not fall back to counting every
+// language's posts, which would advertise tag routes the reader cannot resolve. An article in an
+// unconfigured locale has no taxonomy routes of its own, so its sidebar falls back to the site
+// default locale rather than linking missing `/<lang>/tags/...` routes.
+const siteLocale = siteConfig.lang.replace("_", "-");
+const widgetLocale = locale && siteLocales.includes(locale) ? locale : siteLocale;
+const tags = await getTagList(widgetLocale);
+
 const className = Astro.props.class;
 const style = Astro.props.style;
 
@@ -29,14 +41,17 @@ const hasOverflow = tags.length > DISPLAY_LIMIT;
 
 const tagItems = tags.slice(0, DISPLAY_LIMIT).map((t) => ({
 	name: t.name.trim(),
-	href: getTagUrl(t.name),
+	href: getTagUrl(t.name, widgetLocale),
 }));
 ---
 <WidgetLayout name={i18n(I18nKey.tags)} id="tags" class={className} style={style}>
 	<TagList tags={tagItems} />
 	{hasOverflow && (
 		<div slot="footer" class="widget-index-link">
-			<a href={url("/tags/")} class="m3-state-layer">
+			<a
+			href={url(`${localePrefix(widgetLocale)}tags/`)}
+			class="m3-state-layer"
+		>
 				{i18n(I18nKey.tagsViewAll)}
 				<Icon icon="material-symbols:chevron-right-rounded" />
 			</a>

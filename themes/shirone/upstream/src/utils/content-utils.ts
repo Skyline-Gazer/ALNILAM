@@ -14,6 +14,7 @@ import {
 	type SeriesEntity,
 } from "@utils/series-utils";
 import { getCategoryUrl, getPostUrl, url } from "@utils/url-utils";
+import { siteConfig } from "../config/siteConfig.ts";
 
 /**
  * 加载系列实体目录（Astro 内容层会缓存集合加载，多次调用成本可忽略）。
@@ -114,13 +115,21 @@ export type Tag = {
 	count: number;
 };
 
-export async function getTagList(): Promise<Tag[]> {
+export async function getTagList(locale?: string): Promise<Tag[]> {
 	const allBlogPosts = await getCollection<"posts">("posts", ({ data }) => {
 		return import.meta.env.PROD ? data.draft !== true : true;
 	});
+	// ALNILAM (#35): a locale's tag list is that locale's corpus, so the sidebar never
+	// advertises a tag route the reader cannot resolve in their own language.
+	const siteLocale = siteConfig.lang.replace("_", "-");
+	const scopedPosts = locale
+		? allBlogPosts.filter(
+				(post: { data: { lang?: string } }) => (post.data.lang || siteLocale) === locale,
+			)
+		: allBlogPosts;
 
 	const countMap: { [key: string]: number } = {};
-	allBlogPosts.forEach((post: { data: { tags: string[] } }) => {
+	scopedPosts.forEach((post: { data: { tags: string[] } }) => {
 		post.data.tags.forEach((tag: string) => {
 			if (!countMap[tag]) countMap[tag] = 0;
 			countMap[tag]++;
@@ -141,13 +150,22 @@ export type Category = {
 	url: string;
 };
 
-export async function getCategoryList(): Promise<Category[]> {
+export async function getCategoryList(locale?: string): Promise<Category[]> {
 	const allBlogPosts = await getCollection<"posts">("posts", ({ data }) => {
 		return import.meta.env.PROD ? data.draft !== true : true;
 	});
+	// ALNILAM (#35): with a locale given, the list is that locale's corpus and its links are that
+	// locale's routes, so the category bar never advertises a route the reader cannot resolve.
+	// No locale keeps the theme's site-wide meaning (used by SiteStats totals).
+	const siteLocale = siteConfig.lang.replace("_", "-");
+	const scopedPosts = locale
+		? allBlogPosts.filter(
+				(post: { data: { lang?: string } }) => (post.data.lang || siteLocale) === locale,
+			)
+		: allBlogPosts;
 	const seriesCatalog = await getSeriesCatalog();
 	const count: { [key: string]: number } = {};
-	allBlogPosts.forEach(
+	scopedPosts.forEach(
 		(post: { data: { category: string | null; series?: string } }) => {
 			// 与 getRawSortedPosts 同一回退链（显式 category → 系列默认分类 → 未分类）
 			const seriesSlug = normaliseSeriesSlug(post.data.series);
@@ -179,7 +197,7 @@ export async function getCategoryList(): Promise<Category[]> {
 		ret.push({
 			name: c,
 			count: count[c],
-			url: getCategoryUrl(c),
+			url: getCategoryUrl(c, locale),
 		});
 	}
 	return ret;

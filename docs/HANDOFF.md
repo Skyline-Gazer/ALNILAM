@@ -1,5 +1,14 @@
 # ALNILAM — Current Agent Handoff
 
+## Live-state update — 2026-11-24 · Product consolidation · locale content policy (#35)
+
+- Base GitHub `dev` `336b1e682f6a73828ea6c8ebd969ed2d7ad0485f`. Branch `feat/35-locale-content-policy`: pull request [#214](https://github.com/Skyline-Gazer/ALNILAM/pull/214). Not merged; Owner merge authorization required.
+- Decision: a listing shows the corpus of its own route locale. `resolved lang == route locale`, with `lang` coming from frontmatter and falling back to `site.locale`; the file path never decides it. This makes `/`, `/posts/`, `/archives/`, `/categories/`, `/tags/` and the taxonomy detail routes agree with the per-locale RSS feeds (`lib/feed.mjs:7-14`) and the language-sliced Pagefind index that were already scoped, instead of showing a zh-Chrome home whose cards, feed and search disagreed.
+- Implementation is shared, not duplicated: `archiveListing`, `categoryListing`, `tagListing` in `apps/web/src/lib/taxonomy.ts` and per-locale buckets in `taxonomyPaths` (`apps/web/src/lib/taxonomy-pagination.ts`); the default routes and the `[lang]/` routes call the same functions with a different `locale` argument. For articles whose `lang` is not in configured `locales`, `PostMeta` and `PostCard` render plain unlinked taxonomy labels while `Tags`, `Categories` and `TopAppBar` fall back to the default locale rather than linking omitted `/<lang>/...` routes.
+- Behavior changes that Site owners must know: Demo default listing goes 15 articles / 3 pages → 7 articles / 2 pages; a locale with no member in a category or tag emits no route; a post whose `lang` is not in `locales` keeps its article URL but joins no listing, taxonomy route or feed. Documented in `docs/SITE_ONBOARDING.md` → "Locale listings" and `CHANGELOG.md`.
+- Tests: `node --test --test-concurrency=1 scripts/tests/{content-model,taxonomy-pagination,i18n,seo,sitemap,close-state}.test.mjs` pass, including the unconfigured-locale taxonomy link regression in `taxonomy-pagination.test.mjs`.
+- Related open slices: [#217](https://github.com/Skyline-Gazer/ALNILAM/pull/217) (#194 mobile reading controls), [#213](https://github.com/Skyline-Gazer/ALNILAM/pull/213) (#204 navigation context), [#215](https://github.com/Skyline-Gazer/ALNILAM/pull/215) (#190 Demo guides replacing the closed #205).
+
 ## Live-state update — 2026-11-24 · Product consolidation · navigation context policy (#204)
 
 - Base GitHub `dev` `336b1e682f6a73828ea6c8ebd969ed2d7ad0485f` (includes merged [#212](https://github.com/Skyline-Gazer/ALNILAM/pull/212) Gallery/Moments/Music retirement and merged [#216](https://github.com/Skyline-Gazer/ALNILAM/pull/216) navigation tap fix). Branch `feat/204-page-context-navigation`, pull request [#213](https://github.com/Skyline-Gazer/ALNILAM/pull/213). Not merged; Owner merge authorization required.

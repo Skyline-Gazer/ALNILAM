@@ -59,7 +59,9 @@ for (const [kind, slug] of [["categories", "ja-series-only"], ["tags", "taxonomy
     for (const { out, base } of builds) {
       for (const locale of ["", "en/"]) {
         const route = `${locale}${kind}/${slug}/`;
-        const total = locale ? 6 : kind === "categories" ? 13 : 12;
+        // Locale content policy (#35): the fixture writes 6 default-locale and 6 en members,
+        // so every locale route paginates over exactly its own six.
+        const total = 6;
         const pages = Math.ceil(total / 5);
         const members = [];
         const url = (page) => `${base}${route}${page === 1 ? "" : `${page}/`}`;
@@ -87,16 +89,52 @@ for (const [kind, slug] of [["categories", "ja-series-only"], ["tags", "taxonomy
         }
         const expected = [];
         for (let n = 1; n <= 6; n++) {
-          if (!locale) expected.push(`posts/taxonomy-page-${n}/`);
-          expected.push(`en/posts/taxonomy-page-${n}/`);
+          expected.push(`${locale ? "en/" : ""}posts/taxonomy-page-${n}/`);
         }
-        if (!locale && kind === "categories") expected.push("ja/posts/series-overview-ja/");
         assert.deepEqual(members.sort(), expected.sort(), `${base}${route} members`);
       }
       assert.equal(fs.existsSync(path.join(out, "fr", kind, slug)), false, `empty French ${kind} must not have a detail route`);
     }
   });
 }
+
+test("unconfigured-locale articles emit no broken taxonomy links in PostMeta, PostCard, or Sidebar widgets", () => {
+  const site = path.join(root, "unconfigured-locale-site");
+  const out = path.join(root, "unconfigured-locale-out");
+  fs.cpSync(fixture, site, { recursive: true });
+  for (const rel of fs.readdirSync(site, { recursive: true })) {
+    const target = path.join(site, rel);
+    fs.chmodSync(target, fs.statSync(target).isDirectory() ? 0o755 : 0o644);
+  }
+  // Remove 'fr' from configured locales in alnilam.config.yaml while publishing a French post.
+  const configPath = path.join(site, "alnilam.config.yaml");
+  const withoutFr = fs.readFileSync(configPath, "utf8").replace(/\n  - "?fr"?\n/, "\n");
+  assert.doesNotMatch(withoutFr, /^  - "?fr"?$/m, "fr must be removed from configured locales");
+  fs.writeFileSync(configPath, withoutFr);
+  fs.mkdirSync(path.join(site, "content/posts/fr"), { recursive: true });
+  fs.writeFileSync(
+    path.join(site, "content/posts/fr/bonjour.md"),
+    '---\ntitle: "Bonjour ALNILAM"\npubDate: 2026-04-01\ncategory: "guide"\ntags: ["ALNILAM", "i18n"]\nlang: "fr"\n---\n\nUnconfigured locale post body.\n',
+  );
+  const composeRes = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", site, "--out", out], {
+    cwd: repo,
+    env: { ...process.env, ALNILAM_CACHE_DIR: path.join(root, "unconfigured-cache"), ALNILAM_CORE_REV: "unconfigured-locale-test", SOURCE_DATE_EPOCH: "1700000000" },
+    encoding: "utf8",
+  });
+  assert.equal(composeRes.status, 0, `compose failed:\n${composeRes.stderr}`);
+  // Neither /fr/tags/ nor /fr/categories/ routes are generated when fr is unconfigured.
+  assert.equal(fs.existsSync(path.join(out, "fr/tags")), false);
+  assert.equal(fs.existsSync(path.join(out, "fr/categories")), false);
+  // The French article renders at /fr/posts/bonjour/ and must not link to /fr/tags/ or /fr/categories/.
+  const articleHtml = fs.readFileSync(path.join(out, "fr/posts/bonjour/index.html"), "utf8");
+  assert.doesNotMatch(articleHtml, /href="\/fr\/(?:tags|categories)\//);
+  // Both artifact-check and seo-check (which verifies every internal href resolves) must pass.
+  for (const script of ["scripts/artifact-check.mjs", "scripts/seo-check.mjs"]) {
+    const check = spawnSync(process.execPath, [script, out], { cwd: repo, encoding: "utf8" });
+    assert.equal(check.status, 0, `${script} failed:\n${check.stderr}\n${check.stdout}`);
+  }
+});
+
 test("Site page canonical and alternate URLs include the root or nested deployment base", () => {
   for (const { out, base } of builds) {
     const expected = {

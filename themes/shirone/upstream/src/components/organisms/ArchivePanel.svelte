@@ -15,6 +15,7 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n as siteI18n, i18nForLocale } from "@i18n/translation";
 import Icon from "@iconify/svelte";
 import { formatCalendarDate } from "@utils/content-date";
+import { siteConfig } from "@/config/siteConfig";
 import { getPostUrlBySlug, url } from "@utils/url-utils";
 import { onMount } from "svelte";
 
@@ -115,25 +116,32 @@ function persistCollapsedState(next: Record<string, boolean>) {
 const categoryDisplay = (key: string) => categoryLabels[key] ?? key;
 const tagDisplay = (key: string) => `#${tagLabels[key] ?? key}`;
 
+/** ALNILAM (#35): the breadcrumb points at the taxonomy index of the page locale, so an
+ *  English archive never offers a Chinese-only index as "all categories/tags". */
+const taxonomyUrl = (section: "categories" | "tags") => {
+	const site = siteConfig.lang.replace("_", "-");
+	return url(locale && locale !== site ? `/${locale}/${section}/` : `/${section}/`);
+};
+
 /** 筛选头数据：类别（决定索引链接）+ 展示值；无筛选为 null；宿主可提供面包屑覆盖 */
 const derivedCrumb = $derived.by(() => {
 	if (uncategorized) {
 		return {
-			href: url("/categories/"),
+			href: taxonomyUrl("categories"),
 			label: i18n(I18nKey.categories),
 			value: i18n(I18nKey.uncategorized),
 		};
 	}
 	if (category) {
 		return {
-			href: url("/categories/"),
+			href: taxonomyUrl("categories"),
 			label: i18n(I18nKey.categories),
 			value: categoryDisplay(category),
 		};
 	}
 	if (tag) {
 		return {
-			href: url("/tags/"),
+			href: taxonomyUrl("tags"),
 			label: i18n(I18nKey.tags),
 			value: tagDisplay(tag),
 		};

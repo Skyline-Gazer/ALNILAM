@@ -1,16 +1,14 @@
 ---
-import { getCollection, type CollectionEntry } from "astro:content";
+import { getCollection } from "astro:content";
 import NativeArchive from "@alnilam/theme-shirone/Archive.astro";
 import {
   activeContentLocales,
   canonicalUrl,
   filterPostsByLocale,
-  postPath,
   routeAlternates,
-  withBase,
 } from "../../../lib/i18n.mjs";
+import { archiveListing, comparePosts } from "../../../lib/taxonomy";
 import { loadSite } from "../../../lib/site-source.mjs";
-import { comparePosts } from "../../../lib/taxonomy";
 
 export async function getStaticPaths() {
   const { config } = loadSite();
@@ -20,12 +18,9 @@ export async function getStaticPaths() {
   return activeLocales
     .filter((locale) => locale !== config.site.locale)
     .map((locale) => {
-      const localePosts = filterPostsByLocale(posts, locale, config.site.locale) as CollectionEntry<"posts">[];
-      const sortedPosts = localePosts.map((post) => ({
-        slug: post.id,
-        url: withBase(postPath(post, config.site.locale) + "/"),
-        data: post.data,
-      }));
+      // Same helper as the default-locale route; only the locale argument differs (#35).
+      const sortedPosts = archiveListing(posts, { locale, defaultLocale: config.site.locale });
+      const localePosts = filterPostsByLocale(posts, locale, config.site.locale);
       return {
         params: { lang: locale },
         props: { locale, sortedPosts, activeLocales, feedUrl: localePosts.length > 0 ? undefined : null },

@@ -800,7 +800,9 @@ for (const [name, origin] of deployments) {
 			});
 			const page = await context.newPage();
 			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}/posts/`, { waitUntil: "networkidle" });
+			// #35: each listing carries only its own locale, so the English card is reached from
+			// the English listing, not from the default-locale one.
+			await page.goto(`${origin}/en/posts/`, { waitUntil: "networkidle" });
 			await page
 				.locator('a.m3-blog-postcard__title[href$="/en/posts/pagination-sample/"]')
 				.first()
@@ -823,7 +825,7 @@ for (const [name, origin] of deployments) {
 			await closeLightbox(page, container, await page.evaluate(() => window.scrollY));
 
 			await page.goBack();
-			await expect(page).toHaveURL(new RegExp("/posts/?$"));
+			await expect(page).toHaveURL(new RegExp("/en/posts/?$"));
 			await page.goForward();
 			await expect(page).toHaveURL(new RegExp("/en/posts/pagination-sample/?$"));
 			await context.close();

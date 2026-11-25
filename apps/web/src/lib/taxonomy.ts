@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
+import type { CollectionEntry } from "astro:content";
 import { normalizeSiteConfig, parseSiteConfigDocument, type SiteConfig, type TaxonomyEntry } from "@alnilam/core";
+import { filterPostsByLocale, localeRoutePath, postPath, withBase } from "./i18n.mjs";
 
 export interface SiteTaxonomy {
   categories: readonly TaxonomyEntry[];
@@ -145,4 +147,96 @@ export function comparePosts<
   const diff = b.data.pubDate.valueOf() - a.data.pubDate.valueOf();
   if (diff !== 0) return diff;
   return a.id.localeCompare(b.id);
+}
+
+/**
+ * Listing corpora for the locale content policy (#35).
+ *
+ * Every listing surface — home, posts index, archives, category and tag indexes, taxonomy
+ * detail pages and series — takes its corpus from exactly one of these helpers, so the
+ * default locale and the localized routes cannot drift into two different query rules.
+ * A locale's corpus is the published posts whose resolved `lang` equals that locale.
+ */
+export interface ListingOptions {
+  locale: string;
+  defaultLocale: string;
+  taxonomy: SiteTaxonomy;
+}
+
+export interface CategoryListingOptions extends ListingOptions {
+  /** series id → declared defaultCategory, used when a post has no own category */
+  seriesCategories: ReadonlyMap<string, string>;
+}
+
+export interface ListingTile {
+  name: string;
+  count: number;
+  url: string;
+}
+
+/** Archive/timeline entries in list order for one locale, in the shape the theme consumes. */
+export function archiveListing(
+  posts: CollectionEntry<"posts">[],
+  { locale, defaultLocale }: Pick<ListingOptions, "locale" | "defaultLocale">,
+): { slug: string; url: string; data: CollectionEntry<"posts">["data"] }[] {
+  // `filterPostsByLocale` lives in untyped `i18n.mjs`, so the corpus is pinned here rather than
+  // left to an implicit `any` that would hide a wrong field name from `astro check`.
+  const corpus: CollectionEntry<"posts">[] = filterPostsByLocale(posts, locale, defaultLocale);
+  return corpus
+    .sort(comparePosts)
+    .map((post) => ({
+      slug: post.id,
+      url: withBase(`${postPath(post, defaultLocale)}/`),
+      data: post.data,
+    }));
+}
+
+/** Category tiles counted over one locale's corpus. */
+export function categoryListing(
+  posts: CollectionEntry<"posts">[],
+  { locale, defaultLocale, taxonomy, seriesCategories }: CategoryListingOptions,
+): ListingTile[] {
+  const countMap = new Map<string, number>();
+  const corpus: CollectionEntry<"posts">[] = filterPostsByLocale(posts, locale, defaultLocale);
+  for (const post of corpus) {
+    const category =
+      post.data.category?.trim() || seriesCategories.get(post.data.series?.trim())?.trim();
+    if (!category || category.includes("/")) continue;
+    countMap.set(category, (countMap.get(category) ?? 0) + 1);
+  }
+  return [...countMap.entries()]
+    .sort(([a], [b]) => a.toLowerCase().localeCompare(b.toLowerCase()))
+    .map(([slug, count]) => ({
+      name: categoryDisplayLabel(slug, taxonomy.categories, locale),
+      count,
+      url: withBase(localeRoutePath(locale, defaultLocale, `categories/${encodeURIComponent(slug)}`)),
+    }));
+}
+
+/** Tag tiles counted over one locale's corpus; a post counts once per canonical tag. */
+export function tagListing(
+  posts: CollectionEntry<"posts">[],
+  { locale, defaultLocale, taxonomy }: ListingOptions,
+): ListingTile[] {
+  const countMap = new Map<string, number>();
+  const corpus: CollectionEntry<"posts">[] = filterPostsByLocale(posts, locale, defaultLocale);
+  for (const post of corpus) {
+    const seenInPost = new Set<string>();
+    for (const rawTag of post.data.tags) {
+      const slug = canonicalTagSlug(rawTag, taxonomy.tags);
+      // Same key-admission rule as taxonomyPaths: a slug containing "/" gets no route, so
+      // the index must not offer a tile that links to a missing page.
+      if (!slug || slug.includes("/")) continue;
+      if (seenInPost.has(slug)) continue;
+      seenInPost.add(slug);
+      countMap.set(slug, (countMap.get(slug) ?? 0) + 1);
+    }
+  }
+  return [...countMap.entries()]
+    .sort(([a], [b]) => a.toLowerCase().localeCompare(b.toLowerCase()))
+    .map(([slug, count]) => ({
+      name: tagDisplayLabel(slug, taxonomy.tags, locale),
+      count,
+      url: withBase(localeRoutePath(locale, defaultLocale, `tags/${encodeURIComponent(slug)}`)),
+    }));
 }
