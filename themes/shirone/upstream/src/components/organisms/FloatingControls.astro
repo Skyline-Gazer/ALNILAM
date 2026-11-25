@@ -162,12 +162,13 @@ const isTocVisibleOnDesktop =
 		right: auto
 		left: var(--fab-inline-offset)
 
-/* #194: below lg (1024 px) the article carries its own in-flow contents disclosure
- * (`MobileArticleTOC`) and the reading column keeps its full width, so no floating control is
- * rendered there at all. The desktop cluster — and #211's TOC panel and focus behaviour — is
- * unchanged. */
+/* #194: below lg (1024 px) an article carries its own in-flow contents disclosure
+ * (`MobileArticleTOC`) and back-to-top link, so the cluster is not rendered on article pages and
+ * the reading column keeps its full width. Only article pages carry `data-fab-text-obstruction`;
+ * listing and other pages keep their configured mobile/tablet controls (home, back-to-top). The
+ * desktop cluster — and #211's TOC panel and focus behaviour — is unchanged. */
 @media (max-width: 1023.98px)
-	.m3-floating-controls-container
+	.m3-floating-controls-container[data-fab-text-obstruction="true"]
 		display: none
 
 @media (prefers-reduced-motion: reduce)
