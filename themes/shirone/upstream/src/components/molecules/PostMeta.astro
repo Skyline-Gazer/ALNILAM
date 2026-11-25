@@ -8,6 +8,8 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { formatDateToYYYYMMDD } from "@utils/date-utils";
 import { getCategoryUrl, getTagUrl } from "@utils/url-utils";
+import { siteConfig } from "../../config/siteConfig.ts";
+import { siteLocales } from "../../user/user-config";
 
 interface Props {
 	class?: string;
@@ -16,6 +18,8 @@ interface Props {
 	tags: string[];
 	category: string | null;
 	hideUpdateDate?: boolean;
+	/** ALNILAM (#35): the article's own locale, so its chips link that locale's taxonomy routes. */
+	locale?: string;
 }
 const {
 	class: className,
@@ -24,12 +28,21 @@ const {
 	tags,
 	category,
 	hideUpdateDate = false,
+	locale,
 } = Astro.props;
 
+// An unset locale is the site default, never "every language" (#35). A post whose `lang` is not in
+// `locales` is omitted from taxonomy route generation, so its metadata renders plain labels rather
+// than linking non-existent `/<lang>/...` routes or cross-locale taxonomy pages.
+const metaLocale = locale || siteConfig.lang.replace("_", "-");
+const hasTaxonomyRoutes = siteLocales.includes(metaLocale);
 const categoryLink = category
-	? { name: category, href: getCategoryUrl(category) }
+	? { name: category, href: hasTaxonomyRoutes ? getCategoryUrl(category, metaLocale) : undefined }
 	: null;
-const tagLinks = tags.map((t) => ({ name: t.trim(), href: getTagUrl(t) }));
+const tagLinks = tags.map((t) => ({
+	name: t.trim(),
+	href: hasTaxonomyRoutes ? getTagUrl(t, metaLocale) : undefined,
+}));
 ---
 
 <PostMeta

@@ -89,32 +89,41 @@ export function getPostUrl(
 	return lang && lang !== locale ? url(`/${lang}/posts/${slug}/`) : getPostUrlBySlug(slug);
 }
 
-export function getTagUrl(tag: string): string {
-	if (!tag) return url("/tags/");
+export function getTagUrl(tag: string, locale?: string): string {
+	if (!tag) return url(`${localePrefix(locale)}tags/`);
 	// ALNILAM: catalog slugs win over raw label spellings, so a tag rendered as
 	// "Astro" resolves to the canonical /tags/astro/ route (and its localized
 	// variants) instead of a duplicate label-only route. The resolver is a
 	// DI boundary so the theme never imports the Site loader directly.
 	const slug = tagSlugResolver ? tagSlugResolver(tag.trim()) : tag.trim();
-	return url(`/tags/${encodeURIComponent(slug)}/`);
+	return url(`${localePrefix(locale)}tags/${encodeURIComponent(slug)}/`);
 }
+
+// ALNILAM (#35): taxonomy links are locale-scoped like article links, so a tag rendered on an
+// English page points at the English tag route instead of the default-locale one. The default
+// locale keeps its unprefixed URLs, matching getPostUrl.
+export const localePrefix = (locale?: string): string => {
+	const site = siteConfig.lang.replace("_", "-");
+	return locale && locale !== site ? `/${locale}/` : "/";
+};
 
 let tagSlugResolver: ((tag: string) => string) | undefined;
 export function setTagSlugResolver(resolver: (tag: string) => string): void {
 	tagSlugResolver = resolver;
 }
 
-export function getCategoryUrl(category: string | null): string {
+export function getCategoryUrl(category: string | null, locale?: string): string {
+	const prefix = localePrefix(locale);
 	if (
 		!category ||
 		category.trim() === "" ||
 		category.trim().toLowerCase() ===
 			i18n("uncategorized" as I18nKey).toLowerCase()
 	)
-		return url("/archives/?uncategorized=true");
+		return url(`${prefix}archives/?uncategorized=true`);
 	if (category.includes("/"))
-		return url(`/archives/?category=${encodeURIComponent(category.trim())}`);
-	return url(`/categories/${encodeURIComponent(category.trim())}/`);
+		return url(`${prefix}archives/?category=${encodeURIComponent(category.trim())}`);
+	return url(`${prefix}categories/${encodeURIComponent(category.trim())}/`);
 }
 
 export function getSeriesUrl(series: string): string {

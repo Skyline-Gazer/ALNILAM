@@ -18,16 +18,29 @@ const REPO = process.cwd();
 const FIXTURE = path.join(process.env.CNB_TRUSTED_TEST_ROOT || REPO, "tests/fixtures/content-model-site");
 
 // Counts come from the target-owned fixture, so adding an article or draft
-// cannot silently weaken the pagination assertions.
+// cannot silently weaken the pagination assertions. #35 scopes every listing surface to a
+// single locale's corpus, so the default-locale count - not the whole-corpus count - is the
+// pagination authority for the unlocalized routes.
 const FIXTURE_PAGE_SIZE = 5;
 const fixturePosts = fs.globSync("content/posts/**/*.md", { cwd: FIXTURE });
-const EXPECTED_TOTAL = fixturePosts.filter((rel) => {
-  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(
-    fs.readFileSync(path.join(FIXTURE, rel), "utf8"),
-  )?.[1] ?? "";
-  return !/^draft:\s*true\s*$/m.test(frontmatter);
-}).length;
+const frontmatterOf = (rel) =>
+  /^---\r?\n([\s\S]*?)\r?\n---/.exec(fs.readFileSync(path.join(FIXTURE, rel), "utf8"))?.[1] ?? "";
+const DEFAULT_LOCALE =
+  /^ {2}locale:\s*"?([\w-]+)"?/m.exec(fs.readFileSync(path.join(FIXTURE, "alnilam.config.yaml"), "utf8"))?.[1] ?? "zh-CN";
+const localeOf = (rel) => /^lang:\s*"?([\w-]+)"?/m.exec(frontmatterOf(rel))?.[1] ?? DEFAULT_LOCALE;
+const publishedPosts = fixturePosts.filter((rel) => !/^draft:\s*true\s*$/m.test(frontmatterOf(rel)));
+const EXPECTED_TOTAL = publishedPosts.filter((rel) => localeOf(rel) === DEFAULT_LOCALE).length;
 const EXPECTED_PAGES = Math.ceil(EXPECTED_TOTAL / FIXTURE_PAGE_SIZE);
+// Listing slugs of posts that belong to another locale, e.g. "en/hello-content-model".
+const FOREIGN_SLUGS = publishedPosts
+  .filter((rel) => localeOf(rel) !== DEFAULT_LOCALE)
+  .map((rel) => rel.replace(/^content\/posts\//, "").replace(/\.md$/, ""));
+// The locale of every listing slug, read from that post's own frontmatter: a nested
+// default-locale post such as `content/posts/2026/hello.md` lists as `2026/hello`, whose first
+// segment is a directory, not a locale. The path never decides the locale (#35).
+const LOCALE_BY_SLUG = new Map(
+  publishedPosts.map((rel) => [rel.replace(/^content\/posts\//, "").replace(/\.md$/, ""), localeOf(rel)]),
+);
 
 const read = (out, rel) => fs.readFileSync(path.join(out, rel), "utf8");
 /** Concatenate the official sitemap chunks referenced by sitemap-index.xml. */
@@ -107,29 +120,70 @@ test("provenance binds the composed Site digest and the requested Core revision"
   assert.equal(prov.core.revision, "content-model-test");
 });
 
-test("posts paginate globally with the pinned post first and rel prev/next links", () => {
+test("posts paginate the default-locale corpus with the pinned post first", () => {
   const { out } = ctx;
+  const pages = Array.from({ length: EXPECTED_PAGES }, (_, i) =>
+    read(out, i === 0 ? "posts/index.html" : `posts/${i + 1}/index.html`),
+  );
   for (let page = 1; page <= EXPECTED_PAGES; page++) {
     const rel = page === 1 ? "posts/index.html" : `posts/${page}/index.html`;
     assert.ok(fs.existsSync(path.join(out, rel)), `pagination page /posts/${page === 1 ? "" : page + "/"} must exist`);
   }
-  const page1 = read(out, "posts/index.html");
+  assert.equal(
+    fs.existsSync(path.join(out, `posts/${EXPECTED_PAGES + 1}/index.html`)),
+    false,
+    "the locale corpus must not produce an extra page",
+  );
+  const page1 = pages[0];
   assert.match(page1, new RegExp(`共 ${EXPECTED_TOTAL} 篇 · 第 1/${EXPECTED_PAGES} 页`));
   const cards = postLinks(page1);
   assert.equal(cards[0], "pinned-announcement", "the pinned post must lead the first page despite its old pubDate");
-  // Non-default-locale posts are listed with locale-prefixed URLs.
-  assert.ok(cards.includes("en/star-notes"), "en posts must be listed: " + cards.join(","));
-  assert.ok(cards.includes("ja/star-notes"), "ja posts must be listed: " + cards.join(","));
+  // Locale content policy (#35): translations are listed by their own locale routes, not here.
+  for (const slug of FOREIGN_SLUGS) {
+    for (const [index, html] of pages.entries()) {
+      assert.ok(!postLinks(html).includes(slug), `/posts/${index + 1} must not list ${slug}`);
+    }
+  }
   assert.match(page1, /href="\/posts\/2\/" rel="next"/, "page 1 must link the next page");
-  for (const p of [2, 3, 4, 5]) {
+  for (let p = 2; p <= EXPECTED_PAGES; p += 1) {
     assert.match(page1, new RegExp(`href="/posts/${p}/" aria-label="第 ${p} 页"`), `page-number link ${p} must render`);
   }
   const page2 = read(out, "posts/2/index.html");
   assert.match(page2, /href="\/posts\/" rel="prev"/, "page 2 must link back to page 1");
   assert.match(page2, /href="\/posts\/3\/" rel="next"/, "page 2 must link forward to page 3");
-  const page5 = read(out, "posts/5/index.html");
-  assert.match(page5, /href="\/posts\/4\/" rel="prev"/);
-  assert.ok(!/rel="next"/.test(page5), "the last page must not offer a next link");
+  const last = pages[pages.length - 1];
+  assert.ok(/rel="prev"/.test(last), "the last page must link back");
+  assert.ok(!/rel="next"/.test(last), "the last page must not offer a next link");
+});
+
+test("each locale listing carries exactly its own corpus", () => {
+  const { out } = ctx;
+  const surfaces = [
+    ["index.html", DEFAULT_LOCALE],
+    ["posts/index.html", DEFAULT_LOCALE],
+    ["archives/index.html", DEFAULT_LOCALE],
+    ["categories/guide/index.html", DEFAULT_LOCALE],
+    ["tags/i18n/index.html", DEFAULT_LOCALE],
+    ["en/index.html", "en"],
+    ["en/posts/index.html", "en"],
+    ["en/archives/index.html", "en"],
+    ["ja/index.html", "ja"],
+    ["ja/posts/index.html", "ja"],
+  ];
+  for (const [rel, locale] of surfaces) {
+    const links = postLinks(read(out, rel));
+    assert.ok(links.length > 0, `${rel} must list its own locale articles`);
+    // postLinks() also matches pagination hrefs like /en/posts/2/, whose slug ends in a bare
+    // page number. Those are skipped; every remaining href must name a fixture article, so an
+    // unexpected slug fails instead of passing silently.
+    const listed = links.filter((slug) => !/^\d+$/.test(slug.split("/").at(-1) ?? ""));
+    assert.ok(listed.length > 0, `${rel} must link at least one article`);
+    for (const slug of listed) {
+      const slugLocale = LOCALE_BY_SLUG.get(slug);
+      assert.ok(slugLocale !== undefined, `${rel} links the unknown article slug ${slug}`);
+      assert.equal(slugLocale, locale, `${rel} (${locale}) must not link the ${slugLocale} article ${slug}`);
+    }
+  }
 });
 
 test("draft posts are excluded from every list, route and feed", (t) => {
@@ -138,11 +192,9 @@ test("draft posts are excluded from every list, route and feed", (t) => {
   assert.equal(fs.existsSync(path.join(out, "en", "pages", "draft-preview")), false, "draft Site pages get no route");
   const surfaces = [
     "index.html",
-    "posts/index.html",
-    "posts/2/index.html",
-    "posts/3/index.html",
-    "posts/4/index.html",
-    "posts/5/index.html",
+    ...Array.from({ length: EXPECTED_PAGES }, (_, i) =>
+      i === 0 ? "posts/index.html" : `posts/${i + 1}/index.html`,
+    ),
     "archives/index.html",
     "categories/index.html",
     "categories/notes/index.html",
@@ -252,8 +304,15 @@ test("category index and detail render catalog labels and locale-filtered member
     .map((page) => `categories/guide/${page}/index.html`)
     .filter((rel) => fs.existsSync(path.join(out, rel))).map((rel) => read(out, rel))].flatMap(postLinks);
   assert.ok(guideMembers.includes("pinned-announcement"), "zh members are listed: " + guideMembers.join(","));
-  assert.ok(guideMembers.includes("en/hello-content-model"), "en members are listed: " + guideMembers.join(","));
-  assert.ok(guideMembers.includes("ja/i18n-guide"), "ja members are listed: " + guideMembers.join(","));
+  // Locale content policy (#35): the unlocalized category route is the default-locale corpus.
+  for (const slug of FOREIGN_SLUGS) {
+    assert.ok(!guideMembers.includes(slug), `/categories/guide/ must not list ${slug}`);
+  }
+  const enGuide = read(out, "en/categories/guide/index.html");
+  assert.ok(postLinks(enGuide).includes("en/hello-content-model"), "en members are listed under /en/");
+  assert.ok(!postLinks(enGuide).includes("pinned-announcement"), "/en/ must not list the zh article");
+  const jaGuide = read(out, "ja/categories/ja-series-only/index.html");
+  assert.deepEqual(postLinks(jaGuide), ["ja/series-overview-ja"], "the ja-only category lists only the ja article");
 
   // The taxonomy.yaml-only category gets its zh-CN label from the merged catalog.
   const notes = read(out, "categories/notes/index.html");
@@ -275,8 +334,12 @@ test("tag index and detail render localized labels across locales", (t) => {
   assert.ok(!i18nTag.includes("m3-blog-postcard"), "tag detail must not render postcards");
   const members = postLinks(i18nTag);
   assert.ok(members.includes("hello-content-model"), "zh posts match: " + members.join(","));
-  assert.ok(members.includes("en/hello-content-model"), "en posts match: " + members.join(","));
-  assert.ok(members.includes("ja/hello-content-model"), "ja posts match: " + members.join(","));
+  // Locale content policy (#35): each locale's tag route carries only its own corpus.
+  for (const slug of FOREIGN_SLUGS) {
+    assert.ok(!members.includes(slug), `/tags/i18n/ must not list ${slug}`);
+  }
+  assert.deepEqual(postLinks(read(out, "en/tags/i18n/index.html")).sort(), ["en/hello-content-model", "en/i18n-guide"]);
+  assert.deepEqual(postLinks(read(out, "ja/tags/i18n/index.html")).sort(), ["ja/hello-content-model", "ja/i18n-guide"]);
   const paginationTag = read(out, "tags/pagination/index.html");
   assert.match(paginationTag, /<title>#分页 - Content Model<\/title>/, "taxonomy.yaml tag labels are localized too");
   assert.match(paginationTag, /m3-blog-archive__item/, "taxonomy.yaml-only tag renders the timeline too");

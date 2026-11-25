@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 /**
  * Pagination + Pagefind end-to-end regression (Issue #63, P4/T02).
  *
+ * Every listing is scoped to one locale's corpus (#35) and Pagefind builds per-language indexes.
  * Cover page-2 access, per-locale body and title search with real click-through,
  * and root + /ALNILAM/ deployments.
  */
@@ -146,6 +147,12 @@ for (const [name, origin] of deployments) {
 		const firstPage = await page.locator("main").innerText();
 		const total = Number(/第\s*1\s*\/\s*(\d+)\s*页/.exec(firstPage)?.[1] ?? NaN);
 		expect(Number.isInteger(total) && total >= 2, `page 1 announces ${total} pages`).toBe(true);
+		// Locale content policy (#35): the unlocalized list contains no locale-prefixed article.
+		const firstPageHrefs = await page.locator(".m3-blog-postcard a[href*='/posts/']").evaluateAll((links) =>
+			links.map((link) => link.getAttribute("href") ?? ""),
+		);
+		expect(firstPageHrefs.length).toBeGreaterThan(0);
+		expect(firstPageHrefs.some((href) => /\/(?:en|ja)\/posts\//.test(href))).toBe(false);
 		// The mobile pagination block precedes the desktop one in the DOM but is
 		// hidden at this viewport; only click a visible control.
 		const page2 = page.locator('a[href$="/posts/2/"]').filter({ visible: true }).first();

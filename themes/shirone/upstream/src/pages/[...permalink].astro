@@ -279,6 +279,11 @@ const jsonLd = {
 						updated={entry.data.updated}
 						tags={entry.data.tags}
 						category={entry.data.category}
+						locale={
+							typeof entry.data.lang === "string" && entry.data.lang
+								? entry.data.lang
+								: undefined
+						}
 					></PostMetadata>
 				)}
 				{seriesCardVisible && seriesCardAtTop && series && (

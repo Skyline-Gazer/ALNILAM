@@ -39,6 +39,7 @@ const strippedPath =
 		: Astro.url.pathname;
 const isLocalizedRoute =
 	pageLocale !== defaultLocale &&
+	siteLocales.includes(pageLocale) &&
 	(strippedPath === `/${pageLocale}` || strippedPath.startsWith(`/${pageLocale}/`));
 const t = (key: I18nKey) => i18nForLocale(pageLocale, key);
 const localePrefix = isLocalizedRoute ? `/${pageLocale}` : "";
