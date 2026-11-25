@@ -135,6 +135,17 @@ for (const [name, origin] of deployments) {
 		}
 	});
 
+	test(`homepage exposes pagination continuation to /posts/2/ ${name}`, async ({ page }) => {
+		await page.goto(`${origin}/`, { waitUntil: "networkidle" });
+		await expect(page.locator(".m3-blog-postcard")).toHaveCount(5);
+		const continuation = page.locator('a[href$="/posts/2/"]').filter({ visible: true }).first();
+		await expect(continuation).toBeVisible();
+		await continuation.click();
+		// Full-URL assertion: a continuation link that dropped the /ALNILAM prefix must fail.
+		await expect(page).toHaveURL(new RegExp(`^${origin.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/posts/2/?$`));
+		await expect(page.locator("main")).toContainText(/第\s*2\//);
+	});
+
 	test(`posts pagination reaches page 2 and back ${name}`, async ({ browser }) => {
 		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
 		const page = await context.newPage();

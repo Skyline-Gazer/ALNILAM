@@ -1,6 +1,8 @@
 ---
 import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
 import PostPage from "@alnilam/theme-shirone/PostPage.astro";
+import Pagination from "@alnilam/theme-shirone/Pagination.astro";
+import { POSTS_PAGE_SIZE } from "../../lib/pagination.mjs";
 import { getCollection } from "astro:content";
 import { comparePosts } from "../../lib/taxonomy";
 import {
@@ -31,17 +33,23 @@ const { locale, activeLocales, allPosts } = Astro.props;
 const { config } = loadSite();
 const posts = filterPostsByLocale(allPosts, locale, config.site.locale).sort(comparePosts);
 const feedUrl = posts.length > 0 ? undefined : null;
-const latest = posts.slice(0, 5);
 const currentPath = localeRoutePath(locale, config.site.locale, "");
+const lastPage = Math.max(1, Math.ceil(posts.length / POSTS_PAGE_SIZE));
 const page = {
-  data: latest,
+  data: posts.slice(0, POSTS_PAGE_SIZE),
   currentPage: 1,
-  lastPage: 1,
-  total: latest.length,
-  size: 5,
+  lastPage,
+  total: posts.length,
+  size: POSTS_PAGE_SIZE,
   start: 0,
-  end: Math.max(0, latest.length - 1),
-  url: { current: currentPath, prev: undefined, next: undefined, first: undefined, last: undefined },
+  end: Math.min(POSTS_PAGE_SIZE, posts.length) - 1,
+  url: {
+    current: currentPath,
+    prev: undefined,
+    next: lastPage > 1 ? `${currentPath}posts/2/` : undefined,
+    first: undefined,
+    last: lastPage > 1 ? `${currentPath}posts/${lastPage}/` : undefined,
+  },
 };
 const alts = routeAlternates(activeLocales, config.site.locale, config.locales, "");
 const alternates = alts
@@ -59,4 +67,5 @@ const t = uiStrings(locale);
   <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   <h1 class="sr-only">{t.recentPosts}</h1>
   <PostPage page={page} />
+  {lastPage > 1 && <Pagination page={page} basePath={`${currentPath}posts/`} lang={locale} />}
 </MainGridLayout>
