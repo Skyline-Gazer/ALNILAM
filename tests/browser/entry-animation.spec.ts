@@ -7,7 +7,7 @@ import { test, expect } from "@playwright/test";
 // The deterministic check is the CSS invariant; the press test documents the user-visible effect.
 
 const ORIGINS = ["http://127.0.0.1:4323", "http://127.0.0.1:4324/ALNILAM"];
-const LISTING = "/categories/release/";
+const LISTING = "/categories/guide/";
 
 for (const origin of ORIGINS) {
   const label = new URL(origin).pathname || "/";
@@ -34,8 +34,8 @@ for (const origin of ORIGINS) {
 
   test(`a press that outlives the entry window still navigates ${label}`, async ({ page }) => {
     await page.goto(`${origin}${LISTING}`, { waitUntil: "networkidle" });
-    await page.locator('a[href$="/categories/release/2/"]').filter({ visible: true }).first().click();
-    const prev = page.locator('a[href$="/categories/release/"]').filter({ visible: true }).first();
+    await page.locator(`a[href$="${LISTING}2/"]`).filter({ visible: true }).first().click();
+    const prev = page.locator(`a[href$="${LISTING}"]`).filter({ visible: true }).first();
     const box = await prev.boundingBox();
     expect(box, "previous-page link must exist on page 2").not.toBeNull();
     const x = box!.x + box!.width / 2;

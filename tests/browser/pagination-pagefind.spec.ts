@@ -3,11 +3,9 @@ import { expect, test, type Page } from "@playwright/test";
 /**
  * Pagination + Pagefind end-to-end regression (Issue #63, P4/T02).
  *
- * The demo Site ships 14 published articles across zh-CN / en / ja, but each
- * listing is scoped to one locale's corpus (#35): the default zh-CN list holds 7
- * articles (pageSize 5 -> 2 pages) and Pagefind builds per-language indexes.
- * Cover page-2 access, per-locale unique-keyword search with real
- * click-through, and root + /ALNILAM/ deployments.
+ * Every listing is scoped to one locale's corpus (#35) and Pagefind builds per-language indexes.
+ * Cover page-2 access, per-locale body and title search with real click-through,
+ * and root + /ALNILAM/ deployments.
  */
 
 const ROOT = process.env.ALNILAM_TEST_ROOT_URL ?? "http://127.0.0.1:4323";
@@ -101,16 +99,16 @@ for (const [name, origin] of deployments) {
 			expect(response?.status()).toBe(200);
 			const input = await openSearch(page, "mobile");
 			await input.click();
-			await input.fill("Pagination sample");
-			const result = page.locator("#search-panel").getByRole("link").filter({ hasText: "Pagination sample" }).first();
+			await input.fill("Organize posts with tags and archives");
+			const result = page.locator("#search-panel").getByRole("link").filter({ hasText: "Organize posts with tags and archives" }).first();
 			await expect(result).toBeVisible({ timeout: 15_000 });
-			await expect(result).toHaveAttribute("href", `${base}/en/posts/pagination-sample/`);
+			await expect(result).toHaveAttribute("href", `${base}/en/posts/organize-your-blog/`);
 			await info.attach(`pagefind-title-${name}-390x844.png`, {
 				body: await page.screenshot({ animations: "disabled" }),
 				contentType: "image/png",
 			});
 			await result.click();
-			await expect(page).toHaveURL(`${testOrigin}/en/posts/pagination-sample/`);
+			await expect(page).toHaveURL(`${testOrigin}/en/posts/organize-your-blog/`);
 		} finally {
 			await context.close();
 		}
@@ -119,9 +117,9 @@ for (const [name, origin] of deployments) {
 	test(`localized search routes use the current language and deployment base ${name}`, async ({ page }) => {
 		const base = new URL(origin).pathname.replace(/\/$/, "");
 		for (const [prefix, label, query, expected] of [
-			["", "搜索文章", "萤火虫索引", "/posts/pagination-segmentation-zh/"],
-			["/en", "Search articles", "comet-locator", "/en/posts/pagination-sample/"],
-			["/ja", "記事を検索", "ページネーション", "/ja/posts/"],
+			["", "搜索文章", "用分类、标签和归档整理博客", "/posts/organize-your-blog/"],
+			["/en", "Search articles", "Organize posts with tags and archives", "/en/posts/organize-your-blog/"],
+			["/ja", "記事を検索", "カテゴリとタグで記事を整理する", "/ja/posts/"],
 		] as const) {
 			await page.goto(`${origin}${prefix}/search/`, { waitUntil: "networkidle" });
 			await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
@@ -143,6 +141,12 @@ for (const [name, origin] of deployments) {
 		await page.goto(`${origin}/posts/`, { waitUntil: "networkidle" });
 
 		await expect(page.locator(".m3-blog-postcard")).toHaveCount(5);
+		// The published count is content, not contract. Read the last page from
+		// page 1 and require page 2 to agree with it instead of pinning a number
+		// that rots as soon as a Guide is added or removed.
+		const firstPage = await page.locator("main").innerText();
+		const total = Number(/第\s*1\s*\/\s*(\d+)\s*页/.exec(firstPage)?.[1] ?? NaN);
+		expect(Number.isInteger(total) && total >= 2, `page 1 announces ${total} pages`).toBe(true);
 		// Locale content policy (#35): the unlocalized list contains no locale-prefixed article.
 		const firstPageHrefs = await page.locator(".m3-blog-postcard a[href*='/posts/']").evaluateAll((links) =>
 			links.map((link) => link.getAttribute("href") ?? ""),
@@ -155,7 +159,7 @@ for (const [name, origin] of deployments) {
 		await expect(page2).toBeVisible();
 		await page2.click();
 		await expect(page).toHaveURL(new RegExp("/posts/2/?$"));
-		await expect(page.locator("main")).toContainText("第 2/2 页");
+		await expect(page.locator("main")).toContainText(`第 2/${total} 页`);
 		await expect(page.locator(".m3-blog-postcard").first()).toBeVisible();
 		// Back to page 1 via the visible pagination control.
 		const page1 = page.locator('a[href$="/posts/"]').filter({ visible: true }).first();
@@ -164,22 +168,57 @@ for (const [name, origin] of deployments) {
 		await context.close();
 	});
 
-	test(`pagefind zh-CN unique keyword finds and opens the zh article ${name}`, async ({ browser }) => {
-		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
-		const page = await context.newPage();
-		await page.goto(`${origin}/`, { waitUntil: "networkidle" });
+	for (const { prefix, locale, mode, query } of [
+		{ prefix: "", locale: "zh-CN", mode: "desktop", query: "归档按发布日期" },
+		{ prefix: "/en", locale: "en", mode: "desktop", query: "narrower topics" },
+		{ prefix: "/ja", locale: "ja", mode: "mobile", query: "順番に読む記事" },
+	] as const) {
+		test(`Pagefind matches ${locale} article body text ${name}`, async ({ page }) => {
+			const slug = "/posts/organize-your-blog/";
+			const resultPath = new URL(`${origin}${prefix}${slug}`).pathname;
+			const postsPath = new URL(`${origin}${prefix}/posts/`).pathname;
+			if (mode === "mobile") await page.setViewportSize({ width: 390, height: 844 });
+			await page.goto(`${origin}${prefix}/`, { waitUntil: "networkidle" });
+			const input = await openSearch(page, mode);
+			await input.fill(query);
+			const results = page.locator("#search-panel").getByRole("link");
+			await expect(results.first()).toHaveAttribute("href", resultPath);
+			const hrefs = await results.evaluateAll((links) => links.map((link) => new URL((link as HTMLAnchorElement).href).pathname));
+			expect(new Set(hrefs).size).toBe(hrefs.length);
+			for (const href of hrefs) {
+				expect(href.startsWith(postsPath)).toBe(true);
+				expect(href.slice(postsPath.length)).toMatch(/^[^/]+\/$/);
+			}
+			await results.first().click();
+			await expect(page).toHaveURL(`${origin}${prefix}${slug}`);
+			await expect(page.locator("html")).toHaveAttribute("lang", locale);
+			await expect(page.locator(".markdown-content[data-pagefind-body]")).toContainText(query);
+			await expect(page.locator("main h1")).not.toContainText(query);
+			const description = await page.locator('meta[name="description"]').getAttribute("content");
+			expect(description).not.toContain(query);
+		});
+	}
 
+	test(`Pagefind excludes the draft note and retired English fixture ${name}`, async ({ page }) => {
+		await page.goto(`${origin}/en/`, { waitUntil: "networkidle" });
 		const input = await openSearch(page, "desktop");
-		const href = await searchAndClickFirstResult(page, input, "萤火虫索引");
-		expect(href).toContain("pagination-segmentation-zh");
-		await expect(page.locator("main h1")).toBeVisible();
-		await context.close();
+		const panel = page.locator("#search-panel");
+		const results = panel.getByRole("link");
+		const status = panel.getByRole("status");
+		for (const query of ["comet-locator", "unpublished note stays out"]) {
+			// Reset through a known match so a previous empty response cannot satisfy this query.
+			await input.fill("narrower topics");
+			await expect(results.first()).toHaveAttribute("href", new URL(`${origin}/en/posts/organize-your-blog/`).pathname);
+			await input.fill(query);
+			await expect(status).toHaveText("No results");
+			await expect(results).toHaveCount(0);
+		}
 	});
 
 	for (const { width, locale, query } of [
-		{ width: 1024, locale: "en", query: "comet-locator" },
-		{ width: 1440, locale: "en", query: "comet-locator" },
-		{ width: 1024, locale: "ja", query: "ページネーション" },
+		{ width: 1024, locale: "en", query: "Organize posts with tags and archives" },
+		{ width: 1440, locale: "en", query: "Organize posts with tags and archives" },
+		{ width: 1024, locale: "ja", query: "カテゴリとタグで記事を整理する" },
 	]) {
 		test(`desktop search keeps ${locale} navigation usable at ${width}px ${name}`, async ({ page }) => {
 			await page.setViewportSize({ width, height: 900 });
@@ -193,7 +232,7 @@ for (const [name, origin] of deployments) {
 			await input.fill(query);
 			const result = page.locator("#search-panel").getByRole("link").first();
 			await expect(result).toBeVisible({ timeout: 15_000 });
-			await expect(result).toHaveAttribute("href", new URL(`${origin}/${locale}/posts/pagination-sample/`).pathname);
+			await expect(result).toHaveAttribute("href", new URL(`${origin}/${locale}/posts/organize-your-blog/`).pathname);
 			const capsule = page.locator(".top-app-bar__search-shell");
 			await capsule.evaluate(async (element) => {
 				await Promise.all(element.getAnimations().map((animation) => animation.finished));
@@ -222,42 +261,15 @@ for (const [name, origin] of deployments) {
 		});
 	}
 
-	test(`pagefind en unique keyword finds and opens the en article ${name}`, async ({ browser }) => {
-		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
-		const page = await context.newPage();
-		// Search from the en post itself so the locale context is en.
-		await page.goto(`${origin}/en/posts/pagination-sample/`, { waitUntil: "networkidle" });
-
-		const input = await openSearch(page, "desktop");
-		const href = await searchAndClickFirstResult(page, input, "comet-locator");
-		expect(href).toContain(`${new URL(origin).pathname.replace(/\/$/, "")}/en/posts/pagination-sample/`);
-		await expect(page.locator("main h1")).toBeVisible();
-		await context.close();
-	});
-
-	test(`pagefind ja unique keyword finds the ja article ${name}`, async ({ browser }) => {
-		const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
-		const page = await context.newPage();
-		await page.goto(`${origin}/ja/posts/pagination-sample/`, { waitUntil: "networkidle" });
-
-		const input = await openSearch(page, "mobile");
-		// Pagefind's ja wasm segments standard words; ほしぞろ手帖-style
-		// hiragana/kanji compounds do not match, ページネーション does.
-		const href = await searchAndClickFirstResult(page, input, "ページネーション");
-		expect(href).toContain(`${new URL(origin).pathname.replace(/\/$/, "")}/ja/posts/`);
-		expect(href).not.toContain("/posts/ja/");
-		await context.close();
-	});
-
 	test(`pagefind returns the visible English title ${name}`, async ({ browser }) => {
 		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
 		const page = await context.newPage();
 		const base = new URL(origin).pathname.replace(/\/$/, "");
 		await page.goto(`${origin}/en/`, { waitUntil: "networkidle" });
 		const input = await openSearch(page, "desktop");
-		const href = await searchAndClickFirstResult(page, input, "Pagination sample");
-		expect(href).toBe(`${base}/en/posts/pagination-sample/`);
-		await expect(page.locator("main h1")).toHaveText("Pagination sample");
+		const href = await searchAndClickFirstResult(page, input, "Organize posts with tags and archives");
+		expect(href).toBe(`${base}/en/posts/organize-your-blog/`);
+		await expect(page.locator("main h1")).toHaveText("Organize posts with tags and archives");
 		await context.close();
 	});
 
@@ -276,9 +288,9 @@ for (const [name, origin] of deployments) {
 		const base = new URL(origin).pathname.replace(/\/$/, "");
 		await page.goto(`${origin}/en/`, { waitUntil: "networkidle" });
 		const input = await openSearch(page, "desktop");
-		const href = await searchAndClickFirstResult(page, input, "Pagination sample");
+		const href = await searchAndClickFirstResult(page, input, "Organize posts with tags and archives");
 		expect(metadataRequests).toBeGreaterThanOrEqual(2);
-		expect(href).toBe(`${base}/en/posts/pagination-sample/`);
+		expect(href).toBe(`${base}/en/posts/organize-your-blog/`);
 		await context.close();
 	});
 
@@ -290,7 +302,7 @@ for (const [name, origin] of deployments) {
 		const page = await context.newPage();
 		await page.goto(`${origin}/en/`, { waitUntil: "networkidle" });
 		const input = await openSearch(page, "desktop");
-		await input.fill("Pagination sample");
+		await input.fill("Organize posts with tags and archives");
 		const panel = page.locator("#search-panel");
 		await expect(panel.getByRole("status")).toHaveText("Search is temporarily unavailable. Please try again.", { timeout: 15_000 });
 		await expect(panel.getByText("No results", { exact: true })).toHaveCount(0);

@@ -22,14 +22,25 @@ CURRENT_DOCS = (
 )
 
 
+# Site content links are URL-relative, not source-relative: a post under
+# sites/demo/content/posts/ is published at /posts/<slug>/, so the same relative
+# path means different things in the tree and in the browser. The browser
+# acceptance verifies every emitted link in both deployment bases, so this
+# repository-file check applies to documentation only.
+SITE_CONTENT_PREFIX = 'sites/demo/content/'
+
+
 def broken_links(root, files):
     errors = []
     for relative in files:
         source = root / relative
+        in_site_content = relative.replace('\\', '/').startswith(SITE_CONTENT_PREFIX)
         for target in re.findall(r'\[[^\]\n]+\]\(([^)\n]+)\)', source.read_text()):
             target = target.strip('<>')
             url = urlsplit(target)
             if url.scheme or not url.path or target.startswith('/'):
+                continue
+            if in_site_content:
                 continue
             if not (source.parent / unquote(url.path)).exists():
                 errors.append(f'{relative}: {target}')
@@ -213,6 +224,21 @@ class DocsTests(unittest.TestCase):
             root = Path(directory)
             (root / 'index.md').write_text('[bad](missing.md) [local](#anchor) [web](https://example.com)')
             self.assertEqual(broken_links(root, ['index.md']), ['index.md: missing.md'])
+
+    def test_site_content_links_are_verified_by_the_browser_not_the_tree(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            content = root / 'sites' / 'demo' / 'content' / 'posts'
+            content.mkdir(parents=True)
+            source = 'sites/demo/content/posts/guide.md'
+            # Both a route link and an asset link are URL-relative once published,
+            # so neither may be judged against the source tree.
+            (content / 'guide.md').write_text('[route](../other/) [asset](../../site-assets/x.svg)')
+            self.assertEqual(broken_links(root, [source]), [])
+            # Documentation outside Site content keeps the strict check.
+            (root / 'docs').mkdir()
+            (root / 'docs' / 'guide.md').write_text('[file](missing.md)')
+            self.assertEqual(broken_links(root, ['docs/guide.md']), ['docs/guide.md: missing.md'])
 
     def test_adr_identifiers_are_unique_and_duplicate_ids_are_rejected(self):
         self.assertEqual(duplicate_adr_ids(ROOT), [])
