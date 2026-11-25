@@ -46,6 +46,25 @@ function syncTableOfContents(container: HTMLElement): void {
 		];
 	});
 
+	const base = headings.reduce(
+		(minimum, heading) => Math.min(minimum, heading.depth),
+		Number.POSITIVE_INFINITY,
+	);
+	const mobileDisclosure = document.querySelector<HTMLDetailsElement>("[data-mobile-article-toc]");
+	const mobileNav = mobileDisclosure?.querySelector<HTMLElement>("nav");
+	if (mobileDisclosure && mobileNav) {
+		const topHeadings = headings.filter((heading) => heading.depth === base);
+		mobileNav.replaceChildren();
+		for (const heading of topHeadings) {
+			const anchor = document.createElement("a");
+			anchor.className = "mtc-row flex items-center rounded-lg px-2 m3-state-layer";
+			anchor.href = `#${heading.slug}`;
+			anchor.textContent = heading.text;
+			mobileNav.append(anchor);
+		}
+		mobileDisclosure.classList.toggle("hidden", topHeadings.length < 2);
+	}
+
 	const toc =
 		document.querySelector<DynamicTableOfContents>("table-of-contents");
 	const nav = toc?.querySelector<HTMLElement>(".m3-blog-toc");
@@ -53,10 +72,6 @@ function syncTableOfContents(container: HTMLElement): void {
 
 	nav.setAttribute("aria-label", i18n(I18nKey.tableOfContents));
 	nav.replaceChildren();
-	const base = headings.reduce(
-		(minimum, heading) => Math.min(minimum, heading.depth),
-		Number.POSITIVE_INFINITY,
-	);
 	let counter = 0;
 	for (const heading of headings) {
 		const relativeDepth = heading.depth - base;
