@@ -1,0 +1,57 @@
+---
+/**
+ * ALNILAM mobile article contents (#194).
+ *
+ * A native disclosure shown below `lg` only, replacing the floating TOC button on phones: the
+ * 49 px floating cluster overlapped article text at every phone width (45 px of a 264–374 px
+ * column), and the previous implementation answered that by hiding the controls with
+ * `visibility: hidden` — removing the affordance exactly where a long article needs it. An
+ * in-flow disclosure cannot cover anything, needs no geometry measurement, and keeps native
+ * keyboard and screen reader behaviour (`details`/`summary`, APG disclosure pattern).
+ *
+ * Top-level headings only: the heaviest Demo article sits ~1 KiB under the enforced 64 KiB page
+ * budget (`scripts/artifact-check.mjs`), so a second full nested list does not fit; the desktop
+ * sidebar and floating panel remain the full-depth views.
+ */
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+
+interface TocHeading {
+	depth: number;
+	text: string;
+	slug: string;
+}
+
+interface Props {
+	headings?: TocHeading[];
+	class?: string;
+}
+
+const { headings = [], class: className } = Astro.props;
+const minDepth = Math.min(...headings.map((heading) => heading.depth));
+const visible = headings.filter((heading) => heading.depth === minDepth);
+const hasVisible = visible.length >= 2;
+---
+
+<details
+	class:list={[
+		"lg:hidden mb-4 rounded-xl bg-[var(--m3e-color-surface-container,var(--card-bg))]",
+		{ hidden: !hasVisible },
+		className,
+	]}
+	data-mobile-article-toc
+>
+	<summary class="mtc-row flex cursor-pointer items-center px-4 font-medium">
+		{i18n(I18nKey.tableOfContents)}
+	</summary>
+	<nav class="flex flex-col px-2 pb-2">
+		{visible.map((heading) => (
+			<a
+				class="mtc-row flex items-center rounded-lg px-2 m3-state-layer"
+				href={`#${heading.slug}`}
+			>
+				{heading.text}
+			</a>
+		))}
+	</nav>
+</details>

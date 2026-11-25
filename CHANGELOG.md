@@ -13,10 +13,15 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 
 - Retire the Gallery/Albums, Moments and Music product features: no `/albums/` or `/moments/` route, navigation link, client module, content collection or Demo fixture is emitted any more. The `gallery` and `moments` Site config keys remain accepted so existing Sites keep building, are ignored, and now print a one-line build warning; remove them from `alnilam.config.yaml`. Article image lightboxes are unchanged ([#203](https://github.com/Skyline-Gazer/ALNILAM/issues/203)).
 
+### Changed
+
+- The article category bar and the sidebar tag widget are now contextual opt-in decided by the layout page capability instead of a global default with a route denylist: the bar renders only on home and article pages, the tag cloud only in blog contexts (home, article, listing, category and tag routes), and every other capability is excluded — series, module pages and static Site pages opt in to nothing, while a route that declares no capability at all, such as search, inherits nothing either. Site-identity Profile stays on every page, and the 404 page now declares the excluded `notFound` capability rather than impersonating the home context ([#204](https://github.com/Skyline-Gazer/ALNILAM/issues/204)).
+
 ### Fixed
 
 - Keep desktop navigation links readable and clickable while the header search expands, including at the desktop breakpoint and with translated labels ([#189](https://github.com/Skyline-Gazer/ALNILAM/issues/189)).
 - Stop the component entry animation from moving interactive content ([#213](https://github.com/Skyline-Gazer/ALNILAM/pull/213), [#194](https://github.com/Skyline-Gazer/ALNILAM/issues/194)): components now fade opacity only, and the reading column carries no animation delay. The old slide moved every link inside the animated container by up to 32 px after it was already tappable, so a press whose release landed during the slide was cancelled by the browser and the tap silently did nothing. Measured on `/categories/release/`: 4 of 8 slow "previous page" taps lost before, 0 of 8 after; the new `tests/browser/entry-animation.spec.ts` fails 3 of 4 on the previous animation and passes 4 of 4 after.
+- Article reading controls no longer float over the text on phones and narrow viewports ([#194](https://github.com/Skyline-Gazer/ALNILAM/issues/194)): below 1024 px (`lg`) the reading column keeps its full width and carries an in-flow contents disclosure at the top of the article plus an in-flow back-to-top link at the end, both with 44 px targets; the floating cluster is not rendered there, non-desktop floating TOC markup is omitted, and text-obstruction measurement is skipped. Desktop (`>= 1024 px`) keeps the existing cluster, panel and #211 focus behaviour. The former mobile contract ("the cluster must be visible, or hidden when it overlaps") could not hold on long articles: the 49 px cluster intruded 45 px into a 264–374 px column (and still overlapped 4 text blocks at 768 px single-column layout), so the outcome depended on host text metrics.
 
 ## [0.2.0] - 2026-11-20
 
