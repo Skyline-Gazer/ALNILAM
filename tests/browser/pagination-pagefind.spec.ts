@@ -141,7 +141,8 @@ for (const [name, origin] of deployments) {
 		const continuation = page.locator('a[href$="/posts/2/"]').filter({ visible: true }).first();
 		await expect(continuation).toBeVisible();
 		await continuation.click();
-		await expect(page).toHaveURL(new RegExp("/posts/2/?$"));
+		// Full-URL assertion: a continuation link that dropped the /ALNILAM prefix must fail.
+		await expect(page).toHaveURL(new RegExp(`^${origin.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/posts/2/?$`));
 		await expect(page.locator("main")).toContainText(/第\s*2\//);
 	});
 
