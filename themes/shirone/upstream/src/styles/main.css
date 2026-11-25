@@ -195,3 +195,15 @@ html.motion-reduced *::after {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
 }
+
+/* #194: mobile article contents rows. A utility class keeps the per-page markup small; the
+ * heaviest Demo article is within 60 bytes of the enforced 64 KiB page budget. */
+.mtc-row {
+    min-height: 44px;
+}
+
+/* #194: heading anchors must not land under the fixed app bar (deep links and the mobile contents
+ * disclosure both use plain `#slug` anchors). */
+.markdown-content :is(h1, h2, h3, h4, h5, h6) {
+    scroll-margin-top: 5rem;
+}

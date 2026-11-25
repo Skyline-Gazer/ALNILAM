@@ -5,7 +5,7 @@ import {spawn, execFileSync} from 'node:child_process';
 import {setTimeout as delay} from 'node:timers/promises';
 import {pathToFileURL} from 'node:url';
 import {chromium} from '@playwright/test';
-import {trackChild, stopChildren, assertSuccessfulResponses, validateLighthouseReports, validateLighthouseRegression} from './cnb-evidence.mjs';
+import {trackChild, stopChildren, assertSuccessfulResponses, validateLighthouseReports, assertLighthouseCLSBudget, validateLighthouseRegression} from './cnb-evidence.mjs';
 import {summarizeLighthouseReports} from '../p1/lighthouse-summary.mjs';
 const trustedSourceRoot = process.env.CNB_TRUSTED_SOURCE_ROOT;
 if (!trustedSourceRoot) throw Error('Trusted dependency root is required');
@@ -68,7 +68,8 @@ try {
   await assertSuccessfulResponses(urls);
   if (await run(['autorun', `--config=.tmp/cnb/lighthouse-${formFactor}.json`, '--failOnUploadFailure']) !== 0) throw Error('Lighthouse collection/upload failed');
   const manifest = JSON.parse(fs.readFileSync(path.join(reportDir, 'manifest.json'), 'utf8'));
-  validateLighthouseReports(manifest, item => {if (!fs.statSync(item.htmlPath).size) throw Error('Missing HTML');return JSON.parse(fs.readFileSync(item.jsonPath, 'utf8'));}, urls, started, runsPerURL);
+  const normalReports = validateLighthouseReports(manifest, item => {if (!fs.statSync(item.htmlPath).size) throw Error('Missing HTML');return JSON.parse(fs.readFileSync(item.jsonPath, 'utf8'));}, urls, started, runsPerURL);
+  assertLighthouseCLSBudget(normalReports, clsBudget);
   const rootProvenance = JSON.parse(fs.readFileSync(path.join('dist/site', 'alnilam-provenance.json'), 'utf8'));
   const nestedProvenance = JSON.parse(fs.readFileSync(path.join('dist/nested-base', 'alnilam-provenance.json'), 'utf8'));
   const siteDigest = rootProvenance.site?.digest;

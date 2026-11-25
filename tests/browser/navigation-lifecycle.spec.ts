@@ -59,30 +59,28 @@ for (const origin of ["http://127.0.0.1:4323", "http://127.0.0.1:4324/ALNILAM"])
           await expect(menu).toBeFocused();
         }
         if (width === 390) {
-          const tocBtn = page.locator("#fab-toc-btn button");
-          const tocPanel = page.locator("#floating-toc-panel");
+          // #194: below 1024 px (`lg`) the contents are an in-flow disclosure, not a floating panel.
+          const disclosure = page.locator("[data-mobile-article-toc]");
+          await expect(disclosure).toBeVisible();
           const articleY = await page.locator(".markdown-content").evaluate((el) => el.getBoundingClientRect().top);
-          await tocBtn.focus();
-          await page.keyboard.press("Enter");
-          await expect(tocPanel).toHaveClass(/is-open/);
-          expect(await page.locator(".markdown-content").evaluate((el) => el.getBoundingClientRect().top)).toBe(articleY);
-          const link = tocPanel.locator('a[href^="#"]').last();
+          await disclosure.locator("summary").click();
+          await expect(disclosure).toHaveAttribute("open", "");
+          // An in-flow disclosure grows in its own space: it pushes the article instead of
+          // covering it. Assert no overlap rather than "the article did not move".
+          const [disclosureBottom, articleTop] = await page.evaluate(() => {
+            const toc = document.querySelector("[data-mobile-article-toc]")!;
+            const content = document.querySelector(".markdown-content")!;
+            return [toc.getBoundingClientRect().bottom, content.getBoundingClientRect().top];
+          });
+          expect(disclosureBottom).toBeLessThanOrEqual(articleTop + 1);
+          const link = disclosure.locator('nav a[href^="#"]').last();
           const fragment = await link.getAttribute("href");
           await link.click();
           await expect(page).toHaveURL(`${origin}/posts/getting-started/${fragment}`);
-          await expect(tocPanel).not.toHaveClass(/is-open/);
           const headingTop = await page.locator(fragment!).evaluate((el) => el.getBoundingClientRect().top);
           expect(headingTop).toBeGreaterThanOrEqual(60);
-          await tocBtn.click();
-          await expect(tocPanel).toHaveClass(/is-open/);
-          await tocPanel.locator('a[href^="#"]').first().focus();
-          await page.keyboard.press("Escape");
-          await expect(tocBtn).toBeFocused();
-          await expect(tocPanel).not.toHaveClass(/is-open/);
           await sample("toc-scroll");
-          await tocBtn.click();
           await page.screenshot({ path: info.outputPath("reading-toc.png"), fullPage: true, animations: "disabled" });
-          await page.keyboard.press("Escape");
         } else {
           const toc = page.locator("#toc");
           await expect(toc).toBeVisible();

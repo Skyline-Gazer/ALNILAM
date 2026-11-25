@@ -2,6 +2,8 @@
 
 **Execution status:** `MANUAL_NOT_RUN`. The current host is Linux and cannot run macOS Safari or VoiceOver. This is an executable procedure, not evidence of a screen-reader pass. The existing axe and Playwright results do not replace this manual check.
 
+Current automated engineering evidence is recorded in [P6-74-EVIDENCE.md](P6-74-EVIDENCE.md). It does not change this checklist's manual execution status.
+
 ## Run record
 
 Fill this in before testing. Use the existing public Demo stable alias; do not use the formal Production project or a protected Preview.
