@@ -10,6 +10,10 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 
 - Retire the Gallery/Albums, Moments and Music product features: no `/albums/` or `/moments/` route, navigation link, client module, content collection or Demo fixture is emitted any more. The `gallery` and `moments` Site config keys remain accepted so existing Sites keep building, are ignored, and now print a one-line build warning; remove them from `alnilam.config.yaml`. Article image lightboxes are unchanged ([#203](https://github.com/Skyline-Gazer/ALNILAM/issues/203)).
 
+### Changed
+
+- The article category bar and the sidebar tag widget are now contextual opt-in decided by the layout page capability instead of a global default with a route denylist: the bar renders only on home and article pages, the tag cloud only in blog contexts (home, article, listing, category and tag routes), and every other capability is excluded — series, module pages and static Site pages opt in to nothing, while a route that declares no capability at all, such as search, inherits nothing either. Site-identity Profile stays on every page, and the 404 page now declares the excluded `notFound` capability rather than impersonating the home context ([#204](https://github.com/Skyline-Gazer/ALNILAM/issues/204)).
+
 ### Fixed
 
 - Keep desktop navigation links readable and clickable while the header search expands, including at the desktop breakpoint and with translated labels ([#189](https://github.com/Skyline-Gazer/ALNILAM/issues/189)).

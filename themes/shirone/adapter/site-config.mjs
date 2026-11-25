@@ -25,7 +25,11 @@ export const userConfigOverrides = {
   postList: {pageSize: 5, layout: {mode: 'list', cover: 'right', cardWidth: 'regular'}},
   sidebar: {enable: true, arrangement: 'single', side: 'left', components: [
     {type: 'profile', enable: true, slot: 'top'},
-    {type: 'tags', enable: true, slot: 'sticky'},
+    // ALNILAM (#204): upstream treats an omitted `pages` list as "show everywhere". The tag
+    // cloud is article taxonomy, so it opts in to the blog contexts explicitly and stays out
+    // of series, static Site pages, search, 404 and module pages. Profile is site identity and
+    // keeps the documented everywhere default.
+    {type: 'tags', enable: true, slot: 'sticky', pages: ['home', 'post', 'archive', 'categories', 'tags']},
     {type: 'toc', enable: true, slot: 'sticky', pages: ['post']},
   ]},
   // Native nav links bind both href (`url`) and active-route key (`pageKey`, resolved by `resolvePageKey`).
