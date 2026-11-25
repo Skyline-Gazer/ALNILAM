@@ -5,12 +5,10 @@ import {
   activeContentLocales,
   canonicalUrl,
   filterPostsByLocale,
-  localeRoutePath,
   routeAlternates,
-  withBase,
 } from "../../../lib/i18n.mjs";
+import { loadSiteTaxonomy, tagListing } from "../../../lib/taxonomy";
 import { loadSite } from "../../../lib/site-source.mjs";
-import { canonicalTagSlug, loadSiteTaxonomy, tagDisplayLabel } from "../../../lib/taxonomy";
 
 export async function getStaticPaths() {
   const { root, config } = loadSite();
@@ -24,23 +22,8 @@ export async function getStaticPaths() {
     .filter((locale) => locale !== config.site.locale)
     .map((locale) => {
       const localePosts = filterPostsByLocale(posts, locale, config.site.locale);
-      const countMap = new Map<string, number>();
-      for (const post of localePosts) {
-        const seenInPost = new Set<string>();
-        for (const rawTag of post.data.tags) {
-          const slug = canonicalTagSlug(rawTag, taxonomy.tags);
-          if (seenInPost.has(slug)) continue;
-          seenInPost.add(slug);
-          countMap.set(slug, (countMap.get(slug) ?? 0) + 1);
-        }
-      }
-      const tags = [...countMap.entries()]
-        .sort(([a], [b]) => a.toLowerCase().localeCompare(b.toLowerCase()))
-        .map(([slug, count]) => ({
-          name: tagDisplayLabel(slug, taxonomy.tags, locale),
-          count,
-          url: withBase(localeRoutePath(locale, config.site.locale, `tags/${encodeURIComponent(slug)}`)),
-        }));
+      // Same helper as the default-locale route; only the locale argument differs (#35).
+      const tags = tagListing(posts, { locale, defaultLocale: config.site.locale, taxonomy });
       return {
         params: { lang: locale },
         props: { locale, tags, activeLocales, feedUrl: localePosts.length > 0 ? undefined : null },

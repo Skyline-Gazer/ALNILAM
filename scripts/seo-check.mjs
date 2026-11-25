@@ -267,11 +267,21 @@ const defaultFeedFile = path.join(outDir, "rss.xml");
 const localizedFeedLanguages = new Set();
 let defaultFeedLanguage = null;
 
+// Only configured locales emit a feed (/rss.xml or /<locale>/rss.xml); an unconfigured-locale
+// article keeps its post URL (#35) without publishing a locale listing or feed.
+const configuredLocales = new Set();
+for (const page of pages) {
+  const unlocalized = unlocalizedPagePath(page.relative);
+  if (unlocalized === "index.html") {
+    const language = /<html[^>]*\blang="([^"]+)"/i.exec(fs.readFileSync(page.file, "utf8"))?.[1];
+    if (language) configuredLocales.add(language);
+  }
+}
 const publishedPostLanguages = new Set();
 for (const page of pages) {
   if (!selfCanonical.has(norm(page.url)) || !isPostRoute(page.relative)) continue;
   const language = /<html[^>]*\blang="([^"]+)"/i.exec(fs.readFileSync(page.file, "utf8"))?.[1];
-  if (language) publishedPostLanguages.add(language);
+  if (language && configuredLocales.has(language)) publishedPostLanguages.add(language);
 }
 for (const file of feeds) {
   const relative = path.relative(outDir, file).replace(/\\/g, "/");

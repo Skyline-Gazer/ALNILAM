@@ -3,10 +3,12 @@ import { expect, test, type Page } from "@playwright/test";
 /**
  * Markdown render regression (Issue #66, P4/T05).
  *
- * Two demo posts exercise the covered #66 features through the real build
- * pipeline while keeping feature stylesheets split across documents:
- * - fixture-alpha-zh: expressive-code block, TOC headings, table, image.
- * - fixture-beta-zh: MDX expression, KaTeX inline + display math, mermaid diagram.
+ * The published Markdown and MDX guide exercises the covered #66 features
+ * through the real build pipeline: an expressive-code block, TOC headings, a
+ * table, a sized image with alt text, spaced inline code, the supported link
+ * forms, an MDX expression, KaTeX inline plus display math and a mermaid
+ * diagram. It replaced the fixture-alpha-zh and fixture-beta-zh filler posts so
+ * the public Demo no longer carries rendering-only articles.
  * Runs at 1440px desktop on both root and /ALNILAM/ deployments.
  */
 
@@ -15,8 +17,8 @@ const deployments = [
 	["nested", "http://127.0.0.1:4324/ALNILAM"],
 ] as const;
 
-const CODE_TOC = "/posts/fixture-alpha-zh/";
-const MATH_MERMAID = "/posts/fixture-beta-zh/";
+const CODE_TOC = "/posts/markdown-and-mdx/";
+const MATH_MERMAID = "/posts/markdown-and-mdx/";
 
 async function openArticle(page: Page, origin: string, route: string) {
 	await page.goto(`${origin}${route}`, { waitUntil: "networkidle" });

@@ -28,8 +28,13 @@ interface Props {
 }
 
 const { headings = [], class: className } = Astro.props;
+// `rehype-autolink-headings` appends a `#` anchor before Astro collects headings, so strip it the
+// same way SidebarTOC/FloatingTOCPanel do (the client path in post-decryption.ts already does).
+const stripTrailingHash = (text: string) => (text.endsWith("#") ? text.slice(0, -1) : text);
 const minDepth = Math.min(...headings.map((heading) => heading.depth));
-const visible = headings.filter((heading) => heading.depth === minDepth);
+const visible = headings
+	.filter((heading) => heading.depth === minDepth)
+	.map((heading) => ({ ...heading, text: stripTrailingHash(heading.text) }));
 const hasVisible = visible.length >= 2;
 ---
 

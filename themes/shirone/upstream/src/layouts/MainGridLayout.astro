@@ -138,9 +138,9 @@ const hasBanner =
                 </main>
             </div>
 
-			<SideBar class={sidebarClasses} currentPage={page} headings={headings}></SideBar>
+			<SideBar class={sidebarClasses} currentPage={page} headings={headings} locale={lang}></SideBar>
 			{isDualColumn(sidebarResponsive) && (
-				<SideBar id="sidebar-secondary" column="secondary" class={secondarySidebarClasses} currentPage={page} headings={headings}></SideBar>
+				<SideBar id="sidebar-secondary" column="secondary" class={secondarySidebarClasses} currentPage={page} headings={headings} locale={lang}></SideBar>
 			)}
 
             <div class="footer col-span-2 onload-animation block lg:hidden">

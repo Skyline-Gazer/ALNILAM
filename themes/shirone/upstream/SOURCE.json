@@ -30,11 +30,11 @@
     },
     {
       "path": "src/layouts/MainGridLayout.astro",
-      "sha256": "3d645390465922c65c61cc93cc3522d631acbff6885068e5f7a200aa6fa63111"
+      "sha256": "d6d4de829dd0330ce5cce516cb6add9e449958f5636b63c9abd9fa12fdfc86b0"
     },
     {
       "path": "src/layouts/Layout.astro",
-      "sha256": "49a4183e6caeb1514455fde02abdff0a71d3befff4f7021b9b5c95d2e76a7fcb"
+      "sha256": "6bc22148ba320fe3c785747721f0597cdef770808caf656aef074d5b4daa838b"
     },
     {
       "path": "src/i18n/i18nKey.ts",
@@ -950,7 +950,7 @@
     },
     {
       "path": "src/components/organisms/TopAppBar.astro",
-      "sha256": "5b0d8e3f452cac862fe26b247604591e1e6b2896b57d205175f5262074d0855b"
+      "sha256": "b794c57b64030ec952f6afe94f4643432145d80d3cb87e3576701e856ce137b1"
     },
     {
       "path": "src/components/organisms/BannerStage.astro",
@@ -1002,7 +1002,7 @@
     },
     {
       "path": "src/components/organisms/FloatingControls.astro",
-      "sha256": "05b690016063d3c9957f06f1086137e530b082b909d4a8df56fef4b43b389b38"
+      "sha256": "b336af35ceccc291fc9037881ac63accea67b1e4ca5d4470157e5148a6666286"
     },
     {
       "path": "src/components/organisms/BackToTop.astro",
@@ -1026,7 +1026,7 @@
     },
     {
       "path": "src/components/organisms/CategoryBar.astro",
-      "sha256": "38ada8b9b6d7254dc4c8d52a9660d52cd306de18a69fc8cbb4002e422eed9883"
+      "sha256": "10bfd2ececbdc1a87d22629c9dc23c91a90128c58cb2a9a672e19d866bfa747b"
     },
     {
       "path": "src/components/organisms/Footer.astro",
@@ -1050,7 +1050,7 @@
     },
     {
       "path": "src/components/organisms/PostCard.astro",
-      "sha256": "d7162b75f07ff738a00a7870a973beabf97111cf2d1c1ef623e3c246867454db"
+      "sha256": "0c17e408789537dce509c63a5716fb3d3ee27f847ef969631311bc679b332c1d"
     },
     {
       "path": "src/components/organisms/ArchivePanel.svelte",
@@ -1106,7 +1106,7 @@
     },
     {
       "path": "src/components/molecules/PostMeta.astro",
-      "sha256": "02c588b405b749912908b824d6ad806a6812d9d5725d8de713eefa0769844082"
+      "sha256": "4a0fde83baa00190cab2cf84ef66fbeb04dd2e7511369d44ade4116a7f131134"
     },
     {
       "path": "src/components/molecules/PageHeader.svelte",
@@ -1174,7 +1174,7 @@
     },
     {
       "path": "src/components/molecules/Categories.astro",
-      "sha256": "3a88c4bb651291f0662d98add360a84817210fc8b31f138818760380a6c7b1d6"
+      "sha256": "550ac3c778b203a39ca5857693da584bd79245608fd4070caeca0c6cff881001"
     },
     {
       "path": "src/components/molecules/MermaidDiagramViewer.svelte",
@@ -1190,7 +1190,7 @@
     },
     {
       "path": "src/components/molecules/Tags.astro",
-      "sha256": "9d7d1b903fed9b5f0723a96e1c57b061acc5f091f8080e653f966b0e886fbc08"
+      "sha256": "768aeac7e86137a9517b08628e96abd22b700850c235ccc2fca8999577e3b7ef"
     },
     {
       "path": "src/components/molecules/LastUpdatedNotice.astro",
@@ -1238,7 +1238,7 @@
     },
     {
       "path": "src/components/molecules/MobileArticleTOC.astro",
-      "sha256": "935737a71f568242106edc89616a2dedef2be449e8646f68ee458cde03cbf9b2"
+      "sha256": "1099e69555c1346e4065e6365b212f8289d3492e9fc357c67cf0788973941583"
     },
     {
       "path": "src/components/system/ConfigCarrier.astro",
@@ -1478,7 +1478,7 @@
     },
     {
       "path": "src/components/atoms/blog/PostMeta.astro",
-      "sha256": "fb30e424ee709385c832e3ac28e368b5df8c67e1f3581b8c4902446df1bc6fb7"
+      "sha256": "1c7e13514f819ad40dd477059411e786eb3418425833fccff4d8bc25a84cee82"
     },
     {
       "path": "src/components/atoms/blog/PagePagination.astro",
@@ -1598,7 +1598,7 @@
     },
     {
       "path": "src/pages/posts/[...slug].astro",
-      "sha256": "f2e384e9a948df50842fd0d53c07047711417327082be0871a8b50d651ca3ef6"
+      "sha256": "d113341c51103e73ccebf49cf0cf0898f06188f7d65331f25ad3c8940e5cda2d"
     },
     {
       "path": "src/pages/series/[slug]/index.astro",
@@ -1939,10 +1939,10 @@
     "src/layouts/Layout.astro": "Retain ALNILAM canonical and keyboard skip-link contracts in actual upstream layout. Default appearance from validated Site; omit unimplemented Atom feed link; consolidate Pagefind loader, WidgetLayout custom element and pagination jump handler into the Layout runtime script. Configure Pagefind result URLs with Astro's base. Initialize shared Markdown and Expressive Code runtimes for navigation from pages without Markdown. Emit layout variables once and omit disabled texture initialization to reduce per-page HTML. Record a pre-hydration drawer tap on documentElement so the island can replay it. Keep the display-settings toggle's aria-expanded in sync on toggle and outside-click close. Keep the localized pagination action label when the mobile jump button becomes its input.",
     "src/components/content/Markdown.astro": "Retain a separate Markdown runtime binding and share the generated Expressive Code client modules with Layout to preserve code block behavior within script budgets.",
     "src/env.d.ts": "Declare the adapter-provided Expressive Code runtime virtual module used by Layout and Markdown.",
-    "src/components/organisms/PostCard.astro": "Retain 640x360 layout dimensions for pass-through Site covers, with metadata dimensions overriding when available.",
+    "src/components/organisms/PostCard.astro": "Retain 640x360 layout dimensions for pass-through Site covers, with metadata dimensions overriding when available; Category and tag links use the article's own locale when configured, or render as plain text for unconfigured locales (#35).",
     "src/components/organisms/BannerStage.astro": "Give banner placeholders intrinsic layout dimensions; disabled banner still has no Site asset request.",
-    "src/utils/url-utils.ts": "Preserve existing ALNILAM language-prefixed post URLs, /categories/<category>/, /tags/<tag>/ and plural /archives/ paths.",
-    "src/pages/posts/[...slug].astro": "Semantic article h1; forward Core hreflang/published metadata and optional existing lazy Comments slot; emit Markdown feature stylesheets as Swup-optional links; omit upstream CommentSection mount so disabled Sites emit no Twikoo/Waline/Giscus provider chunks (Core comments remain slot-only). Renders the in-flow back-to-top action below lg / 1024 px (#194).",
+    "src/utils/url-utils.ts": "Preserve existing ALNILAM language-prefixed post URLs, /categories/<category>/, /tags/<tag>/ and plural /archives/ paths; getTagUrl/getCategoryUrl take the article or page locale and emit the locale-prefixed taxonomy route (#35 locale content policy), so a tag or category link on an English page resolves in English instead of the default-locale route; localePrefix is exported so the category bar scopes its Home/Archive links with the same rule.",
+    "src/pages/posts/[...slug].astro": "Semantic article h1; forward Core hreflang/published metadata and optional existing lazy Comments slot; emit Markdown feature stylesheets as Swup-optional links; omit upstream CommentSection mount so disabled Sites emit no Twikoo/Waline/Giscus provider chunks (Core comments remain slot-only); pass the article's own locale to PostMeta so its taxonomy chips resolve in that locale (#35). Renders the in-flow back-to-top action below lg / 1024 px (#194).",
     "src/pages/archive.astro": "Add native PageHeader for one semantic page h1; serialize only fields used by ArchivePanel to reduce archive HTML size.",
     "src/components/molecules/ImageWrapper.astro": "Preserve explicit 640x360 layout dimensions for public/remote Site covers.",
     "src/utils/setting-utils.ts": "Default to Site appearance when no stored visitor choice; keep native theme state and controls.",
@@ -1954,7 +1954,7 @@
     "src/components/organisms/Search.svelte": "Preserve request ordering, Escape/focus restoration and remove listeners on unmount using native Search/Panel. Resolve search strings from the current page locale (documentElement.lang, kept in sync on Swup views). Track the panel open state (class observer covers outside-click closing) and expose aria-expanded/aria-controls on the toggle. Keep the results panel open after a finished search and pass the localized no-results state, so an empty result set is an answer instead of a silently closed panel. The empty state follows the query of the visible input (desktop capsule above 1024px, panel input below it), so a layout switch cannot show a no-results message next to an empty input. Remove Pagefind's internal weight delimiter from result titles and excerpts.",
     "src/components/organisms/Footer.astro": "Link to existing Core rss.xml/sitemap.xml; omit unimplemented Atom route.",
     "src/components/organisms/Profile.astro": "Use configured Site name for avatar fallback; disabled About module links home.",
-    "src/components/organisms/CategoryBar.astro": "ALNILAM (#204): the category bar is article-taxonomy context navigation and now renders only for the page capabilities that opt in (`home`, `post`), decided from the layout's `page` prop instead of a pathname denylist; this supersedes the earlier #124 base-stripped `/categories` and `/tags` hide rule, whose locale/base-prefix parsing is no longer needed here.",
+    "src/components/organisms/CategoryBar.astro": "ALNILAM (#204): the category bar is article-taxonomy context navigation and now renders only for the page capabilities that opt in (`home`, `post`), decided from the layout's `page` prop instead of a pathname denylist; this supersedes the earlier #124 base-stripped `/categories` and `/tags` hide rule, whose locale/base-prefix parsing is no longer needed here. Category counts, the category chips and the Home/Archive links follow the locale of the rendered route, derived from the base-stripped path, so an English page never advertises default-locale taxonomy routes (#35).",
     "src/config/integrationsConfig.ts": "Use installed Vite8 native Oxc/LightningCSS minifiers instead of forcing its optional esbuild peer in the target toolchain; minification remains enabled.",
     "src/integration/types.ts": "Add optional cache path override to ShironesPaths for Core-managed derived state isolation.",
     "src/integration/resolve/paths.ts": "Resolve cacheDir under Core-managed ALNILAM_SHIRONE_CACHE / ALNILAM_ASTRO_CACHE.",
@@ -1967,13 +1967,13 @@
     "src/plugins/rehype-safe-markdown-links.mjs": "Remove unsafe URL schemes from Markdown links while retaining link text.",
     "src/plugins/rehype-markdown-images.mjs": "Resolve relative and Site-asset Markdown images into managed _astro / subpath URLs, retain query and fragment, and guarantee explicit width/height dimensions.",
     "src/utils/nav-utils.ts": "Map ALNILAM /posts, /archives, /tags, /bangumi and /moments routes in resolvePageKey for native active-link highlighting.",
-    "src/utils/content-utils.ts": "Add optional original image dimensions to the MomentImage contract for CLS-safe gallery slots.",
+    "src/utils/content-utils.ts": "Add optional original image dimensions to the MomentImage contract for CLS-safe gallery slots; getTagList and getCategoryList accept an optional locale and count only that locale's published corpus (#35), matching the Site-scoped listing helpers in apps/web/src/lib/taxonomy.ts; called without a locale they keep the upstream site-wide meaning used by SiteStats.",
     "src/components/molecules/FloatingActionButton.astro": "Render static FAB button shell without redundant per-button client:load island hydration.",
     "src/components/molecules/SeriesCard.astro": "Keep the visible series title and part count in the accessible name by using visually hidden direction text instead of an overriding aria-label.",
     "src/components/organisms/TopAppBar.astro": "Gate DisplaySettings island on !siteConfig.themeColor.fixed and consolidate TopAppBar navigation runtime into Layout. Add server-rendered aria-expanded/aria-controls to the menu button so the drawer disclosure is announced before hydration. Add aria-expanded/aria-controls to the display-settings toggle. Add the stable #main-navigation id so browser contracts select the navigation landmark without depending on its accessible name. Localize the navigation landmark name with the page language and resolve the Moments link label from the active locale. Keep desktop navigation in a grid track separate from the search and other actions.",
     "src/layouts/MainGridLayout.astro": "Gate BannerStage when banner images and homeText are disabled; render RouteProgress without redundant island hydration; move the sidebar elements after the main content column so mobile DOM/parse order matches the visual order (content → sidebar → footer) and the already-painted aside is no longer pushed down by late-parsed article blocks (real mobile CLS); desktop columns stay on explicit lg:/xl: col-start/row-start; forward the layout `page` capability to CategoryBar so the taxonomy bar is opt-in per page context (#204). Mounts MobileArticleTOC above the slot for post pages, and gives #content-wrapper scroll-mt-20 so the in-flow back-to-top anchor lands below the fixed app bar (#194).",
-    "src/components/organisms/SideBar.astro": "Render only widgets visible on the current page in static MPA mode and omit unused Swup polling script.",
-    "src/components/organisms/FloatingControls.astro": "Render TOC floating panel/button only on pages where TOC is visible on desktop and consolidate FAB init into Layout. Below 1024 px (lg) the cluster is display:none: #194 moved the contents into the in-flow disclosure and the end-of-article back-to-top link, so no floating control may cover the reading column.",
+    "src/components/organisms/SideBar.astro": "Render only widgets visible on the current page in static MPA mode and omit unused Swup polling script; Pass the page locale to taxonomy widgets (#35).",
+    "src/components/organisms/FloatingControls.astro": "Render TOC floating panel/button only on pages where TOC is visible on desktop and consolidate FAB init into Layout. Below 1024 px (lg) the cluster is display:none on article pages only (data-fab-text-obstruction): #194 moved their contents into the in-flow disclosure and the end-of-article back-to-top link, so no floating control may cover the reading column; listing and other pages keep their configured mobile/tablet controls.",
     "src/components/organisms/PostPage.astro": "Consolidate post-list masonry initialization into Layout runtime script.",
     "src/components/organisms/SiteNavigationDrawer.svelte": "Sync aria-expanded on #nav-drawer-switch, replay a drawer tap recorded before the island mounted, trap Tab focus inside the aria-modal panel while open, dismiss on outside press or Escape with focus restored, and close mobile drawer on desktop viewport resize. Focus the first drawer item only once the open class makes the panel visible. Expose aria-expanded only after the panel is visible and focused, and keep Tab inside while the opening frame precedes computed visibility. Mark non-drawer body children inert while the modal is open (restored on close, resize and unmount). Localize the drawer navigation landmark name with the page language and resolve the Moments link label from the active locale.",
     "src/utils/fab-controller.ts": "Respect prefers-reduced-motion when scrolling to TOC anchors and keep mobile FAB controls visible across TOC anchor jumps. Text-obstruction sync returns early when #floating-controls is display:none, so the mobile breakpoint does no geometry or observer work (#194).",
@@ -1983,9 +1983,9 @@
     "src/styles/transition.css": "Disable onload-animation initial translateY/opacity under prefers-reduced-motion and motion-reduced; the component entry animation is opacity-only (no translate) and the reading content carries no delay, because a translated target cancels a press whose release lands after the shift starts (measured 4/8 lost taps on the category listing before the change, 0/8 after).",
     "src/utils/fancybox-handler.ts": "ALNILAM: replace @fancyapps/ui with MIT photoswipe@5.4.4 behind FancyboxHandler public API; prefetch CSS+PhotoSwipe ctor at init for sync open; treat Markdown image-only original links (thumb→full) as lightbox triggers while leaving text links alone; HTTPS/site-path URL policy; parallel neighbor probes; generation-token abort; dimension probe with 8s timeout and original-link degrade; PhotoSwipe caption via textContent; trap Tab and Shift+Tab within the open PhotoSwipe dialog, wrapping its focusable controls at both boundaries; LIGHTBOX_DEFAULTS inlined (#75).",
     "src/styles/fancybox-custom.css": "ALNILAM: rewrite Fancybox/Panzoom skin to PhotoSwipe .pswp toolbar/counter/caption skin; drop #123 .is-fullsize patch; leave .pswp__bg opacity to PhotoSwipe bgOpacity; prefers-reduced-motion disables non-essential transitions.",
-    "src/components/organisms/ArchivePanel.svelte": "ALNILAM addition: SSR initial filter props (initialCategory/initialTag/initialUncategorized/initialGroupBy), explicit-params-only onMount override so detail routes without query keep their SSR filter, preScoped flag so host pages that pre-filter members (alias/series fallback) skip panel-side re-filtering, optional breadcrumb override, and categoryLabels/tagLabels display maps so localized names never participate in filter matching (#124). Translate panel controls and counts using the active page locale.",
+    "src/components/organisms/ArchivePanel.svelte": "ALNILAM addition (#35): breadcrumb links to the categories/tags index of the page locale instead of the default-locale index.",
     "src/utils/markdown-assets.ts": "Resolve each Markdown feature stylesheet to an externally emitted, base-aware URL instead of inlining CSS.",
-    "src/pages/[...permalink].astro": "Emit Markdown feature stylesheets as Swup-optional links; omit upstream CommentSection mount so disabled Sites emit no Twikoo/Waline/Giscus provider chunks.",
+    "src/pages/[...permalink].astro": "ALNILAM addition (#35): pass the article's own locale to PostMeta, matching the posts route.",
     "src/pages/about.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
     "src/pages/series/[slug]/index.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
     "src/pages/tags.astro": "Use the visible tag name and count as the content-derived link name; avoid an overriding aria-label.",
@@ -2014,7 +2014,11 @@
     "src/components/organisms/AlbumSection.svelte": "Accept localized headings and album paths, and localize search, counts, and empty states.",
     "src/components/molecules/AlbumCard.svelte": "Accept an explicit detail route and use the fallback when the cover fails to load.",
     "src/styles/main.css": "Closed float panels are hidden from the accessibility tree and tab order (opacity alone left invisible controls focusable). Adds .mtc-row (min-height 44px) for the mobile article contents rows and scroll-margin-top on article headings so plain #slug anchors (deep links and the mobile contents disclosure) do not land under the fixed app bar (#194).",
-    "src/components/molecules/MobileArticleTOC.astro": "ALNILAM addition (#194): in-flow mobile contents disclosure (native details/summary, APG disclosure pattern) rendered at the top of article pages below lg (1024 px), with 44 px summary and row targets and logical padding. Replaces the floating TOC button on phones and single-column viewports, which overlapped the article column.",
+    "src/components/molecules/Tags.astro": "ALNILAM addition (#35): the sidebar tag cloud takes a locale prop, falls back to the site default locale when unset or unconfigured, counts that locale's corpus and links to its tag routes.",
+    "src/components/molecules/Categories.astro": "ALNILAM addition (#35): the sidebar category widget takes a locale prop (site default when unset or unconfigured), counts that locale's corpus and scopes the 'view all' index link to that locale.",
+    "src/components/molecules/PostMeta.astro": "ALNILAM addition (#35): the article meta chips take the article's locale (site default when unset) so category and tag links resolve in the reader's own language, or render as plain text when the article's locale is not in config.locales.",
+    "src/components/atoms/blog/PostMeta.astro": "ALNILAM addition (#35): allow optional BlogMetaLink.href so unconfigured-locale articles render category and tag badges as plain text instead of dead taxonomy links.",
+    "src/components/molecules/MobileArticleTOC.astro": "ALNILAM addition (#194): in-flow mobile contents disclosure (native details/summary, APG disclosure pattern) rendered at the top of article pages below lg (1024 px), with 44 px summary and row targets and logical padding. Replaces the floating TOC button on phones and single-column viewports, which overlapped the article column. Labels strip the trailing autolink `#` like SidebarTOC and FloatingTOCPanel.",
     "src/utils/post-decryption.ts": "ALNILAM addition (#194): populate and unhide the in-flow mobile contents disclosure ([data-mobile-article-toc]) after article decryption."
   }
 }
