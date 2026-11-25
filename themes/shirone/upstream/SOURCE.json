@@ -242,7 +242,7 @@
     },
     {
       "path": "src/utils/post-decryption.ts",
-      "sha256": "90f4ec112724ffe1e4b5b57269cfe96437729eedb31cd434eee224589b07e849"
+      "sha256": "58cec6759459d086e0d311b48f2785d0b46cf10c867ee6893b39dc0386bcda0f"
     },
     {
       "path": "src/utils/permalink-utils.ts",
@@ -1002,7 +1002,7 @@
     },
     {
       "path": "src/components/organisms/FloatingControls.astro",
-      "sha256": "7d7d5932560e56acaa79d7fd956324f318aa57d66a45f36ee16c0368998280a5"
+      "sha256": "05b690016063d3c9957f06f1086137e530b082b909d4a8df56fef4b43b389b38"
     },
     {
       "path": "src/components/organisms/BackToTop.astro",
@@ -1238,7 +1238,7 @@
     },
     {
       "path": "src/components/molecules/MobileArticleTOC.astro",
-      "sha256": "5833f9d61eeb0ea0148b680e0db2f397ecc66729249949b29e60f8e3b139fbc4"
+      "sha256": "935737a71f568242106edc89616a2dedef2be449e8646f68ee458cde03cbf9b2"
     },
     {
       "path": "src/components/system/ConfigCarrier.astro",
@@ -2014,6 +2014,7 @@
     "src/components/organisms/AlbumSection.svelte": "Accept localized headings and album paths, and localize search, counts, and empty states.",
     "src/components/molecules/AlbumCard.svelte": "Accept an explicit detail route and use the fallback when the cover fails to load.",
     "src/styles/main.css": "Closed float panels are hidden from the accessibility tree and tab order (opacity alone left invisible controls focusable). Adds .mtc-row (min-height 44px) for the mobile article contents rows and scroll-margin-top on article headings so plain #slug anchors (deep links and the mobile contents disclosure) do not land under the fixed app bar (#194).",
-    "src/components/molecules/MobileArticleTOC.astro": "ALNILAM addition (#194): in-flow mobile contents disclosure (native details/summary, APG disclosure pattern) rendered at the top of article pages below lg (1024 px), with 44 px summary and row targets and logical padding. Replaces the floating TOC button on phones and single-column viewports, which overlapped the article column."
+    "src/components/molecules/MobileArticleTOC.astro": "ALNILAM addition (#194): in-flow mobile contents disclosure (native details/summary, APG disclosure pattern) rendered at the top of article pages below lg (1024 px), with 44 px summary and row targets and logical padding. Replaces the floating TOC button on phones and single-column viewports, which overlapped the article column.",
+    "src/utils/post-decryption.ts": "ALNILAM addition (#194): populate and unhide the in-flow mobile contents disclosure ([data-mobile-article-toc]) after article decryption."
   }
 }

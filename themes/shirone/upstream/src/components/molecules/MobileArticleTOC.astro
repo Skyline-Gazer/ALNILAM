@@ -30,30 +30,28 @@ interface Props {
 const { headings = [], class: className } = Astro.props;
 const minDepth = Math.min(...headings.map((heading) => heading.depth));
 const visible = headings.filter((heading) => heading.depth === minDepth);
+const hasVisible = visible.length >= 2;
 ---
 
-{
-	visible.length >= 2 && (
-		<details
-			class:list={[
-				"lg:hidden mb-4 rounded-xl bg-[var(--m3e-color-surface-container,var(--card-bg))]",
-				className,
-			]}
-			data-mobile-article-toc
-		>
-			<summary class="mtc-row flex cursor-pointer items-center px-4 font-medium">
-				{i18n(I18nKey.tableOfContents)}
-			</summary>
-			<nav class="flex flex-col px-2 pb-2">
-				{visible.map((heading) => (
-					<a
-						class="mtc-row flex items-center rounded-lg px-2 m3-state-layer"
-						href={`#${heading.slug}`}
-					>
-						{heading.text}
-					</a>
-				))}
-			</nav>
-		</details>
-	)
-}
+<details
+	class:list={[
+		"lg:hidden mb-4 rounded-xl bg-[var(--m3e-color-surface-container,var(--card-bg))]",
+		{ hidden: !hasVisible },
+		className,
+	]}
+	data-mobile-article-toc
+>
+	<summary class="mtc-row flex cursor-pointer items-center px-4 font-medium">
+		{i18n(I18nKey.tableOfContents)}
+	</summary>
+	<nav class="flex flex-col px-2 pb-2">
+		{visible.map((heading) => (
+			<a
+				class="mtc-row flex items-center rounded-lg px-2 m3-state-layer"
+				href={`#${heading.slug}`}
+			>
+				{heading.text}
+			</a>
+		))}
+	</nav>
+</details>

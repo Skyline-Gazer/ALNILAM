@@ -41,8 +41,9 @@ const isHomeItemVisible = homeItem
 	? isWidgetVisibleOnPage(homeItem.pages, page) &&
 		(!homeItem.onlySubPages || page !== "home")
 	: false;
-const tocDevices = tocItem?.devices ?? ["mobile", "tablet", "desktop"];
-const isTocVisibleOnDesktop = tocDevices.includes("desktop");
+const tocDevices = tocItem?.devices;
+const isTocVisibleOnDesktop =
+	!tocDevices || tocDevices.length === 0 || tocDevices.includes("desktop");
 ---
 
 <aside
