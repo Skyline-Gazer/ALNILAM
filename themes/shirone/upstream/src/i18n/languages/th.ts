@@ -9,6 +9,7 @@ export const th: Translation = {
 	[Key.archiveGroupYear]: "ตามปี",
 	[Key.archiveGroupCategory]: "ตามหมวดหมู่",
 	[Key.archiveGroupTag]: "ตามแท็ก",
+	[Key.archiveGroupTagHint]: "แต่ละกลุ่มแท็กแสดงบทความสมาชิกทั้งหมด บทความหนึ่งอาจปรากฏในหลายแท็ก ตัวเลขของกลุ่มคือจำนวนสมาชิก ส่วนยอดรวมด้านบนนับบทความที่ไม่ซ้ำกัน",
 	[Key.search]: "ค้นหา",
 	[Key.searchNoResults]: "ไม่พบผลลัพธ์",
 	[Key.searchUnavailable]: "การค้นหาไม่พร้อมใช้งานชั่วคราว โปรดลองอีกครั้ง",
