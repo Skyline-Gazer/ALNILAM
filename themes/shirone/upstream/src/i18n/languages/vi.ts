@@ -9,6 +9,7 @@ export const vi: Translation = {
 	[Key.archiveGroupYear]: "Theo năm",
 	[Key.archiveGroupCategory]: "Theo danh mục",
 	[Key.archiveGroupTag]: "Theo thẻ",
+	[Key.archiveGroupTagHint]: "Mỗi nhóm thẻ liệt kê các bài viết mang thẻ đó; một bài có thể xuất hiện ở nhiều thẻ. Số đếm của nhóm là số bài thành viên, còn tổng phía trên đếm bài không trùng lặp.",
 	[Key.search]: "Tìm kiếm",
 	[Key.searchNoResults]: "Không có kết quả",
 	[Key.searchUnavailable]: "Tìm kiếm tạm thời không khả dụng. Vui lòng thử lại sau.",

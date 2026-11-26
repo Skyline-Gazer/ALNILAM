@@ -10,6 +10,7 @@ enum I18nKey {
 	archiveGroupYear = "archiveGroupYear",
 	archiveGroupCategory = "archiveGroupCategory",
 	archiveGroupTag = "archiveGroupTag",
+	archiveGroupTagHint = "archiveGroupTagHint",
 	search = "search",
 	searchNoResults = "searchNoResults",
 	searchUnavailable = "searchUnavailable",

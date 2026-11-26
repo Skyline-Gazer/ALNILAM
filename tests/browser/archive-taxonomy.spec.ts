@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 /**
  * Shirone archive / taxonomy detail regression coverage (Issue #124).
@@ -145,6 +145,45 @@ for (const [name, origin] of deployments) {
 		expect(guideItems).toBeGreaterThan(0);
 		expect(guideItems).toBeLessThan(allItems);
 		await context.close();
+	});
+
+	test(`tag groups list memberships and explain counts ${name}`, async ({ browser }) => {
+		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
+		const page = await context.newPage();
+		await page.goto(`${origin}/archives/`, { waitUntil: "networkidle" });
+		// Year mode has no membership hint; the explanation belongs to tag mode only.
+		await expect(page.locator(".archive-panel__group-hint")).toHaveCount(0);
+		// The native radio input is visually clipped inside the label; click the segment.
+		await page.locator(".m3-segmented label").filter({ hasText: "按标签" }).click();
+		await expect(page.locator(".archive-panel__group-hint")).toBeVisible();
+		const group = (tag: string) =>
+			// Case-sensitive anchored match: #alnilam and #ALNILAM are distinct group keys.
+			page.locator(".m3-blog-archive__group").filter({ has: page.locator(".m3-blog-archive__group-title").filter({ hasText: new RegExp(`^${tag.replace("#", "\\#")}$`) }) });
+		const expand = async (section: Locator) => {
+			const header = section.locator(".m3-blog-archive__header");
+			if ((await header.getAttribute("aria-expanded")) === "false") await header.click();
+		};
+
+		const guide = group("#guide");
+		await expect(guide).toHaveCount(1);
+		await expand(guide);
+		const hrefs = await guide.locator(".m3-blog-archive__item").evaluateAll((items) =>
+			items.map((item) => item.getAttribute("href")),
+		);
+		expect(hrefs.some((href) => href?.endsWith("/posts/organize-your-blog/"))).toBe(true);
+		// The group key is not repeated inside rows; remaining tags still render.
+		for (const text of await guide.locator(".m3-blog-archive__tags").allTextContents()) {
+			expect(text).not.toContain("#guide");
+		}
+
+		// Multi-membership stays intentional: the same article appears under each of its tags.
+		const alnilam = group("#alnilam");
+		await expect(alnilam).toHaveCount(1);
+		await expand(alnilam);
+		const alnilamHrefs = await alnilam.locator(".m3-blog-archive__item").evaluateAll((items) =>
+			items.map((item) => item.getAttribute("href")),
+		);
+		expect(alnilamHrefs.some((href) => href?.endsWith("/posts/organize-your-blog/"))).toBe(true);
 	});
 }
 
