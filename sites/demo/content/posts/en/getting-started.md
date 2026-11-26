@@ -30,7 +30,7 @@ Only `schemaVersion: 2` is supported. See the authoritative [Site Onboarding gui
 
 ## Publish a post at a stable URL
 
-This frontmatter describes a published post; categories and tags must be declared by the Site:
+This frontmatter describes a published post. To reuse this example's taxonomy, declare `guide` in `categories` and `alnilam` in `tags` first.
 
 <pre tabindex="0"><code>---
 title: "A note beneath the evening sky"
@@ -49,3 +49,11 @@ Save it as `content/posts/en/first-note.md`; it becomes `/en/posts/first-note/`.
 Without an exclusion flag, a post generates a page and appears in public lists, feeds, and the sitemap. `draft: true`, `private: true`, and `unlisted: true` exclude article HTML at build time; they are not access control and cannot protect secrets.
 
 Compose outside the Site into two separate outputs, because Compose replaces the output directory it publishes: `ALNILAM_SITE_URL=https://blog.example.org/ pnpm compose --site ./my-site --out ./dist/root` and then the same command with `--out ./dist/subpath` plus `ALNILAM_SITE_URL=https://blog.example.org/ALNILAM/`. Check both outputs' links. This guide is pinned in every language and uses the Demo's declared taxonomy. Continue with [Markdown and MDX](../markdown-and-mdx/).
+
+## Set up the reading experience
+
+Set `theme.appearance` to `light` or `dark` for a reader’s first visit. Try the appearance switch here and reload to see the browser keep your choice. On narrow screens, the article contents are above the text. On wide screens, find them in the sidebar.
+
+The public Demo leaves Bangumi and comments off. To display a public collection, set `bangumi.userId` in your own [Bangumi configuration](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/SITE_ONBOARDING.md#bangumi-bangumi) and check `/bangumi/` after building. For comments, enable Discussions in your own public GitHub repository and follow the [Giscus configuration](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/SITE_ONBOARDING.md#comments-comments) for public identifiers and thread mapping. Enable these features as you need them.
+
+Continue with [publishing translations](../internationalization/), [organizing categories and series](../organize-your-blog/), or [searching article text](../pagefind-basics/).
