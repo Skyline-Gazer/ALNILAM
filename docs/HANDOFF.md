@@ -1332,3 +1332,40 @@ python3 -m unittest scripts.tests.docs_test
   该 PASS 绑定上述代码 head；本地 PASS 不替代远端结果。
 - 未完成/边界：locale 前缀路由（`/en/posts/…`）与 locale taxonomy 分页属 #65；无 HTTP 301；
   `/ALNILAM/robots.txt` 不是 origin 级 robots；未改 `main`、tag、生产配置、ADS pin。
+
+## 2026-11-26 · Convergence wave — integration, selector, lightbox, archive semantics (#35 follow-ups)
+
+- 基线：GitHub `dev` @ `c8415e81f738f152d4c091e866efd12aca616a8c`（本轮全部 PR 以 exact-head 合入后的状态）。
+- 本轮合入（全部 exact-head + `verify` 绿灯）：
+  `#223`→`7af0b6e6`、`#225`→`b4984ba5`、`#226`→`853e18ad`、`#230`→`a080151c`、
+  `#227`→`cc0e2bc2`、`#228`→`f32b80ce`、`#231`→`a6672db1`、`#232`→`c8415e81`。
+  最终 `dev` CI：run 45809898895 SUCCESS（含根路径与 `/ALNILAM/` 浏览器验收）。
+- 交付内容：
+  - `#228`（#201）：头部语言选择器改为单按钮 + 原生 popover；链接保持 SSR、
+    无 JS 可导航、`aria-current` 标识当前语言、缺翻译目标标注本地化"主页"回退。
+  - `#231`（#194）：PhotoSwipe fixture 双基座独立部署、fixture 用例在缺构建时跳过、
+    移动端阅读控件与标签修复、zh 及区域变体（zh-SG/zh-HK/zh-Hans-CN）走简中词典。
+  - `#232`（#198）：懒加载窗口内的首次点击被捕获并在 delegate 绑定后重放；
+    共享资格判定阻止拦截普通文本链接内图片；Swup `visit:start` 丢弃挂起捕获并按
+    lifetime 防止过期初始化重放。回归：延迟 chunk 首击、加载窗口内文本链接导航，57/57。
+  - `#230`（#197）：按标签归档读作成员关系——组内行不再重复组标签，分组切换下
+    输出十语种成员关系说明；与上游分歧在 `SOURCE.json` 记录。
+  - `#227`（#81）：发布验收记录、治理与 onboarding 权限文档对齐。
+  - `#225/#226`：编译缓存键修复；canonical Home feed + 兼容路由 locale 元数据。
+- 验证证据：各 PR 描述含 exact-head 本地验证（如 103/103 序列化 contract、
+  115/115 a11y+lightbox+floating-controls、57/57 lightbox、20/20 archive）；
+  Demo 面板抽样（390/1440，zh/en/ja，canonical/lang/无横向溢出）在
+  `853e18ad`/`f32b80ce` 构建上通过。公开 Demo provenance 滞后于 dev 合并属
+  Vercel 集成节奏，非代码问题。
+- 未决事项：
+  - #195（语言标签间歇性晚绘）保持 open：SSR 三链接在每个抽样首帧均在场，
+    未复现缺标签区间，等待能捕获该区间的录屏。
+  - #196（归档/分类头视觉层级）代码已合入（`#223`），Owner 视觉签收未做。
+  - #194 内容/E2E 审计与 #190 Demo 文案更换仍在 open；fixture 隔离部分已交付。
+  - vendored ledger 漂移：`SOURCE.json` 约 69 个 `files[].sha256` 与当前内容不符
+    （历史 PR 未刷新），需要独立小 PR 统一刷新或加 CI 校验。
+  - 合并流程事实：分支侧携带冲突解决 merge commit 会触发
+    `require_extra_approval_for_unattributed_changes`；本轮以线性 squash
+    替代 PR（#231/#232）解决，未放宽任何规则。
+- 边界：未动 `main`、未打 tag、未改生产配置、ADS pin 保持
+  `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`。
