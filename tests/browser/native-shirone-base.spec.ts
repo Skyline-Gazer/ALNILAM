@@ -131,7 +131,7 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
         await page.goto(origin+'/posts/fixture-beta-zh/',{waitUntil:'networkidle'});
         expect(await page.locator('#navbar [data-lang-switcher] a[data-lang-target="ja"]').getAttribute('href')).toBe(new URL(origin).pathname.replace(/\/$/,'')+'/ja/');
         await page.locator('#navbar [popovertarget="header-languages"]').click();
-        await expect(page.locator('#navbar [data-lang-target="ja"]')).toContainText('首页');
+        await expect(page.locator('#navbar [data-lang-target="ja"]')).toContainText('主页');
         await page.locator('#navbar [data-lang-switcher] a[data-lang-target="ja"]').click();
         await expect(page).toHaveURL(origin+'/ja/');
         await page.goto(origin+'/',{waitUntil:'networkidle'});
