@@ -3,6 +3,8 @@ import { FANCYBOX_SELECTORS } from "./fancybox-config";
 const RUNTIME_BOUND_KEY = "fancyboxRuntimeBound";
 
 let cleanupFancybox: (() => void) | undefined;
+let earlyHandler: ((event: MouseEvent) => void) | null = null;
+let pendingTrigger: HTMLElement | null = null;
 
 function hasMatch(root: ParentNode, selector: string): boolean {
 	if (root instanceof Element && root.matches(selector)) return true;
@@ -15,6 +17,31 @@ function hasFancyboxTarget(root: ParentNode): boolean {
 	);
 }
 
+function installEarlyCapture(): void {
+	if (earlyHandler) return;
+	const selector = Object.values(FANCYBOX_SELECTORS).join(",");
+	earlyHandler = (event: MouseEvent) => {
+		if (event.defaultPrevented || event.button !== 0) return;
+		if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+		const target = event.target;
+		if (!(target instanceof Element)) return;
+		const trigger = target.closest(selector);
+		if (!(trigger instanceof HTMLElement)) return;
+		event.preventDefault();
+		pendingTrigger = trigger;
+	};
+	document.addEventListener("click", earlyHandler, true);
+}
+
+function flushEarlyCapture(): void {
+	if (!earlyHandler) return;
+	document.removeEventListener("click", earlyHandler, true);
+	earlyHandler = null;
+	const trigger = pendingTrigger;
+	pendingTrigger = null;
+	if (trigger?.isConnected) trigger.click();
+}
+
 /**
  * Loads Fancybox only when the supplied page fragment has a lightbox target.
  * The images remain normal links when the optional enhancement cannot load.
@@ -24,12 +51,15 @@ export async function initFancyboxRuntime(
 ): Promise<void> {
 	if (typeof document === "undefined" || !hasFancyboxTarget(root)) return;
 
+	installEarlyCapture();
 	try {
 		const runtime = await import("./fancybox-handler");
 		cleanupFancybox = runtime.cleanupFancybox;
 		await runtime.initFancybox();
 	} catch (error) {
 		console.error("Failed to initialize Fancybox runtime", error);
+	} finally {
+		flushEarlyCapture();
 	}
 }
 
