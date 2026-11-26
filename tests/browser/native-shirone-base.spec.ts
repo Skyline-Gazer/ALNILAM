@@ -1,4 +1,37 @@
 import {test, expect} from '@playwright/test';
+
+const retiredDemoPosts = /fixture-beta-zh|lightbox-fixtures/;
+for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM']) {
+  test(`Demo output excludes test-only posts ${new URL(origin).pathname}`, async ({page}) => {
+    for (const slug of ['fixture-beta-zh', 'lightbox-fixtures']) {
+      const route = `/posts/${slug}/`;
+      expect((await page.request.get(origin + route, {maxRedirects: 0})).status(), route).toBe(404);
+    }
+
+    for (const route of ['/', '/posts/', '/posts/2/', '/archives/', '/rss.xml', '/sitemap-0.xml']) {
+      const response = await page.request.get(origin + route);
+      expect(response.status(), route).toBe(200);
+      expect(await response.text(), route).not.toMatch(retiredDemoPosts);
+    }
+
+    await page.goto(origin + '/search/');
+    const urlsByQuery = await page.evaluate(async () => {
+      type Pagefind = {
+        search(query: string): Promise<{results: {data(): Promise<{url: string}>}[]}>;
+      };
+      const api = await (window as Window & {__loadPagefind(): Promise<Pagefind>}).__loadPagefind();
+      const urlsByQuery: string[][] = [];
+      for (const query of ['ALNILAM', 'lightbox', '猎户座腰带']) {
+        const {results} = await api.search(query);
+        urlsByQuery.push(await Promise.all(results.map(async (result) => (await result.data()).url)));
+      }
+      return urlsByQuery;
+    });
+    expect(urlsByQuery[0]).toContain(new URL(origin + '/posts/hello-alnilam/').pathname);
+    expect(urlsByQuery.flat().join('\n')).not.toMatch(retiredDemoPosts);
+  });
+}
+
 for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM']) {
   test(`locale navigation boundaries ${new URL(origin).pathname}`, async ({page}) => {
     const base = new URL(origin).pathname.replace(/\/$/, '');
@@ -129,12 +162,17 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
           await categoriesLink.click();
           await expect(page).toHaveURL(origin+'/en/categories/');
         }
-        // Untranslated article falls back to target locale homepage (/ja/)
-        await page.goto(origin+'/posts/fixture-beta-zh/',{waitUntil:'networkidle'});
-        expect(await page.locator('#navbar [data-lang-switcher] a[data-lang-target="ja"]').getAttribute('href')).toBe(new URL(origin).pathname.replace(/\/$/,'')+'/ja/');
+        // The published checklist has no Japanese translation and falls back to the Japanese home.
+        const checklist = await page.goto(origin+'/posts/release-checklist-zh/',{waitUntil:'networkidle'});
+        expect(checklist?.status()).toBe(200);
+        await expect(page.getByRole('heading', {level: 1})).toHaveText('版本说明与发布检查表');
+        await expect(page.locator('link[hreflang="ja"]')).toHaveCount(0);
+        const jaFallback = page.locator('#navbar [data-lang-switcher] a[data-lang-target="ja"]');
+        await expect(jaFallback).toHaveAttribute('href', prefix+'/ja/');
+        await expect(jaFallback).toHaveAttribute('data-lang-exact', 'false');
         await page.locator('#navbar [popovertarget="header-languages"]').click();
         await expect(page.locator('#navbar [data-lang-target="ja"]')).toContainText('主页');
-        await page.locator('#navbar [data-lang-switcher] a[data-lang-target="ja"]').click();
+        await jaFallback.click();
         await expect(page).toHaveURL(origin+'/ja/');
         await page.goto(origin+'/',{waitUntil:'networkidle'});
         if(width===390) {

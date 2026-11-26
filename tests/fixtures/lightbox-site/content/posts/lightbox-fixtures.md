@@ -2,8 +2,8 @@
 title: "Lightbox HTTPS fixtures"
 description: "Playwright-routed HTTPS beds for PhotoSwipe matrix; not a live network dependency."
 pubDate: 2026-10-20
-category: "release"
-tags: ["ALNILAM", "lightbox"]
+category: ""
+tags: []
 lang: "zh-CN"
 translationKey: "lightbox-fixtures"
 ---
@@ -29,6 +29,4 @@ External beds below are HTTPS-only Playwright routes (`lightbox-fixtures.local` 
 
 ## Fixture notes
 
-1. Keep HTTPS beds on this post only.
-2. Do not put unrouted external images on hello-alnilam.
-3. Trusted dual-compat harness opens local hello-alnilam slides.
+Playwright fulfills these image requests locally over HTTPS routes.

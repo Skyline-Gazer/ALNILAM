@@ -79,6 +79,12 @@ jobs:
           }
           console.log("nested-base internal URLs OK");
           EOF
+      - name: Compose the isolated PhotoSwipe test Site at both bases
+        env:
+          SOURCE_DATE_EPOCH: "1700000000"
+        run: |
+          ALNILAM_SITE_URL=https://example.com/ node scripts/compose.mjs --site tests/fixtures/lightbox-site --out dist/lightbox-root
+          ALNILAM_SITE_URL=https://example.com/ALNILAM/ node scripts/compose.mjs --site tests/fixtures/lightbox-site --out dist/lightbox-nested
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser acceptance (root and /ALNILAM/)

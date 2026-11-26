@@ -21,7 +21,7 @@ translationKey: "getting-started"
 
 Site のルートに保存し、`content/posts/` を用意します。
 
-<pre><code>schemaVersion: 2
+<pre tabindex="0"><code>schemaVersion: 2
 site: { title: "夜空のフィールドノート", description: "読書の記録", url: "https://blog.example.org", locale: "zh-CN" }
 locales: ["zh-CN", "en", "ja"]
 </code></pre>
@@ -32,7 +32,7 @@ locales: ["zh-CN", "en", "ja"]
 
 次の frontmatter は公開記事の例です。分類とタグは Site に宣言しておきます。
 
-<pre><code>---
+<pre tabindex="0"><code>---
 title: "夕空の下の記録"
 pubDate: 2026-11-23
 category: "guide"

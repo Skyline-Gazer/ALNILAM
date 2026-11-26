@@ -127,7 +127,7 @@ const hasBanner =
                     class="transition-swup-fade"
                 >
                     <div id="content-wrapper" class="onload-animation scroll-mt-20">
-                        {page === "post" && <MobileArticleTOC headings={headings} class="mx-auto w-full max-w-3xl px-4 pt-4" />}
+                        {page === "post" && <MobileArticleTOC headings={headings} locale={lang} class="mx-auto w-full max-w-3xl px-4 pt-4" />}
                         <!-- the overflow-hidden here prevent long text break the layout-->
                         <!-- make id different from windows.swup global property -->
                         <slot></slot>
