@@ -31,6 +31,7 @@ const map: { [key: string]: Translation } = {
 	en_us: en,
 	en_gb: en,
 	en_au: en,
+	zh: zh_CN,
 	zh_cn: zh_CN,
 	zh_tw: zh_TW,
 	ja: ja,
@@ -48,7 +49,7 @@ const map: { [key: string]: Translation } = {
 
 export function getTranslation(lang: string): Translation {
 	const key = lang.toLowerCase();
-	const exact = key === "zh" ? zh_CN : map[key];
+	const exact = map[key];
 	if (exact) return exact;
 	// A regional variant without its own entry falls back to the base language
 	// dictionary (es-ES → es) before it falls back to English.
