@@ -8,8 +8,7 @@ tag widget only for `home`, `post`, `archive`, `categories` and `tags`, Profile 
 and every other capability is excluded — series, module pages, static Site pages and the `notFound`
 404 page opt in to nothing — while a route that declares no capability at all, such as search,
 inherits nothing either. Excluded or undeclared, both mean off, so a new route cannot leak article
-taxonomy by accident. Implemented in [#213](https://github.com/Skyline-Gazer/ALNILAM/pull/213) (not merged, Owner
-authorization required). The visibility matrix is documented in
+taxonomy by accident. Merged in [#213](https://github.com/Skyline-Gazer/ALNILAM/pull/213). The visibility matrix is documented in
 [docs/ARCHITECTURE.md](ARCHITECTURE.md#navigation-context-policy-issue-204).
 
 ## Product scope reconciliation — 2026-11-24
@@ -70,12 +69,9 @@ reviewed real-user onboarding from an independently owned Site. They are
 **NOT VERIFIED** or **MANUAL_NOT_RUN**, never PASS. The public Demo remains on
 `dev`; public Production promotion is a separate Owner action.
 
-The public Demo at Core `ad8e28c1cfe82724f45d0715265936de2d7ec9e8` passed the
-live PhotoSwipe focus check ([#184](https://github.com/Skyline-Gazer/ALNILAM/issues/184)).
-Desktop search obscures part of primary navigation on that deployment
-([#189](https://github.com/Skyline-Gazer/ALNILAM/issues/189)). Demo acceptance and
-the Owner's [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35) sign-off remain
-open. See [Handoff](HANDOFF.md) for deployment and Verify links.
+Current Demo validation and pending sign-offs are recorded in the [Handoff](HANDOFF.md).
+The desktop search navigation defect was corrected under [#189](https://github.com/Skyline-Gazer/ALNILAM/issues/189).
+The public Demo and the formal Production release have separate acceptance records.
 
 ## Foundation GA scope freeze — 2026-11-20
 

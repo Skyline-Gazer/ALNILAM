@@ -1,12 +1,10 @@
 ---
-/**
- * Locale switcher (M3 pill row). Rendered inside the top app bar and kept in
- * its own component with no scoped stylesheet, so Astro adds no
- * data-astro-cid-* attributes to the emitted markup — the list pages sit
- * within a few hundred bytes of the 64 KiB document budget and the cid
- * overhead was pushing them over.
- */
+import Icon from "@iconify/svelte";
+
+// Keep the stylesheet global to avoid adding scoped Astro attributes to every link.
 interface Props {
+	label: string;
+	homeLabel: string;
 	targets: Array<{
 		locale: string;
 		label: string;
@@ -16,12 +14,20 @@ interface Props {
 	}>;
 }
 
-const { targets } = Astro.props;
+const { targets, label, homeLabel } = Astro.props;
 ---
 {targets.length > 1 && (
-	<div class="top-app-bar__lang" data-lang-switcher>
-		{targets.map((item) => (
-			<a href={item.href} data-lang-target={item.locale} data-lang-exact={item.active ? undefined : item.exact ? "true" : "false"} class:list={["top-app-bar__lang-item", item.active && "top-app-bar__lang-item--active"]}>{item.label}</a>
-		))}
-	</div>
+	<>
+		<button type="button" class="top-app-bar__lang-trigger m3-state-layer" popovertarget="header-languages" aria-label={label}>
+			<Icon icon="material-symbols:translate-rounded" aria-hidden="true" />
+		</button>
+		<div id="header-languages" class="top-app-bar__lang" popover data-lang-switcher>
+			{targets.map(({ locale, label, href, active, exact }) => (
+				<a class="top-app-bar__lang-item" href={href} data-lang-target={locale} data-lang-exact={active ? undefined : String(exact)} aria-current={active ? "true" : undefined}>
+					<span lang={locale}>{label}</span>
+					{!active && !exact && <small>{homeLabel}</small>}
+				</a>
+			))}
+		</div>
+	</>
 )}
