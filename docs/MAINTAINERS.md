@@ -8,6 +8,10 @@ Operational notes for ALNILAM maintainers. Public contributor guidance is in [CO
 - `dev` — integration branch. Protected by ruleset `alnilam-dev` (ID 25809723): identical policy.
 - Task branches: `feat/*`, `fix/*`, `chore/*` from `dev`; Issue-linked PRs only.
 
+## Release records and authority
+
+The annotated tag and matching [GitHub Release](https://github.com/Skyline-Gazer/ALNILAM/releases) identify the published version and assets. The [changelog](../CHANGELOG.md) records changes and migrations. The [handoff](HANDOFF.md) records checked refs, CI, deployments and outstanding acceptance. Release and Production authorization come from the linked Owner decision.
+
 ## Release procedure (vX.Y.Z)
 
 1. Confirm `dev` Verify and the current acceptance requirements pass at the intended SHA. Record any Owner-approved changes to the acceptance contract in the release PR.

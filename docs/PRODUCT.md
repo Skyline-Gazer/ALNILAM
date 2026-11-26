@@ -29,11 +29,12 @@
   staged composition, provenance (Core revision, Site ref and digest), atomic
   output swap, the documented upgrade/rollback procedure and a release artifact
   hygiene gate over final output.
-- Acceptance still open at this release: field p75 performance, manual macOS
+- Acceptance outstanding when v0.2.0 shipped included field p75 performance and manual macOS
   Safari/VoiceOver, reviewed onboarding by a real user from an independently
   owned Site, and Owner product/visual sign-off. Lab browser and Lighthouse
   evidence plus the public Test-Site regression are recorded in the
   [Handoff](HANDOFF.md).
+  The Owner deferred real-user onboarding review to post-release stabilization. The public Test-Site exercise supplies regression evidence. See the [#81 decision](https://github.com/Skyline-Gazer/ALNILAM/issues/81#issuecomment-7031165221).
 
 ## Post-v0.2.0 product scope
 
