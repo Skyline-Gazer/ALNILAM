@@ -34,7 +34,7 @@ const withBar = [
 // The app's own 404 document is `/404.html`; an unknown path is the preview server's bare
 // "Not found" response, which is not a rendered ALNILAM page.
 const withoutBar = [
-	"/posts/",
+	"/posts/2/",
 	"/archives/",
 	"/categories/",
 	"/categories/release/",
@@ -45,7 +45,7 @@ const withoutBar = [
 	"/404.html",
 ] as const;
 
-const withTagWidget = [...withBar, "/posts/", "/archives/", "/categories/", "/tags/"] as const;
+const withTagWidget = [...withBar, "/posts/2/", "/archives/", "/categories/", "/tags/"] as const;
 const withoutTagWidget = ["/series/", "/search/", "/404.html"] as const;
 
 for (const [name, origin] of [

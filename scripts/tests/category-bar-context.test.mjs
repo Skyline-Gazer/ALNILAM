@@ -26,10 +26,9 @@ function pageKind(relative) {
   if (parts.length === 0) return "home";
   const [first] = parts;
   if (first === "posts") {
-    // `/posts/` and its pagination are the listing (page capability `archive`); the
-    // `/posts/<lang>/<slug>/` noindex fallback also declares `archive`, only
-    // `/posts/<slug>/` is an article.
-    if (parts.length === 1) return "archive";
+    // `/posts/` forwards to Home. Subsequent pages and old article aliases
+    // use the archive capability. The remaining slug routes are articles.
+    if (parts.length === 1) return "redirect";
     const second = parts[1];
     if (/^\d+$/.test(second) || locales.includes(second)) return "archive";
     return "post";
@@ -66,7 +65,7 @@ after(() => {
 test("every emitted route kind is exercised by the Demo build", () => {
   const seen = new Set(kinds.values());
   // Gallery (`/albums/`) and Moments (`/moments/`) were retired in #203, and Bangumi is disabled by default in Demo.
-  for (const expected of ["home", "post", "archive", "categories", "tags", "series", "search", "other"]) {
+  for (const expected of ["home", "post", "archive", "redirect", "categories", "tags", "series", "search", "other"]) {
     assert.ok(seen.has(expected), `Demo build must emit a ${expected} route; saw ${[...seen].join(", ")}`);
   }
 });

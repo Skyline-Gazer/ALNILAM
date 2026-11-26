@@ -123,11 +123,11 @@ test("provenance binds the composed Site digest and the requested Core revision"
 test("posts paginate the default-locale corpus with the pinned post first", () => {
   const { out } = ctx;
   const pages = Array.from({ length: EXPECTED_PAGES }, (_, i) =>
-    read(out, i === 0 ? "posts/index.html" : `posts/${i + 1}/index.html`),
+    read(out, i === 0 ? "index.html" : `posts/${i + 1}/index.html`),
   );
   for (let page = 1; page <= EXPECTED_PAGES; page++) {
-    const rel = page === 1 ? "posts/index.html" : `posts/${page}/index.html`;
-    assert.ok(fs.existsSync(path.join(out, rel)), `pagination page /posts/${page === 1 ? "" : page + "/"} must exist`);
+    const rel = page === 1 ? "index.html" : `posts/${page}/index.html`;
+    assert.ok(fs.existsSync(path.join(out, rel)), `feed output ${rel} must exist`);
   }
   assert.equal(
     fs.existsSync(path.join(out, `posts/${EXPECTED_PAGES + 1}/index.html`)),
@@ -135,7 +135,6 @@ test("posts paginate the default-locale corpus with the pinned post first", () =
     "the locale corpus must not produce an extra page",
   );
   const page1 = pages[0];
-  assert.match(page1, new RegExp(`共 ${EXPECTED_TOTAL} 篇 · 第 1/${EXPECTED_PAGES} 页`));
   const cards = postLinks(page1);
   assert.equal(cards[0], "pinned-announcement", "the pinned post must lead the first page despite its old pubDate");
   // Locale content policy (#35): translations are listed by their own locale routes, not here.
@@ -149,7 +148,7 @@ test("posts paginate the default-locale corpus with the pinned post first", () =
     assert.match(page1, new RegExp(`href="/posts/${p}/" aria-label="第 ${p} 页"`), `page-number link ${p} must render`);
   }
   const page2 = read(out, "posts/2/index.html");
-  assert.match(page2, /href="\/posts\/" rel="prev"/, "page 2 must link back to page 1");
+  assert.match(page2, /href="\/" rel="prev"/, "page 2 must link back to Home");
   assert.match(page2, /href="\/posts\/3\/" rel="next"/, "page 2 must link forward to page 3");
   const last = pages[pages.length - 1];
   assert.ok(/rel="prev"/.test(last), "the last page must link back");
@@ -174,15 +173,12 @@ test("each locale listing carries exactly its own corpus", () => {
   const { out } = ctx;
   const surfaces = [
     ["index.html", DEFAULT_LOCALE],
-    ["posts/index.html", DEFAULT_LOCALE],
     ["archives/index.html", DEFAULT_LOCALE],
     ["categories/guide/index.html", DEFAULT_LOCALE],
     ["tags/i18n/index.html", DEFAULT_LOCALE],
     ["en/index.html", "en"],
-    ["en/posts/index.html", "en"],
     ["en/archives/index.html", "en"],
     ["ja/index.html", "ja"],
-    ["ja/posts/index.html", "ja"],
   ];
   for (const [rel, locale] of surfaces) {
     const links = postLinks(read(out, rel));
@@ -207,7 +203,7 @@ test("draft posts are excluded from every list, route and feed", (t) => {
   const surfaces = [
     "index.html",
     ...Array.from({ length: EXPECTED_PAGES }, (_, i) =>
-      i === 0 ? "posts/index.html" : `posts/${i + 1}/index.html`,
+      i === 0 ? "index.html" : `posts/${i + 1}/index.html`,
     ),
     "archives/index.html",
     "categories/index.html",

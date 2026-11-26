@@ -7,8 +7,13 @@ const INPUTS = [
   "package.json",
   "pnpm-lock.yaml",
   "apps/web/astro.config.mjs",
+  "apps/web/package.json",
   "apps/web/src",
+  "packages/core/package.json",
+  "packages/core/src",
+  "themes/shirone/adapter",
   "themes/shirone/package.json",
+  "themes/shirone/upstream/package.json",
   "themes/shirone/upstream/src",
 ];
 

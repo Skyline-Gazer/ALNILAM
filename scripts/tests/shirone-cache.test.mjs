@@ -14,14 +14,19 @@ function fixture(t) {
 }
 
 function createInputTree(root) {
-  for (const dir of ["apps/web/src", "themes/shirone/upstream/src/config"]) {
+  for (const dir of ["apps/web/src", "packages/core/src", "themes/shirone/adapter", "themes/shirone/upstream/src/config"]) {
     fs.mkdirSync(path.join(root, dir), { recursive: true });
   }
   for (const file of [
     "package.json",
     "pnpm-lock.yaml",
     "apps/web/astro.config.mjs",
+    "apps/web/package.json",
+    "packages/core/package.json",
+    "packages/core/src/parse-site-config.mjs",
+    "themes/shirone/adapter/site-config.mjs",
     "themes/shirone/package.json",
+    "themes/shirone/upstream/package.json",
     "themes/shirone/upstream/src/config/site.ts",
   ]) {
     fs.writeFileSync(path.join(root, file), file + "\n");
@@ -45,7 +50,11 @@ test("Shirone input identity tracks dependency, compiler configuration, and runt
   createInputTree(root);
   const runtime = { version: "v24", platform: "linux", arch: "x64" };
   const baseline = shironeBuildInputKey(root, runtime);
-  for (const relative of ["pnpm-lock.yaml", "apps/web/astro.config.mjs"]) {
+  for (const relative of [
+    "pnpm-lock.yaml", "apps/web/astro.config.mjs", "apps/web/package.json",
+    "packages/core/package.json", "packages/core/src/parse-site-config.mjs",
+    "themes/shirone/adapter/site-config.mjs", "themes/shirone/upstream/package.json",
+  ]) {
     const file = path.join(root, relative);
     const original = fs.readFileSync(file);
     fs.appendFileSync(file, "changed input\n");
