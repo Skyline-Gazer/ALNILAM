@@ -9,16 +9,17 @@ export async function GET() {
   const { config } = loadSite();
   const locale = config.site.locale;
   const posts = localeFeedPosts(await getCollection("posts"), locale, locale);
-  const self = canonicalUrl(feedPath(locale, config.site.locale), config.site.url);
+  const site = canonicalUrl("/", config.site.url);
+  const self = new URL(feedPath(locale, locale).slice(1), site).href;
   return rss({
     title: config.site.title,
     description: config.site.description,
-    site: canonicalUrl("/", config.site.url),
+    site,
     items: posts.map((post) => ({
       title: post.data.title,
       description: post.data.description,
       pubDate: post.data.pubDate,
-      link: canonicalUrl(postPath(post, locale) + "/", config.site.url),
+      link: new URL(postPath(post, locale).slice(1) + "/", site).href,
       categories: post.data.tags,
       customData: `<language>${locale}</language>`,
     })),
