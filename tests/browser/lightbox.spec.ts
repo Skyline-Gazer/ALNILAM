@@ -291,6 +291,25 @@ test("a click before the lazy lightbox module loads still opens on first try", a
 	await expect(page.locator(".pswp")).toBeVisible({timeout: 12_000});
 });
 
+test("an image inside a text link navigates while the lazy module is still loading", async ({page}) => {
+	await page.route(/fancybox-handler\.[^/]*\.js/, async (route) => {
+		const { promise, resolve } = Promise.withResolvers<void>();
+		setTimeout(resolve, 1_500);
+		await promise;
+		await route.continue();
+	});
+	await page.goto(ROOT + ARTICLE, {waitUntil: "domcontentloaded"});
+	const link = page
+		.locator(".custom-md a")
+		.filter({has: page.locator('img[alt="inline"]')})
+		.first();
+	const image = link.locator("img");
+	await image.click({force: true, timeout: 3_000});
+	// The link target is the pre-#226 listing path (its Home redirect is not this test's subject).
+	await expect(page).toHaveURL(/\/posts\/\/?$/);
+	await expect(page.locator(".pswp")).toHaveCount(0);
+});
+
 for (const [name, origin] of deployments) {
 	for (const width of [1440, 390]) {
 		test(`local markdown image opens visible slide ${name} ${width}`, async ({ browser }) => {

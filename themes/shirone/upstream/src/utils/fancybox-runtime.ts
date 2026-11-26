@@ -1,4 +1,7 @@
-import { FANCYBOX_SELECTORS } from "./fancybox-config";
+import {
+	FANCYBOX_SELECTORS,
+	isLightboxEligibleArticleImage,
+} from "./fancybox-config";
 
 const RUNTIME_BOUND_KEY = "fancyboxRuntimeBound";
 
@@ -27,10 +30,23 @@ function installEarlyCapture(): void {
 		if (!(target instanceof Element)) return;
 		const trigger = target.closest(selector);
 		if (!(trigger instanceof HTMLElement)) return;
+		// 不可开启的图片（如普通文本链接内的配图）不拦截，保持链接默认导航。
+		if (
+			trigger.matches(FANCYBOX_SELECTORS.articleImages) &&
+			!isLightboxEligibleArticleImage(trigger)
+		) {
+			return;
+		}
 		event.preventDefault();
 		pendingTrigger = trigger;
 	};
 	document.addEventListener("click", earlyHandler, true);
+}
+
+function discardEarlyCapture(): void {
+	if (earlyHandler) document.removeEventListener("click", earlyHandler, true);
+	earlyHandler = null;
+	pendingTrigger = null;
 }
 
 function flushEarlyCapture(): void {
@@ -66,7 +82,10 @@ export async function initFancyboxRuntime(
 function bindSwupCleanup(): void {
 	const bind = () => {
 		if (!window.swup?.hooks) return;
-		window.swup.hooks.on("visit:start", () => cleanupFancybox?.());
+		window.swup.hooks.on("visit:start", () => {
+			discardEarlyCapture();
+			cleanupFancybox?.();
+		});
 	};
 
 	if (window.swup?.hooks) bind();
