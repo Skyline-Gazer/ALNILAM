@@ -57,9 +57,9 @@ commits; no protection rule was weakened.
 reconciliation, `d7fee39f`), #235 (Demo content review corrections,
 `6354ef3f`), #236 (regional feed base, `976d0ccd`) and #237 (ADS `v0.8.0` pin,
 `4ffef1e9`), each with exact-head Verify; the ruleset's up-to-date requirement
-serialized the integrations. The stable Demo alias still serves `f32b80ce` while GitHub
-deployments for that project report Vercel's build rate limit, so published-build
-acceptance trails integration. A reproducible candidate package (424 files, two
+serialized the integrations. The Demo alias reached `976d0ccd` once Vercel's build
+rate limit cleared, so the affected surfaces were re-verified on a published build.
+A reproducible candidate package (424 files, two
 byte-identical builds) passed artifact, SEO and notice checks at both bases,
 axe reported no violation nodes, and #194 records the audit with its deferred
 items. #204 closed on live evidence. What remains is acceptance rather than
