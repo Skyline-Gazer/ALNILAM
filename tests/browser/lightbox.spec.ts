@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 import zlib from "node:zlib";
 
@@ -14,9 +16,16 @@ const FIXTURES = "/posts/lightbox-fixtures/";
 type Theme = "dark" | "light";
 
 const deployments = [
-	["root", ROOT],
-	["nested", NESTED],
+	["root", ROOT, "http://127.0.0.1:4333"],
+	["nested", NESTED, "http://127.0.0.1:4334/ALNILAM"],
 ] as const;
+
+const candidateRoot = process.env.CNB_CANDIDATE_ROOT ?? process.cwd();
+// Mirrors the config's conditional fixture servers: direct `pnpm browser` runs
+// skip fixture-deployment tests instead of failing on refused connections.
+const fixturesReady =
+	existsSync(path.join(candidateRoot, "dist/lightbox-root/index.html")) &&
+	existsSync(path.join(candidateRoot, "dist/lightbox-nested/index.html"));
 
 type Vendor = "fancybox" | "photoswipe";
 
@@ -130,7 +139,7 @@ async function installFixtureRoutes(page: Page) {
 
 		if (path === "/hotlink") {
 			const referer = req.headers()["referer"] ?? "";
-			if (!/127\.0\.0\.1:(4323|4324)/.test(referer)) {
+			if (!/^http:\/\/127\.0\.0\.1:(4323|4324|4333|4334)\//.test(referer)) {
 				return route.fulfill({ status: 403, body: "hotlink" });
 			}
 			return fulfillPng(route, 100, 100);
@@ -310,7 +319,7 @@ test("an image inside a text link navigates while the lazy module is still loadi
 	await expect(page.locator(".pswp")).toHaveCount(0);
 });
 
-for (const [name, origin] of deployments) {
+for (const [name, origin, fixtureOrigin] of deployments) {
 	for (const width of [1440, 390]) {
 		test(`local markdown image opens visible slide ${name} ${width}`, async ({ browser }) => {
 			const context = await browser.newContext({
@@ -332,6 +341,7 @@ for (const [name, origin] of deployments) {
 		});
 
 		test(`external https fixture preserves URL ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
@@ -344,7 +354,7 @@ for (const [name, origin] of deployments) {
 				}
 			});
 			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
+			await page.goto(`${fixtureOrigin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			const external = page.locator('.custom-md img[src*="lightbox-fixtures.local/ok/640/360"]');
@@ -363,6 +373,7 @@ for (const [name, origin] of deployments) {
 		});
 
 		test(`signed and protocol-relative URLs ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
@@ -374,7 +385,7 @@ for (const [name, origin] of deployments) {
 				if (u.includes("signed/") || u.includes("cdn.example.com")) seen.push(u);
 			});
 			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
+			await page.goto(`${fixtureOrigin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			const signed = page.locator('.custom-md img[src*="signed/"]');
@@ -408,6 +419,7 @@ for (const [name, origin] of deployments) {
 		});
 
 		test(`thumb/full uses author original ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
@@ -419,7 +431,7 @@ for (const [name, origin] of deployments) {
 				if (u.includes("/full/") || u.includes("/thumb/")) slideReqs.push(u);
 			});
 			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
+			await page.goto(`${fixtureOrigin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			const thumbLink = page.locator('a[href*="/full/1280/720.png"]');
@@ -439,13 +451,14 @@ for (const [name, origin] of deployments) {
 		});
 
 		test(`keyboard a11y trap and caption ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: width === 390 ? 844 : 1000 },
 				reducedMotion: "reduce",
 			});
 			const page = await context.newPage();
 			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
+			await page.goto(`${fixtureOrigin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			const trigger = page.locator(".custom-md img").nth(1);
@@ -549,6 +562,7 @@ for (const [name, origin] of deployments) {
 		});
 
 		test(`one-time signed original GETs exactly once ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
@@ -562,7 +576,7 @@ for (const [name, origin] of deployments) {
 				if (u.includes("/thumb/320/180.png")) thumbReqs.push(u);
 			});
 			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
+			await page.goto(`${fixtureOrigin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			const thumbLink = page.locator('a[href*="/once-signed/"]');
@@ -681,6 +695,7 @@ for (const [name, origin] of deployments) {
 		});
 
 		test(`error/timeout degrade without hang ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
@@ -689,7 +704,7 @@ for (const [name, origin] of deployments) {
 			const errors: string[] = [];
 			page.on("pageerror", (err) => errors.push(String(err)));
 			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
+			await page.goto(`${fixtureOrigin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			// Inject a marked failing trigger into the article group.
@@ -719,13 +734,14 @@ for (const [name, origin] of deployments) {
 		});
 
 		test(`keyboard trap skips inactive degraded slides ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
 			});
 			const page = await context.newPage();
 			await installFixtureRoutes(page);
-			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
+			await page.goto(`${fixtureOrigin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 			await page.evaluate(() => {
 				const md = document.querySelector(".custom-md");
@@ -806,13 +822,14 @@ for (const [name, origin] of deployments) {
 		});
 
 		test(`swup mid-probe does not leak lightbox ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
 			});
 			const page = await context.newPage();
 			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}${FIXTURES}`, { waitUntil: "networkidle" });
+			await page.goto(`${fixtureOrigin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			const slowImg = page.locator('.custom-md img[src*="ok/321/187"]');
@@ -821,20 +838,23 @@ for (const [name, origin] of deployments) {
 			await page.evaluate(() => {
 				document.dispatchEvent(new Event("swup:content:replace"));
 			});
-			await page.goto(`${origin}/`, { waitUntil: "domcontentloaded" });
+			await page.goto(`${fixtureOrigin}/`, { waitUntil: "domcontentloaded" });
 			await expect(page.locator(".pswp")).toHaveCount(0);
 			await context.close();
 		});
 
 		test(`carousel and close restore navigation ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
 			});
 			const page = await context.newPage();
 			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}/`, { waitUntil: "networkidle" });
-			await page.goto(`${origin}/posts/lightbox-fixtures/`, { waitUntil: "networkidle" });
+			// Keep the history contract (article -> Home) with the page that is
+			// built for the external-protocol fixture matrix.
+			await page.goto(`${fixtureOrigin}/`, { waitUntil: "networkidle" });
+			await page.goto(`${fixtureOrigin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await expect(page).toHaveURL(new RegExp("/posts/lightbox-fixtures/?$"));
 			// Swup remount can race readiness; force the same content:replace path Layout uses.
 			await page.evaluate(() => document.dispatchEvent(new Event("swup:content:replace")));
@@ -853,9 +873,9 @@ for (const [name, origin] of deployments) {
 			await closeLightbox(page, container, await page.evaluate(() => window.scrollY));
 
 			await page.goBack();
-			await expect(page).toHaveURL(`${origin}/`);
+			await expect(page).toHaveURL(`${fixtureOrigin}/`);
 			await page.goForward();
-			await expect(page).toHaveURL(new RegExp("/posts/lightbox-fixtures/?$"));
+			await expect(page).toHaveURL(`${fixtureOrigin}${FIXTURES}`);
 			await context.close();
 		});
 	}

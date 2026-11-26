@@ -64,6 +64,7 @@ const HEADER_LABELS = {
 
 const LOCALE_VARIANTS = {
   "zh-CN": "zh_CN",
+  "zh-Hans-CN": "zh_CN",
   "zh-TW": "zh_TW",
   "ja-JP": "ja",
   "en-US": "en",
@@ -76,7 +77,7 @@ const LOCALE_VARIANTS = {
   "tr-TR": "tr",
 };
 
-const UNKNOWN_LOCALES = ["fr", "xx", "", "de-DE", "zh-Hans-CN"];
+const UNKNOWN_LOCALES = ["fr", "xx", "", "de-DE"];
 
 test("every dictionary defines exactly the English key set", () => {
   for (const [locale, dictionary] of Object.entries(dictionaries)) {
@@ -118,6 +119,14 @@ for (const locale of UNKNOWN_LOCALES) {
 
 test("the Site default locale and the page locale agree", () => {
   assert.equal(i18n("menu"), i18nForLocale("zh-CN", "menu"));
+});
+
+test("an article using the generic Chinese locale gets Chinese reading controls", () => {
+  for (const key of ["tableOfContents", "backToTop"]) {
+    for (const locale of ["zh", "zh-SG", "zh-HK"]) {
+      assert.equal(i18nForLocale(locale, key), dictionaries.zh_CN[key], `${locale}/${key}`);
+    }
+  }
 });
 
 test("a Site override wins over the built-in dictionary", () => {

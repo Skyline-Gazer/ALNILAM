@@ -29,6 +29,7 @@ The bundled `sites/demo` supplies the public Demo and regression coverage. Use y
 In a fresh worktree, install dependencies as above and install the pinned Playwright
 Chromium with `pnpm exec playwright install chromium` (Linux may also require
 `pnpm exec playwright install-deps chromium`). Ports 4323 and 4324 must be free.
+The PhotoSwipe fixture also uses ports 4333 and 4334.
 Then run one of:
 
 ```bash
@@ -41,6 +42,9 @@ pnpm audit:local       # complete Playwright suite followed by both Lighthouse r
 Each command composes a temporary copy of the demo Site at root and `/ALNILAM/`,
 checks both artifacts, and stops on failure. Browser commands accept additional
 Playwright arguments, for example `pnpm browser:local -- --grep navigation`.
+`browser:local` and `audit:local` compose the HTTPS PhotoSwipe article from
+`tests/fixtures/lightbox-site` into `dist/lightbox-root` and `dist/lightbox-nested`.
+Use `pnpm browser` to rerun specs against already composed outputs.
 Playwright writes `browser-results/`; Lighthouse writes `artifacts/lighthouse/`
 and `artifacts/lighthouse-regression/`, replacing the selected form factor's
 previous reports. Lighthouse uses the CI routes, budgets, run count and expected-red
