@@ -1,9 +1,9 @@
 import {test, expect} from '@playwright/test';
 
-const retiredDemoPosts = /fixture-beta-zh|lightbox-fixtures/;
+const retiredDemoPosts = /fixture-beta-zh|lightbox-fixtures|unpublished-lighthouse/;
 for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM']) {
   test(`Demo output excludes test-only posts ${new URL(origin).pathname}`, async ({page}) => {
-    for (const slug of ['fixture-beta-zh', 'lightbox-fixtures']) {
+    for (const slug of ['fixture-beta-zh', 'lightbox-fixtures', 'unpublished-lighthouse']) {
       const route = `/posts/${slug}/`;
       expect((await page.request.get(origin + route, {maxRedirects: 0})).status(), route).toBe(404);
     }

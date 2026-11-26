@@ -1,4 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { existsSync } from "node:fs";
+import path from "node:path";
 
 /**
  * Pagination + Pagefind end-to-end regression (Issue #63, P4/T02).
@@ -12,8 +14,8 @@ const ROOT = process.env.ALNILAM_TEST_ROOT_URL ?? "http://127.0.0.1:4323";
 const NESTED = process.env.ALNILAM_TEST_NESTED_URL ?? "http://127.0.0.1:4324/ALNILAM";
 
 const deployments = [
-	["root", ROOT],
-	["nested", NESTED],
+	["root", ROOT, "http://127.0.0.1:4333", "lightbox-root"],
+	["nested", NESTED, "http://127.0.0.1:4334/ALNILAM", "lightbox-nested"],
 ] as const;
 
 type SearchMode = "desktop" | "mobile";
@@ -49,7 +51,7 @@ async function searchAndClickFirstResult(
 	return href;
 }
 
-for (const [name, origin] of deployments) {
+for (const [name, origin, fixtureOrigin, fixtureOutput] of deployments) {
 	test(`search excerpts hide Pagefind internals ${name}`, async ({ page }) => {
 		await page.goto(`${origin}/`, { waitUntil: "networkidle" });
 		const input = await openSearch(page, "desktop");
@@ -221,20 +223,19 @@ for (const [name, origin] of deployments) {
 		});
 	}
 
-	test(`Pagefind excludes the draft note and retired English fixture ${name}`, async ({ page }) => {
-		await page.goto(`${origin}/en/`, { waitUntil: "networkidle" });
+	test(`Pagefind excludes a draft present in the fixture Site ${name}`, async ({ page }) => {
+		const candidateRoot = process.env.CNB_CANDIDATE_ROOT ?? process.cwd();
+		test.skip(!existsSync(path.join(candidateRoot, "dist", fixtureOutput, "index.html")), "lightbox fixture build missing; run pnpm browser:local first");
+		await page.goto(`${fixtureOrigin}/`, { waitUntil: "networkidle" });
 		const input = await openSearch(page, "desktop");
 		const panel = page.locator("#search-panel");
 		const results = panel.getByRole("link");
-		const status = panel.getByRole("status");
-		for (const query of ["comet-locator", "unpublished note stays out"]) {
-			// Reset through a known match so a previous empty response cannot satisfy this query.
-			await input.fill("narrower topics");
-			await expect(results.first()).toHaveAttribute("href", new URL(`${origin}/en/posts/organize-your-blog/`).pathname);
-			await input.fill(query);
-			await expect(status).toHaveText("No results");
-			await expect(results).toHaveCount(0);
-		}
+		await input.fill("Playwright fulfills");
+		await expect(results.first()).toHaveAttribute("href", new URL(`${fixtureOrigin}/posts/lightbox-fixtures/`).pathname);
+		await input.fill("雾航日志");
+		await expect(panel.getByRole("status")).toHaveText("没有找到结果");
+		await expect(results).toHaveCount(0);
+		expect((await page.request.get(`${fixtureOrigin}/posts/unpublished-lighthouse/`)).status()).toBe(404);
 	});
 
 	for (const { width, locale, query } of [
@@ -330,14 +331,11 @@ for (const [name, origin] of deployments) {
 		await expect(panel.getByText("No results", { exact: true })).toHaveCount(0);
 		await context.close();
 	});
-	test(`drafts and fixtures stay out of pagefind index files ${name}`, async ({ browser }) => {
+	test(`Pagefind publishes indexes for all Demo locales ${name}`, async ({ browser }) => {
 		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
 		const page = await context.newPage();
 		await page.goto(`${origin}/pagefind/pagefind-entry.json`, { waitUntil: "domcontentloaded" });
 		const entry = await page.evaluate(() => document.body.innerText);
-		// The entry is per-language metadata; the fragment files must not leak
-		// unpublished content. The draft fixture site has no drafts, but the
-		// index must exist for all three languages.
 		expect(entry).toContain("zh-cn");
 		expect(entry).toContain("en");
 		expect(entry).toContain("ja");

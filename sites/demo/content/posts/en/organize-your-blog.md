@@ -26,7 +26,7 @@ Open the [Guide category](../../categories/guide/) to find related posts. The ro
 
 The Site owns the tag catalog. This guide uses `guide` for tutorials and `alnilam` for project posts. Browse the [Guide tag](../../tags/guide/) or [ALNILAM tag](../../tags/alnilam/).
 
-Categories describe an article's main subject; tags connect narrower topics. Reuse a declared label so its route is available.
+Categories describe an article's main subject and must be declared in the Site. Tags connect narrower topics. Tags can come directly from a post, and reusing a catalog ID gives them a consistent label and URL.
 
 ## Browse by publication date
 
@@ -34,7 +34,7 @@ Open the [English archive](../../archives/), then use the language selector to v
 
 ## Follow an ordered series
 
-A series groups posts that belong in sequence. Its route is shared: the [ALNILAM Introduction series](../../../series/alnilam-introduction/) shows its order and members. Each post still opens in its own locale.
+A series groups posts that belong in sequence. The shared [ALNILAM Introduction series](../../../series/alnilam-introduction/) lists its two Chinese members in reading order. After opening an article, use the language selector to reach its English or Japanese translation.
 
 These routes answer different questions, so one article can belong to a category, use several tags, appear in a date archive, and be part of a series. Continue with the [multilingual publishing guide](../internationalization/) and the [Pagefind search guide](../pagefind-basics/); search a phrase in that guide to move from discovery to reading.
 
