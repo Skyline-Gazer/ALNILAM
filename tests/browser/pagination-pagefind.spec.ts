@@ -77,6 +77,7 @@ for (const [name, origin] of deployments) {
 			const link = page.locator(`#navbar [data-lang-switcher] a[data-lang-target="${locale}"]`);
 			await expect(link).toHaveAttribute("href", `${base}${path}`);
 			await expect(link).toHaveAttribute("data-lang-exact", "true");
+			await page.locator('#navbar [popovertarget="header-languages"]').click();
 			await link.click();
 			await expect(page).toHaveURL(`${origin}${path}`);
 			await expect(page.getByRole("searchbox", { name: label })).toBeVisible();

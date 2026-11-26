@@ -71,9 +71,22 @@ function hrefFor(path?: string) {
 
 const localeNames: Record<string, string> = {
 	"zh-CN": "中文",
-	en: "EN",
+	en: "English",
 	ja: "日本語",
 };
+const languageLabels: Record<string, string> = {
+	zh: "语言",
+	"zh-CN": "语言",
+	"zh-TW": "語言",
+	es: "Idioma",
+	id: "Bahasa",
+	ja: "言語",
+	ko: "언어",
+	th: "ภาษา",
+	tr: "Dil",
+	vi: "Ngôn ngữ",
+};
+const languageLabel = languageLabels[pageLocale] ?? languageLabels[pageLocale.split("-")[0]] ?? "Language";
 const publishedPosts = await getCollection("posts", ({ data }) => !data.draft);
 const homeLocales = new Set([defaultLocale, ...publishedPosts.map((post) => post.data.lang || defaultLocale)]);
 const switchTargets =
@@ -174,7 +187,7 @@ function isActive(link: (typeof links)[number]): boolean {
 		</nav>
 		<div class="ml-auto flex shrink-0 items-center gap-1">
 			<Search client:only="svelte"></Search>
-			<LangSwitch targets={switchTargets} />
+			<LangSwitch targets={switchTargets} label={languageLabel} homeLabel={t(I18nKey.home)} />
 			{!siteConfig.themeColor.fixed && (
 				<IconButton id="display-settings-switch" label={t(I18nKey.displaySettings)} ariaExpanded={false} ariaControls="display-setting" class="shrink-0">
 					<Icon icon="material-symbols:palette-outline" class="text-[1.25rem]"></Icon>
