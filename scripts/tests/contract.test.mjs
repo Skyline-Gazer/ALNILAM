@@ -241,7 +241,8 @@ test("nested-base output keeps canonical and internal links inside /ALNILAM/", (
   assert.doesNotMatch(html, /href="\/(?!ALNILAM\/)/);
   assert.doesNotMatch(html, /href="\/ALNILAM\/\//);
   assert.doesNotMatch(posts, /href="\/(?!ALNILAM\/)/);
-  assert.match(posts, /<a href="\/ALNILAM\/posts\/2\/" rel="next"/);
+  assert.match(html, /<a href="\/ALNILAM\/posts\/2\/" rel="next"/);
+  assert.match(posts, /<meta http-equiv="refresh" content="0;url=\/ALNILAM\/"/);
   assert.doesNotMatch(posts, /\/ALNILAM\/ALNILAM\//);
   const relativeArticle = fs.readFileSync(path.join(out, "site", "posts", "relative-image", "index.html"), "utf8");
   const relativeSrc = relativeArticle.match(/<img[^>]*src="([^"]+orion[^"]*)"/)?.[1];
@@ -1259,7 +1260,7 @@ test("taxonomy, series and pinned frontmatter compose category, tag and series r
   // Pinned posts sort first on the paginated list even with an old pubDate.
   // The Demo may pin more than one article, so the invariant is that every
   // pinned post precedes every unpinned one, not that one fixture is first.
-  const postsPage = fs.readFileSync(path.join(out, "posts", "index.html"), "utf8");
+  const postsPage = fs.readFileSync(path.join(out, "index.html"), "utf8");
   const cardOrder = [...postsPage.matchAll(/href="\/posts\/([^"/]+)\/"/g)]
     .map((m) => m[1])
     .filter((slug, index, all) => slug !== "page" && all.indexOf(slug) === index);

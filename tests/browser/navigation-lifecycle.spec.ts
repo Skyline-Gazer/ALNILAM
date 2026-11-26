@@ -107,10 +107,10 @@ for (const origin of ["http://127.0.0.1:4323", "http://127.0.0.1:4324/ALNILAM"])
             await menu.click();
             await expect(menu).toHaveAttribute("aria-expanded", "true");
             await expect(page.locator(".site-drawer--open")).toBeVisible();
-            await page.locator(".site-drawer__nav").getByRole("link", { name: "文章" }).click();
+            await page.locator('.site-drawer__nav').getByRole('link', { name: '首页', exact: true }).click();
             await expect(menu).toHaveAttribute("aria-expanded", "false");
           } else {
-            await page.locator('#main-navigation').getByRole("link", { name: "文章" }).click();
+            await page.locator('#main-navigation a[data-nav-key="home"]').click();
           }
           await expect(page.locator("#post-list")).toBeVisible();
           if (width === 390) {

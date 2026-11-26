@@ -35,7 +35,6 @@ export const userConfigOverrides = {
   // Native nav links bind both href (`url`) and active-route key (`pageKey`, resolved by `resolvePageKey`).
   navBar: {links: [
     {name: '首页', url: '/', pageKey: 'home'},
-    {name: '文章', url: '/posts/', pageKey: 'posts'},
     {name: '分类', url: '/categories/', pageKey: 'categories'},
     {name: '归档', url: '/archives/', pageKey: 'archive'},
     {name: '标签', url: '/tags/', pageKey: 'tags'},

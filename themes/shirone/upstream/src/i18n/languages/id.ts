@@ -9,6 +9,7 @@ export const id: Translation = {
 	[Key.archiveGroupYear]: "Berdasarkan tahun",
 	[Key.archiveGroupCategory]: "Berdasarkan kategori",
 	[Key.archiveGroupTag]: "Berdasarkan tag",
+	[Key.archiveGroupTagHint]: "Setiap grup tag mencantumkan artikel anggotanya; satu artikel dapat muncul di beberapa tag. Jumlah grup adalah keanggotaan, sedangkan total di atas menghitung artikel unik.",
 	[Key.search]: "Cari",
 	[Key.searchNoResults]: "Tidak ada hasil",
 	[Key.searchUnavailable]: "Pencarian untuk sementara tidak tersedia. Silakan coba lagi nanti.",

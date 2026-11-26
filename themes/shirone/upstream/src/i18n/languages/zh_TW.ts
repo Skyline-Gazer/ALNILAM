@@ -9,6 +9,7 @@ export const zh_TW: Translation = {
 	[Key.archiveGroupYear]: "依年份",
 	[Key.archiveGroupCategory]: "依分類",
 	[Key.archiveGroupTag]: "依標籤",
+	[Key.archiveGroupTagHint]: "標籤組內為成員文章；同一文章會出現在它的每個標籤組中，組內數字為成員文章數，頂部總數為不重複文章數。",
 	[Key.search]: "搜尋",
 	[Key.searchNoResults]: "找不到結果",
 	[Key.searchUnavailable]: "搜尋暫時無法使用，請稍後再試。",
