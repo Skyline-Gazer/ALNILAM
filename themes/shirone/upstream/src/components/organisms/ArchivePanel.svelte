@@ -11,6 +11,7 @@ import ArchiveList, {
 } from "@components/atoms/blog/ArchiveList.svelte";
 import Card from "@components/atoms/display/Card.svelte";
 import SegmentedButton from "@components/atoms/selection/SegmentedButton.svelte";
+import PageHeader from "@components/molecules/PageHeader.svelte";
 import I18nKey from "@i18n/i18nKey";
 import { i18n as siteI18n, i18nForLocale } from "@i18n/translation";
 import Icon from "@iconify/svelte";
@@ -37,6 +38,7 @@ interface Breadcrumb {
 }
 
 interface Props {
+	heading?: { title: string; subtitle: string };
 	sortedPosts?: Post[];
 	locale?: string;
 	/** SSR 初始筛选：分类稳定键（slug/id）。仅预置，URL 显式参数仍可覆盖。 */
@@ -58,6 +60,7 @@ interface Props {
 }
 
 let {
+	heading,
 	sortedPosts = [] as Post[],
 	locale,
 	initialCategory = "",
@@ -248,17 +251,6 @@ $effect(() => {
 </script>
 
 <Card color="var(--card-bg)" radius="l" class="archive-panel px-8 py-6">
-	<!-- 带筛选参数（?category= / ?tag= / ?uncategorized）是定向浏览视图：
-	    隐藏分组切换，只留面包屑 + 筛选后时间轴；无筛选才显示分组切换。 -->
-	{#if !filterCrumb}
-		<div class="archive-panel__group-switch">
-			<SegmentedButton
-				options={groupOptions}
-				bind:value={groupBy}
-				label={i18n(I18nKey.archiveGroup)}
-			/>
-		</div>
-	{/if}
 	{#if filterCrumb}
 		<nav class="archive-panel__crumb" aria-label="Breadcrumb">
 			<ol class="archive-panel__crumb-list">
@@ -279,6 +271,20 @@ $effect(() => {
 				</li>
 			</ol>
 		</nav>
+	{/if}
+	{#if heading}
+		<PageHeader {...heading} />
+	{/if}
+	<!-- 带筛选参数（?category= / ?tag= / ?uncategorized）是定向浏览视图：
+	    隐藏分组切换，只留面包屑 + 筛选后时间轴；无筛选才显示分组切换。 -->
+	{#if !filterCrumb}
+		<div class="archive-panel__group-switch">
+			<SegmentedButton
+				options={groupOptions}
+				bind:value={groupBy}
+				label={i18n(I18nKey.archiveGroup)}
+			/>
+		</div>
 	{/if}
 	{#if groups.length > 0}
 		<ArchiveList
