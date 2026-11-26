@@ -68,7 +68,7 @@ export function looksLikeImageHref(href: string): boolean {
 	return href.startsWith("https:") || href.startsWith("//");
 }
 
-function isMarkedLightboxAnchor(anchor: HTMLAnchorElement): boolean {
+export function isMarkedLightboxAnchor(anchor: HTMLAnchorElement): boolean {
 	return (
 		anchor.hasAttribute("data-fancybox") ||
 		anchor.hasAttribute("data-pswp-src") ||
@@ -91,7 +91,7 @@ function isImageOnlyAnchor(anchor: HTMLAnchorElement): boolean {
 	});
 }
 
-function isAuthorImageOriginalLink(anchor: HTMLAnchorElement): boolean {
+export function isAuthorImageOriginalLink(anchor: HTMLAnchorElement): boolean {
 	if (!isImageOnlyAnchor(anchor)) return false;
 	const href = anchor.getAttribute("href") ?? "";
 	return isSafeImageUrl(href) && looksLikeImageHref(href);
