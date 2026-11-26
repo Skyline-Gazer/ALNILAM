@@ -315,23 +315,8 @@ test("an image inside a text link navigates while the lazy module is still loadi
 		.locator(".custom-md a")
 		.filter({has: page.locator('img[alt="Inline icon"]')})
 		.first();
-	const image = link.locator("img");
-	await expect
-		.poll(async () => {
-			const href = await link.getAttribute("href") ?? "";
-			// The authored href is relative ("../"); resolve it like the browser does.
-			return new URL(href, ROOT_FIXTURE + FIXTURES).pathname.replace(/\/$/, "");
-		})
-		.toBe("/posts");
-	// The target page meta-refreshes to Home afterwards, so assert the
-	// navigation request instead of the final URL; no lightbox may open.
-	const navigation = page.waitForRequest(
-		(request) =>
-			request.resourceType() === "document" &&
-			new URL(request.url()).pathname.replace(/\/$/, "") === "/posts",
-	);
-	await image.click({force: true, timeout: 3_000});
-	await navigation;
+	await link.locator("img").click({force: true, timeout: 3_000});
+	await expect(page).toHaveURL(`${ROOT_FIXTURE}/`);
 	await expect(page.locator(".pswp")).toHaveCount(0);
 });
 
@@ -559,7 +544,7 @@ for (const [name, origin, fixtureOrigin] of deployments) {
 				reducedMotion: "reduce",
 			});
 			const page = await context.newPage();
-			const responses = await installFixtureRoutes(page);
+			await installFixtureRoutes(page);
 			await page.goto(`${fixtureOrigin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
@@ -568,11 +553,8 @@ for (const [name, origin, fixtureOrigin] of deployments) {
 				.filter({ has: page.locator('img[alt="Inline icon"]') })
 				.first();
 			await link.scrollIntoViewIfNeeded();
-			const navigation = page.waitForRequest((request) =>
-				request.resourceType() === "document" && request.url() === `${fixtureOrigin}/posts/`,
-			);
 			await link.click();
-			await navigation;
+			await expect(page).toHaveURL(`${fixtureOrigin}/`);
 			await expect(page.locator(".pswp")).toHaveCount(0);
 			await context.close();
 		});

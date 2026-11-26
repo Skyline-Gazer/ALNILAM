@@ -128,7 +128,7 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
         const zhTarget=await page.locator('#navbar [data-lang-switcher] a[data-lang-target="zh-CN"]').getAttribute('href');
         expect(zhTarget).toBe(new URL(origin).pathname.replace(/\/$/,'')+'/posts/hello-alnilam/');
         expect(await page.locator('#navbar [data-lang-switcher] a[data-lang-target="zh-CN"]').getAttribute('data-lang-exact')).toBe('true');
-        await expect(page.locator('.markdown-content')).toContainText('This article lives in');
+        await expect(page.locator('.markdown-content')).toContainText('Rehearse an upgrade with the same Site');
         await expect(page.locator('meta[name="robots"][content*="noindex"]')).toHaveCount(0);
         await page.locator('#navbar [popovertarget="header-languages"]').click();
         await page.locator('#navbar [data-lang-switcher] a[data-lang-target="zh-CN"]').click();
