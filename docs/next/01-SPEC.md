@@ -4,6 +4,8 @@
 
 Current Owner requirement delta (2026-10-27): vNext Site is YAML-only. See [ADR 0003](../adr/0003-vnext-yaml-requirement-delta.md). The frozen v1/TOML text below remains historical; the current schema v2 behavior and validation are in Site onboarding and the Site contract.
 
+The later [#203 product decision](https://github.com/Skyline-Gazer/ALNILAM/issues/203) retires Gallery, Moments and site-wide Music. Gallery and Moments appeared in the historical Foundation v0.2.0 release. Comments and Bangumi remain optional.
+
 > **FROZEN P1 SCOPE · Owner G0-F approval 2026-10-26** ([decision](08-G0-F-DECISION.md)). Requirements are targets, not features already shipped in v0.1.3. P1 implementation is authorized through reviewed dev PRs, not production publication. The words MUST/SHOULD describe target behavior, not capabilities already shipped in v0.1.3. Linked plan: [00-PLAN.md](00-PLAN.md).
 
 ## Normative product requirements
@@ -143,7 +145,7 @@ Then an exact path- and locale-aware llms.txt index links to a source-backed ind
 
 ## G0-F Owner decisions and bounded P1 authorization
 1. Shirone M3E is the only frontend visual base; retain the Fuwari one-post-per-row listing, left text/right ~28% cover at desktop and cover-first on mobile. Capture approval/reference screenshots during P1.
-2. Gallery/moments/music are explicitly deferred by the Owner; comments/Bangumi remain optional with zero-output/zero-network disabled-state criteria.
+2. The historical G0-F scope deferred Gallery, Moments and Music. The scope update above records the later product decision. Comments and Bangumi retain the disabled-state zero-output and zero-network requirements.
 3. Which user-level Site customization interfaces are vNext MUST vs later SHOULD, after comparing actual upstream code.
 4. Which optional third-party providers require a live preview rather than a deterministic fixture.
 
