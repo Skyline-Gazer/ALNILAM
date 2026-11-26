@@ -313,9 +313,22 @@ test("an image inside a text link navigates while the lazy module is still loadi
 		.filter({has: page.locator('img[alt="inline"]')})
 		.first();
 	const image = link.locator("img");
+	await expect
+		.poll(async () => {
+			const href = await link.getAttribute("href") ?? "";
+			// The authored href is relative ("../"); resolve it like the browser does.
+			return new URL(href, ROOT + "/posts/hello-alnilam/").pathname.replace(/\/$/, "");
+		})
+		.toBe("/posts");
+	// The target page meta-refreshes to Home afterwards, so assert the
+	// navigation request instead of the final URL; no lightbox may open.
+	const navigation = page.waitForRequest(
+		(request) =>
+			request.resourceType() === "document" &&
+			new URL(request.url()).pathname.replace(/\/$/, "") === "/posts",
+	);
 	await image.click({force: true, timeout: 3_000});
-	// The link target is the pre-#226 listing path (its Home redirect is not this test's subject).
-	await expect(page).toHaveURL(/\/posts\/\/?$/);
+	await navigation;
 	await expect(page.locator(".pswp")).toHaveCount(0);
 });
 

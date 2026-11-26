@@ -8,6 +8,7 @@ const RUNTIME_BOUND_KEY = "fancyboxRuntimeBound";
 let cleanupFancybox: (() => void) | undefined;
 let earlyHandler: ((event: MouseEvent) => void) | null = null;
 let pendingTrigger: HTMLElement | null = null;
+let captureLifetime = 0;
 
 function hasMatch(root: ParentNode, selector: string): boolean {
 	if (root instanceof Element && root.matches(selector)) return true;
@@ -44,6 +45,7 @@ function installEarlyCapture(): void {
 }
 
 function discardEarlyCapture(): void {
+	captureLifetime += 1;
 	if (earlyHandler) document.removeEventListener("click", earlyHandler, true);
 	earlyHandler = null;
 	pendingTrigger = null;
@@ -68,6 +70,7 @@ export async function initFancyboxRuntime(
 	if (typeof document === "undefined" || !hasFancyboxTarget(root)) return;
 
 	installEarlyCapture();
+	const lifetime = captureLifetime;
 	try {
 		const runtime = await import("./fancybox-handler");
 		cleanupFancybox = runtime.cleanupFancybox;
@@ -75,9 +78,11 @@ export async function initFancyboxRuntime(
 	} catch (error) {
 		console.error("Failed to initialize Fancybox runtime", error);
 	} finally {
-		flushEarlyCapture();
+		// 过期的初始化（导航后的旧调用）不得冲洗新页面的捕获。
+		if (lifetime === captureLifetime) flushEarlyCapture();
 	}
 }
+
 
 function bindSwupCleanup(): void {
 	const bind = () => {
