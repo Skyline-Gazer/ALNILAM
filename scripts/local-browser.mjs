@@ -43,6 +43,10 @@ try {
       source: 'tests/fixtures/ads-site',
       outputs: [['ads-root', 'https://ads.example.com/'], ['ads-nested', 'https://ads.example.com/ALNILAM/']],
     },
+    ...(['all', 'browser'].includes(mode) ? [{
+      source: 'tests/fixtures/lightbox-site',
+      outputs: [['lightbox-root', 'https://example.com/'], ['lightbox-nested', 'https://example.com/ALNILAM/']],
+    }] : []),
   ]) {
     const site = fs.mkdtempSync(path.join(os.tmpdir(), 'alnilam-local-site-'));
     sites.push(site);

@@ -7,7 +7,7 @@ import { test, expect } from "@playwright/test";
 // The deterministic check is the CSS invariant; the press test documents the user-visible effect.
 
 const ORIGINS = ["http://127.0.0.1:4323", "http://127.0.0.1:4324/ALNILAM"];
-const LISTING = "/categories/guide/";
+const LISTING = "/tags/alnilam/";
 
 for (const origin of ORIGINS) {
   const label = new URL(origin).pathname || "/";

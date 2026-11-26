@@ -24,7 +24,7 @@ Site 拥有配置、文章和图片；ALNILAM Core 读取这些输入并生成�
 
 在 Site 根目录保存配置，并创建 `content/posts/`：
 
-<pre><code>schemaVersion: 2
+<pre tabindex="0"><code>schemaVersion: 2
 site: { title: "纸上星图", description: "阅读笔记", url: "https://blog.example.org", locale: "zh-CN" }
 locales: ["zh-CN", "en", "ja"]
 </code></pre>
@@ -35,7 +35,7 @@ locales: ["zh-CN", "en", "ja"]
 
 frontmatter 描述一篇已发布文章；分类与标签要在 Site taxonomy 中声明：
 
-<pre><code>---
+<pre tabindex="0"><code>---
 title: "夜色里的第一则笔记"
 pubDate: 2026-11-23
 category: "guide"

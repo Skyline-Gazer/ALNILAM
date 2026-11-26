@@ -21,7 +21,7 @@ Publishing takes three steps:
 
 Save this at the Site root, beside `content/posts/`:
 
-<pre><code>schemaVersion: 2
+<pre tabindex="0"><code>schemaVersion: 2
 site: { title: "Field Notes", description: "Reading notes", url: "https://blog.example.org", locale: "zh-CN" }
 locales: ["zh-CN", "en", "ja"]
 </code></pre>
@@ -32,7 +32,7 @@ Only `schemaVersion: 2` is supported. See the authoritative [Site Onboarding gui
 
 This frontmatter describes a published post; categories and tags must be declared by the Site:
 
-<pre><code>---
+<pre tabindex="0"><code>---
 title: "A note beneath the evening sky"
 pubDate: 2026-11-23
 category: "guide"

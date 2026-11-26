@@ -37,22 +37,21 @@ for (const [name, origin] of deployments) {
 	});
 
 	test(`taxonomy pagination navigates to page 2 and back ${name}`, async ({ page }) => {
-		// The guide category holds the published article set and is the slice that
-		// stays long enough to paginate as Demo content changes.
-		await page.goto(`${origin}/categories/guide/`, { waitUntil: "networkidle" });
+		// The ALNILAM tag spans both guide and release posts after removing test-only articles.
+		await page.goto(`${origin}/tags/alnilam/`, { waitUntil: "networkidle" });
 		await expectTimeline(page, 1);
 		const firstPageLinks = await page.locator(".m3-blog-archive__item").evaluateAll((items) =>
 			items.map((item) => item.getAttribute("href")),
 		);
-		await page.locator('.m3-blog-pagination a[href$="/categories/guide/2/"]').filter({ visible: true }).first().click();
-		await expect(page).toHaveURL(`${origin}/categories/guide/2/`);
+		await page.locator('.m3-blog-pagination a[href$="/tags/alnilam/2/"]').filter({ visible: true }).first().click();
+		await expect(page).toHaveURL(`${origin}/tags/alnilam/2/`);
 		await expectTimeline(page, 1);
 		const secondPageLinks = await page.locator(".m3-blog-archive__item").evaluateAll((items) =>
 			items.map((item) => item.getAttribute("href")),
 		);
 		expect(secondPageLinks.every((href) => !firstPageLinks.includes(href))).toBe(true);
-		await page.locator('.m3-blog-pagination a[href$="/categories/guide/"]').filter({ visible: true }).first().click();
-		await expect(page).toHaveURL(`${origin}/categories/guide/`);
+		await page.locator('.m3-blog-pagination a[href$="/tags/alnilam/"]').filter({ visible: true }).first().click();
+		await expect(page).toHaveURL(`${origin}/tags/alnilam/`);
 		await expectTimeline(page, 1);
 	});
 
@@ -97,7 +96,7 @@ for (const [name, origin] of deployments) {
 		await expect(page.locator("main").getByRole("heading", { level: 1 })).toHaveCount(1);
 		await expect(page.locator(".archive-panel").getByRole("heading", { level: 1 })).toBeVisible();
 		await expect(page.locator(".archive-panel a[href$='/categories/']")).toHaveCount(1);
-		await expectTimeline(page, 3);
+		await expectTimeline(page, 2);
 		// The category bar hides on taxonomy detail routes (also under nested base).
 		await expect(page.locator("#category-bar-region")).toBeHidden();
 		// Every member link belongs to the release category's posts.
@@ -161,7 +160,7 @@ test(`archive timeline in dark theme (root, desktop)`, async ({ browser }) => {
 		await page.waitForTimeout(300);
 	}
 	await expect(page.locator("html")).toHaveAttribute("data-theme", "github-dark");
-	await expectTimeline(page, 3);
+	await expectTimeline(page, 2);
 	// Year group collapse toggles without losing the timeline.
 	const chevron = page.locator(".m3-blog-archive__chevron").first();
 	await chevron.click();
@@ -183,7 +182,7 @@ test(`archive timeline in light theme (root, desktop)`, async ({ browser }) => {
 		await page.waitForTimeout(300);
 	}
 	await expect(page.locator("html")).toHaveAttribute("data-theme", "github-light");
-	await expectTimeline(page, 3);
+	await expectTimeline(page, 2);
 	await context.close();
 });
 
@@ -193,7 +192,7 @@ for (const [name, origin] of deployments) {
 		const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
 		const page = await context.newPage();
 		await page.goto(`${origin}/categories/release/`, { waitUntil: "networkidle" });
-		await expectTimeline(page, 3);
+		await expectTimeline(page, 2);
 		await expect(page.locator("#category-bar-region")).toBeHidden();
 		await context.close();
 	});

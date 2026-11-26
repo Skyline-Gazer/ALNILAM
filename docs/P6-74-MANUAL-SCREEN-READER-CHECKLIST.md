@@ -35,7 +35,7 @@ Apple references: [Get started with VoiceOver](https://support.apple.com/en-cn/g
 ## Checklist
 
 VoiceOver wording varies by macOS version, voice, and page language. Check that the expected **role, accessible name, state, and content** are conveyed; record the actual utterance instead of requiring one exact sentence.
-Routes below assume the #190 guide corpus on the public Demo (`/en/posts/getting-started/`, `/posts/lightbox-fixtures/`). Below 1024px article pages use the in-flow contents disclosure ([#194](https://github.com/Skyline-Gazer/ALNILAM/issues/194) / [#217](https://github.com/Skyline-Gazer/ALNILAM/pull/217)), not the floating TOC cluster. Default-locale `/posts/` pagination reflects the locale-scoped corpus ([#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35)): 2 pages on the current Demo.
+Use the published `/en/posts/getting-started/` guide and `/posts/hello-alnilam/` article on the public Demo. Below 1024px, article pages use the in-flow contents disclosure in place of the floating TOC cluster ([#194](https://github.com/Skyline-Gazer/ALNILAM/issues/194) / [#217](https://github.com/Skyline-Gazer/ALNILAM/pull/217)). The default-locale `/posts/` spans two pages ([#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35)).
 
 
 | ID | Route / layout | Actions | Expected announcement and focus | Result / actual speech |
@@ -48,7 +48,7 @@ Routes below assume the #190 guide corpus on the public Demo (`/en/posts/getting
 | SR-06 | `/` and `/search/` · 1440px and 390px | Open the header search control. Search for `ALNILAM`, then `voiceover-no-match-74`. On `/search/`, use the labelled searchbox and repeat. | Search control has localized accessible names. Results are links with understandable titles. No-results is announced as status. Escape restores focus to trigger. | |
 | SR-07 | `/posts/` · 1440px | Use pagination links to open page 2, then return to page 1. | Page links have distinct names. Page 2 announces `第 2/2 页` or equivalent; URL is `/posts/2/`. | |
 | SR-08 | `/posts/` · 390px | Focus the jump control; confirm name includes localized jump label and position. Activate, type `2`, Enter. On page 2, exercise Escape and blur. | Button announces position (for example, `1/2`). Enter navigates to `/posts/2/`. Escape returns focus to jump button without navigation. Record actual focus destination; do not infer it from the button reappearing. | |
-| SR-09 | `/posts/lightbox-fixtures/` · 1440px and 390px | Tab to bare raster images; activate with Enter and Space. Open second image, ArrowRight, tab through viewer, Escape. | Lightbox is dialog/modal with alt text and caption. Tab stays in viewer. Escape restores focus to triggering image and preserves scroll. | |
+| SR-09 | `/posts/hello-alnilam/` · 1440px and 390px | Tab to the two bare lighthouse images and activate them with Enter and Space. From the first slide, press ArrowRight, tab through the viewer, then press Escape. | Lightbox is dialog/modal with alt text and caption. Tab stays in viewer. Escape restores focus to triggering image and preserves scroll. | |
 
 ### Failure and evidence record
 

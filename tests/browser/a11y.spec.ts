@@ -6,7 +6,7 @@ const viewports = [
   { width: 390, height: 844 },
   { width: 1440, height: 900 },
 ] as const;
-const routes = ["/", "/posts/", "/posts/hello-alnilam/", "/search/", "/tags/"] as const;
+const routes = ["/", "/posts/", "/posts/hello-alnilam/", "/en/posts/getting-started/", "/search/", "/tags/"] as const;
 const hardImpacts: Record<string, true> = { critical: true, serious: true };
 
 async function analyze(page: Page) {
