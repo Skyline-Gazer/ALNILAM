@@ -37,10 +37,10 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
     const base = new URL(origin).pathname.replace(/\/$/, '');
     await page.goto(origin + '/en/', {waitUntil:'networkidle'});
     const nav = page.locator('#main-navigation');
-    await expect(nav.locator('[data-nav-key="posts"]')).toHaveAttribute('href', base + '/en/posts/');
-    await expect(nav.locator('[data-nav-key="posts"]')).toHaveText('Posts');
+    await expect(nav.locator('[data-nav-key="home"]')).toHaveAttribute('href', base + '/en/');
+    await expect(nav.locator('[data-nav-key="posts"]')).toHaveCount(0);
     for (const [route, active] of [
-      ['/en', 'home'], ['/en/posts/', 'posts'], ['/xx', ''],
+      ['/en', 'home'], ['/en/posts/2/', 'home'], ['/xx', ''],
       ['/xx/posts/', ''], ['/enough/posts/', ''],
     ]) {
       await page.evaluate((path) => {
@@ -141,17 +141,19 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
         const feed=await (await page.request.get(origin+'/en/rss.xml')).text();
         expect(feed).toContain('https://example.com'+canonicalPath);
         expect(feed).not.toContain('/posts/en/hello-alnilam/');
-        // Localized taxonomy & listing routes (/en/categories/guide/, /en/posts/)
+        // Localized taxonomy and Home use the same locale in mobile navigation.
         const enCatResp=await page.goto(origin+'/en/categories/guide/',{waitUntil:'networkidle'});
         expect(enCatResp?.status()).toBe(200);
         await expect(page.locator('html')).toHaveAttribute('lang','en');
         expect(await page.locator('link[rel="canonical"]').getAttribute('href')).toBe('https://example.com'+new URL(origin).pathname.replace(/\/$/,'')+'/en/categories/guide/');
         if(width===390) {
           await page.locator('#nav-drawer-switch').click();
-          const postsLink=page.locator('.site-drawer__nav').getByRole('link',{name:'Posts'});
-          await expect(postsLink).toHaveAttribute('href',new URL(origin).pathname.replace(/\/$/,'')+'/en/posts/');
-          await postsLink.click();
-          await expect(page).toHaveURL(origin+'/en/posts/');
+          const drawer = page.locator('.site-drawer__nav');
+          await expect(drawer.getByRole('link', {name:'Posts', exact:true})).toHaveCount(0);
+          const homeLink = drawer.getByRole('link', {name:'Home', exact:true});
+          await expect(homeLink).toHaveAttribute('href',new URL(origin).pathname.replace(/\/$/,'')+'/en/');
+          await homeLink.click();
+          await expect(page).toHaveURL(origin+'/en/');
           await expect(page.locator('html')).toHaveAttribute('lang','en');
           await page.locator('#nav-drawer-switch').click();
           const categoriesLink=page.locator('.site-drawer__nav').getByRole('link',{name:'Categories'});

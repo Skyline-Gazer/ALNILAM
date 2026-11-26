@@ -43,7 +43,7 @@ for (const [name, origin] of offDeployments) {
     await page.goto(`${origin}/posts/hello-alnilam/`, { waitUntil: "networkidle" });
     await expect(page.locator(GATE_SEL)).toHaveCount(0);
     expect(await page.evaluate((key) => window.localStorage.getItem(key), STORAGE_KEY)).toBeNull();
-    await page.goto(`${origin}/posts/`, { waitUntil: "networkidle" });
+    await page.goto(`${origin}/`, { waitUntil: "networkidle" });
     await expect(page.locator(GATE_SEL)).toHaveCount(0);
     expect(thirdParty).toEqual([]);
   });
@@ -123,7 +123,7 @@ for (const [name, origin] of deployments) {
       JSON.stringify({ analytics: false, ads: false }),
     );
     // A denied-only state must not load any third-party script on navigation.
-    await page.goto(`${origin}/posts/`, { waitUntil: "networkidle" });
+    await page.goto(`${origin}/`, { waitUntil: "networkidle" });
     await page.goBack();
     await expect(page.locator(GATE_SEL)).toBeHidden();
     expect(thirdParty).toEqual([]);

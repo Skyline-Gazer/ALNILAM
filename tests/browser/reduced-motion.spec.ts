@@ -56,7 +56,7 @@ for (const origin of ORIGINS) {
 		try {
 			await page.goto(`${origin}${ROUTE}`, { waitUntil: "networkidle" });
 
-			await page.locator("#main-navigation").getByRole("link", { name: /^(文章|Posts|記事)$/ }).click();
+			await page.locator('#main-navigation a[data-nav-key="home"]').click();
 			await expect(page.locator("#post-list")).toBeVisible();
 
 			await page.locator("#scheme-switch").click();
