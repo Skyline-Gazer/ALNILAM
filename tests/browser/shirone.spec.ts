@@ -105,13 +105,13 @@ for (const [name, origin, width, height] of [
       await captureScreenshot(page, `browser-results/${name}-article-dark.png`);
       await selectTheme(page, "light");
       await captureScreenshot(page, `browser-results/${name}-article-light.png`);
-      await page.locator('#main-navigation').getByRole("link", { name: /^(文章|Posts|記事)$/ }).click();
+      await page.locator('#main-navigation a[data-nav-key="home"]').click();
       await expect(page.locator("#post-list")).toBeVisible();
       await expect(page.locator("html")).not.toHaveClass(/dark/);
       await expect(page.locator("html")).toHaveAttribute("data-theme", "github-light");
       await page.goBack({ waitUntil: "domcontentloaded" });
       await expect(page.locator(".post-card")).toBeVisible();
-      await page.locator('#main-navigation').getByRole("link", { name: /^(文章|Posts|記事)$/ }).click();
+      await page.locator('#main-navigation a[data-nav-key="home"]').click();
       await expect(page.locator("#post-list")).toBeVisible();
       await page.keyboard.press("Home");
       await page.keyboard.press("Tab");
@@ -167,7 +167,7 @@ test("mobile cards place the cover before content", async ({ browser }) => {
     await expect(page.locator("h1")).toHaveCount(1);
     await page.screenshot({ path: "browser-results/root-mobile-article.png", fullPage: true });
     await page.locator("#nav-drawer-switch").click();
-    await page.locator(".site-drawer__nav").getByRole("link", { name: /^(文章|Posts|記事)$/ }).click();
+    await page.locator('.site-drawer__nav').getByRole('link', { name: '首页', exact: true }).click();
     await expect(page.locator("#post-list")).toBeVisible();
   } finally {
     await context.close();
@@ -334,15 +334,15 @@ for (const origin of [ROOT, NESTED]) {
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
       }
       await page.setViewportSize({ width: 390, height: 844 });
-      await nav.getByRole("link", { name: "文章", exact: true }).focus();
+      await nav.getByRole("link", { name: "归档", exact: true }).focus();
       await page.keyboard.press("Escape");
       await expect(menu).toBeFocused();
       await expect(drawer).not.toHaveClass(/site-drawer--open/);
       await page.keyboard.press("Enter");
       await expect(drawer).toHaveClass(/site-drawer--open/);
       await captureScreenshot(page, info.outputPath("mobile-navigation.png"));
-      await nav.getByRole("link", { name: "文章", exact: true }).tap();
-      await expect(page).toHaveURL(`${origin}/posts/`);
+      await nav.getByRole("link", { name: "归档", exact: true }).tap();
+      await expect(page).toHaveURL(`${origin}/archives/`);
       await expect(menu).toHaveAttribute("aria-expanded", "false");
       await expect(page.locator("html")).not.toHaveClass(/dark/);
       await selectTheme(page, "dark");

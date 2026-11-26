@@ -78,8 +78,7 @@ export function resolvePageKey(
 		pathname = pathname.slice(firstSegment.length + 1) || "/";
 	}
 
-	if (pathname === "/") return "home";
-	if (pathname === "/posts" || /^\/posts\/\d+$/.test(pathname)) return "posts";
+	if (pathname === "/" || pathname === "/posts" || /^\/posts\/\d+$/.test(pathname)) return "home";
 	if (
 		url.searchParams.has("category") ||
 		pathname === "/categories" ||
