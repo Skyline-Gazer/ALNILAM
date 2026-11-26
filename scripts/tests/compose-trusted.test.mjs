@@ -33,9 +33,10 @@ test("external trusted toolchain runs its own CLI from the candidate workspace",
     for (const file of ["LICENSE", "NOTICE", "CREDITS.md", "THIRD_PARTY_NOTICES.md", "LICENSES/Example-MIT.txt"]) {
       fs.writeFileSync(path.join(candidate, file), `${file}\n`);
     }
-    fs.mkdirSync(path.join(candidate, "apps/web"), { recursive: true });
-    for (const dir of ["apps/web/src", "themes/shirone/upstream/src"]) fs.mkdirSync(path.join(candidate, dir), { recursive: true });
-    for (const file of ["package.json", "pnpm-lock.yaml", "apps/web/astro.config.mjs", "themes/shirone/package.json"]) {
+    for (const dir of ["apps/web/src", "packages/core/src", "themes/shirone/adapter", "themes/shirone/upstream/src"]) {
+      fs.mkdirSync(path.join(candidate, dir), { recursive: true });
+    }
+    for (const file of ["package.json", "pnpm-lock.yaml", "apps/web/astro.config.mjs", "apps/web/package.json", "packages/core/package.json", "themes/shirone/package.json", "themes/shirone/upstream/package.json"]) {
       fs.writeFileSync(path.join(candidate, file), "fixture input\n");
     }
     const candidateCwd = fs.realpathSync(path.join(candidate, "apps/web"));
