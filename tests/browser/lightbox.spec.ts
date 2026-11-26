@@ -286,6 +286,52 @@ test("lightbox retries after a stylesheet request fails", async ({ page }) => {
 	await expect(page.locator(slideImgSel(vendor)).first()).toBeVisible();
 });
 
+test("a click before the lazy lightbox module loads still opens on first try", async ({page}) => {
+	await page.route(/fancybox-handler\.[^/]*\.js/, async (route) => {
+		const { promise, resolve } = Promise.withResolvers<void>();
+		setTimeout(resolve, 1_500);
+		await promise;
+		await route.continue();
+	});
+	await page.goto(ROOT + ARTICLE, {waitUntil: "domcontentloaded"});
+	const image = page.locator('.custom-md img:not([src$=".svg"])').first();
+	await image.waitFor({state: "attached"});
+	await image.click({force: true, timeout: 3_000});
+	await expect(page.locator(".pswp")).toBeVisible({timeout: 12_000});
+});
+
+test("an image inside a text link navigates while the lazy module is still loading", async ({page}) => {
+	await page.route(/fancybox-handler\.[^/]*\.js/, async (route) => {
+		const { promise, resolve } = Promise.withResolvers<void>();
+		setTimeout(resolve, 1_500);
+		await promise;
+		await route.continue();
+	});
+	await page.goto(ROOT + ARTICLE, {waitUntil: "domcontentloaded"});
+	const link = page
+		.locator(".custom-md a")
+		.filter({has: page.locator('img[alt="inline"]')})
+		.first();
+	const image = link.locator("img");
+	await expect
+		.poll(async () => {
+			const href = await link.getAttribute("href") ?? "";
+			// The authored href is relative ("../"); resolve it like the browser does.
+			return new URL(href, ROOT + "/posts/hello-alnilam/").pathname.replace(/\/$/, "");
+		})
+		.toBe("/posts");
+	// The target page meta-refreshes to Home afterwards, so assert the
+	// navigation request instead of the final URL; no lightbox may open.
+	const navigation = page.waitForRequest(
+		(request) =>
+			request.resourceType() === "document" &&
+			new URL(request.url()).pathname.replace(/\/$/, "") === "/posts",
+	);
+	await image.click({force: true, timeout: 3_000});
+	await navigation;
+	await expect(page.locator(".pswp")).toHaveCount(0);
+});
+
 for (const [name, origin, fixtureOrigin] of deployments) {
 	for (const width of [1440, 390]) {
 		test(`local markdown image opens visible slide ${name} ${width}`, async ({ browser }) => {

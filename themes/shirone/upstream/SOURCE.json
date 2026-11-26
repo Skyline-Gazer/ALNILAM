@@ -462,7 +462,7 @@
     },
     {
       "path": "src/utils/fancybox-runtime.ts",
-      "sha256": "7fc08cadbcd11a0a14353d3ebd2b13b0667f592136624fb3a18f77f5cd8986e0"
+      "sha256": "e1d7f19d1cd409164362c96f49efb19f4af1f8a878807dc095a6b0dfca78b8da"
     },
     {
       "path": "src/utils/option-groups.ts",
@@ -1991,7 +1991,8 @@
     "src/pages/about.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
     "src/pages/series/[slug]/index.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
     "src/pages/tags.astro": "Use the visible tag name and count as the content-derived link name; avoid an overriding aria-label.",
-    "src/utils/fancybox-config.ts": "ALNILAM: drop @fancyapps/ui FancyboxOptions import; keep FANCYBOX_SELECTORS only; PhotoSwipe defaults live in fancybox-handler LIGHTBOX_DEFAULTS.",
+    "src/utils/fancybox-runtime.ts": "Capture lightbox activations that land while the handler chunk is still loading and replay them once the delegate is bound, so the first click on a slow connection opens instead of being dropped (#198). Captures only lightbox-eligible article images (shared eligibility predicate), so images inside ordinary text links keep their navigation, and a queued activation is discarded when a Swup visit starts.",
+    "src/utils/fancybox-config.ts": "ALNILAM: drop @fancyapps/ui FancyboxOptions import; keep FANCYBOX_SELECTORS only; PhotoSwipe defaults live in fancybox-handler LIGHTBOX_DEFAULTS. Own the shared URL-safety and article-image eligibility predicates (isSitePath, isSafeImageUrl, looksLikeImageHref, isLightboxEligibleArticleImage) so the runtime can gate early capture without importing the handler (#198).",
     "src/components/organisms/LightDarkSwitch.svelte": "Resolve light/dark/system labels, the toggle aria-label and the menu label from the current page locale; keep the stored theme and system-preference behaviour.",
     "src/i18n/translation.ts": "Add i18nForLocale(locale, key) so islands can translate for the current page while still honouring Site i18n overrides; i18n(key) delegates to the site default. Expose resolveTranslation(locale, key, overrides) as the testable seam, normalise Site override locale keys (case and separator insensitive) and define the missing-key degradation (locale dictionary, then English dictionary, then the key name). A regional variant without its own dictionary entry falls back to its base language. Chinese locales without their own dictionary (zh and regional variants other than zh-TW) use Simplified Chinese.",
     "src/i18n/i18nKey.ts": "Add menu and displaySettings keys used by the header/drawer accessible names, mainNavigation/navigationDrawer keys used by the navigation landmark names, and searchNoResults for the search panel empty state. Add archiveGroupTagHint for the tag-membership grouping explanation (#197).",

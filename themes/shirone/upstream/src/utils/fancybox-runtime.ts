@@ -1,8 +1,14 @@
-import { FANCYBOX_SELECTORS } from "./fancybox-config";
+import {
+	FANCYBOX_SELECTORS,
+	isLightboxEligibleArticleImage,
+} from "./fancybox-config";
 
 const RUNTIME_BOUND_KEY = "fancyboxRuntimeBound";
 
 let cleanupFancybox: (() => void) | undefined;
+let earlyHandler: ((event: MouseEvent) => void) | null = null;
+let pendingTrigger: HTMLElement | null = null;
+let captureLifetime = 0;
 
 function hasMatch(root: ParentNode, selector: string): boolean {
 	if (root instanceof Element && root.matches(selector)) return true;
@@ -15,6 +21,45 @@ function hasFancyboxTarget(root: ParentNode): boolean {
 	);
 }
 
+function installEarlyCapture(): void {
+	if (earlyHandler) return;
+	const selector = Object.values(FANCYBOX_SELECTORS).join(",");
+	earlyHandler = (event: MouseEvent) => {
+		if (event.defaultPrevented || event.button !== 0) return;
+		if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+		const target = event.target;
+		if (!(target instanceof Element)) return;
+		const trigger = target.closest(selector);
+		if (!(trigger instanceof HTMLElement)) return;
+		// 不可开启的图片（如普通文本链接内的配图）不拦截，保持链接默认导航。
+		if (
+			trigger.matches(FANCYBOX_SELECTORS.articleImages) &&
+			!isLightboxEligibleArticleImage(trigger)
+		) {
+			return;
+		}
+		event.preventDefault();
+		pendingTrigger = trigger;
+	};
+	document.addEventListener("click", earlyHandler, true);
+}
+
+function discardEarlyCapture(): void {
+	captureLifetime += 1;
+	if (earlyHandler) document.removeEventListener("click", earlyHandler, true);
+	earlyHandler = null;
+	pendingTrigger = null;
+}
+
+function flushEarlyCapture(): void {
+	if (!earlyHandler) return;
+	document.removeEventListener("click", earlyHandler, true);
+	earlyHandler = null;
+	const trigger = pendingTrigger;
+	pendingTrigger = null;
+	if (trigger?.isConnected) trigger.click();
+}
+
 /**
  * Loads Fancybox only when the supplied page fragment has a lightbox target.
  * The images remain normal links when the optional enhancement cannot load.
@@ -24,19 +69,28 @@ export async function initFancyboxRuntime(
 ): Promise<void> {
 	if (typeof document === "undefined" || !hasFancyboxTarget(root)) return;
 
+	installEarlyCapture();
+	const lifetime = captureLifetime;
 	try {
 		const runtime = await import("./fancybox-handler");
 		cleanupFancybox = runtime.cleanupFancybox;
 		await runtime.initFancybox();
 	} catch (error) {
 		console.error("Failed to initialize Fancybox runtime", error);
+	} finally {
+		// 过期的初始化（导航后的旧调用）不得冲洗新页面的捕获。
+		if (lifetime === captureLifetime) flushEarlyCapture();
 	}
 }
+
 
 function bindSwupCleanup(): void {
 	const bind = () => {
 		if (!window.swup?.hooks) return;
-		window.swup.hooks.on("visit:start", () => cleanupFancybox?.());
+		window.swup.hooks.on("visit:start", () => {
+			discardEarlyCapture();
+			cleanupFancybox?.();
+		});
 	};
 
 	if (window.swup?.hooks) bind();
