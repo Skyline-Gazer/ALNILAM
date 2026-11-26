@@ -2,7 +2,7 @@
 
 ## Start with an Issue
 
-Check the GitHub Issues and Project #17 before starting work. Link each change to its Issue and open the pull request against GitHub `dev`. Create a task branch from current `dev` using `feat/*`, `fix/*`, or `chore/*`. Do not push directly to protected `dev` or `main`, force-push, publish a release tag, or trigger a Production release. `main` is release-only.
+Check GitHub Issues and Project #17 before starting work. Link the change to its Issue and create a task branch from current `dev` using `feat/*`, `fix/*`, or `chore/*`. Contributors without write access use a fork and open the pull request into upstream GitHub `dev`. The protected `dev` and `main` branches require pull requests. Release tags and Production actions follow the maintainer procedure and require Owner authorization.
 
 ## Keep the Core/Site boundary
 
@@ -29,3 +29,5 @@ Use the [pull request template](.github/pull_request_template.md). Explain the u
 ## License, attribution, and secrets
 
 ALNILAM is Apache-2.0. Preserve upstream license files and record copied code, fonts, images, and other assets in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), [CREDITS.md](CREDITS.md), or the applicable file-level source record. Do not commit private Site content, credentials, tokens, or real provider secrets. The private `.ads` submodule is optional for public contributors; public CI does not fetch it. Vulnerability reporting limits are documented in [SECURITY.md](SECURITY.md); do not disclose sensitive details in public Issues or pull requests. See [maintainer guidance](docs/MAINTAINERS.md) for release and project boundaries.
+
+Keep attribution in repository notices and distribution files. The Core, Demo and Site templates omit generated credits pages and navigation links. Site authors control acknowledgements for their own content ([Issue #147](https://github.com/Skyline-Gazer/ALNILAM/issues/147)).

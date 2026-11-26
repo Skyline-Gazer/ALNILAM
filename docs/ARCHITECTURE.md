@@ -1,6 +1,6 @@
 # Architecture — Core / Site composition
 
-Status: v0.1 implementation baseline; not a framework-neutral CMS.
+Status for the v0.2.0 Foundation static Core/Site architecture. See the [handoff](HANDOFF.md) for current delivery and acceptance evidence.
 
 ## Invariants
 1. **Core is source-controlled software** in this Monorepo; Site is user-owned config, content, data and assets.
@@ -16,8 +16,8 @@ Status: v0.1 implementation baseline; not a framework-neutral CMS.
 apps/web/              # Astro assembly app, build & route entrypoints
 packages/core/         # shared site config contract; no Astro dependency
 packages/ui/           # Svelte UI islands
-themes/editorial/      # released visual layout + rollback surface
-themes/shirone/        # P1 Shirone-derived layout, tokens and Post card
+themes/editorial/      # v0.1.x layout and rollback surface
+themes/shirone/        # v0.2.0 Shirone-derived layout, tokens and post cards
 sites/demo/            # Core-repo Site fixture (only for tests & preview)
 scripts/compose.mjs    # non-mutating external Site builder
 .ads/                  # optional private ADS gitlink (cnb/dev b8d9cfc); not cloned by public CI
