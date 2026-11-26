@@ -35,6 +35,22 @@ opt-in for the category filter bar), the mixed-locale content policy behind
 and [#207](https://github.com/Skyline-Gazer/ALNILAM/issues/207) GHCard cache semantics. None of them
 blocks the retirement slice.
 
+## Convergence wave — 2026-11-26
+
+The 2026-11-25 integration sprint completed on GitHub `dev` at
+`c8415e81f738f152d4c091e866efd12aca616a8c` (Required Verify
+[45809898895](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/45809898895)).
+Integrated, each with exact-head verify: archive surface (#223), compiler cache
+key (#225), canonical Home feed with locale metadata on compatibility routes
+(#226), governance docs (#227), the compact server-rendered language selector
+(#228, #201), the archive tag-membership semantics (#230, #197), the demo
+fixture isolation and mobile reading controls (#231, #194), and the lightbox
+first-click replay with eligibility-gated capture (#232, #198). Delivery detail
+and open items are recorded in [docs/HANDOFF.md](HANDOFF.md). Superseded
+branches #224/#229 were closed in favour of linear-history replacements after
+the unattributed-changes merge policy blocked their resolution-carrying merge
+commits; no protection rule was weakened.
+
 ## Web engineering capability pilot — #209
 
 Use the optional [Web Evidence Skill](../.agents/skills/alnilam-web-evidence/SKILL.md) for browser audits, timing comparisons and flaky UI scenarios. [#209](https://github.com/Skyline-Gazer/ALNILAM/issues/209) tracks the pilot and its disposition after the next 3–5 naturally completed frontend deliveries. [#148](https://github.com/Skyline-Gazer/ALNILAM/issues/148) tracks the existing Learning Loop independently.
