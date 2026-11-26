@@ -30,7 +30,7 @@ locales: ["zh-CN", "en", "ja"]
 
 ## 安定した URL で記事を公開
 
-次の frontmatter は公開記事の例です。分類とタグは Site に宣言しておきます。
+次の frontmatter は公開記事の例です。この分類とタグを使う場合は、先に `categories` で `guide` を、`tags` で `alnilam` を宣言します。
 
 <pre tabindex="0"><code>---
 title: "夕空の下の記録"
@@ -49,3 +49,11 @@ translationKey: "first-note"
 通常の記事はページになり、公開一覧、Feed、Sitemap に入ります。`draft: true`、`private: true`、`unlisted: true` はビルド時に記事 HTML を除外します。アクセス制御ではなく、秘密を守る機能でもありません。
 
 出力先を Site の外に、しかも互いに上書きされない二つに分けて Compose します：`ALNILAM_SITE_URL=https://blog.example.org/ pnpm compose --site ./my-site --out ./dist/root`。次に `ALNILAM_SITE_URL` を `https://blog.example.org/ALNILAM/`、`--out` を `./dist/subpath` 変えて再ビルドします（Compose は公開済みの出力ディレクトリを置き換えるため）。両方のリンクを確認してください。この記事は各言語で優先表示されます。次は[Markdown と MDX](../markdown-and-mdx/)を読んでみましょう。
+
+## 読みやすい表示を設定する
+
+初めて訪れた読者の表示を `theme.appearance` の `light` または `dark` で設定できます。このページで表示を切り替えて再読み込みし、選択が保存されることを確かめてください。画面が狭いと目次は本文の上に、広いとサイドバーに表示されます。
+
+公開デモでは Bangumi とコメントを無効にしています。自分の公開コレクションを表示するには、[Bangumi の設定](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/SITE_ONBOARDING.md#bangumi-bangumi)で `bangumi.userId` を指定し、ビルド後に `/bangumi/` を開きます。コメントが必要な場合は自分の公開 GitHub リポジトリで Discussions を有効にし、[Giscus の設定](https://github.com/Skyline-Gazer/ALNILAM/blob/dev/docs/SITE_ONBOARDING.md#comments-comments)で公開 ID とスレッドの対応を指定します。
+
+続けて[翻訳の公開](../internationalization/)、[カテゴリとシリーズの整理](../organize-your-blog/)、[本文の検索](../pagefind-basics/)を試してみましょう。

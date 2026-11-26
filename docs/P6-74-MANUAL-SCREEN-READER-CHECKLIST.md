@@ -48,7 +48,7 @@ Use the published `/en/posts/getting-started/` guide and `/posts/hello-alnilam/`
 | SR-06 | `/` and `/search/` · 1440px and 390px | Open the header search control. Search for `ALNILAM`, then `voiceover-no-match-74`. On `/search/`, use the labelled searchbox and repeat. | Search control has localized accessible names. Results are links with understandable titles. No-results is announced as status. Escape restores focus to trigger. | |
 | SR-07 | `/posts/` · 1440px | Use pagination links to open page 2, then return to page 1. | Page links have distinct names. Page 2 announces `第 2/2 页` or equivalent; URL is `/posts/2/`. | |
 | SR-08 | `/posts/` · 390px | Focus the jump control; confirm name includes localized jump label and position. Activate, type `2`, Enter. On page 2, exercise Escape and blur. | Button announces position (for example, `1/2`). Enter navigates to `/posts/2/`. Escape returns focus to jump button without navigation. Record actual focus destination; do not infer it from the button reappearing. | |
-| SR-09 | `/posts/hello-alnilam/` · 1440px and 390px | Tab to the two bare lighthouse images and activate them with Enter and Space. From the first slide, press ArrowRight, tab through the viewer, then press Escape. | Lightbox is dialog/modal with alt text and caption. Tab stays in viewer. Escape restores focus to triggering image and preserves scroll. | |
+| SR-09 | `/posts/hello-alnilam/` · 1440px and 390px | Tab to the lighthouse illustration, press Enter, tab through the viewer, then press Escape. Reopen with Space. | Lightbox is dialog/modal with alt text and caption. Tab stays in viewer. Escape restores focus to triggering image and preserves scroll. | |
 
 ### Failure and evidence record
 
