@@ -7,8 +7,7 @@ import { expect, test, type Page } from "@playwright/test";
  * through the real build pipeline: an expressive-code block, TOC headings, a
  * table, a sized image with alt text, spaced inline code, the supported link
  * forms, an MDX expression, KaTeX inline plus display math and a mermaid
- * diagram. It replaced the fixture-alpha-zh and fixture-beta-zh filler posts so
- * the public Demo no longer carries rendering-only articles.
+ * diagram. This guide exercises the features that used to rely on filler posts.
  * Runs at 1440px desktop on both root and /ALNILAM/ deployments.
  */
 

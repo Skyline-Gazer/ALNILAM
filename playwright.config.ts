@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { existsSync } from "node:fs";
 import path from "node:path";
 
 const candidateRoot = process.env.CNB_CANDIDATE_ROOT ?? process.cwd();
@@ -77,6 +78,21 @@ const adsServers = hasAdsFixture ? [
   },
 ] : [];
 
+// Focused specs can reuse Demo builds without composing the PhotoSwipe fixture.
+const lightboxServers = [
+  { name: "lightbox-root", port: 4333, base: "/" },
+  { name: "lightbox-nested", port: 4334, base: "/ALNILAM/" },
+].flatMap(({ name, port, base }) => {
+  const root = path.join(candidateRoot, "dist", name);
+  if (!existsSync(path.join(root, "index.html"))) return [];
+  return [{
+    command: previewCommand(path.join(candidateRoot, `artifacts/cnb-browser/${name}-server.json`), root, port, base),
+    url: `http://127.0.0.1:${port}${base}`,
+    reuseExistingServer: false,
+    timeout: 30_000,
+  }];
+});
+
 export default defineConfig({
   testDir: "./tests/browser",
   timeout: 90_000,
@@ -107,5 +123,6 @@ export default defineConfig({
     ...consentServers,
     ...ga4Servers,
     ...adsServers,
+    ...lightboxServers,
   ],
 });

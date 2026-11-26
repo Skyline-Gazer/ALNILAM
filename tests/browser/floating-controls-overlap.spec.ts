@@ -50,6 +50,7 @@ for (const [base, origin] of [
         const disclosure = page.locator("[data-mobile-article-toc]");
         await expect(disclosure).toBeVisible();
         const summary = disclosure.locator("summary");
+        await expect(summary).toHaveText("Table of Contents", { ignoreCase: true });
         // Measure in CSS pixels: with `isMobile`, a page wider than the viewport is scaled down and
         // Playwright's boundingBox() reports device-independent pixels (44 CSS px read as 38.5).
         expect(await summary.evaluate((el) => el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(TOUCH_TARGET);
@@ -80,6 +81,7 @@ for (const [base, origin] of [
         // The end-of-article action is in the flow, not floating over it.
         const top = page.locator("[data-article-top]");
         await expect(top).toBeAttached();
+        await expect(top).toHaveAccessibleName("Back to top");
         expect(await top.evaluate((el) => el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(TOUCH_TARGET);
         // In the flow, not an overlay: `relative` is fine (the state layer needs it), fixed or
         // absolute are not.

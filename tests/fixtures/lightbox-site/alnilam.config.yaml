@@ -1,0 +1,8 @@
+schemaVersion: 2
+site:
+  title: PhotoSwipe Test Site
+  description: Deterministic HTTPS image fixture for the PhotoSwipe browser matrix.
+  url: https://example.com/
+  locale: zh-CN
+locales:
+  - zh-CN
