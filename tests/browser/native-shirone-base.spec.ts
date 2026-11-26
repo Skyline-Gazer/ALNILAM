@@ -97,6 +97,7 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
         expect(await page.locator('#navbar [data-lang-switcher] a[data-lang-target="zh-CN"]').getAttribute('data-lang-exact')).toBe('true');
         await expect(page.locator('.markdown-content')).toContainText('This article lives in');
         await expect(page.locator('meta[name="robots"][content*="noindex"]')).toHaveCount(0);
+        await page.locator('#navbar [popovertarget="header-languages"]').click();
         await page.locator('#navbar [data-lang-switcher] a[data-lang-target="zh-CN"]').click();
         await expect(page).toHaveURL(origin+'/posts/hello-alnilam/');
         const canonicalPath = new URL(origin).pathname.replace(/\/$/,'')+'/en/posts/hello-alnilam/';
@@ -131,6 +132,8 @@ for (const origin of ['http://127.0.0.1:4323', 'http://127.0.0.1:4324/ALNILAM'])
         // Untranslated article falls back to target locale homepage (/ja/)
         await page.goto(origin+'/posts/fixture-beta-zh/',{waitUntil:'networkidle'});
         expect(await page.locator('#navbar [data-lang-switcher] a[data-lang-target="ja"]').getAttribute('href')).toBe(new URL(origin).pathname.replace(/\/$/,'')+'/ja/');
+        await page.locator('#navbar [popovertarget="header-languages"]').click();
+        await expect(page.locator('#navbar [data-lang-target="ja"]')).toContainText('主页');
         await page.locator('#navbar [data-lang-switcher] a[data-lang-target="ja"]').click();
         await expect(page).toHaveURL(origin+'/ja/');
         await page.goto(origin+'/',{waitUntil:'networkidle'});
