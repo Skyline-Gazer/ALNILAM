@@ -1,5 +1,4 @@
 ---
-import PageHeader from "@components/atoms/display/PageHeader.astro";
 import ArchivePanel from "@components/organisms/ArchivePanel.svelte";
 import I18nKey from "@i18n/i18nKey";
 import { getTranslation, i18n } from "@i18n/translation";
@@ -33,7 +32,11 @@ const archiveSummary = `${sortedPostsList.length} ${t(I18nKey.postsCount)}`;
 ---
 
 <MainGridLayout title={t(I18nKey.archive)} description={archiveSummary} page="archive" lang={lang} alternates={alternates} feedUrl={feedUrl}>
-    <PageHeader title={t(I18nKey.archive)} subtitle={archiveSummary} />
-    <ArchivePanel sortedPosts={archivePosts} locale={lang} client:visible></ArchivePanel>
+    <ArchivePanel
+        heading={{ title: t(I18nKey.archive), subtitle: archiveSummary }}
+        sortedPosts={archivePosts}
+        locale={lang}
+        client:visible
+    />
 </MainGridLayout>
 
