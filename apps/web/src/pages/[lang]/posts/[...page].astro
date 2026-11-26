@@ -82,7 +82,7 @@ const csp = post ? commentsCsp(config) : null;
       </Card>
     </section>
   )}
-</NativeArticle> : !page || page.currentPage === 1 ? <LegacyFeed {locale} /> :
+</NativeArticle> : !page || page.currentPage === 1 ? <LegacyFeed {locale} feedUrl={page ? undefined : null} /> :
 <MainGridLayout title={t.pageTitle(page.currentPage)} description={t.allPosts} page="archive" lang={locale} {canonical}>
   <PageHeader title={t.allPosts} subtitle={t.postsSubtitle(page.total, page.currentPage, page.lastPage)} />
   <PostPage page={page} />
