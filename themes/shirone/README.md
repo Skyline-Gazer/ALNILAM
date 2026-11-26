@@ -6,9 +6,14 @@ from `upstream/`. Use these exports for new frontend work, for example
 `src/` contains the historical local adaptation; it is not a package export or
 an active route dependency. Its old token tests do not verify the native UI.
 
-`upstream/SOURCE.json` binds the original source to
-`LyraVoid/Shirone@55a84b2322bdfb634a59ca6383bb242e5ce646bf` and lists every
-consumer patch. Preserve the original MIT license and third-party notices.
+`upstream/SOURCE.json` identifies the original source as
+`LyraVoid/Shirone@55a84b2322bdfb634a59ca6383bb242e5ce646bf`. The pinned revision
+is the authority for upstream originals. `files[].sha256` records the current
+bytes of every file under `upstream/` except the ledger itself. `modified`
+explains local adaptations and additions. When editing vendored code, update
+both the affected digests and their patch notes. Run
+`node --test scripts/tests/shirone-source.test.mjs` to check the inventory and
+digests offline. Preserve the original MIT license and third-party notices.
 Do not copy upstream demo content, artwork, fonts or content-sync scripts.
 
 `adapter/site-config.mjs` reads the existing validated immutable Site. The app
