@@ -120,6 +120,12 @@ test("the Site default locale and the page locale agree", () => {
   assert.equal(i18n("menu"), i18nForLocale("zh-CN", "menu"));
 });
 
+test("an article using the generic Chinese locale gets Chinese reading controls", () => {
+  for (const key of ["tableOfContents", "backToTop"]) {
+    assert.equal(i18nForLocale("zh", key), dictionaries.zh_CN[key], key);
+  }
+});
+
 test("a Site override wins over the built-in dictionary", () => {
   assert.equal(resolveTranslation("zh-CN", "menu", { "zh-CN": { menu: "站点菜单" } }), "站点菜单");
 });
