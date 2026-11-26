@@ -802,7 +802,7 @@ for (const [name, origin] of deployments) {
 			await page.evaluate(() => {
 				document.dispatchEvent(new Event("swup:content:replace"));
 			});
-			await page.goto(`${origin}/posts/`, { waitUntil: "domcontentloaded" });
+			await page.goto(`${origin}/`, { waitUntil: "domcontentloaded" });
 			await expect(page.locator(".pswp")).toHaveCount(0);
 			await context.close();
 		});
@@ -814,9 +814,7 @@ for (const [name, origin] of deployments) {
 			});
 			const page = await context.newPage();
 			const responses = await installFixtureRoutes(page);
-			// Keep the history contract (article -> /posts/) with the page that is
-			// built for the external-protocol fixture matrix.
-			await page.goto(`${origin}/posts/`, { waitUntil: "networkidle" });
+			await page.goto(`${origin}/`, { waitUntil: "networkidle" });
 			await page.goto(`${origin}/posts/lightbox-fixtures/`, { waitUntil: "networkidle" });
 			await expect(page).toHaveURL(new RegExp("/posts/lightbox-fixtures/?$"));
 			// Swup remount can race readiness; force the same content:replace path Layout uses.
@@ -836,7 +834,7 @@ for (const [name, origin] of deployments) {
 			await closeLightbox(page, container, await page.evaluate(() => window.scrollY));
 
 			await page.goBack();
-			await expect(page).toHaveURL(new RegExp("/posts/?$"));
+			await expect(page).toHaveURL(`${origin}/`);
 			await page.goForward();
 			await expect(page).toHaveURL(new RegExp("/posts/lightbox-fixtures/?$"));
 			await context.close();

@@ -9,6 +9,7 @@ export const zh_CN: Translation = {
 	[Key.archiveGroupYear]: "按年份",
 	[Key.archiveGroupCategory]: "按分类",
 	[Key.archiveGroupTag]: "按标签",
+	[Key.archiveGroupTagHint]: "标签组内为成员文章；同一文章会出现在它的每个标签组中，组内数字为成员文章数，顶部总数为不重复文章数。",
 	[Key.search]: "搜索",
 	[Key.searchNoResults]: "没有找到结果",
 	[Key.searchUnavailable]: "搜索暂时不可用，请稍后重试。",

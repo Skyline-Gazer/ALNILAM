@@ -1,0 +1,19 @@
+---
+import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
+import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
+import { canonicalUrl, localeRoutePath, uiStrings, withBase } from "./i18n.mjs";
+import { loadSite } from "./site-source.mjs";
+
+const { locale, feedUrl } = Astro.props as { locale: string; feedUrl?: null };
+const { config } = loadSite();
+const home = localeRoutePath(locale, config.site.locale, "");
+const target = withBase(home);
+const canonical = canonicalUrl(home, config.site.url);
+const title = uiStrings(locale).home;
+---
+
+<MainGridLayout {title} lang={locale} {canonical} noindex {feedUrl}>
+  <meta slot="head" http-equiv="refresh" content={`0;url=${target}`} />
+  <PageHeader {title} />
+  <a href={target} class="text-[var(--primary)] underline">{title}</a>
+</MainGridLayout>
