@@ -219,6 +219,12 @@ test("nested-base output keeps canonical and internal links inside /ALNILAM/", (
   t.after(() => fs.rmSync(out, { recursive: true, force: true }));
   const site = path.join(out, "site-source");
   fs.cpSync(DEMO, site, { recursive: true });
+  const config = path.join(site, "alnilam.config.yaml");
+  fs.writeFileSync(config, fs.readFileSync(config, "utf8").replace("  - ja\n", "  - ja\n  - de-DE\n"));
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "regional-note.md"),
+    '---\ntitle: "Regional feed note"\npubDate: 2026-10-24\nlang: de-DE\n---\n\nA note for the regional feed.\n',
+  );
   fs.writeFileSync(
     path.join(site, "content", "posts", "pagination-regression.md"),
     ["---", 'title: "Pagination regression"', 'description: "Sixth post exercises page two under a nested base."', "pubDate: 2026-10-24", 'tags: ["Test"]', "---", "", "Pagination regression fixture.", ""].join("\n"),
@@ -244,6 +250,8 @@ test("nested-base output keeps canonical and internal links inside /ALNILAM/", (
   assert.match(html, /<a href="\/ALNILAM\/posts\/2\/" rel="next"/);
   assert.match(posts, /<meta http-equiv="refresh" content="0;url=\/ALNILAM\/"/);
   assert.doesNotMatch(posts, /\/ALNILAM\/ALNILAM\//);
+  const regionalFeed = fs.readFileSync(path.join(out, "site", "de-DE", "rss.xml"), "utf8");
+  assert.match(regionalFeed, /<atom:link href="https:\/\/example\.com\/ALNILAM\/de-DE\/rss\.xml" rel="self"/);
   const relativeArticle = fs.readFileSync(path.join(out, "site", "posts", "relative-image", "index.html"), "utf8");
   const relativeSrc = relativeArticle.match(/<img[^>]*src="([^"]+orion[^"]*)"/)?.[1];
   assert.ok(relativeSrc, "relative image must render under a nested base");

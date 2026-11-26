@@ -1,16 +1,15 @@
 import rss from "@astrojs/rss";
 import { getCollection } from "astro:content";
-import { getRelativeLocaleUrl } from "astro:i18n";
 import { loadSite } from "../lib/site-source.mjs";
 import { localeFeedPosts } from "../lib/feed.mjs";
-import { canonicalUrl, postPath } from "../lib/i18n.mjs";
+import { canonicalUrl, feedPath, postPath } from "../lib/i18n.mjs";
 
 /** Default-locale feed. Other enabled locales publish under /<locale>/rss.xml. */
 export async function GET() {
   const { config } = loadSite();
   const locale = config.site.locale;
   const posts = localeFeedPosts(await getCollection("posts"), locale, locale);
-  const self = canonicalUrl(getRelativeLocaleUrl(locale, "rss.xml"), config.site.url).replace(/\/+$/, "");
+  const self = canonicalUrl(feedPath(locale, config.site.locale), config.site.url);
   return rss({
     title: config.site.title,
     description: config.site.description,

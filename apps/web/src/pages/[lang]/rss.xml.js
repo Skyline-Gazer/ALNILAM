@@ -1,9 +1,8 @@
 import rss from "@astrojs/rss";
 import { getCollection } from "astro:content";
-import { getRelativeLocaleUrl } from "astro:i18n";
 import { loadSite } from "../../lib/site-source.mjs";
 import { localeFeedPosts } from "../../lib/feed.mjs";
-import { canonicalUrl, postPath } from "../../lib/i18n.mjs";
+import { canonicalUrl, feedPath, postPath } from "../../lib/i18n.mjs";
 
 /** One feed per enabled locale that actually publishes posts. */
 export async function getStaticPaths() {
@@ -19,7 +18,7 @@ export async function GET({ props }) {
   const { config } = loadSite();
   const { locale } = props;
   const posts = localeFeedPosts(await getCollection("posts"), locale, config.site.locale);
-  const self = canonicalUrl(getRelativeLocaleUrl(locale, "rss.xml"), config.site.url).replace(/\/+$/, "");
+  const self = canonicalUrl(feedPath(locale, config.site.locale), config.site.url);
   return rss({
     title: config.site.title,
     description: config.site.description,
