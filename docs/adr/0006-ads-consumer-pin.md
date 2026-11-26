@@ -4,7 +4,7 @@
 
 ## Context
 
-ALNILAM's private `.ads` submodule is pinned to `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` on ADS `cnb/dev`, a development line rather than a release tag. The v0.4.1 release commit `3abf6025657a5d716476029cc8cbf5239543210b` is historical adoption evidence, not the current gitlink. Optional CodeGraph/RTK and strict ADS profiles are disabled for this project.
+ALNILAM's private `.ads` submodule is pinned to [ADS v0.8.0](https://github.com/Skyline-Gazer/ADS/releases/tag/v0.8.0) at `178212c41cce8fbf9354d4066e0f77341f6f23c4`. That is the commit the annotated tag resolves to. The prior pin `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` came from the retired ADS `cnb/dev` line and is reachable from `archive/cnb-dev-final`. Optional CodeGraph/RTK and strict ADS profiles remain disabled.
 
 ## Decision
 

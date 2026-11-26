@@ -46,7 +46,7 @@ The later [#203 product decision](https://github.com/Skyline-Gazer/ALNILAM/issue
 
 ### Reuse-first and document-governance normative annex
 
-**[06-REUSE-DOC-GOVERNANCE.md](06-REUSE-DOC-GOVERNANCE.md) binds every Phase.** Preserve the existing `Skyline-Gazer/ALNILAM` repository and working Core/Site, CI and tests while using Shirone as the ONE product frontend base. Every destructive code change requires a Reuse Decision Record and proof; copying upstream code does not imply rewriting ALNILAM. Maintain documents and evidence with the corresponding code PR, not as a release-end afterthought. PR #84 records historical ADS v0.4.1 adoption; the current pin is `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` per `AGENTS.md` and `ads-pin.txt`. Optional ADS profiles remain disabled; experimental build acceleration is only a post-stable TODO #83.
+**[06-REUSE-DOC-GOVERNANCE.md](06-REUSE-DOC-GOVERNANCE.md) binds every Phase.** Preserve the existing `Skyline-Gazer/ALNILAM` repository and working Core/Site, CI and tests while using Shirone as the ONE product frontend base. Every destructive code change requires a Reuse Decision Record and proof. Maintain documents and evidence with the corresponding code PR. See [ADR 0006](../adr/0006-ads-consumer-pin.md) for the current ADS pin and optional profile policy. Experimental build acceleration is only a post-stable TODO #83.
 
 ### Official-Astro-first implementation criterion
 

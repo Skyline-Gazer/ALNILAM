@@ -99,12 +99,11 @@ Automated acceptance: `node scripts/upgrade-check.mjs --old <historical-core-sha
 - CNB `dev` is frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; new product work and current validation do not run through CNB.
 - Vercel: the existing public Demo project remains on GitHub `dev`; separate `alnilam-production-next` tracks `main` with SSO protection. Its deployment URL is gated; first formal Production release and custom-domain activation remain Owner decisions. See [Handoff](docs/HANDOFF.md).
 - Tagging: `vX.Y.Z` on `main` only, annotated, created by the release PR merge. See [CHANGELOG.md](CHANGELOG.md) for SemVer rules; the content-frontmatter fields `lang` and `translationKey` were added compatibly in schema v1 and remain supported under v2.
-- ADS pinned at `.ads` to commit `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` (ADS `cnb/dev` development line, not a release tag; private — optional for public users, `git submodule update --init --checkout .ads` requires authorized access). CI never clones it.
+- ADS Lite uses the v0.8.0 release commit recorded in [`ads-pin.txt`](ads-pin.txt). The private `.ads` submodule is optional for public contributors. CI checks the gitlink without fetching the submodule. See [AGENTS.md](AGENTS.md).
 - Docs: [Contributing](CONTRIBUTING.md) · [Architecture](docs/ARCHITECTURE.md) · [Site onboarding](docs/SITE_ONBOARDING.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/HANDOFF.md) · [Document ownership](docs/next/06-REUSE-DOC-GOVERNANCE.md) · [Security policy](SECURITY.md)
 - Repository attribution: [CREDITS.md](CREDITS.md) records design references. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), [NOTICE](NOTICE) and [LICENSES](LICENSES/) record attribution for repository and distributed materials.
 - GitHub Project #17: https://github.com/orgs/Skyline-Gazer/projects/17/
 - Release line: Foundation v0.2.0 ships the Shirone-derived frontend adopted after G0-F, the YAML schema v2 Site contract, optional Site modules and the release artifact hygiene gate. Post-release fixes and the next roadmap follow [#136](https://github.com/Skyline-Gazer/ALNILAM/issues/136); experimental Astro build acceleration stays out of scope until its official stable release is validated.
-- ADS: the current project pin is `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` on ADS `cnb/dev`, a development line rather than a release. PR #84 records historical v0.4.1 adoption; optional CodeGraph/RTK and strict profiles remain disabled. Public CI does not fetch the private submodule; see [AGENTS](AGENTS.md).
 
 ## License
 
