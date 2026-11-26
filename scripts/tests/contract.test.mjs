@@ -219,6 +219,12 @@ test("nested-base output keeps canonical and internal links inside /ALNILAM/", (
   t.after(() => fs.rmSync(out, { recursive: true, force: true }));
   const site = path.join(out, "site-source");
   fs.cpSync(DEMO, site, { recursive: true });
+  const config = path.join(site, "alnilam.config.yaml");
+  fs.writeFileSync(config, fs.readFileSync(config, "utf8").replace("  - ja\n", "  - ja\n  - de-DE\n"));
+  fs.writeFileSync(
+    path.join(site, "content", "posts", "regional-note.md"),
+    '---\ntitle: "Regional feed note"\npubDate: 2026-10-24\nlang: de-DE\n---\n\nA note for the regional feed.\n',
+  );
   fs.writeFileSync(
     path.join(site, "content", "posts", "pagination-regression.md"),
     ["---", 'title: "Pagination regression"', 'description: "Sixth post exercises page two under a nested base."', "pubDate: 2026-10-24", 'tags: ["Test"]', "---", "", "Pagination regression fixture.", ""].join("\n"),
@@ -244,11 +250,27 @@ test("nested-base output keeps canonical and internal links inside /ALNILAM/", (
   assert.match(html, /<a href="\/ALNILAM\/posts\/2\/" rel="next"/);
   assert.match(posts, /<meta http-equiv="refresh" content="0;url=\/ALNILAM\/"/);
   assert.doesNotMatch(posts, /\/ALNILAM\/ALNILAM\//);
+  const regionalFeed = fs.readFileSync(path.join(out, "site", "de-DE", "rss.xml"), "utf8");
+  assert.match(regionalFeed, /<atom:link href="https:\/\/example\.com\/ALNILAM\/de-DE\/rss\.xml" rel="self"/);
   const relativeArticle = fs.readFileSync(path.join(out, "site", "posts", "relative-image", "index.html"), "utf8");
   const relativeSrc = relativeArticle.match(/<img[^>]*src="([^"]+orion[^"]*)"/)?.[1];
   assert.ok(relativeSrc, "relative image must render under a nested base");
   assert.match(relativeSrc, /^\/ALNILAM\/_astro\//, "relative image must be base-prefixed: " + relativeSrc);
   assert.equal(fs.existsSync(path.join(out, "site", decodeURIComponent(relativeSrc).replace(/^\/ALNILAM\//, "").replace(/^\//, ""))), true);
+});
+
+test("RSS links retain the base when it matches a secondary locale", (t) => {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-rss-base-"));
+  t.after(() => fs.rmSync(out, { recursive: true, force: true }));
+  const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", DEMO, "--out", out], {
+    env: { ...process.env, ALNILAM_SITE_URL: "https://example.com/en/", SOURCE_DATE_EPOCH: "1700000000" },
+  });
+  assert.equal(result.status, 0, "feed compose failed: " + result.stderr);
+  const primary = fs.readFileSync(path.join(out, "rss.xml"), "utf8");
+  const secondary = fs.readFileSync(path.join(out, "en", "rss.xml"), "utf8");
+  assert.match(primary, /<atom:link href="https:\/\/example\.com\/en\/rss\.xml" rel="self"/);
+  assert.match(secondary, /<atom:link href="https:\/\/example\.com\/en\/en\/rss\.xml" rel="self"/);
+  assert.match(secondary, /<link>https:\/\/example\.com\/en\/en\/posts\/hello-alnilam\/<\/link>/);
 });
 
 test("compose rejects a post slug that collides with a pagination route without changing the Site", (t) => {
