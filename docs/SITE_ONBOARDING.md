@@ -493,9 +493,7 @@ When the caller is the public Site repository itself, its `GITHUB_TOKEN` with
 that configuration. Private or cross-repository Sites require an appropriately
 scoped read-only credential.
 
-The Test-Site run supplies regression evidence for the workflow. Onboarding
-acceptance requires a separate review by a real user with an independently
-owned Site. See [issue #81](https://github.com/Skyline-Gazer/ALNILAM/issues/81).
+The public Test-Site run supplies regression evidence for the workflow. Real-user onboarding review of an independently owned Site remains outstanding under the [post-release decision in #81](https://github.com/Skyline-Gazer/ALNILAM/issues/81#issuecomment-7031165221).
 
 ### Static publishing (multi-host)
 
