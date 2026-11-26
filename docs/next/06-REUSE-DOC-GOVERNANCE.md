@@ -81,7 +81,7 @@ ADR identifiers are unique and traceable: [0001](../adr/0001-shirone-core-site.m
 7. **Before Agent execution**: all required accounts, external Site credentials, service provider config and permissions are collected **up front**; optional provider gaps cannot block independent feature work. Never ask for private access just to validate public CI.
 
 ## E. ADS v0.4.1 adoption and current consumer pin
-- **Current ALNILAM consumer pin:** `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695` on ADS `cnb/dev`, a development line rather than a release tag. `AGENTS.md` and `ads-pin.txt` are current policy; optional CodeGraph/RTK and strict profiles are not enabled.
+- **Current ALNILAM consumer pin:** See [ADR 0006](../adr/0006-ads-consumer-pin.md), [AGENTS.md](../../AGENTS.md) and [ads-pin.txt](../../ads-pin.txt). Optional CodeGraph/RTK and strict profiles are not enabled.
 
 - Verified upstream release [ADS v0.4.1](https://github.com/Skyline-Gazer/ADS/releases/tag/v0.4.1), **commit SHA `3abf6025657a5d716476029cc8cbf5239543210b`**; annotated tag object `e38d01ff176448a13180afe2419c1c9c94a6ab43` is not the gitlink.
 - ALNILAM's `dev` gitlink was `1e07d6c4bbd296b7d37dcd31934cfc70426f73ac` (v0.3) before adoption; PR #84 recorded the historical move to v0.4.1. That historical adoption does not describe the current project-specific pin.

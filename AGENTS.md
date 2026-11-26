@@ -3,8 +3,8 @@
 ## ADS (lite default)
 
 Source: https://github.com/Skyline-Gazer/ADS
-Local rules: `.ads/` Git submodule pinned to commit `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`
-(ADS `cnb/dev` development line; not a release tag).
+Local rules: `.ads/` Git submodule pinned to ADS v0.8.0 commit
+`178212c41cce8fbf9354d4066e0f77341f6f23c4`.
 Read at this pin: `.ads/STANDARD.md`, `.ads/SAFETY.md`, `.ads/QUALITY.md`,
 `.ads/docs/lite-adoption.md`, `.ads/docs/cnb-review.md`, `.ads/docs/how-to-update.md`.
 Optional ADS profiles (CodeGraph/RTK toolchain, strict Git governance, strict lifecycle)
@@ -91,8 +91,8 @@ The ADS Learning Loop Pilot applies only to real triggers; follow the five-field
   `dev` commit and tree. Do not force-push.
 - CNB `dev` is frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; do not push
   development changes there or mirror it back into GitHub.
-- Keep ADS pinned to `b8d9cfc09f5fb543b9fa2c7dc3d1708ff20d9695`. This project-local
-  Owner decision does not opt into ADS strict governance profiles.
+- Keep the exact ADS pin recorded above. This project does not opt into ADS strict
+  governance profiles.
 - `main` remains release-only. Main promotion, production releases, tags and
   protection changes require separate Owner authorization.
 
