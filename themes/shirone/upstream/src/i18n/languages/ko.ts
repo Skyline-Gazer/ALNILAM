@@ -9,6 +9,7 @@ export const ko: Translation = {
 	[Key.archiveGroupYear]: "연도별",
 	[Key.archiveGroupCategory]: "분류별",
 	[Key.archiveGroupTag]: "태그별",
+	[Key.archiveGroupTagHint]: "태그 그룹에는 해당 태그를 가진 글이 모두 표시됩니다. 한 글은 여러 태그 그룹에 나타날 수 있으며, 그룹의 개수는 멤버 수이고 위의 합계는 중복 없는 글 수입니다.",
 	[Key.search]: "검색",
 	[Key.searchNoResults]: "결과가 없습니다",
 	[Key.searchUnavailable]: "검색을 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.",

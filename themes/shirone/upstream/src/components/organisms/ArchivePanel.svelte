@@ -206,7 +206,12 @@ const groups = $derived.by((): ArchiveGroup[] => {
 		}
 	} else if (groupBy === "tag") {
 		for (const p of filtered) {
-			for (const t of p.data.tags) add(`#${t}`, toItem(p));
+			for (const t of p.data.tags)
+				add(`#${t}`, {
+					...toItem(p),
+					// 组头已标识当前标签；行内只保留其余标签，避免逐行重复组键。
+					tags: p.data.tags.filter((x) => x !== t),
+				});
 		}
 	} else {
 		for (const p of filtered) {
@@ -285,6 +290,9 @@ $effect(() => {
 				label={i18n(I18nKey.archiveGroup)}
 			/>
 		</div>
+		{#if groupBy === "tag"}
+			<p class="archive-panel__group-hint">{i18n(I18nKey.archiveGroupTagHint)}</p>
+		{/if}
 	{/if}
 	{#if groups.length > 0}
 		<ArchiveList
@@ -311,6 +319,11 @@ $effect(() => {
 	/* 分组切换（SegmentedButton，站内 pill 语言）与下方时间轴之间的节奏 */
 	:global(&__group-switch)
 		margin-bottom: var(--m3e-space-4)
+
+	:global(&__group-hint)
+		margin: calc(-1 * var(--m3e-space-2)) 0 var(--m3e-space-4)
+		color: var(--on-surface-variant)
+		font: var(--m3e-type-body-small)
 
 	:global(&__empty)
 		display: flex

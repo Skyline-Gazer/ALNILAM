@@ -9,6 +9,7 @@ export const tr: Translation = {
 	[Key.archiveGroupYear]: "Yıla göre",
 	[Key.archiveGroupCategory]: "Kategoriye göre",
 	[Key.archiveGroupTag]: "Etikete göre",
+	[Key.archiveGroupTagHint]: "Her etiket grubu, o etiketi taşıyan yazıları listeler; bir yazı birden çok etiket altında görünebilir. Grup sayıları üyelikleri, üstteki toplam ise benzersiz yazıları sayar.",
 	[Key.search]: "Ara",
 	[Key.searchNoResults]: "Sonuç bulunamadı",
 	[Key.searchUnavailable]: "Arama geçici olarak kullanılamıyor. Lütfen daha sonra tekrar deneyin.",
