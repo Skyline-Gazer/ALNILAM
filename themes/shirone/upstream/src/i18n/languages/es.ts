@@ -9,6 +9,7 @@ export const es: Translation = {
 	[Key.archiveGroupYear]: "Por año",
 	[Key.archiveGroupCategory]: "Por categoría",
 	[Key.archiveGroupTag]: "Por etiqueta",
+	[Key.archiveGroupTagHint]: "Cada grupo de etiquetas enumera sus artículos miembros; un artículo puede aparecer en varias etiquetas. Los recuentos de grupo son membresías; el total superior cuenta artículos únicos.",
 	[Key.search]: "Buscar",
 	[Key.searchNoResults]: "Sin resultados",
 	[Key.searchUnavailable]: "La búsqueda no está disponible temporalmente. Inténtalo de nuevo más tarde.",

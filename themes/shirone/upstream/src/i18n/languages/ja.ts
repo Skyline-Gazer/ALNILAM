@@ -9,6 +9,7 @@ export const ja: Translation = {
 	[Key.archiveGroupYear]: "年別",
 	[Key.archiveGroupCategory]: "カテゴリ別",
 	[Key.archiveGroupTag]: "タグ別",
+	[Key.archiveGroupTagHint]: "タグのグループにはそのタグを持つ記事をすべて表示します。同じ記事は複数のタグ グループに現れることがあり、グループの件数はメンバー数、上部の合計は重複のない記事数です。",
 	[Key.search]: "検索",
 	[Key.searchNoResults]: "結果が見つかりません",
 	[Key.searchUnavailable]: "検索は一時的に利用できません。後でもう一度お試しください。",
