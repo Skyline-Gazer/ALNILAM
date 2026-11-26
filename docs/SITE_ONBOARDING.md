@@ -153,9 +153,10 @@ ALNILAM creates that marker only when no managed `v1`, `bangumi` or `shirone` na
 exists; unmarked cache namespaces fail closed. Unrelated sibling files are preserved.
 The Site snapshot and Astro content/image state are keyed by Core revision and Site
 digest; Vite's dependency cache is keyed by Core revision. Shirone's compiled bundle
-manifests are keyed by Core compiler inputs, while immutable SHA-256 objects are shared
-across inputs when their output bytes match. GC preserves objects referenced by retained
-manifests. Bangumi snapshots are scoped by user ID, subject type and limit. Keep the
+manifests are keyed by Core compiler inputs, including the Site config parser, Shirone
+adapter, and package metadata. Immutable SHA-256 objects are shared across inputs when
+their output bytes match. GC preserves objects referenced by retained manifests. Bangumi
+snapshots are scoped by user ID, subject type and limit. Keep the
 cache outside your Site.
 
 Normal Compose never recursively deletes project-local legacy directories.
