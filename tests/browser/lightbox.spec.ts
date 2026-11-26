@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 import zlib from "node:zlib";
 
@@ -17,6 +19,13 @@ const deployments = [
 	["root", ROOT, "http://127.0.0.1:4333"],
 	["nested", NESTED, "http://127.0.0.1:4334/ALNILAM"],
 ] as const;
+
+const candidateRoot = process.env.CNB_CANDIDATE_ROOT ?? process.cwd();
+// Mirrors the config's conditional fixture servers: direct `pnpm browser` runs
+// skip fixture-deployment tests instead of failing on refused connections.
+const fixturesReady =
+	existsSync(path.join(candidateRoot, "dist/lightbox-root/index.html")) &&
+	existsSync(path.join(candidateRoot, "dist/lightbox-nested/index.html"));
 
 type Vendor = "fancybox" | "photoswipe";
 
@@ -299,6 +308,7 @@ for (const [name, origin, fixtureOrigin] of deployments) {
 		});
 
 		test(`external https fixture preserves URL ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
@@ -330,6 +340,7 @@ for (const [name, origin, fixtureOrigin] of deployments) {
 		});
 
 		test(`signed and protocol-relative URLs ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
@@ -375,6 +386,7 @@ for (const [name, origin, fixtureOrigin] of deployments) {
 		});
 
 		test(`thumb/full uses author original ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
@@ -406,6 +418,7 @@ for (const [name, origin, fixtureOrigin] of deployments) {
 		});
 
 		test(`keyboard a11y trap and caption ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: width === 390 ? 844 : 1000 },
 				reducedMotion: "reduce",
@@ -516,6 +529,7 @@ for (const [name, origin, fixtureOrigin] of deployments) {
 		});
 
 		test(`one-time signed original GETs exactly once ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
@@ -648,6 +662,7 @@ for (const [name, origin, fixtureOrigin] of deployments) {
 		});
 
 		test(`error/timeout degrade without hang ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
@@ -686,6 +701,7 @@ for (const [name, origin, fixtureOrigin] of deployments) {
 		});
 
 		test(`keyboard trap skips inactive degraded slides ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
@@ -773,6 +789,7 @@ for (const [name, origin, fixtureOrigin] of deployments) {
 		});
 
 		test(`swup mid-probe does not leak lightbox ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
@@ -794,6 +811,7 @@ for (const [name, origin, fixtureOrigin] of deployments) {
 		});
 
 		test(`carousel and close restore navigation ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
