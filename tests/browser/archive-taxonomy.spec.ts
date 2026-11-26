@@ -94,6 +94,9 @@ for (const [name, origin] of deployments) {
 		const page = await context.newPage();
 		// No query param: the SSR filter from the host page must survive onMount.
 		await page.goto(`${origin}/categories/release/`, { waitUntil: "networkidle" });
+		await expect(page.locator("main").getByRole("heading", { level: 1 })).toHaveCount(1);
+		await expect(page.locator(".archive-panel").getByRole("heading", { level: 1 })).toBeVisible();
+		await expect(page.locator(".archive-panel a[href$='/categories/']")).toHaveCount(1);
 		await expectTimeline(page, 3);
 		// The category bar hides on taxonomy detail routes (also under nested base).
 		await expect(page.locator("#category-bar-region")).toBeHidden();
@@ -117,6 +120,7 @@ for (const [name, origin] of deployments) {
 		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
 		const page = await context.newPage();
 		await page.goto(`${origin}/tags/alnilam/`, { waitUntil: "networkidle" });
+		await expect(page.locator(".archive-panel").getByRole("heading", { level: 1 })).toBeVisible();
 		await expectTimeline(page, 3);
 		await expect(page.locator("#category-bar-region")).toBeHidden();
 		await context.close();
@@ -128,6 +132,7 @@ for (const [name, origin] of deployments) {
 
 		// No params: grouped switch visible, full corpus present.
 		await page.goto(`${origin}/archives/`, { waitUntil: "networkidle" });
+		await expect(page.locator(".archive-panel").getByRole("heading", { level: 1 })).toBeVisible();
 		await expect(page.locator(".archive-panel__group-switch")).toBeVisible();
 		const allItems = await page.locator(".m3-blog-archive__item").count();
 		expect(allItems).toBeGreaterThanOrEqual(4);

@@ -2,7 +2,6 @@
 import type { Page } from "astro";
 import type { CollectionEntry } from "astro:content";
 import MainGridLayout from "@alnilam/theme-shirone/MainGridLayout.astro";
-import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
 import ArchivePanel from "@alnilam/theme-shirone/ArchivePanel.svelte";
 import Pagination from "@alnilam/theme-shirone/Pagination.astro";
 import { canonicalUrl, localeRoutePath, postPath, routeAlternates, uiStrings, withBase } from "./i18n.mjs";
@@ -49,11 +48,10 @@ const breadcrumbJsonLd = breadcrumbListJsonLd([
 <MainGridLayout {title} {description} page={kind} lang={locale} {canonical} {alternates}>
   <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(collectionJsonLd)} />
   <script slot="head" is:inline type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
-  <a href={withBase(indexPath)} class="text-[var(--primary)]">{isCategory ? t.allCategories : t.allTags}</a>
-  <PageHeader title={display} subtitle={t.postsCount(page.total)} />
   <ArchivePanel
     client:visible
     {locale}
+    heading={{ title: display, subtitle: t.postsCount(page.total) }}
     sortedPosts={mappedPosts}
     initialCategory={isCategory ? slug : void 0}
     initialTag={isCategory ? void 0 : slug}
