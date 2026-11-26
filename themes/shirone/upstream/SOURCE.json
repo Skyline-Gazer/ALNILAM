@@ -14,7 +14,7 @@
     },
     {
       "path": "src/env.d.ts",
-      "sha256": "9026d3d20106255bd0567fc5cff58c235a60c7a74555ac75aa552c50e5b1a30b"
+      "sha256": "6fdf34b6797bbf71e4d61d20171b2e09c15cdd98a023afd9ada184277ec7269f"
     },
     {
       "path": "src/global.d.ts",
@@ -30,7 +30,7 @@
     },
     {
       "path": "src/layouts/MainGridLayout.astro",
-      "sha256": "d6d4de829dd0330ce5cce516cb6add9e449958f5636b63c9abd9fa12fdfc86b0"
+      "sha256": "6cb72f4dfb018558ce4d1d87fbc65d80176fe5b2aa7eaed3f15b0be77bc044f5"
     },
     {
       "path": "src/layouts/Layout.astro",
@@ -38,7 +38,7 @@
     },
     {
       "path": "src/i18n/i18nKey.ts",
-      "sha256": "631d05bed08a4afa72c47ad1dcd0618b026db63d2a7c11bb4c7f13f4ac7a536a"
+      "sha256": "f17261fab4642ff3e6e3f1c300ecdb881c9f6d4f5be52f3a86a3802d1229ed39"
     },
     {
       "path": "src/i18n/i18nKey-runtime.mjs",
@@ -46,19 +46,19 @@
     },
     {
       "path": "src/i18n/translation.ts",
-      "sha256": "ca02fc9de30055984f73a843fe1d2a525f382f274f398cb983b2c13c7c28a3f9"
+      "sha256": "cf615236001dbdd5c3bd63a3695ec1198989fe86beb62f6be9628ffb1006fb0c"
     },
     {
       "path": "src/pages/categories.astro",
-      "sha256": "24f70f901f1d2f93b93799fa87364fb1cf44eed2c753e63524875ffb58cf88f4"
+      "sha256": "9103098a8742fc47cf01be2db515359efdfc4b4d99eb4c7596e3d2a458dfe719"
     },
     {
       "path": "src/pages/moments.astro",
-      "sha256": "57a5f788af1e200c8370e63401d1755d34f7eaefa38e85994d01da47aa084e66"
+      "sha256": "6d30a94e0ca3b0b4b53ba31fed167804b8a81eb2d86c49730049576e7c666c2d"
     },
     {
       "path": "src/pages/tags.astro",
-      "sha256": "cbfc3e8a9f7676a50b5b3cb870d10fcddb11f43364fb8e78e8a0fecb76714445"
+      "sha256": "4a737b1444ac7505bc6831fc992659676455f0cf27e805463abaad7db5370fc3"
     },
     {
       "path": "src/pages/[...page].astro",
@@ -74,7 +74,7 @@
     },
     {
       "path": "src/pages/archive.astro",
-      "sha256": "1c31508304756d616b3020d72a3ad760c016c3605e8a68a38ab2d0e1609fe2f9"
+      "sha256": "21aaef2f4d12999b8fee033895a4ab0ee38f8b9c987ff2e8c2569966df26420e"
     },
     {
       "path": "src/pages/projects.astro",
@@ -82,7 +82,7 @@
     },
     {
       "path": "src/pages/[...permalink].astro",
-      "sha256": "a34c0a187a03bb5524dac360a87f2d804005ad9d4e02ee77c642d50b2741ff94"
+      "sha256": "7d17e9d61729dfdd7c265bfde1e1c85dd5ca118b77b643fb08cd644a93492904"
     },
     {
       "path": "src/pages/games.astro",
@@ -106,7 +106,7 @@
     },
     {
       "path": "src/pages/about.astro",
-      "sha256": "9a21e4fb5ebeddae5c6dfcd29215cbfaa3d480f12a2283404ed6aed873c6e986"
+      "sha256": "30e52ac9f51b9f60099f6211af138cfdff30c83a1d3cd39fa66cada08b063300"
     },
     {
       "path": "src/pages/404.astro",
@@ -174,7 +174,7 @@
     },
     {
       "path": "src/integration/index.ts",
-      "sha256": "c1ac2fb0e4c16c6cec931e2ffe3b155826191a696cf745fd9b52a60d1f2f3e1d"
+      "sha256": "8e97521859a71972f87516971ad35e667a83479dee0e379908fdfd3c54d368f3"
     },
     {
       "path": "src/integration/collections.manifest.json",
@@ -190,7 +190,7 @@
     },
     {
       "path": "src/integration/types.ts",
-      "sha256": "0af789334459c6bf8bc32671157f58a5ff7400d0f1f20eb070f7cba1332e2230"
+      "sha256": "7f2d8153fd393fa3a9033053665239959d182cc147703938a457c8f050fe8986"
     },
     {
       "path": "src/utils/album-scanner.ts",
@@ -198,7 +198,7 @@
     },
     {
       "path": "src/utils/fancybox-config.ts",
-      "sha256": "b18c17e05213b0633dda9b2f6b9fd193226e73d8189d3974a11bf56c1c988d04"
+      "sha256": "964ca2bd41a89cde3aa888e48c3e711d2ac4344b1459f791602105e679c6429d"
     },
     {
       "path": "src/utils/banner-animation.ts",
@@ -234,11 +234,11 @@
     },
     {
       "path": "src/utils/markdown-processor.mjs",
-      "sha256": "ac386141845fca470169d43882c254872c045309af3b65beb47c95c6698df47b"
+      "sha256": "7b43192e05dc8d1afa06b327bef25d2ac3666eaa1f1933af390f215161b5da0e"
     },
     {
       "path": "src/utils/fancybox-handler.ts",
-      "sha256": "631723e7d39bda5715991d091799e37b3baebce9d7f18365254665d199463658"
+      "sha256": "0631e0cbf476df07f1020aab996ac28740ae24a04b965f0f7463cc9142ead6b4"
     },
     {
       "path": "src/utils/post-decryption.ts",
@@ -254,7 +254,7 @@
     },
     {
       "path": "src/utils/url-utils.ts",
-      "sha256": "fe973118af2186a9a66e3f5d57e4e94f85d6bb627559efc9652ddfc46fc3d716"
+      "sha256": "e675e535ef27fd85ca3a438c19ecc41cb4f7ad0adcf036686f4ae223ef992c20"
     },
     {
       "path": "src/utils/theme-utils.ts",
@@ -262,7 +262,7 @@
     },
     {
       "path": "src/utils/content-utils.ts",
-      "sha256": "52b23cee603741a5a05c2279ffe732c3700ae634bbf1f29f602b2dc0e312940d"
+      "sha256": "24294c9025d0c8c1eebd9fdc1e6c1956572ac6c15cb06355f8076583c187a100"
     },
     {
       "path": "src/utils/mc-utils.ts",
@@ -326,7 +326,7 @@
     },
     {
       "path": "src/utils/setting-utils.ts",
-      "sha256": "3b861fdd1140bdf90499539690a93b5c9bccf16ed1fb2a21bfb069095c850039"
+      "sha256": "6e02dd6e5f4f4b3cf325ee10254b7ee5293e14c77d94bbf47a736eef44b030c5"
     },
     {
       "path": "src/utils/config-overlay.ts",
@@ -402,7 +402,7 @@
     },
     {
       "path": "src/utils/nav-utils.ts",
-      "sha256": "08e4c8422629c9bb9e7346a323681f8288c6bf59fd9035bd477c63b62431ac48"
+      "sha256": "18e08d8b579a7b1b74a7612cc349d90d77bb68693f6731d1ab17c061dd4d90db"
     },
     {
       "path": "src/utils/responsive-utils.ts",
@@ -446,7 +446,7 @@
     },
     {
       "path": "src/utils/markdown-assets.ts",
-      "sha256": "bc3e24184140979655f926eaac26c38312c04ab6ae3596a2668f4e6a35bc6371"
+      "sha256": "8e4edabb62a436a0c07e6a5918db109375ae09c774f6dba042f0aae74fdeb9ba"
     },
     {
       "path": "src/utils/snackbar.ts",
@@ -454,7 +454,7 @@
     },
     {
       "path": "src/utils/markdown-runtime.ts",
-      "sha256": "68e6fb12bcd0c7d459553de19aa194f4090db12fb5c28a1e179818869a5c14f7"
+      "sha256": "d910c34596d2ffd73c372f86d28b8cdc2aee1a7c498a17814d950414299235cf"
     },
     {
       "path": "src/utils/menu-bus.ts",
@@ -550,7 +550,7 @@
     },
     {
       "path": "src/types/sidebarConfig.ts",
-      "sha256": "a34f626b61a4678f13d0f45ad9a46d03f73bf51f9c5151bc6a2f7f4ac0a76a4f"
+      "sha256": "d511ffe59bf15f8eeaccf9059f83b0e3ccfe162ab471bc8a3ed90e4635f51fe4"
     },
     {
       "path": "src/types/devicesConfig.ts",
@@ -654,7 +654,7 @@
     },
     {
       "path": "src/styles/fancybox-custom.css",
-      "sha256": "174dbab68821b7604c17c3fbd5ef2be7efad873ffa1a54d48df7291aad0d017d"
+      "sha256": "de87f3f584cb8e283c85432c928169186c6f9e12768f9dda335fac9ad849c7f7"
     },
     {
       "path": "src/styles/scrollbar.css",
@@ -686,7 +686,7 @@
     },
     {
       "path": "src/styles/transition.css",
-      "sha256": "8be5bcb8540492b6815088eeddf52717d2824247445c061931817dd6d8d9f9ae"
+      "sha256": "0dd522e987fef38f5c4d3f1021bbe450c4ef17bcebb5209b802b6676f3c35279"
     },
     {
       "path": "src/data/games.ts",
@@ -726,7 +726,7 @@
     },
     {
       "path": "src/user/user-config.ts",
-      "sha256": "725ea6e2705bee26815dea6ff7191b8fdbd06385debb9ab5423816a4ea93a638"
+      "sha256": "dfa0e2e7c6a7e01ee6c56e989afef6650c4d31c2a5e416e3cffd789cf871f180"
     },
     {
       "path": "src/plugins/remark-reading-time.mjs",
@@ -746,7 +746,7 @@
     },
     {
       "path": "src/plugins/rehype-markdown-images.mjs",
-      "sha256": "5424ba434aacbfa5a936964fcce55b8446ac33b3b1eac97206b566d4fa31ab3d"
+      "sha256": "48f72c41ff6221996aefdb1d01ac25b30a005504e383ef1c796381b73f8011c7"
     },
     {
       "path": "src/plugins/rehype-component-admonition.mjs",
@@ -866,7 +866,7 @@
     },
     {
       "path": "src/config/integrationsConfig.ts",
-      "sha256": "b98a6ba3ae9701c96c6261e583bc945f445cb215d168540a4d393fe87300ce16"
+      "sha256": "4251f825aa2aba3cc0fea5b4a0230d799eb8a2ea710c0de2fb2a934fbedabc83"
     },
     {
       "path": "src/config/postListConfig.ts",
@@ -950,11 +950,11 @@
     },
     {
       "path": "src/components/organisms/TopAppBar.astro",
-      "sha256": "b794c57b64030ec952f6afe94f4643432145d80d3cb87e3576701e856ce137b1"
+      "sha256": "321bcea4bbf26d78db2083a523fba80e8d9d1b3a7328cf80b29669678da34a93"
     },
     {
       "path": "src/components/organisms/BannerStage.astro",
-      "sha256": "09338bff4194c7080cd8f7f54134c57c663f7442705d0f28f0a38a4cde21184d"
+      "sha256": "4b855733c1c2ec0c4fe05a488caea318562e8098e8fa2cd36ac68d335497bc56"
     },
     {
       "path": "src/components/organisms/PasswordGate.svelte",
@@ -962,7 +962,7 @@
     },
     {
       "path": "src/components/organisms/MomentSection.svelte",
-      "sha256": "2e762ef99d8b8fbdd6d50b49999b51b9d14e42e184743dcf2ce07ab3d09a64b6"
+      "sha256": "cae13656a4a6ed495c2c58be2285affe571c9d53a99aa05f90979fa585839007"
     },
     {
       "path": "src/components/organisms/ArticleDiscovery.astro",
@@ -974,15 +974,15 @@
     },
     {
       "path": "src/components/organisms/AlbumGallery.svelte",
-      "sha256": "c4036a833940183eb3cfb88ec94761fd6d251d03453953cc8c2b18050a33a8bf"
+      "sha256": "9d869dcc79ec3864465c2e47297c60b161c509ab16c1dea3e08b28567a45bb4a"
     },
     {
       "path": "src/components/organisms/AlbumSection.svelte",
-      "sha256": "f36bd0d04ff25dc1f1c2afe633ee7ef3f370a3062253cc7e35b06177d57519f6"
+      "sha256": "b49e8b06913f27081b995c690989e4ad2dc7c4bdf4e535fad2e1f2ca279fb3ba"
     },
     {
       "path": "src/components/organisms/PostPage.astro",
-      "sha256": "2272d848ca40888c8870ead1abab24829e5db3eefe69104e45d568679bff80ff"
+      "sha256": "5781b76e9879c58b4f5a65970212d33d1da85ab733a402f0085c867f8f91fa48"
     },
     {
       "path": "src/components/organisms/ProtectedPost.svelte",
@@ -990,15 +990,15 @@
     },
     {
       "path": "src/components/organisms/Profile.astro",
-      "sha256": "da3459f65fd589573bd06c1c26ef7704440f1049609a3bc4dcc88c04ed5f64a6"
+      "sha256": "40dd555541f2f0e4f63066974aae8f6dda4c3398036d71826fab5d7e5c37f234"
     },
     {
       "path": "src/components/organisms/SiteNavigationDrawer.svelte",
-      "sha256": "28b5847e393862155d06dcb3070a48c3e2fe74dbb19407a88fa3f10f74f7a998"
+      "sha256": "18f3fcbfb1032a3640ebbb96497eb1365b9c35ea84b35cbb8d00724996ca3aaf"
     },
     {
       "path": "src/components/organisms/Search.svelte",
-      "sha256": "8699b9cf720f655df9668294a1ce5c2be6782e369376cb3402be96df696ff2fb"
+      "sha256": "75a29b5b1b7ebfd8e1d04fd1c3d6d27c290b87090e825fe7618ba486432c294d"
     },
     {
       "path": "src/components/organisms/FloatingControls.astro",
@@ -1014,7 +1014,7 @@
     },
     {
       "path": "src/components/organisms/LightDarkSwitch.svelte",
-      "sha256": "e678cd2c294fb5ad5508a33c4f3ea9b692fc5902c5066a3f41eb9f1f4f677d42"
+      "sha256": "c1d85c781e43b7473a42386140aacf11991fcac8d589b72cfe00a5f60845f062"
     },
     {
       "path": "src/components/organisms/CompassSection.svelte",
@@ -1030,7 +1030,7 @@
     },
     {
       "path": "src/components/organisms/Footer.astro",
-      "sha256": "2b645e7b5e44d7312d02254b7f406fdafb5fe3b22fe1ec90a68036e4c02c0306"
+      "sha256": "70116b45cd1911e6f936cb5db2c6428ba770b2e055f463ca258e209d3334a73c"
     },
     {
       "path": "src/components/organisms/EncryptedContent.astro",
@@ -1054,7 +1054,7 @@
     },
     {
       "path": "src/components/organisms/ArchivePanel.svelte",
-      "sha256": "46524f5052c77ea74ffc52da9ecaca7c2e8f63a4075163bb3e97ba291d1402c1"
+      "sha256": "b460ebaa7e85b3e4db5d8f012edc8c6f3bc278c7fccfe0031ab970252b43057a"
     },
     {
       "path": "src/components/organisms/GamesSection.svelte",
@@ -1066,7 +1066,7 @@
     },
     {
       "path": "src/components/organisms/SideBar.astro",
-      "sha256": "a4de3c1d5bfbc441c9d6dca1f09bdb39dca23e6d228c8307ded629a34bf19646"
+      "sha256": "5f1d91e59ab1b07b87e8f12ca266338e26c253986804e17a5b6aaecc00476c2c"
     },
     {
       "path": "src/components/organisms/RouteProgress.svelte",
@@ -1090,15 +1090,15 @@
     },
     {
       "path": "src/components/molecules/AlbumCard.svelte",
-      "sha256": "b31ed52e958669277030be4df0a78d29a980b167873f2b9bd89995af8fe5c950"
+      "sha256": "7f84fed3c414bdd4d47a21705c0429f4a5d2afb984469a5eb0df857ae29cd4b4"
     },
     {
       "path": "src/components/molecules/WidgetLayout.astro",
-      "sha256": "32ec8f90ccbe236cb5d4af5835b128fcdd639223e5c60558c01502475688a4ee"
+      "sha256": "ed5a770b5c14a67126491a0a4873a0949352e0b3028ab433113d56073517e0cc"
     },
     {
       "path": "src/components/molecules/MomentCard.svelte",
-      "sha256": "3d0d7e909d207011676054459c389a10aced3cabfbe1aa10fd732a9cc60baf0a"
+      "sha256": "39e4e4c1fbe925fbeb09f7a2e584e4648019c87654c639c94b4a00614e1b12da"
     },
     {
       "path": "src/components/molecules/SkillCard.svelte",
@@ -1126,15 +1126,15 @@
     },
     {
       "path": "src/components/molecules/SearchBar.svelte",
-      "sha256": "3ba9f7ad00a541f09fdd44af25bcc5b7287b45700903de822a128976a910f00a"
+      "sha256": "5a013a5c0dc8af3b4fd13403a814b14c8f93656771153d1bd48d6eaa96fe8ad3"
     },
     {
       "path": "src/components/molecules/MomentGallery.svelte",
-      "sha256": "5076a590e267843af6ed6533f8ddd32e5b02c715b9bf3a53376824131bf5f9af"
+      "sha256": "0cb483083bba9b917024dfcaa3e7492bc33737e03960d8050d933bc317ea4781"
     },
     {
       "path": "src/components/molecules/Pagination.astro",
-      "sha256": "db4e6f2aef2590f8637b4e654beb3193d4882dcd161a394b79169f0a19dd9098"
+      "sha256": "ea74543f5263fe9cdf9f51ebbd9f038b94a27667676b2a8a84e9c05f4c2127d1"
     },
     {
       "path": "src/components/molecules/CompassTile.svelte",
@@ -1146,7 +1146,7 @@
     },
     {
       "path": "src/components/molecules/FloatingActionButton.astro",
-      "sha256": "3be1705f1fa0082457eae084b460251c08957b6f1f8be6953565e59284ac3fc8"
+      "sha256": "599a9a752b6cb460b5fe134ff15b021aa34a50205ffd6c08bf3768a7d3c45ebf"
     },
     {
       "path": "src/components/molecules/GameCard.svelte",
@@ -1158,7 +1158,7 @@
     },
     {
       "path": "src/components/molecules/FloatingTOCPanel.astro",
-      "sha256": "2786a0a9555672be549bcac3dd450a0442449cd9c3578b4424f6ed4623b85b56"
+      "sha256": "57411204ab7335041233bccddb4989447ae28acdac9f9da5d10e2a32bb06af49"
     },
     {
       "path": "src/components/molecules/SectionTitle.svelte",
@@ -1166,7 +1166,7 @@
     },
     {
       "path": "src/components/molecules/SeriesCard.astro",
-      "sha256": "25f5afb01f6b4be7afde689440f13d68dc88d70b0a2442656609716ae4d08f28"
+      "sha256": "c8e5de6cae45f28cfa949473aee7c2cae053b48c02a744f53eccccd98006a065"
     },
     {
       "path": "src/components/molecules/ButtonTag.astro",
@@ -1206,7 +1206,7 @@
     },
     {
       "path": "src/components/molecules/ImageWrapper.astro",
-      "sha256": "4fc5d4a3d75be7fc2068e36a2c775b89c203f7e0ec295f913dad4b73f4dfb3e1"
+      "sha256": "56be4fd6ca0c4f6cc479d475e9b07a861fdddc82b3609c87f4b248a6b44ea3ef"
     },
     {
       "path": "src/components/molecules/Series.astro",
@@ -1234,11 +1234,11 @@
     },
     {
       "path": "src/components/molecules/SidebarTOC.astro",
-      "sha256": "50159ff71cdee6eeac470e5e894d5637bf6b3c43f8686b402e52a4699c027eda"
+      "sha256": "9dc1a66b01843640b9b40eac4ff1a1502fad73926410984f9999f4a669742a01"
     },
     {
       "path": "src/components/molecules/MobileArticleTOC.astro",
-      "sha256": "1099e69555c1346e4065e6365b212f8289d3492e9fc357c67cf0788973941583"
+      "sha256": "ab8c6b87c434c97c149abb596d8a8322195d661dbd36b750acd310cb2f844fb5"
     },
     {
       "path": "src/components/system/ConfigCarrier.astro",
@@ -1254,7 +1254,7 @@
     },
     {
       "path": "src/components/content/Markdown.astro",
-      "sha256": "9f3d7aa251b1a1ff308a6e0da9fc1bca181ae862393f6c28983b33dfc1d3fce5"
+      "sha256": "83a8d5afe0e10e87126c407842a29193d2ed1fe7af9394c918ca4231e683020a"
     },
     {
       "path": "src/components/atoms/manifest.json",
@@ -1482,7 +1482,7 @@
     },
     {
       "path": "src/components/atoms/blog/PagePagination.astro",
-      "sha256": "49def907e5587754a888f2f60ac1731f66593ff091e77af709292ac9f3a240c9"
+      "sha256": "5e6b003b3f9472e1f1311c12ef0e4c31bafa2a37f7fdfbb747b21937d05c5c97"
     },
     {
       "path": "src/components/atoms/blog/FooterBar.astro",
@@ -1490,7 +1490,7 @@
     },
     {
       "path": "src/components/atoms/blog/SearchPanel.svelte",
-      "sha256": "9e3b63eb59b308e3454d59d33e957ed9d8130d1740572cba09c4efffe93f811c"
+      "sha256": "f7c9791d59dd212332cae24363a253054a8f38000e0f3be84c3b416ff44bf05b"
     },
     {
       "path": "src/components/atoms/blog/TagBadge.astro",
@@ -1506,7 +1506,7 @@
     },
     {
       "path": "src/components/atoms/blog/PostCard.astro",
-      "sha256": "490caa180b190cb1308b0a122d959ec8a69fc88989817695403401b087621833"
+      "sha256": "d7a1c4954e35296b3eef77a3097688797e098cc084cd63373faad84042a3831a"
     },
     {
       "path": "src/components/atoms/blog/TocList.astro",
@@ -1558,51 +1558,51 @@
     },
     {
       "path": "src/i18n/languages/ko.ts",
-      "sha256": "33ecf5838a7410f74f9627a57db36cb2fffdcb45ddd775a1b210a11b616ea563"
+      "sha256": "d4f74acb2bbad7037077f6ef43cb87f2a4ddc966510631f7034007b1df9fae07"
     },
     {
       "path": "src/i18n/languages/en.ts",
-      "sha256": "ed98fc7b951c79a687f5deb33e6e7a7933332fb4f08b1ce609bbeade6f99eb2f"
+      "sha256": "5473547a06725716684befd2152d9865cedd84ec82fc126ecd60919819f7b868"
     },
     {
       "path": "src/i18n/languages/zh_CN.ts",
-      "sha256": "e14f063b297388cb698dbea95768eaface4bb969aad9c7226597516574ce54ad"
+      "sha256": "c4c46201aaaafabf6f690aecfe33ab0759e9bfe7ff621b184410df9ab99da097"
     },
     {
       "path": "src/i18n/languages/tr.ts",
-      "sha256": "8d3156c5d80a36c945136710e3f76ba05636fb207e802e638df9c864d4980f0d"
+      "sha256": "bf5ba2172e7a3d83b90ad7f16056c9247deac410de4c35658c2d0c397e7e85d0"
     },
     {
       "path": "src/i18n/languages/id.ts",
-      "sha256": "fd5cce0e99b9a72ce3ac147fc67ea2365037c90997d7691dce7f9b40f98a4eff"
+      "sha256": "b51e69e69c6be011ed426a7c32a0ca705a0ee67ffd7e7d6f5c66a6ba575bd926"
     },
     {
       "path": "src/i18n/languages/es.ts",
-      "sha256": "7504d68d104c642dab5f406aa8123bf0fb1a1caec43b7886d5019dbd3dcc3524"
+      "sha256": "7c4eec90422255475889ca5491ec935425ed33d1ffeac33bdc410919f502aca6"
     },
     {
       "path": "src/i18n/languages/ja.ts",
-      "sha256": "2356e7bc110529ac357f1ea6f87805edc3207a69d4754851cc37dcc47b3d7eab"
+      "sha256": "a161f185e89a03741a291d618091d09f2c32f2a77bf5927924910c9608c9c099"
     },
     {
       "path": "src/i18n/languages/vi.ts",
-      "sha256": "460848a6dd36838c370119e1da0614b911956340f6cf6175df6e4555c06a305f"
+      "sha256": "2d4fa4afb1b00bc9a3a03b32e2cc8aa928320e41a1af40fef0544f0ac5694bce"
     },
     {
       "path": "src/i18n/languages/zh_TW.ts",
-      "sha256": "6f09df0568d1e58aeb3e564f9829fe482aa8efe102aa6a075868678c7f07b331"
+      "sha256": "4095694078ee64bca9f75f2a59a3275ff1776773747bc07a17d3a984aca75af0"
     },
     {
       "path": "src/i18n/languages/th.ts",
-      "sha256": "045d79b0e7a3797cc272c87803b2a57406666e42546abce4402045ee6bee4cfa"
+      "sha256": "9602d915298e867f444aa50c862fba7c2efcc64bc2c5afa1042b85fd78f48646"
     },
     {
       "path": "src/pages/posts/[...slug].astro",
-      "sha256": "d113341c51103e73ccebf49cf0cf0898f06188f7d65331f25ad3c8940e5cda2d"
+      "sha256": "b7179629ebe40ca33f5c87b4d7ea277c0d3d35c1cd68f43212af2347f77aee9f"
     },
     {
       "path": "src/pages/series/[slug]/index.astro",
-      "sha256": "556d215f3a3295749d46b20142cfecd5608e13b2c7a4796cdeb561b93f5a0f85"
+      "sha256": "0a14b8645c34fbf9effe5c5c1658f351c1b3957e0ff0c6aeb395355af9f147b5"
     },
     {
       "path": "src/pages/albums/[id]/index.astro",
@@ -1610,11 +1610,11 @@
     },
     {
       "path": "src/integration/resolve/load-config.ts",
-      "sha256": "37782f1c5023ec2de4a25fa6f64dba8c00cca69eb729bf7ebc203569af98a8ca"
+      "sha256": "9a674e976d830f066220d3bc692926fdb999769cede19ed7b81e4a5147a187f2"
     },
     {
       "path": "src/integration/resolve/paths.ts",
-      "sha256": "9e2ea21a735d3fed4d738ac4d97a73138884e1d9c214e62ebd6113f54dd5a171"
+      "sha256": "36204539940d01cd0839236ed5bcd4283887a66cc8793e3d817cbe7090fd8fbc"
     },
     {
       "path": "src/integration/resolve/registry.ts",
@@ -1638,15 +1638,15 @@
     },
     {
       "path": "src/integration/vite/icon/regeneration.ts",
-      "sha256": "d97af94f746cc56a12755cf71e4bf0ce5d4c517d66ab8f9756fcf95e36e92f8e"
+      "sha256": "f981a3c6670438d2ac52642f9aba958a4a62576c0686e6f1248412efe0230472"
     },
     {
       "path": "src/integration/vite/thumbnails/generate.ts",
-      "sha256": "054fc11f98f44328469fe8713d4b0341b555f5225295ad963855661d9ee40268"
+      "sha256": "b7649a890e25a797bac32b84b391d4d20a4b2bae5a7520971b5bdaaa492e0049"
     },
     {
       "path": "src/integration/vite/thumbnails/regeneration.ts",
-      "sha256": "1e1ca07bbaa216cc9dd83b2569c70a128db83e8932a30f831e228c8d06fe49ca"
+      "sha256": "9ca00a3f2b67bd4e8ed6fa023899b0548f7fa0bde6ce00973e44c0903afd296e"
     },
     {
       "path": "src/utils/anime/status.ts",
@@ -1746,7 +1746,7 @@
     },
     {
       "path": "src/styles/markdown/generic.styl",
-      "sha256": "e1b6e941d3ee144acab730ecb1f2a0770df74ddf0632102128ff2ffe037deda9"
+      "sha256": "2a2f883f0bb1baae74dd77d6d1c5a5109a4d6e0c5e85b49e6c2bb62aa69504b5"
     },
     {
       "path": "src/styles/markdown/math.css",
@@ -1931,9 +1931,80 @@
     {
       "path": "src/plugins/markdown/core/audio-reader.d.mts",
       "sha256": "169139392d48e56de0332bef865ffde4be8c37b6e7f2abb6dbbc6dfd57817166"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "3d0dde254e123f698ff9bb1754a05687a1c365abe33bc6c4ecede896cafdc260"
+    },
+    {
+      "path": "package.json",
+      "sha256": "4a61f82685c256c39ccd4401ade7ebbd835c98701343ef55e21251d2c7a1dcb9"
+    },
+    {
+      "path": "src/components/organisms/LangSwitch.astro",
+      "sha256": "22476012d1364263bff2b19e07d9be3f4d4edaa2f87e0bf421147a01ae0c7aa6"
+    },
+    {
+      "path": "src/components/system/AdBlockRecovery.astro",
+      "sha256": "7340ec9d08b09363876398268445b156af234e61d19089e71bf1be2ebb99861e"
+    },
+    {
+      "path": "src/components/system/AdsRuntime.astro",
+      "sha256": "b6d5331ef34bdb898727b05d3fd7c9cacb2fd02c9f7cd2b77d2d56fc85cf7a40"
+    },
+    {
+      "path": "src/components/system/AnalyticsRuntime.astro",
+      "sha256": "78457317fdca681deb2839526c5e755a941073907c5ca3f9f877efd880a93ac4"
+    },
+    {
+      "path": "src/components/system/ConsentGate.astro",
+      "sha256": "d8ec1f2eca41388ee7680d3832fbbb86f6166f7de8fb05d5e3dcf7909ce21b66"
+    },
+    {
+      "path": "src/integration/resolve/bundle-cache.d.mts",
+      "sha256": "2ba60db4bcba28cdd7582bd5e643366637d3bd32e58de9a5d312365b4bc6ead7"
+    },
+    {
+      "path": "src/integration/resolve/bundle-cache.mjs",
+      "sha256": "4d933e26e123e062d9b54fe85472c9894e3daab62ffa9d00626cbcca3e53615a"
+    },
+    {
+      "path": "src/plugins/rehype-safe-markdown-links.mjs",
+      "sha256": "25f6a161df14e8153c6158d418a5b26d12912622bbf65dd222746def5a0ed5cc"
+    },
+    {
+      "path": "src/styles/lang-switch.css",
+      "sha256": "fd755f84c1002c72ab445b0b10b110067b9b9124a96d95e7558c82ac389bf443"
+    },
+    {
+      "path": "src/utils/adblock-recovery.ts",
+      "sha256": "100a5284a1e4c8efcab6b3a73663cf4ed6778fe90283a808939c3050c83195d7"
+    },
+    {
+      "path": "src/utils/adsense.ts",
+      "sha256": "7d85a3ce348f18a65ee52994faf0527463387378b2c9afc7228693ad06b1f4c9"
+    },
+    {
+      "path": "src/utils/consent.ts",
+      "sha256": "87a209f0c6c28b6eddfbebce622ffb11755430e7ae1729a4ceb3c9a1749850c9"
+    },
+    {
+      "path": "src/utils/ga4.ts",
+      "sha256": "4a322603abfbc44c6cbad6fdef1fe937d351ea42e50b4ce14de8b617b53226d1"
     }
   ],
   "modified": {
+    "src/components/molecules/FloatingTOCPanel.astro": "Keep the closed panel inert and make it available for focus in the opening task while the opacity and transform animate.",
+    "src/components/system/AdBlockRecovery.astro": "ALNILAM addition for the optional ad-block recovery prompt (#93).",
+    "src/components/system/AdsRuntime.astro": "ALNILAM addition for consent-gated AdSense loading (#90).",
+    "src/components/system/AnalyticsRuntime.astro": "ALNILAM addition for consent-gated GA4 initialization (#91).",
+    "src/components/system/ConsentGate.astro": "ALNILAM addition for optional third-party loader consent (#92).",
+    "src/integration/resolve/bundle-cache.d.mts": "ALNILAM types for shared immutable Shirone build artifacts (#145).",
+    "src/integration/resolve/bundle-cache.mjs": "ALNILAM implementation of shared immutable Shirone build artifacts and cache identity (#145).",
+    "src/utils/adblock-recovery.ts": "ALNILAM client behavior for the optional ad-block recovery prompt (#93).",
+    "src/utils/adsense.ts": "ALNILAM client behavior for consent-gated AdSense loading (#90).",
+    "src/utils/consent.ts": "ALNILAM client behavior for optional third-party loader consent (#92).",
+    "src/utils/ga4.ts": "ALNILAM client behavior for consent-gated GA4 loading and page views (#91).",
     "src/user/user-config.ts": "Read-only ALNILAM Site adapter; replaces upstream generated config mount.",
     "package.json": "Consumer compatibility metadata uses ALNILAM existing locked Astro7.4.2 / Svelte integration9.1.1 / MDX8.1.1; upstream peer checks remain active. See existing #79 record; native integration verification pending.",
     "src/layouts/Layout.astro": "Retain ALNILAM canonical and keyboard skip-link contracts in actual upstream layout. Default appearance from validated Site; omit unimplemented Atom feed link; consolidate Pagefind loader, WidgetLayout custom element and pagination jump handler into the Layout runtime script. Configure Pagefind result URLs with Astro's base. Initialize shared Markdown and Expressive Code runtimes for navigation from pages without Markdown. Emit layout variables once and omit disabled texture initialization to reduce per-page HTML. Record a pre-hydration drawer tap on documentElement so the island can replay it. Keep the display-settings toggle's aria-expanded in sync on toggle and outside-click close. Keep the localized pagination action label when the mobile jump button becomes its input.",
