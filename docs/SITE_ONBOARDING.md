@@ -76,12 +76,17 @@ tags are Site-owned catalogs; tag pages also use post frontmatter.
 
 #### Locale listings
 
-Every listing surface is scoped to one locale's corpus: `/`, `/posts/`, `/archives/`,
+Every listing surface is scoped to one locale's corpus: Home and its pagination, `/archives/`,
 `/categories/`, `/tags/` and the taxonomy detail routes list only posts whose resolved `lang`
 equals the **default** locale, while `/<lang>/…` lists only that locale's posts. Resolved `lang` is
 the frontmatter `lang` value, falling back to `site.locale` when absent — the file path never
 decides it. Per-locale RSS feeds and Pagefind (whose index is sliced by each page's `<html lang>`)
 already behaved this way, so a page, its feed and its search results now agree.
+
+Home is page one of the Feed. Page 2 and later keep their published `/posts/2/`,
+`/posts/3/` URLs and locale equivalents. Older `/posts/` index URLs serve a
+`noindex` page with an immediate HTML redirect and a link to the matching Home.
+This also works on static subpath hosts. Article URLs remain stable.
 
 - A translation is reachable through its article URL, `hreflang` alternates, the language switch and
   its own locale listing — never inside another locale's list.

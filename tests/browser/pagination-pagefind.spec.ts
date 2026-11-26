@@ -146,17 +146,28 @@ for (const [name, origin] of deployments) {
 		await expect(page.locator("main")).toContainText(/第\s*2\//);
 	});
 
+	test(`legacy listings forward to the canonical locale home ${name}`, async ({ page }) => {
+		for (const prefix of ["", "/en", "/ja"]) {
+			const legacy = `${origin}${prefix}/posts/`;
+			const home = `${origin}${prefix}/`;
+			const response = await page.request.get(legacy);
+			expect(response.ok()).toBe(true);
+			const html = await response.text();
+			expect(html).toMatch(/name="robots" content="noindex/);
+			expect(html).not.toContain('class="m3-blog-postcard');
+			await page.goto(legacy);
+			await expect(page).toHaveURL(home);
+			await expect(page.locator('#main-navigation [data-nav-key="posts"]')).toHaveCount(0);
+		}
+	});
+
 	test(`posts pagination reaches page 2 and back ${name}`, async ({ browser }) => {
 		const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
 		const page = await context.newPage();
-		await page.goto(`${origin}/posts/`, { waitUntil: "networkidle" });
+		await page.goto(`${origin}/`, { waitUntil: "networkidle" });
 
 		await expect(page.locator(".m3-blog-postcard")).toHaveCount(5);
-		// The published count is content, not contract. Read the last page from
-		// page 1 and require page 2 to agree with it instead of pinning a number
-		// that rots as soon as a Guide is added or removed.
-		const firstPage = await page.locator("main").innerText();
-		const total = Number(/第\s*1\s*\/\s*(\d+)\s*页/.exec(firstPage)?.[1] ?? NaN);
+		const total = Number(await page.locator(".m3-blog-pagination__jump").getAttribute("data-total"));
 		expect(Number.isInteger(total) && total >= 2, `page 1 announces ${total} pages`).toBe(true);
 		// Locale content policy (#35): the unlocalized list contains no locale-prefixed article.
 		const firstPageHrefs = await page.locator(".m3-blog-postcard a[href*='/posts/']").evaluateAll((links) =>
@@ -172,10 +183,9 @@ for (const [name, origin] of deployments) {
 		await expect(page).toHaveURL(new RegExp("/posts/2/?$"));
 		await expect(page.locator("main")).toContainText(`第 2/${total} 页`);
 		await expect(page.locator(".m3-blog-postcard").first()).toBeVisible();
-		// Back to page 1 via the visible pagination control.
-		const page1 = page.locator('a[href$="/posts/"]').filter({ visible: true }).first();
+		const page1 = page.locator('.m3-blog-pagination a[rel="prev"]:visible');
 		await page1.click();
-		await expect(page).toHaveURL(new RegExp("/posts/?$"));
+		await expect(page).toHaveURL(`${origin}/`);
 		await context.close();
 	});
 

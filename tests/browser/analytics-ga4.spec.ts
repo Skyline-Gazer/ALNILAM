@@ -63,7 +63,7 @@ function expectLoaderLoads(page: Page, count: number) {
 async function clickNavLink(page: Page, origin: string, path: string) {
 	await Promise.all([
 		page.waitForURL(`${origin}${path}`),
-		page.locator("header").getByRole("link", { name: /文章|Posts/ }).first().click(),
+		page.locator('#main-navigation a[data-nav-key="home"]').click(),
 	]);
 }
 
@@ -151,10 +151,7 @@ if (process.env.GA4_FIXTURE === "1") {
 		test(`ga4 full-document navigations re-emit exactly one view ${name}`, async ({ page }) => {
 			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
 			await expectPageViews(page, 1);
-			await Promise.all([
-				page.waitForURL(`${origin}/posts/`),
-				page.locator("header").getByRole("link", { name: /文章|Posts/ }).first().click(),
-			]);
+			await clickNavLink(page, origin, "/");
 			await expectPageViews(page, 1);
 			await expectLoaderLoads(page, 1);
 		});
@@ -184,7 +181,7 @@ if (process.env.CONSENT_FIXTURE === "1") {
 
 			// Full-document navigation with granted analytics: fresh document
 			// re-initializes the loader exactly once with exactly one view.
-			await clickNavLink(page, origin, "/posts/");
+			await clickNavLink(page, origin, "/");
 			await expectPageViews(page, 1);
 			await expectLoaderLoads(page, 1);
 

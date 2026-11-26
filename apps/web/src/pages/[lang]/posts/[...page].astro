@@ -8,13 +8,14 @@ import PostPage from "@alnilam/theme-shirone/PostPage.astro";
 import Pagination from "@alnilam/theme-shirone/Pagination.astro";
 import PageHeader from "@alnilam/theme-shirone/PageHeader.astro";
 import { loadSite } from "../../../lib/site-source.mjs";
-import { activeContentLocales, canonicalUrl, localeRoutePath, postLang, postLocalSlug, postPath, routeAlternates, translationAlternates, uiStrings } from "../../../lib/i18n.mjs";
+import { activeContentLocales, canonicalUrl, localeRoutePath, postLang, postLocalSlug, postPath, translationAlternates, uiStrings } from "../../../lib/i18n.mjs";
 import { commentLang, commentsCsp, resolveCommentIdentity } from "../../../lib/comments.mjs";
 import { comparePosts } from "../../../lib/taxonomy";
 import type { GetStaticPaths } from "astro";
 import { POSTS_PAGE_SIZE } from "../../../lib/pagination.mjs";
 import { articleSeriesContexts } from "../../../lib/article-series";
 import { llmsIndexPath, markdownPath, absolute } from "../../../lib/llms.mjs";
+import LegacyFeed from "../../../lib/LegacyFeed.astro";
 
 export const getStaticPaths = (async ({ paginate }) => {
   const allPosts = (await getCollection("posts", ({ data }) => !data.draft)).sort(comparePosts);
@@ -28,33 +29,13 @@ export const getStaticPaths = (async ({ paginate }) => {
     .filter((locale) => locale !== config.site.locale && !articleLocales.has(locale))
     .map((locale) => ({
       params: { lang: locale },
-      props: {
-        locale,
-        activeLocales,
-        feedUrl: null,
-        page: {
-          data: [],
-          currentPage: 1,
-          lastPage: 1,
-          total: 0,
-          size: POSTS_PAGE_SIZE,
-          start: 0,
-          end: 0,
-          url: {
-            current: localeRoutePath(locale, config.site.locale, "posts"),
-            prev: undefined,
-            next: undefined,
-            first: undefined,
-            last: undefined,
-          },
-        },
-      },
+      props: { locale },
     }));
   const articleRoutes = [...articleLocales].filter((locale) => locale !== config.site.locale).flatMap((locale) => {
     const posts = allPosts.filter((post) => postLang(post, config.site.locale) === locale);
     const hasListing = activeLocales.includes(locale);
     const lastPage = hasListing ? Math.ceil(posts.length / POSTS_PAGE_SIZE) : 0;
-    const listings = hasListing ? paginate(posts, { params: { lang: locale }, props: { locale, activeLocales }, pageSize: POSTS_PAGE_SIZE }) : [];
+    const listings = hasListing ? paginate(posts, { params: { lang: locale }, props: { locale }, pageSize: POSTS_PAGE_SIZE }) : [];
     const articles = posts.map((post) => {
       const slug = postLocalSlug(post, config.site.locale);
       const page = Number(slug);
@@ -70,11 +51,13 @@ export const getStaticPaths = (async ({ paginate }) => {
   });
   return [...emptyListings, ...articleRoutes];
 }) satisfies GetStaticPaths;
-const { post, allPosts, locale, page, activeLocales, series, feedUrl } = Astro.props;
+const { post, allPosts, locale, page, series } = Astro.props;
 const { config } = loadSite();
-const canonical = post ? canonicalUrl(postPath(post, config.site.locale) + "/", config.site.url) : canonicalUrl(page.url.current, config.site.url);
-const altMap = post ? translationAlternates(post, allPosts, config.site.locale, config.locales) : page.currentPage === 1 ? routeAlternates(activeLocales, config.site.locale, config.locales, "posts") : null;
-const alternates = altMap ? [...altMap].map(([lang, path]) => ({ lang, href: canonicalUrl(post ? path + "/" : path, config.site.url) })) : undefined;
+const canonical = post
+  ? canonicalUrl(postPath(post, config.site.locale) + "/", config.site.url)
+  : page && canonicalUrl(page.url.current, config.site.url);
+const altMap = post ? translationAlternates(post, allPosts, config.site.locale, config.locales) : null;
+const alternates = altMap ? [...altMap].map(([lang, path]) => ({ lang, href: canonicalUrl(path + "/", config.site.url) })) : undefined;
 const t = uiStrings(locale);
 const comment = post && config.comments.enabled ? resolveCommentIdentity(post, config) : null;
 const csp = post ? commentsCsp(config) : null;
@@ -99,8 +82,9 @@ const csp = post ? commentsCsp(config) : null;
       </Card>
     </section>
   )}
-</NativeArticle> : <MainGridLayout title={page.currentPage === 1 ? t.postsTitle : t.pageTitle(page.currentPage)} description={t.allPosts} page="archive" lang={locale} canonical={canonical} alternates={alternates} feedUrl={feedUrl}>
+</NativeArticle> : !page || page.currentPage === 1 ? <LegacyFeed {locale} /> :
+<MainGridLayout title={t.pageTitle(page.currentPage)} description={t.allPosts} page="archive" lang={locale} {canonical}>
   <PageHeader title={t.allPosts} subtitle={t.postsSubtitle(page.total, page.currentPage, page.lastPage)} />
   <PostPage page={page} />
-  <Pagination page={page} basePath={localeRoutePath(locale, config.site.locale, "posts")} lang={locale} />
+  <Pagination {page} basePath={localeRoutePath(locale, config.site.locale, "posts")} firstPagePath={localeRoutePath(locale, config.site.locale, "")} lang={locale} />
 </MainGridLayout>}
