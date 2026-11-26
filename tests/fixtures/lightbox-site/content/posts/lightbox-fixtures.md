@@ -30,3 +30,5 @@ External beds below are HTTPS-only Playwright routes (`lightbox-fixtures.local` 
 ## Fixture notes
 
 Playwright fulfills these image requests locally over HTTPS routes.
+
+[Read all entries ![Inline icon](https://lightbox-fixtures.local/ok/48/48.png)](../../).

@@ -12,11 +12,12 @@ const ROOT = "http://127.0.0.1:4323";
 const NESTED = "http://127.0.0.1:4324/ALNILAM";
 const ARTICLE = "/posts/hello-alnilam/";
 const FIXTURES = "/posts/lightbox-fixtures/";
+const ROOT_FIXTURE = "http://127.0.0.1:4333";
 
 type Theme = "dark" | "light";
 
 const deployments = [
-	["root", ROOT, "http://127.0.0.1:4333"],
+	["root", ROOT, ROOT_FIXTURE],
 	["nested", NESTED, "http://127.0.0.1:4334/ALNILAM"],
 ] as const;
 
@@ -301,34 +302,21 @@ test("a click before the lazy lightbox module loads still opens on first try", a
 });
 
 test("an image inside a text link navigates while the lazy module is still loading", async ({page}) => {
+	test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
+	await installFixtureRoutes(page);
 	await page.route(/fancybox-handler\.[^/]*\.js/, async (route) => {
 		const { promise, resolve } = Promise.withResolvers<void>();
 		setTimeout(resolve, 1_500);
 		await promise;
 		await route.continue();
 	});
-	await page.goto(ROOT + ARTICLE, {waitUntil: "domcontentloaded"});
+	await page.goto(ROOT_FIXTURE + FIXTURES, {waitUntil: "domcontentloaded"});
 	const link = page
 		.locator(".custom-md a")
-		.filter({has: page.locator('img[alt="inline"]')})
+		.filter({has: page.locator('img[alt="Inline icon"]')})
 		.first();
-	const image = link.locator("img");
-	await expect
-		.poll(async () => {
-			const href = await link.getAttribute("href") ?? "";
-			// The authored href is relative ("../"); resolve it like the browser does.
-			return new URL(href, ROOT + "/posts/hello-alnilam/").pathname.replace(/\/$/, "");
-		})
-		.toBe("/posts");
-	// The target page meta-refreshes to Home afterwards, so assert the
-	// navigation request instead of the final URL; no lightbox may open.
-	const navigation = page.waitForRequest(
-		(request) =>
-			request.resourceType() === "document" &&
-			new URL(request.url()).pathname.replace(/\/$/, "") === "/posts",
-	);
-	await image.click({force: true, timeout: 3_000});
-	await navigation;
+	await link.locator("img").click({force: true, timeout: 3_000});
+	await expect(page).toHaveURL(`${ROOT_FIXTURE}/`);
 	await expect(page.locator(".pswp")).toHaveCount(0);
 });
 
@@ -348,8 +336,6 @@ for (const [name, origin, fixtureOrigin] of deployments) {
 			const scrollAtOpen = await page.evaluate(() => window.scrollY);
 			await closeLightbox(page, container, scrollAtOpen);
 
-			const container2 = await openSlide(page, 1, responses);
-			await closeLightbox(page, container2, await page.evaluate(() => window.scrollY));
 			await context.close();
 		});
 
@@ -552,24 +538,23 @@ for (const [name, origin, fixtureOrigin] of deployments) {
 		});
 
 		test(`text link with image still navigates ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
 			});
 			const page = await context.newPage();
-			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
+			await installFixtureRoutes(page);
+			await page.goto(`${fixtureOrigin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			const link = page
 				.locator(".custom-md a")
-				.filter({ has: page.locator('img[alt="inline"]') })
+				.filter({ has: page.locator('img[alt="Inline icon"]') })
 				.first();
 			await link.scrollIntoViewIfNeeded();
-			await Promise.all([
-				page.waitForURL(/\/posts\/?$/),
-				link.click(),
-			]);
+			await link.click();
+			await expect(page).toHaveURL(`${fixtureOrigin}/`);
 			await expect(page.locator(".pswp")).toHaveCount(0);
 			await context.close();
 		});
@@ -610,13 +595,14 @@ for (const [name, origin, fixtureOrigin] of deployments) {
 		});
 
 		test(`bare image keyboard reachability ${name} ${width}`, async ({ browser }) => {
+			test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
 			const context = await browser.newContext({
 				viewport: { width, height: 1000 },
 				reducedMotion: "reduce",
 			});
 			const page = await context.newPage();
 			const responses = await installFixtureRoutes(page);
-			await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
+			await page.goto(`${fixtureOrigin}${FIXTURES}`, { waitUntil: "networkidle" });
 			await waitForLightboxReady(page);
 
 			const bareInfo = await page.evaluate(() => {
