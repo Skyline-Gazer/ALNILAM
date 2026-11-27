@@ -305,7 +305,7 @@ export function reconcileWatch({ registry, state, snapshots, dependencyScan, dep
       role: source.role,
       baselineRevision: source.baselineRevision,
       status: tracked.status,
-      differsFromBaseline: snapshot.head.sha !== source.baselineRevision,
+      differsFromBaseline: source.baselineRevision ? snapshot.head.sha !== source.baselineRevision : null,
       lastAnalyzed: nextState.sources[source.id].last_analyzed,
       lastIntegrated: nextState.sources[source.id].last_integrated,
       ...snapshot,

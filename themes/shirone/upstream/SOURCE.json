@@ -334,7 +334,7 @@
     },
     {
       "path": "src/utils/mermaid.ts",
-      "sha256": "5c09bd2821707a1055e32f21e92bf31e41d0661a51106664cc57c4e4deca984c"
+      "sha256": "f31bdc402e6e261289555a9706ec748de23f580770825101209b8349a86a45c9"
     },
     {
       "path": "src/utils/github-cards.ts",
@@ -1710,7 +1710,7 @@
     },
     {
       "path": "src/styles/markdown/github-card.css",
-      "sha256": "a9d9a0bf8c9b8d1a85275f29b9572a64a682328548a9b2dda685789eba989633"
+      "sha256": "47697ca71bc1c982aacaf36fc74b9fb7ae5ccbde1b5c7e76407d7664c2fcf858"
     },
     {
       "path": "src/styles/markdown/marker.css",
@@ -2059,7 +2059,9 @@
     "src/styles/fancybox-custom.css": "ALNILAM: rewrite Fancybox/Panzoom skin to PhotoSwipe .pswp toolbar/counter/caption skin; drop #123 .is-fullsize patch; leave .pswp__bg opacity to PhotoSwipe bgOpacity; prefers-reduced-motion disables non-essential transitions.",
     "src/components/organisms/ArchivePanel.svelte": "Resolve breadcrumb index links in the page locale (#35) and render the archive and taxonomy headings within the native timeline card (#196). In tag-grouped mode, rows no longer repeat the group tag among their listed tags and the switch prints a localized membership explanation, so per-group counts read as tag memberships distinct from the unique-article total (#197). Upstream keeps the self-tag row; the divergence is documented here.",
     "src/utils/markdown-assets.ts": "Resolve each Markdown feature stylesheet to an externally emitted, base-aware URL instead of inlining CSS.",
+    "src/utils/mermaid.ts": "Adapt Shirone f124c3bf837fb99bd6c219b1ddc7f37e48338bb2 to parse HTML line breaks inside Mermaid SVG labels using an inert template. Retain strict Mermaid rendering and source fallback.",
     "src/pages/[...permalink].astro": "ALNILAM addition (#35): pass the article's own locale to PostMeta, matching the posts route.",
+    "src/styles/markdown/github-card.css": "ALNILAM: the card keeps its server-rendered repository link usable before and without the client fetch, so the waiting skeleton no longer disables pointer events (#137).",
     "src/pages/about.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
     "src/pages/series/[slug]/index.astro": "Emit Markdown feature stylesheets as Swup-optional links.",
     "src/pages/tags.astro": "Use the visible tag name and count as the content-derived link name; avoid an overriding aria-label.",

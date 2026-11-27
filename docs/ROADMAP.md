@@ -33,8 +33,10 @@ and keyboard behavior stay in the product.
 
 ## Approved long-running research (non-blocking)
 
-- [#137](https://github.com/Skyline-Gazer/ALNILAM/issues/137) — Upstream Watch & Selective
-  Sync via `scripts/upstream-watch.mjs`; reviews are manual.
+- [#137](https://github.com/Skyline-Gazer/ALNILAM/issues/137) — Upstream Watch with a
+  per-source policy in `docs/upstream-watch/sources.json`: the Shirone base is
+  evaluated for a tagged upgrade, while the other references stay selective.
+  Reviews are manual.
 - [#88](https://github.com/Skyline-Gazer/ALNILAM/issues/88) /
   [#89](https://github.com/Skyline-Gazer/ALNILAM/issues/89) — Git-based and headless CMS
   adapters; the offline Pages CMS PoC (`scripts/pages-cms.mjs`) stays research.
