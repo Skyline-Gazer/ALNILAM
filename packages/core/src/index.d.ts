@@ -56,9 +56,9 @@ export interface SiteConfig {
   schemaVersion: number;
   site: { title: string; description: string; url: string; locale: string };
   theme: { appearance: "dark" | "light" };
-  /** Validated and reserved; this Core revision does not consume the value yet. */
+  /** Consumed by the app's Astro i18n routing configuration. */
   routing: { prefixDefaultLocale: boolean };
-  /** Validated but not consumed by this Core revision (reserved for routing). */
+  /** Enabled content locales; the app builds one route tree per entry. */
   locales: readonly string[];
   /** Validated catalog; tag pages still derive from post frontmatter in this slice. */
   categories: readonly TaxonomyEntry[];

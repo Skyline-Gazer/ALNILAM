@@ -14,7 +14,7 @@
     },
     {
       "path": "src/env.d.ts",
-      "sha256": "6fdf34b6797bbf71e4d61d20171b2e09c15cdd98a023afd9ada184277ec7269f"
+      "sha256": "4309115a2343faa104f11f2690adfe2863a640063f394e607c92ce73ca8d90cd"
     },
     {
       "path": "src/global.d.ts",
@@ -2009,7 +2009,7 @@
     "package.json": "Consumer compatibility metadata uses ALNILAM existing locked Astro7.4.2 / Svelte integration9.1.1 / MDX8.1.1; upstream peer checks remain active. See existing #79 record; native integration verification pending.",
     "src/layouts/Layout.astro": "Retain ALNILAM canonical and keyboard skip-link contracts in actual upstream layout. Default appearance from validated Site; omit unimplemented Atom feed link; consolidate Pagefind loader, WidgetLayout custom element and pagination jump handler into the Layout runtime script. Configure Pagefind result URLs with Astro's base. Initialize shared Markdown and Expressive Code runtimes for navigation from pages without Markdown. Emit layout variables once and omit disabled texture initialization to reduce per-page HTML. Record a pre-hydration drawer tap on documentElement so the island can replay it. Keep the display-settings toggle's aria-expanded in sync on toggle and outside-click close. Keep the localized pagination action label when the mobile jump button becomes its input.",
     "src/components/content/Markdown.astro": "Retain a separate Markdown runtime binding and share the generated Expressive Code client modules with Layout to preserve code block behavior within script budgets.",
-    "src/env.d.ts": "Declare the adapter-provided Expressive Code runtime virtual module used by Layout and Markdown.",
+    "src/env.d.ts": "Declare the adapter-provided Expressive Code runtime virtual module and the ALNILAM privacy config passed to AdBlockRecovery; recovery.googleTag is required for Google recovery mode.",
     "src/components/organisms/PostCard.astro": "Retain 640x360 layout dimensions for pass-through Site covers, with metadata dimensions overriding when available; Category and tag links use the article's own locale when configured, or render as plain text for unconfigured locales (#35).",
     "src/components/organisms/BannerStage.astro": "Give banner placeholders intrinsic layout dimensions; disabled banner still has no Site asset request.",
     "src/utils/url-utils.ts": "Preserve existing ALNILAM language-prefixed post URLs, /categories/<category>/, /tags/<tag>/ and plural /archives/ paths; getTagUrl/getCategoryUrl take the article or page locale and emit the locale-prefixed taxonomy route (#35 locale content policy), so a tag or category link on an English page resolves in English instead of the default-locale route; localePrefix is exported so the category bar scopes its Home/Archive links with the same rule; the trailing locale directory in a content id is stripped case-insensitively because Astro lowercases regional ids such as de-DE to de-de (#81).",

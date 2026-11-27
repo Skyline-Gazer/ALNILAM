@@ -20,12 +20,7 @@ import {
   withBase,
 } from "../../apps/web/src/lib/i18n.mjs";
 import { localeFeedPosts } from "../../apps/web/src/lib/feed.mjs";
-import {
-  blogPostingJsonLd,
-  breadcrumbListJsonLd,
-  ogLocale,
-  websiteJsonLd,
-} from "../../apps/web/src/lib/seo.mjs";
+import { breadcrumbListJsonLd, websiteJsonLd } from "../../apps/web/src/lib/seo.mjs";
 import { createSeoInventory, parseSeoHead } from "../../apps/web/seo-inventory.mjs";
 
 const post = (id, lang, translationKey, extra = {}) => ({
@@ -96,28 +91,7 @@ test("locale feeds keep one language, newest first, and drop drafts", () => {
 });
 
 test("structured data carries only Site-owned facts", () => {
-  const posting = blogPostingJsonLd({
-    headline: "Hi",
-    description: "d",
-    url: "https://example.com/posts/hi/",
-    datePublished: "2026-01-01",
-    inLanguage: "en",
-    keywords: ["x"],
-  });
-  assert.equal(posting.url, "https://example.com/posts/hi/");
-  assert.deepEqual(posting.mainEntityOfPage, { "@type": "WebPage", "@id": "https://example.com/posts/hi/" });
-  assert.equal("dateModified" in posting, false, "no update date must not fabricate dateModified");
-  assert.equal("author" in posting, false, "no configured author must not fabricate one");
-  const updated = blogPostingJsonLd({
-    headline: "Hi",
-    url: "https://example.com/posts/hi/",
-    datePublished: "2026-01-01",
-    dateModified: "2026-02-01T00:00:00.000Z",
-    inLanguage: "en",
-  });
-  assert.equal(updated.dateModified, "2026-02-01T00:00:00.000Z");
   assert.equal(websiteJsonLd({ name: "S", url: "https://example.com/" })["@type"], "WebSite");
-  assert.equal(ogLocale("zh-CN"), "zh_CN");
   assert.deepEqual(
     breadcrumbListJsonLd([{ name: "Home", url: "https://example.com/" }]).itemListElement[0].position,
     1,

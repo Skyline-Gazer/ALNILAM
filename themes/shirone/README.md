@@ -3,8 +3,8 @@
 The theme package exports the actual pinned Shirone layouts, pages and components
 from `upstream/`. Use these exports for new frontend work, for example
 `@alnilam/theme-shirone/MainGridLayout.astro` and `PostPage.astro`.
-`src/` contains the historical local adaptation; it is not a package export or
-an active route dependency. Its old token tests do not verify the native UI.
+`src/tokens.css` only backs the palette-consistency token test; it does not
+verify the native UI.
 
 `upstream/SOURCE.json` identifies the original source as
 `LyraVoid/Shirone@55a84b2322bdfb634a59ca6383bb242e5ce646bf`. The pinned revision

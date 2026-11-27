@@ -104,6 +104,5 @@ const pages = defineCollection({
     image: resolveCover(data.cover, base),
   })),
 });
-const emptyCollection = (schema = z.object({title: z.string().default('')})) => defineCollection({loader: async () => [], schema});
-export const collections = { posts, series, pages, spec: emptyCollection() };
+export const collections = { posts, series, pages };
 

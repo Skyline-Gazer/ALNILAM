@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./Status.svelte": "./src/Status.svelte",
     "./Search.svelte": "./src/Search.svelte",
     "./Comments.svelte": "./src/Comments.svelte"
   },
