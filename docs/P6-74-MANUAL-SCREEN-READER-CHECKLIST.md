@@ -1,5 +1,7 @@
 # #74 Manual Screen Reader Checklist — macOS Safari + VoiceOver
 
+**Scope status — `OWNER_REJECTED` (2026-11-27):** manual screen-reader and VoiceOver acceptance is not an ALNILAM requirement and is not a build or release gate. This document is retained only as historical record; removal of its remaining dependencies is tracked in [#240](https://github.com/Skyline-Gazer/ALNILAM/issues/240). Do not treat the checklist as work to execute.
+
 **Execution status:** `MANUAL_NOT_RUN`. The current host is Linux and cannot run macOS Safari or VoiceOver. This is an executable procedure, not evidence of a screen-reader pass. The existing axe and Playwright results do not replace this manual check.
 
 Current automated engineering evidence is recorded in [P6-74-EVIDENCE.md](P6-74-EVIDENCE.md). It does not change this checklist's manual execution status.

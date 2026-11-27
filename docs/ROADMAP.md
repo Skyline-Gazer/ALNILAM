@@ -51,20 +51,25 @@ branches #224/#229 were closed in favour of linear-history replacements after
 the unattributed-changes merge policy blocked their resolution-carrying merge
 commits; no protection rule was weakened.
 
-## Release candidate reconciliation — 2026-11-27
+## Final engineering closure — 2026-11-27
 
-`dev` advanced from `c8415e81` through #234 (vendored-source ledger
-reconciliation, `d7fee39f`), #235 (Demo content review corrections,
-`6354ef3f`), #236 (regional feed base, `976d0ccd`) and #237 (ADS `v0.8.0` pin,
-`4ffef1e9`), each with exact-head Verify; the ruleset's up-to-date requirement
-serialized the integrations. The Demo alias reached `976d0ccd` once Vercel's build
-rate limit cleared, so the affected surfaces were re-verified on a published build.
-A reproducible candidate package (424 files, two
-byte-identical builds) passed artifact, SEO and notice checks at both bases,
-axe reported no violation nodes, and #194 records the audit with its deferred
-items. #204 closed on live evidence. What remains is acceptance rather than
-implementation: the consolidated review request is in #35. See
-[docs/HANDOFF.md](HANDOFF.md).
+`dev` moved from `c8415e81` through the release-candidate reconciliation (#234–#239)
+to #242 (deployment-base validation on the effective URL, regional locale slugs,
+notice wording) and #241 (thumbnail-origin lightbox with a decoded placeholder and
+geometry gating), each merged at its exact head with the required `verify` green and
+a post-merge push Verify. The Demo alias serves a build verified by provenance, and
+the affected surfaces were re-checked there: locale listings and pagination, archive
+tag membership, retirement 404s, reading controls at eight widths and the lightbox.
+
+Scope was reduced by Owner decision: accessibility audit and signoff (axe scoring,
+manual screen-reader/VoiceOver, contrast audits) is not a requirement; #240 owns the
+remaining cleanup and sits in `Todo`. Ordinary semantics, keyboard/focus behaviour
+and reduced-motion support remain part of normal quality.
+
+Closed with evidence in this tranche: #74, #145, #147, #148, #190, #194, #195, #196,
+#197, #198, #199, #200, #201, #206, #207 and #209. Remaining: #35 product acceptance,
+#42 release decision, #81 human onboarding, #240 cleanup, and the deferred backlog
+(#83, #88, #89, #136, #137, #138, #146).
 
 ## Web engineering capability pilot — #209
 

@@ -4,7 +4,7 @@
 
 Apache-2.0 licensed, static-first Astro 7 / Svelte 5 / Tailwind CSS 4 blogging platform, with a strict Core/Site ownership boundary. Released v0.2.0 uses the Shirone-derived frontend; the Editorial theme remains the v0.1.x rollback package.
 
-> **Status:** v0.2.0 is the Foundation release. GitHub `main` is release-only at that version; `dev` carries post-release development. GitHub Actions `verify` is the required check on both branches. CNB `dev` remains frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`. See [Handoff](docs/HANDOFF.md) and live Issues for current state and remaining acceptance.
+> **Status:** v0.2.0 is the Foundation release. GitHub `main` is release-only at that version; `dev` carries the unreleased `v0.3.0` work described in [CHANGELOG.md](CHANGELOG.md). GitHub Actions `verify` is the required check on both branches. CNB `dev` remains frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`. See [Handoff](docs/HANDOFF.md) and live Issues for current state and remaining acceptance.
 
 ## Quickstart
 
