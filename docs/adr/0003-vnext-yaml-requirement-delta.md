@@ -1,6 +1,6 @@
 # ADR 0003 — Owner requirement delta: YAML-only vNext Site
 
-> **Historical decision snapshot:** the 2026-10-27 pending-implementation and GitHub-primary statements below describe the original decision, not current state. The current Site contract is YAML-only schema v2; TOML-only Sites fail closed without automatic migration. See [Site onboarding](../SITE_ONBOARDING.md), [Site contract](../../scripts/site-contract.mjs), and [HANDOFF](../HANDOFF.md) for implementation and current development authority.
+> **Historical decision snapshot:** the 2026-10-27 pending-implementation and GitHub-primary statements below describe the original decision, not current state. The current Site contract is YAML-only schema v2; TOML-only Sites fail closed without automatic migration. See [Site onboarding](../SITE_ONBOARDING.md) and the [Site contract](../../scripts/site-contract.mjs) for implementation.
 
 **Status: Owner-approved requirement delta (2026-10-27); implemented in GitHub `dev` at `d56b2d4bb5d3577a9d09d3168ebce310dbedc85e`.** Refs #94, #37, #49, #50. This ADR preserves the decision snapshot; see the current Site contract and onboarding docs for implementation.
 
