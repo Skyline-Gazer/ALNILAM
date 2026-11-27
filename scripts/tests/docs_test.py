@@ -120,80 +120,6 @@ def current_unreleased_changelog(changelog):
     return section.group(1) if section is not None else ''
 
 
-def deployment_guidance_errors(readme, handoff):
-    updates = list(re.finditer(
-        r'^## Live-state update[ \t]*[—–-][ \t]*(\d{4}-\d{2}-\d{2})[^\n]*\n(.*?)(?=^## |\Z)',
-        handoff,
-        re.M | re.S,
-    ))
-    evidence = []
-    for update in updates:
-        section = re.search(
-            r'^### Vercel topology and current exposure[ \t]*\n(.*?)(?=^### |\Z)',
-            update.group(2),
-            re.M | re.S,
-        )
-        if section is not None:
-            evidence.append((update.group(1), section.group(1)))
-    if not evidence:
-        return ['HANDOFF: current Vercel evidence section is missing']
-    latest_date = max(date for date, _ in evidence)
-    current_sections = [body for date, body in evidence if date == latest_date]
-    if len(current_sections) != 1:
-        return ['HANDOFF: current Vercel evidence section is ambiguous']
-    current = current_sections[0]
-    demo = re.search(r'existing public Demo project .*? on GitHub `([^`]+)`', current, re.S | re.I)
-    production = re.search(r'Separate project `([^`]+)`.*?productionBranch=([^`\s]+)', current, re.S | re.I)
-    line = next((line for line in readme.splitlines() if line.startswith('- Vercel:')), '')
-    if demo is None or production is None or not line:
-        return ['README/HANDOFF: current Vercel branch facts are incomplete']
-    demo_doc = re.search(r'Demo project.*?GitHub `([^`]+)`', line, re.I)
-    production_doc = re.search(r'separate `([^`]+)` tracks `([^`]+)`', line, re.I)
-    sso_doc = re.search(r'separate `([^`]+)` tracks `([^`]+)` with SSO protection\b', line, re.I)
-    errors = []
-    if demo_doc is None or demo_doc.group(1) != demo.group(1):
-        errors.append('README: Demo branch disagrees with current HANDOFF evidence')
-    if production_doc is None or production_doc.groups() != production.groups():
-        errors.append('README: production project or branch disagrees with current HANDOFF evidence')
-
-    project_line = next((
-        candidate for candidate in current.splitlines()
-        if re.search(rf'Separate project `{re.escape(production.group(1))}`', candidate, re.I)
-        and re.search(rf'productionBranch={re.escape(production.group(2))}\b', candidate, re.I)
-    ), '')
-    sso_enabled = bool(re.search(
-        r'\bssoProtection=(?:all|all_except_custom_domains)\b|\b(?:sets?|enforces?|requires?) SSO for Production URLs\b',
-        project_line,
-        re.I,
-    ))
-    sso_disabled = bool(re.search(
-        r'\bssoProtection=(?:none|disabled|off)\b|\bSSO (?:is )?(?:disabled|off)\b|\bdoes not (?:set|require|use) SSO\b',
-        project_line,
-        re.I,
-    ))
-    if sso_doc is not None:
-        if sso_doc.groups() != production.groups():
-            errors.append('README: SSO claim names a different Production project or branch')
-        if not sso_enabled or sso_disabled:
-            errors.append('README: claims SSO protection without enabled SSO evidence for the named Production project')
-    elif sso_enabled:
-        errors.append('README: current SSO protection is omitted')
-    return errors
-
-
-
-
-def plan_disclaims_implementation_status(text):
-    header = text.split('\n## ', 1)[0]
-    disclaimers = (
-        r'\bnot\s+(?:yet\s+)?implemented\b',
-        r'\b(?:requirements?|targets?)\b.{0,120}\bdo not by themselves establish current implementation\b',
-        r'\b(?:requirements?|targets?)\b.{0,120}\bnot features? already shipped\b',
-    )
-    return any(re.search(pattern, header, re.I) for pattern in disclaimers)
-
-
-
 def duplicate_adr_ids(root):
     seen = set()
     duplicates = set()
@@ -303,10 +229,9 @@ class DocsTests(unittest.TestCase):
             self.assertEqual(after.returncode, 0, after.stderr)
             self.assertEqual(subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(), before_tag)
 
-    def test_current_authority_deployment_release_and_plan_claims_are_checked(self):
+    def test_current_authority_release_and_cnb_claims_are_checked(self):
         readme = (ROOT / 'README.md').read_text()
         changelog = (ROOT / 'CHANGELOG.md').read_text()
-        handoff = (ROOT / 'docs' / 'HANDOFF.md').read_text()
         current_changelog = current_unreleased_changelog(changelog)
         authority_docs = '\n'.join([
             readme,
@@ -319,32 +244,6 @@ class DocsTests(unittest.TestCase):
         self.assertTrue(stale_cnb_claims(
             'CNB is the required validation provider; the ADS pin records a frozen CNB development commit.'
         ))
-        self.assertEqual(deployment_guidance_errors(readme, handoff), [])
-        wrong_branches = readme.replace('Demo project remains on GitHub `dev`', 'Demo project remains on GitHub `main`').replace('tracks `main`', 'tracks `dev`')
-        self.assertTrue(deployment_guidance_errors(wrong_branches, handoff))
-        denied_sso = readme.replace('with SSO protection', 'without SSO protection')
-        self.assertTrue(deployment_guidance_errors(denied_sso, handoff))
-        disabled_sso_handoff = handoff.replace(
-            'sets SSO for Production URLs and all Previews',
-            'SSO is disabled for Production URLs',
-        )
-        self.assertTrue(deployment_guidance_errors(readme, disabled_sso_handoff))
-        unrelated_same_date = (
-            '## Live-state update — 2026-11-18 · unrelated update\n'
-            'No deployment evidence in this update.\n\n'
-            + handoff
-        )
-        self.assertEqual(deployment_guidance_errors(readme, unrelated_same_date), [])
-        newer_handoff = (
-            '## Live-state update — 2099-01-01 · Superseding receipt\n'
-            '### Vercel topology and current exposure\n'
-            '- Existing public Demo project `demo-next` remained on GitHub `preview`.\n'
-            '- Separate project `production-next` reports `productionBranch=release/2026.11` and `ssoProtection=all`.\n'
-            + handoff
-        )
-        newer_readme = '- Vercel: the existing public Demo project remains on GitHub `preview`; separate `production-next` tracks `release/2026.11` with SSO protection.'
-        self.assertEqual(deployment_guidance_errors(newer_readme, newer_handoff), [])
-        self.assertTrue(deployment_guidance_errors(newer_readme.replace('tracks `release/2026.11`', 'tracks `release`'), newer_handoff))
         self.assertEqual(release_claim_errors(readme, changelog), [])
         prepared_changelog = '## [9.9.9] - 2099-01-01\n' + re.sub(
             r'(?m)^## \[Unreleased\][^\n]*\n', '', changelog, count=1
@@ -368,10 +267,6 @@ class DocsTests(unittest.TestCase):
         self.assertTrue(published_release_errors(candidate_readme, prepared_changelog, '0.1.4'))
         self.assertTrue(published_release_errors('v9.9.9 is released', prepared_changelog, '0.1.2'))
         self.assertTrue(published_release_errors(candidate_readme, prepared_changelog, 'not-a-version'))
-        self.assertTrue(plan_disclaims_implementation_status((ROOT / 'docs' / 'next' / '00-PLAN.md').read_text()))
-        self.assertTrue(plan_disclaims_implementation_status((ROOT / 'docs' / 'next' / '01-SPEC.md').read_text()))
-        self.assertFalse(plan_disclaims_implementation_status('# Plan\n\nNot a draft; P1 is implemented.'))
-        self.assertFalse(plan_disclaims_implementation_status('# Plan\n\nThis is not a production-release authorization.'))
 
     def test_pagefind_web_runtime_license_is_retained_and_referenced(self):
         license_text = (ROOT / 'LICENSES' / 'Pagefind-Web-Runtime-MIT.txt').read_text()

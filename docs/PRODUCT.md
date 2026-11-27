@@ -32,9 +32,9 @@
 - Acceptance outstanding when v0.2.0 shipped included field p75 performance and manual macOS
   Safari/VoiceOver, reviewed onboarding by a real user from an independently
   owned Site, and Owner product/visual sign-off. Lab browser and Lighthouse
-  evidence plus the public Test-Site regression are recorded in the
-  [Handoff](HANDOFF.md).
-  The Owner deferred real-user onboarding review to post-release stabilization. The public Test-Site exercise supplies regression evidence. See the [#81 decision](https://github.com/Skyline-Gazer/ALNILAM/issues/81#issuecomment-7031165221).
+  evidence plus the public Test-Site regression are recorded in the release
+  Issues and CI runs.
+  The Owner deferred real-user onboarding review to post-release stabilization. The public Test-Site exercise supplies regression evidence. See the [#81 decision](https://github.com/Skyline-Gazer/ALNILAM/issues/81#issuecomment-7031165221). Standalone macOS accessibility acceptance is later rejected scope (see [#240](https://github.com/Skyline-Gazer/ALNILAM/issues/240)).
 
 ## Post-v0.2.0 product scope
 
@@ -56,15 +56,12 @@
 
 ## Delivered and proposed scope
 The v0.1.3 line included archives, tags, Pagefind, RSS/sitemap, translation
-metadata, pagination, optional giscus and static Bangumi. Its category routes,
-complete locale-scoped navigation and nested-base canonical defects are recorded
-in the [P0 report](p0/P0-ACCEPTANCE.md); Foundation v0.2.0 supersedes that
-contract.
+metadata, pagination, optional giscus and static Bangumi; its nested-base and
+locale-routing defects were corrected by the Foundation v0.2.0 contract.
 
-The [historical release roadmap](ROADMAP.md) is distinct from the frozen
-[Next Plan/Spec](next/01-SPEC.md). G0-F authorized P1 development; Foundation
-v0.2.0 is the resulting released line. Post-release features and the next
-roadmap remain separate decisions tracked in [#136](https://github.com/Skyline-Gazer/ALNILAM/issues/136).
+The [roadmap](ROADMAP.md) tracks current direction; post-release features and
+the next roadmap remain separate decisions tracked in
+[#136](https://github.com/Skyline-Gazer/ALNILAM/issues/136).
 
 ## Non-goals for bootstrap
 User authentication, admin dashboard, hosted content DB, CMS server, commercial plugin marketplace, external media hotlinking, automatic production deployment.

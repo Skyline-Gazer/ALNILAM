@@ -15,9 +15,9 @@ Closes #
 - [ ] External Site build
 - [ ] UI/Accessibility checks (if applicable)
 
-## ADS v0.3 and Git workflow
+## Git workflow
 - [ ] Target is `dev` (unless this is the authorized release PR).
-- [ ] Local AGENTS.md and pinned .ads rules reviewed.
+- [ ] AGENTS.md project boundaries respected.
 - [ ] No deployment or production-side effect without authorization.
 - [ ] Unverified conditions stated.
 

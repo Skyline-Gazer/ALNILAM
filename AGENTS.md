@@ -1,107 +1,74 @@
 # ALNILAM — Agent Entry Point
 
-## ADS (lite default)
+## Project
 
-Source: https://github.com/Skyline-Gazer/ADS
-Local rules: `.ads/` Git submodule pinned to ADS v0.8.0 commit
-`178212c41cce8fbf9354d4066e0f77341f6f23c4`.
-Read at this pin: `.ads/STANDARD.md`, `.ads/SAFETY.md`, `.ads/QUALITY.md`,
-`.ads/docs/lite-adoption.md`, `.ads/docs/cnb-review.md`, `.ads/docs/how-to-update.md`.
-Optional ADS profiles (CodeGraph/RTK toolchain, strict Git governance, strict lifecycle)
-are **not** enabled; do not copy their scripts, hooks or workflows into this repository.
-Advance the gitlink only in a dedicated, reviewable PR; never track a moving branch.
-If `.ads` is inaccessible, report the blocker; do not invent policy text.
+ALNILAM is an Apache-2.0 open-source static-first personal blogging platform.
+**Core owns the program; Site owns content, configuration and assets.** The
+Site is an immutable build input — no production operation may write into it.
 
-## Project facts
+## Stack and layout
 
-- ALNILAM is an Apache-2.0 open-source static blogging platform.
-- **Core owns the program; Site owns content, configuration and assets.** The Site is an
-  immutable build input — no production operation may write into it.
-- Monorepo: `apps/web` (Astro 7 + Svelte 5 + Tailwind CSS 4), `packages/core` (Site
-  config contract), `packages/ui` (Svelte islands), `themes/editorial` (released),
-  `themes/shirone` (P1), `sites/demo` (fixture only, not a user's Site).
-- Site contract: `alnilam.config.yaml` (`schemaVersion: 2`), `content/posts/`, optional
-  `assets/` and `data/`. A TOML-only Site fails closed; there is no v1 fallback or
-  automatic migration.
-- Development authority: GitHub `https://github.com/Skyline-Gazer/ALNILAM`. GitHub
-  `dev` is the feature-development branch; CNB `dev` is frozen at
-  `9916a0c4984f8e9d762f59247cf923f0fd7f0071`. `main` is release-only.
-- GitHub Issues and Project #17 remain task-tracking authority. Read live Project
-  state and Owner decisions before selecting work; use GitHub PR history and
-  Actions evidence, then update `docs/HANDOFF.md` and `docs/ROADMAP.md`.
-- Build and test:
+- `apps/web` — Astro 7 + Svelte 5 + Tailwind CSS 4 assembly and routes.
+- `packages/core` — Site config contract; `packages/ui` — Svelte islands.
+- `themes/shirone` — the released frontend foundation (vendored upstream plus
+  `adapter/` glue; do not opportunistically refactor vendored files).
+  `themes/editorial` — released v0.1.x rollback package.
+- `sites/demo` — bundled Demo fixture only, never a user's Site.
+- Site contract: `alnilam.config.yaml` (`schemaVersion: 2`), `content/posts/`,
+  optional `assets/` and `data/`. YAML-only: a TOML-only Site fails closed and
+  there is no v1 fallback or automatic migration.
+- Product obligations: Fuwari-style one-post-per-row reading flow, responsive
+  layouts, dark/light themes, categories/tags/archives/series, Pagefind search,
+  multilingual content with locale isolation, article images with PhotoSwipe,
+  optional Bangumi and Comments, CLS/perceived-performance budgets, Release
+  Artifact Hygiene. Gallery, Moments and site-wide Music are retired; do not
+  restore them.
+
+## Commands
 
 ```bash
 corepack enable
 pnpm install --frozen-lockfile
-pnpm test
-pnpm check
-pnpm build
-node scripts/compose.mjs --site /absolute/path/to/site --out /absolute/path/to/output
+pnpm test        # node contract tests
+pnpm check       # Astro type and content checks
+pnpm build       # compose demo + artifact + SEO checks
 python3 -m unittest discover -s scripts/tests -p '*_test.py'
+node scripts/compose.mjs --site /absolute/path/to/site --out /absolute/path/to/output
 ```
 
-Run affected checks locally in the DevBox before pushing. Use the existing
-`pnpm test`, `pnpm check`, build and browser commands as appropriate. For browser
-work, `pnpm browser:local`, `pnpm cls:local` and `pnpm lighthouse:local` prepare
-root and subpath outputs using the same Playwright, CLS and Lighthouse settings
-as CI. After the first build, `pnpm browser <spec>` reuses those outputs; rebuild
-after product changes. Run `pnpm audit:local` for a full audit only when relevant.
-GitHub Actions `verify` is the required PR check. Vercel's existing Git integration
-builds the `dev` branch. CNB is a frozen source snapshot, not a current validation
-or development provider. See README for setup and evidence locations.
+`pnpm browser:local`, `pnpm cls:local` and `pnpm lighthouse:local` reuse the
+same Playwright/CLS/Lighthouse settings as CI against root and subpath outputs;
+rebuild after product changes.
 
-For UI audits, browser regressions and navigation diagnostics, use the optional
-[Web Evidence Skill](.agents/skills/alnilam-web-evidence/SKILL.md).
+## Contracts that must not regress
 
-- Production deployment, release tags, changes to `main`, and branch-protection
-  changes require explicit Owner authorization. Do not write new development work
-  to frozen CNB `dev` or start a recurring CNB mirror.
-- Secrets never belong in the repository, logs, URLs or Site config. Public CI must not
-  check out the private ADS repository.
+- Composition emits `alnilam-provenance.json` binding the Core revision, the
+  Site ref and the Site input digest; repeated builds are byte-identical with
+  `SOURCE_DATE_EPOCH` pinned.
+- A Core upgrade or rollback rebuilds an unchanged Site:
+  `node scripts/upgrade-check.mjs --old <core-sha>`.
+- Secrets never enter the repository, logs, URLs or Site config.
+- Three-language Usage Guide articles accompany each implemented feature.
 
-## Working agreement
+## Development workflow
 
-Implement the minimum sufficient change for the current goal. Verify with the project's
-existing tests and CI. Reuse installed runtimes and declared scripts before adding
-tooling. No extra task database, session journal or per-phase approval ritual. Preserve
-Core/Site independence, Site immutability, YAML-only v2, provenance/rollback and
-Apache-2.0/third-party notices. End each task with the exact SHA, CI run, PR, verified
-behavior and unresolved blockers.
+- Authority: GitHub `https://github.com/Skyline-Gazer/ALNILAM`. `dev` is the
+  feature-development branch; `main` is release-only. CNB is a frozen source
+  snapshot — do not push development work there or mirror it back.
+- Ordinary development is Issue-linked PRs to `dev`. The required check is
+  GitHub Actions `verify` (CI workflow, scope-aware: documentation-only
+  changes run the documentation tests, everything else runs the full
+  functional suite). Address material findings; independent approval is not
+  mandatory. CodeRabbit is advisory — reply in its threads with disposition
+  and evidence. Keep Auto-merge disabled; no force pushes.
+- GitHub Issues and Project #17 are the only task-tracking state. Do not
+  maintain a duplicate task database in Markdown.
+- Development methodology is the installed Ponytail skill set: smallest
+  complete change, reuse before new code, deletion before addition, no new
+  frameworks or governance layers.
 
-The ADS Learning Loop Pilot applies only to real triggers; follow the five-field process in [docs/MAINTAINERS.md](docs/MAINTAINERS.md#learning-loop-pilot). Historical candidates do not count as observations.
+## Owner authorization boundaries
 
-## GitHub development workflow — Owner decision 2026-11-13
-
-- Use Issue-linked pull requests to GitHub `dev`. The active ruleset requires a
-  pull request and the GitHub Actions `verify` check; it permits no force pushes
-  or bypass actors. Keep Auto-merge disabled.
-- Functional CI and Greptile feedback find defects; independent approval is not
-  mandatory on every ordinary development PR. Address material findings and
-  report failed, missing or stale results honestly.
-- CodeRabbit automatically reviews PRs to `dev`; the repository's default
-  `main` branch is also always included by CodeRabbit. CodeRabbit is advisory;
-  GitHub Actions `verify` remains the required check.
-- For every actionable CodeRabbit finding, verify the current diff and reply in
-  its original thread with the disposition and exact verification evidence.
-  Resolve the thread only when the disposition is supported; keep material
-  disagreements open.
-- Existing required checks remain effective. Serialize writes, reread live refs
-  before integration, preserve both histories, and verify the resulting GitHub
-  `dev` commit and tree. Do not force-push.
-- CNB `dev` is frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; do not push
-  development changes there or mirror it back into GitHub.
-- Keep the exact ADS pin recorded above. This project does not opt into ADS strict
-  governance profiles.
-- `main` remains release-only. Main promotion, production releases, tags and
-  protection changes require separate Owner authorization.
-
-## Handoff
-
-Read `docs/HANDOFF.md` before changing development authority or starting a slice. Never
-infer implemented features from roadmap entries. Record exact commit SHA, CI run URL and
-results, PR, verified functionality and unresolved blockers.
-
-## Owner override — 2026-11-01
-
-Ordinary development uses proportionate functional checks and CodeBuddy feedback under the current development workflow above. SCA, SBOM, license scanning, security evidence and isolation checks are opt-in and do not gate normal development. Preserve credential protection and production authorization boundaries. This override applies immediately under ADS #109, including while consuming older ADS releases.
+Production deployment, `main` promotion, release tags, repository ruleset or
+protection changes, and credential scope changes require explicit Owner
+authorization. Do not start recurring CNB mirroring or modify ADS upstream.

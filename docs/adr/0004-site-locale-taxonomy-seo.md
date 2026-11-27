@@ -8,7 +8,7 @@ ALNILAM must support root and `/ALNILAM/` hosting, genuine partial translations,
 
 ## Decision
 
-1. Keep [04-ROUTING-SEO-LLMS-V2](../next/04-ROUTING-SEO-LLMS-V2.md) as the sole normative source for ROUTE, TAX, SEARCH, SEO, and LLM requirements. [ADR 0002](0002-native-mpa-and-pagefind-lifecycle.md) records the narrower native-MPA and Pagefind lifecycle decision; [05-UPSTREAM-ASTRO-AUDIT](../next/05-UPSTREAM-ASTRO-AUDIT.md) records official API comparisons.
+1. Keep [Site onboarding](../SITE_ONBOARDING.md) as the sole normative source for ROUTE, TAX, SEARCH, SEO, and LLM contracts. [ADR 0002](0002-native-mpa-and-pagefind-lifecycle.md) records the narrower native-MPA and Pagefind lifecycle decision.
 2. Prefer Astro's native route, locale, and pagination APIs. Any ALNILAM-specific resolver stays limited to Site content identity and published-route mapping.
 3. Preserve existing URLs and root/subpath behavior. Emit locale alternates and taxonomy pages only for real published content. A permalink or schema migration needs a versioned Site plan and Owner review.
 4. Treat each linked task's tests and CI evidence as the implementation status; this ADR and its normative annex are not a feature-completion receipt.
@@ -19,4 +19,4 @@ Routing, taxonomy, and SEO requirements have one normative home while their arch
 
 ## References
 
-Issues #49–#65, #73, and #79; [G0-F decision](../next/08-G0-F-DECISION.md); [traceability](../next/03-TRACEABILITY.md).
+Issues #49–#65, #73, and #79.
