@@ -127,3 +127,7 @@ node scripts/upgrade-check.mjs --old <sha>    # two-version acceptance
 node scripts/artifact-check.mjs dist/site     # standalone budget re-check
 ```
 
+Documentation-only pull requests (only `README.md`, `docs/**`, `CHANGELOG.md` or
+`themes/*/docs/**` changed) run the Python documentation tests and skip the browser
+matrix; any product change keeps the full matrix, which now runs in parallel with the
+contract suite instead of after it (#249).
