@@ -87,6 +87,13 @@ The check runs on PRs to `dev` and `main` and on pushes to those branches.
 Documentation and contributor forms use the docs tests with the Core YAML parser
 installed. Product changes and unknown scope run the full checks below.
 
+Measured on GitHub-hosted runners after the split (PR #251, run 45980999180): a
+product-scope PR takes about 12 minutes of wall clock instead of about 20, because
+the roughly 10-minute `checks` job and the roughly 7-minute `browser` job overlap;
+total runner time rises only by the duplicated install and composes. When changing
+this workflow, keep `verify` the single aggregate and do not reintroduce a
+dependency between the two acceptance branches unless an output is shared.
+
 1. `pnpm install --frozen-lockfile` (Node 24, pnpm 10.19) — `checks` and `browser`.
 2. Contract tests (`pnpm test`): config normalization, schema fail-closed, Site digest stability, output-overlap rejection, symlink rejection, provenance binding, hashTree addressing, upgrade-check argument handling. — `checks`.
 3. Python contract, artifact and release tests (`scripts/tests/*_test.py`), including the offline release DAG. — `checks`.
