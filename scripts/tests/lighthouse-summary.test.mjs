@@ -18,7 +18,7 @@ test("Lighthouse summary reports per-URL medians and keeps lab data separate", (
     fs.writeFileSync(jsonPath, JSON.stringify({
       categories: {
         performance: { score: 0.8 + index / 100 },
-        accessibility: { score: value.a11y, auditRefs: [{ id: "contrast" }] },
+        accessibility: { score: value.a11y },
       },
       audits: {
         "cumulative-layout-shift": { numericValue: value.cls },
@@ -31,7 +31,6 @@ test("Lighthouse summary reports per-URL medians and keeps lab data separate", (
           { resourceType: "image", transferSize: value.image, requestCount: 1 },
           { resourceType: "font", transferSize: value.font, requestCount: 1 },
         ] } },
-        contrast: { title: "Background and foreground colors do not have a sufficient contrast ratio.", score: index === 1 ? 0 : 1 },
       },
     }));
     return { url: "http://127.0.0.1:4323/", jsonPath };
@@ -57,10 +56,6 @@ test("Lighthouse summary reports per-URL medians and keeps lab data separate", (
     imageTransferBytes: 800,
     fontTransferBytes: 600,
   });
-  assert.deepEqual(summary.pages[0].accessibilityFindings, [{
-    id: "contrast",
-    title: "Background and foreground colors do not have a sufficient contrast ratio.",
-  }]);
 });
 
 test("missing resource summaries stay unknown while empty summaries measure zero", (t) => {

@@ -9,7 +9,7 @@ import { expect, test } from "@playwright/test";
  *   archive, categories,
  *   tags                  → tag widget only (no redundant Home/Archive chip strip)
  *   series, module pages
- *   (albums/moments/bangumi), static Site pages,
+ *   (bangumi), static Site pages,
  *   search, 404           → neither control
  *   Profile widget        → every page (site identity)
  *

@@ -64,11 +64,6 @@ export function summarizeLighthouseReports(directory, metadata = {}) {
       url,
       runs: reports.length,
       median: Object.fromEntries(metricNames.map((name) => [name, median(runs.map((run) => run[name]))])),
-      accessibilityFindings: [...new Map(reports.flatMap((report) =>
-        (report.categories?.accessibility?.auditRefs ?? [])
-          .filter((ref) => report.audits?.[ref.id]?.score !== null && report.audits?.[ref.id]?.score < 1)
-          .map((ref) => [ref.id, { id: ref.id, title: report.audits[ref.id]?.title ?? ref.id }]),
-      )).values()].sort((a, b) => a.id.localeCompare(b.id)),
     };
   });
   return {

@@ -69,8 +69,7 @@ package retains its own license. Vendored Shirone source is described above.
 | khroma | MIT (see [LICENSES/Khroma-MIT.txt](LICENSES/Khroma-MIT.txt); package.json omits license) | Mermaid transitive color utility, version 2.1.0 |
 | yaml | MIT | Site config parsing |
 | typescript | Apache-2.0 | type checking |
-| @axe-core/playwright | MPL-2.0 | Playwright axe WCAG runner (dev/test only) |
-| axe-core (transitive via @axe-core/playwright) | MPL-2.0 | accessibility engine used by a11y.spec.ts |
+| axe-core (transitive via Lighthouse) | MPL-2.0 | Lighthouse audit engine, dev/test only; not a product accessibility gate |
 
 The [Demo client dependency notices](LICENSES/Demo-Client-Dependencies.txt)
 preserve original texts for components identified in emitted browser bundles and

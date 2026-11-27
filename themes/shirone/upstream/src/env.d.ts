@@ -9,7 +9,7 @@ declare module "virtual:alnilam-privacy" {
 			adsense: {
 				enabled: boolean;
 				clientId: string;
-				recovery: { mode: "off" | "google" | "custom"; dismissDays: number };
+				recovery: { mode: "off" | "google" | "custom"; googleTag: string; dismissDays: number };
 			};
 		};
 	}

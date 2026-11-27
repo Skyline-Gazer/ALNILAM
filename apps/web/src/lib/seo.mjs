@@ -9,11 +9,6 @@
 
 const SCHEMA = "https://schema.org";
 
-/** Open Graph locale identifiers use underscores ("en_US"), not BCP-47 hyphens. */
-export function ogLocale(locale) {
-  return locale.replace(/-/g, "_");
-}
-
 function compact(value) {
   return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined && v !== null && v !== ""));
 }
@@ -25,32 +20,6 @@ export function websiteJsonLd({ name, description, url, inLanguage }) {
     name,
     description,
     url,
-    inLanguage,
-  });
-}
-
-export function blogPostingJsonLd({
-  headline,
-  description,
-  url,
-  image,
-  datePublished,
-  dateModified,
-  inLanguage,
-  keywords,
-}) {
-  return compact({
-    "@context": SCHEMA,
-    "@type": "BlogPosting",
-    headline,
-    description,
-    keywords: Array.isArray(keywords) && keywords.length > 0 ? keywords : undefined,
-    url,
-    mainEntityOfPage: { "@type": "WebPage", "@id": url },
-    image,
-    datePublished,
-    // Only a real Site-provided update date becomes dateModified.
-    dateModified,
     inLanguage,
   });
 }

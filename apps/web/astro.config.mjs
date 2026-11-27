@@ -238,7 +238,7 @@ export default defineConfig({
               adsense: {
                 enabled: config.ads.adsense.enabled,
                 clientId: config.ads.adsense.clientId,
-                recovery: { mode: config.ads.adsense.recovery.mode, dismissDays: config.ads.adsense.recovery.dismissDays },
+                recovery: { mode: config.ads.adsense.recovery.mode, googleTag: config.ads.adsense.recovery.googleTag, dismissDays: config.ads.adsense.recovery.dismissDays },
               },
             },
           };

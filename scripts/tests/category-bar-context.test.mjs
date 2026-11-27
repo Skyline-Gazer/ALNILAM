@@ -36,7 +36,7 @@ function pageKind(relative) {
   if (first === "archives") return "archive";
   if (first === "categories" || first === "tags") return first;
   if (first === "series") return "series";
-  if (first === "albums" || first === "moments" || first === "bangumi") return "module";
+  if (first === "bangumi") return "module";
   if (first === "search") return "search";
   return "other";
 }
