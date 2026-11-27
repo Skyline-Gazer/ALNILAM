@@ -738,7 +738,7 @@
     },
     {
       "path": "src/plugins/remark-directive-rehype.js",
-      "sha256": "828c94c81565c408a8e10c4e24b2db78aaf9517f79b3523d5ecdf23a8195bf4c"
+      "sha256": "a86569ddc719628fb79aa9ae68931ad8c7eb379a7ff1ea2578f718ce950f13aa"
     },
     {
       "path": "src/plugins/rehype-responsive-tables.mjs",
@@ -1994,6 +1994,7 @@
     }
   ],
   "modified": {
+    "src/plugins/remark-directive-rehype.js": "Adapt Shirone 961f522e545c65c7b19faa38c836c9ba0714d14a to restore bare inline directives as prose in the existing tree traversal.",
     "src/components/molecules/FloatingTOCPanel.astro": "Keep the closed panel inert and make it available for focus in the opening task while the opacity and transform animate.",
     "src/components/system/AdBlockRecovery.astro": "ALNILAM addition for the optional ad-block recovery prompt (#93).",
     "src/components/system/AdsRuntime.astro": "ALNILAM addition for consent-gated AdSense loading (#90).",

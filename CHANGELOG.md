@@ -6,6 +6,10 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 
 ## [Unreleased]
 
+### Added
+
+- Independent Site starter with a pinned released Core and one checked static build for Cloudflare Pages and Workers Static Assets, Vercel, Netlify and GitHub Pages. Update or roll back the Core pin independently of Site content.
+
 ### Changed
 
 - Listings are now scoped to one locale's corpus ([#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35)): the default-locale home, `/posts/`, `/archives/`, `/categories/`, `/tags/` and the taxonomy detail routes list only default-locale articles instead of the whole multilingual corpus, matching the per-locale RSS feeds and the language-sliced Pagefind index that were already locale-scoped. Page counts, pagination boundaries and taxonomy routes are per locale, and a locale without members in a category or tag no longer gets a route. Site pages, article URLs and `hreflang` alternates are unchanged; series pages stay corpus-wide until their own localization change.
@@ -26,6 +30,8 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 
 ### Fixed
 
+
+- Preserve bare colons in Markdown prose such as `a:b`. Inline directives with content or attributes still render. Adapted from [Shirone's Markdown fix](https://github.com/LyraVoid/Shirone/commit/961f522e545c65c7b19faa38c836c9ba0714d14a).
 - Preserve configured locale casing in RSS self links and keep the deployment base on feed and article links, including when the base matches a locale ([#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81)).
 - Reject a `site.url` whose deployment base ends in an enabled locale instead of publishing duplicated `/en/en/...` addresses, with an actionable build error ([#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81)).
 - Keep regional-locale article slugs short: a lower-cased content id such as `de-de/regional-note` no longer repeats the locale directory in the published URL, so `/de-DE/posts/regional-note/` matches the documented shape. A Site that published the duplicated form needs a redirect from `/<locale>/posts/<lowercased-locale>/<slug>/` ([#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81)).

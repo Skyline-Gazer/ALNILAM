@@ -1,0 +1,22 @@
+name: Bug report
+description: Report unexpected ALNILAM behavior
+title: "[Bug] "
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Actual and expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include a minimal example. Remove secrets and personal information from logs and screenshots.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include the Core version or commit, and relevant browser, OS, Node.js or pnpm versions.

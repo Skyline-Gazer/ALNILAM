@@ -45,17 +45,18 @@ jobs:
           fi
           product=true
           if [ -n "$base" ] && [ "$base" != "0000000000000000000000000000000000000000" ]; then
-            if ! changes="$(git diff --name-only --no-renames "$base" HEAD)"; then
-              echo "::error::Cannot resolve the base commit $base; refusing to skip product checks"
-              exit 1
+            if changes="$(git diff --name-only --no-renames "$base" HEAD)"; then
+              product=false
+            else
+              echo "::warning::Cannot resolve the base commit $base; running full verification"
+              changes=""
             fi
-            product=false
             while IFS= read -r file; do
               [ -z "$file" ] && continue
               case "$file" in
                 */*)
                   case "$file" in
-                    docs/*|LICENSES/*) ;;
+                    docs/*|LICENSES/*|.github/ISSUE_TEMPLATE/*|.github/pull_request_template.md|.agents/skills/alnilam-web-evidence/SKILL.md) ;;
                     *) product=true; break ;;
                   esac ;;
                 *.md|LICENSE|NOTICE) ;;
@@ -65,17 +66,17 @@ jobs:
           fi
           echo "product=$product" >> "$GITHUB_OUTPUT"
           echo "Change scope: product=$product"
-      - name: Set up documentation tests
-        if: steps.scope.outputs.product != 'true'
-        run: python3 -m unittest discover -s scripts/tests -p 'docs*_test.py'
       - uses: pnpm/action-setup@v4
-        if: steps.scope.outputs.product == 'true'
         with:
           version: 10.19.0
       - uses: actions/setup-node@v4
-        if: steps.scope.outputs.product == 'true'
         with:
           node-version: "24"
+      - name: Verify documentation changes
+        if: steps.scope.outputs.product != 'true'
+        run: |
+          pnpm --filter @alnilam/core install --frozen-lockfile
+          python3 -m unittest discover -s scripts/tests -p 'docs*_test.py'
       - name: Install workspace dependencies
         if: steps.scope.outputs.product == 'true'
         run: pnpm install --frozen-lockfile

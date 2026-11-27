@@ -1,8 +1,16 @@
 # Contributing to ALNILAM
 
-## Start with an Issue
+Documentation, translations, bug fixes and features are welcome. Start with the
+[README](README.md) and search [open Issues and PRs](https://github.com/Skyline-Gazer/ALNILAM)
+before opening a Bug Report or Feature Request. Include a minimal reproduction
+and relevant versions for bugs. For features, describe the use case and any
+alternatives. Remove secrets and personal information from examples or logs.
 
-Check GitHub Issues and Project #17 before starting work. Link the change to its Issue and create a task branch from current `dev` using `feat/*`, `fix/*`, or `chore/*`. Contributors without write access use a fork and open the pull request into upstream GitHub `dev`. The protected `dev` and `main` branches require pull requests. Release tags and Production actions follow the maintainer procedure and require Owner authorization.
+## Open a pull request to `dev`
+
+Start from current `dev`. If you lack write access, use a fork. Group related
+changes and link relevant Issues. Release tags and Production actions follow
+the maintainer procedure and require Owner authorization.
 
 ## Keep the Core/Site boundary
 
@@ -24,7 +32,11 @@ For browser or visual changes, use the existing local commands as applicable: `p
 
 ## Keep changes reviewable
 
-Use the [pull request template](.github/pull_request_template.md). Explain the user-visible behavior, linked requirement or Issue, checks run, screenshots or browser evidence when relevant, and unresolved limits. Update directly affected user docs, Site examples, architecture decisions, and notices in the same PR. Preserve historical docs and decisions with links rather than silently deleting them.
+Use the [pull request template](.github/pull_request_template.md). Record what
+changed and which checks ran. Add screenshots or limitations when useful. Update
+affected documentation and attribution in the same PR. GitHub Actions `verify`
+is required. CodeRabbit is advisory. Resolve material review findings or explain
+your decision in the thread.
 
 ## License, attribution, and secrets
 

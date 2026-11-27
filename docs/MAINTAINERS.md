@@ -5,8 +5,11 @@ Operational notes for ALNILAM maintainers. Public contributor guidance is in [CO
 ## Branch model
 
 - `main` — release-only. Protected by ruleset `alnilam-main` (ID 25809753): PR-only, required `verify` check (strict), no force pushes, no deletion.
-- `dev` — integration branch. Protected by ruleset `alnilam-dev` (ID 25809723): identical policy.
-- Task branches: `feat/*`, `fix/*`, `chore/*` from `dev`; Issue-linked PRs only.
+- `dev` — integration branch. Ruleset `alnilam-dev` (ID 25809723) requires a PR,
+  resolved review threads and `verify` on an up-to-date branch. It requires zero
+  approving reviews and blocks force pushes and deletion.
+- Use focused PRs that link relevant Issues. GitHub Issues and Project #17 track
+  work. No separate documentation closeout PR is required.
 
 ## Release records and authority
 
@@ -74,11 +77,10 @@ from protected Vercel staging and the Owner-authorized public promotion.
 
 ## CI acceptance inventory (workflow: CI, job: verify)
 
-The required `verify` check always runs. A change whose every path is documentation
-(`docs/**`, `LICENSES/**`, root Markdown, `LICENSE`, `NOTICE`) runs the documentation
-tests only; any other path — including `.github/**`, Site fixtures and dependencies —
-runs the full product checks below. The decision is made inside the job, so the
-required check is never left pending.
+The required `verify` check runs on PRs to `dev` and `main` and on pushes to
+those branches. Documentation and contributor forms use the docs checks with
+the Core YAML parser installed. Product changes and unknown scope run the full
+checks below.
 
 1. `pnpm install --frozen-lockfile` (Node 24, pnpm 10.19)
 2. Contract tests (`pnpm test`): config normalization, schema fail-closed, Site digest stability, output-overlap rejection, symlink rejection, provenance binding, hashTree addressing, upgrade-check argument handling.

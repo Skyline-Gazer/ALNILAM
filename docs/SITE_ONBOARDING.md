@@ -7,6 +7,55 @@ it out — you pin the Site revision yourself.
 This guide covers the current YAML v2 contract. For the published TOML v1
 contract, see the [v0.1.3 Site layout](https://github.com/Skyline-Gazer/ALNILAM/blob/v0.1.3/docs/SITE_ONBOARDING.md#site-layout-schema-v1--frozen).
 
+## Start a deployable Git Site
+
+Copy the [Site starter](../templates/site/) into a fresh repository you own.
+The outer repository holds deployment config and `core.sha`. The `site/`
+subdirectory is the read-only input described in the rest of this guide.
+
+```bash
+git clone --depth 1 --branch dev https://github.com/Skyline-Gazer/ALNILAM.git alnilam-core
+cp -R alnilam-core/templates/site my-blog
+cd my-blog
+git init -b main
+```
+
+Set the title and final public URL in `site/alnilam.config.yaml`. Add Markdown
+or MDX under `site/content/posts/`, then commit the files and run `npm run build`
+with Git, Bash and Node.js 24. The build fetches the exact public Core commit
+in `core.sha`, installs its frozen lockfile in a temporary directory, and writes
+`dist/` outside `site/`. It checks the generated artifact and SEO before the
+hosting build can succeed. Add your repository to your host and publish only
+`dist/`. The configured URL is also used for canonicals in preview builds.
+If the host provides a source snapshot without Git metadata, the build uses
+its Git commit SHA environment variable. On Vercel, leave access to system
+environment variables enabled.
+
+| Host | Settings for the Site repo |
+| --- | --- |
+| [Cloudflare Pages](https://developers.cloudflare.com/pages/get-started/git-integration/) | Connect the Git repo, choose its publish branch, set framework preset to None, build command `npm run build` and output directory `dist`. The included `.node-version` selects Node 24. |
+| [Cloudflare Workers Static Assets](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/) | Connect the Git repo through Workers Builds and choose `npm run build` and `npx wrangler deploy`. Match the Worker name in `wrangler.jsonc` to the project and set the `workers.dev` or custom URL in Site YAML. No Worker code or service bindings are needed. |
+| [Vercel](https://vercel.com/docs/git) | Import the Site repo using the Other preset. The included `vercel.json` sets the command and output, and `package.json` selects Node 24. |
+| [Netlify](https://docs.netlify.com/deploy/create-deploys/) | Import the Site repo. The included `netlify.toml` sets the command and publish directory. |
+| [GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages) | Choose GitHub Actions in Settings → Pages. Set `site.url` to the published URL including the repository path for a project site, commit, then run **Publish blog to GitHub Pages** from Actions. |
+
+Grant the host’s Git integration access to the Site repository you intend to
+build. A private source repository does not make the published output private.
+Check your plan before connecting a private or organization repository. Cloudflare
+Pages Free includes 500 builds/month and a 25 MiB per-file limit. Pages and Workers
+have separate quotas. The [Deploy to Cloudflare button](https://developers.cloudflare.com/workers/platform/deploy-buttons/)
+clones a public starter as a Workers project. [Vercel's Deploy Button](https://vercel.com/docs/deploy-button)
+and [Netlify's button](https://docs.netlify.com/deploy/create-deploys/#deploy-to-netlify-button)
+also start from a template. Import your own existing Site repo to retain its history.
+
+To upgrade, change only `core.sha` to the commit behind a compatible published
+[Core release](https://github.com/Skyline-Gazer/ALNILAM/releases). Build and check
+`dist/alnilam-provenance.json` for the new Core and the same `site.digest`. To
+roll back Core with your current content, restore the previous pin in a new
+commit and rebuild. A host's rollback redeploys the entire retained artifact,
+including its earlier content. Keep a checked artifact for a byte-identical
+rollback. Rebuilds from fresh Core directories can change generated asset hashes.
+
 ## Site layout (schema v2 — frozen)
 
 ```

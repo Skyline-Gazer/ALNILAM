@@ -1,27 +1,19 @@
-name: Implementation task
-description: Issue-driven development with acceptance evidence
-title: "[Task] "
-labels: []
+name: Feature request
+description: Suggest an improvement to ALNILAM
+title: "[Feature] "
 body:
   - type: textarea
     id: objective
     attributes:
-      label: Objective
-      description: Scope and expected user impact.
+      label: What problem would this solve?
+      description: Describe the use case and who would benefit.
     validations:
       required: true
   - type: textarea
     id: acceptance
     attributes:
-      label: Acceptance criteria
-      description: Testable results, including Core/Site compatibility where applicable.
+      label: Proposed behavior and alternatives
+      description: Describe the expected result and alternatives you considered. Omit secrets and private data.
     validations:
       required: true
-  - type: textarea
-    id: verification
-    attributes:
-      label: Verification
-      description: Actions checks, preview/e2e evidence, manual verification boundaries.
-    validations:
-      required: false
 
