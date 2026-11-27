@@ -238,7 +238,7 @@
     },
     {
       "path": "src/utils/fancybox-handler.ts",
-      "sha256": "0631e0cbf476df07f1020aab996ac28740ae24a04b965f0f7463cc9142ead6b4"
+      "sha256": "3eb786ee0860b9633748bd5280138977e7218b45ee335af402564eaad017106d"
     },
     {
       "path": "src/utils/post-decryption.ts",
@@ -254,7 +254,7 @@
     },
     {
       "path": "src/utils/url-utils.ts",
-      "sha256": "e675e535ef27fd85ca3a438c19ecc41cb4f7ad0adcf036686f4ae223ef992c20"
+      "sha256": "70b7297a85312b5eb865c0e3286a0bea110767a9d2414f39b1e47cee5f5cf904"
     },
     {
       "path": "src/utils/theme-utils.ts",
@@ -2012,7 +2012,7 @@
     "src/env.d.ts": "Declare the adapter-provided Expressive Code runtime virtual module used by Layout and Markdown.",
     "src/components/organisms/PostCard.astro": "Retain 640x360 layout dimensions for pass-through Site covers, with metadata dimensions overriding when available; Category and tag links use the article's own locale when configured, or render as plain text for unconfigured locales (#35).",
     "src/components/organisms/BannerStage.astro": "Give banner placeholders intrinsic layout dimensions; disabled banner still has no Site asset request.",
-    "src/utils/url-utils.ts": "Preserve existing ALNILAM language-prefixed post URLs, /categories/<category>/, /tags/<tag>/ and plural /archives/ paths; getTagUrl/getCategoryUrl take the article or page locale and emit the locale-prefixed taxonomy route (#35 locale content policy), so a tag or category link on an English page resolves in English instead of the default-locale route; localePrefix is exported so the category bar scopes its Home/Archive links with the same rule.",
+    "src/utils/url-utils.ts": "Preserve existing ALNILAM language-prefixed post URLs, /categories/<category>/, /tags/<tag>/ and plural /archives/ paths; getTagUrl/getCategoryUrl take the article or page locale and emit the locale-prefixed taxonomy route (#35 locale content policy), so a tag or category link on an English page resolves in English instead of the default-locale route; localePrefix is exported so the category bar scopes its Home/Archive links with the same rule; the trailing locale directory in a content id is stripped case-insensitively because Astro lowercases regional ids such as de-DE to de-de (#81).",
     "src/pages/posts/[...slug].astro": "Semantic article h1; forward Core hreflang/published metadata and optional existing lazy Comments slot; emit Markdown feature stylesheets as Swup-optional links; omit upstream CommentSection mount so disabled Sites emit no Twikoo/Waline/Giscus provider chunks (Core comments remain slot-only); pass the article's own locale to PostMeta so its taxonomy chips resolve in that locale (#35). Render the localized in-flow back-to-top action below lg / 1024 px (#194).",
     "src/pages/archive.astro": "Pass the archive heading to the native ArchivePanel card; serialize only fields used by the timeline to reduce archive HTML size.",
     "src/components/molecules/ImageWrapper.astro": "Preserve explicit 640x360 layout dimensions for public/remote Site covers.",

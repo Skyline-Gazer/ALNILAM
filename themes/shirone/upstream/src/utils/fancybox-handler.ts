@@ -21,7 +21,9 @@ import skinCss from "../styles/fancybox-custom.css?url";
 
 const LIGHTBOX_DEFAULTS = {
 	bgOpacity: 0.88,
-	showHideAnimationType: "fade" as const,
+	// Zoom from the trigger's own bounds; PhotoSwipe falls back to a fade when no
+	// bounds exist, and disables both animations under prefers-reduced-motion.
+	showHideAnimationType: "zoom" as const,
 	padding: { top: 20, bottom: 40, left: 20, right: 20 },
 };
 type GalleryItem = {
@@ -229,9 +231,14 @@ function resolveSlideFromTrigger(el: HTMLElement): ResolvedSlide | null {
 
 	const dims = img ? dimensionsFromImg(img, src) : null;
 	const caption = captionFromElement(el, img);
+	// The rendered thumbnail is already decoded; PhotoSwipe uses msrc as the
+	// placeholder so the zoom starts from a real image instead of a blank box.
+	const thumbnail =
+		img && display && isSafeImageUrl(display) ? canonicalizeSrc(display) : null;
 
 	return {
 		src,
+		...(thumbnail ? { msrc: thumbnail } : {}),
 		...(dims ? { width: dims.width, height: dims.height } : {}),
 		...(img?.alt ? { alt: img.alt } : {}),
 		...(caption ? { caption } : {}),
@@ -595,6 +602,13 @@ export class FancyboxHandler {
 			pswpModule: this.pswpCtor,
 		});
 		this.lightbox = lightbox;
+		// PhotoSwipe only uses data.msrc for the first slide by default; article
+		// images open as a group, so any slide with a known thumbnail keeps it as
+		// the placeholder while its original loads.
+		lightbox.addFilter("placeholderSrc", (placeholderSrc, content) => {
+			const msrc = (content.data as SlideExtras | null | undefined)?.msrc;
+			return typeof msrc === "string" && msrc ? msrc : placeholderSrc;
+		});
 
 		lightbox.on("uiRegister", () => {
 			const pswp = lightbox.pswp;
