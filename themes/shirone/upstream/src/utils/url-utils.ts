@@ -85,7 +85,14 @@ export function getPostUrl(
 	const lang = post.data && "lang" in post.data && typeof post.data.lang === "string" ? post.data.lang : undefined;
 	const locale = siteConfig.lang.replace("_", "-");
 	const contentLocale = lang || locale;
-	const slug = postId.startsWith(`${contentLocale}/`) ? postId.slice(contentLocale.length + 1) : postId;
+	// Astro lowercases content ids, so a regional locale ("de-DE") arrives as
+	// "de-de/..."; compare case-insensitively to keep the documented short slug.
+	const langPrefix = `${contentLocale}/`;
+	const langHead = postId.slice(0, langPrefix.length);
+	const slug =
+		langHead.toLowerCase() === langPrefix.toLowerCase()
+			? postId.slice(langPrefix.length)
+			: postId;
 	return lang && lang !== locale ? url(`/${lang}/posts/${slug}/`) : getPostUrlBySlug(slug);
 }
 

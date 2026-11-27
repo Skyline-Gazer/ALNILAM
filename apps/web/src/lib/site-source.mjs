@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync } from "node:fs";
-import { normalizeSiteConfig, parseSiteConfigDocument, RETIRED_SITE_FEATURES, SITE_CONFIG_FILENAME } from "@alnilam/core";
+import { assertDeploymentBaseNotLocale, normalizeSiteConfig, parseSiteConfigDocument, RETIRED_SITE_FEATURES, SITE_CONFIG_FILENAME } from "@alnilam/core";
 
 // A composed build loads the Site contract in several processes. The first loader records the
 // keys it warned about in this variable and child builds inherit it, so one build logs one notice.
@@ -46,5 +46,8 @@ export function loadSite() {
     }
     config = { ...config, site: { ...config.site, url: u.toString() } };
   }
+  // The effective URL (stored or overridden) must not shadow a locale; checking
+  // it after the override keeps a valid override able to replace a bad stored URL.
+  assertDeploymentBaseNotLocale(config.site.url, config.locales);
   return { root, config };
 }

@@ -78,6 +78,8 @@ export interface SiteConfig {
 /** Site config keys kept for compatibility but no longer enabling any feature. */
 export declare const RETIRED_SITE_FEATURES: readonly ("gallery" | "moments")[];
 export declare function normalizeSiteConfig(input: unknown): Readonly<SiteConfig>;
+/** Rejects a deployment base whose final path segment equals an enabled locale. */
+export declare function assertDeploymentBaseNotLocale(siteUrl: string, locales: readonly string[]): void;
 export declare const SITE_CONFIG_FILENAME: "alnilam.config.yaml";
 /** Parses a Site YAML document; throws unless the root document is a YAML mapping. */
 export declare function parseSiteConfigDocument(
