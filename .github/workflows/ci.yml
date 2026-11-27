@@ -57,7 +57,7 @@ jobs:
                 *.md|LICENSE|NOTICE) ;;
                 *) product=true; break ;;
               esac
-            done <<< "$(git diff --name-only "$base" HEAD)"
+            done <<< "$(git diff --name-only --no-renames "$base" HEAD)"
           fi
           echo "product=$product" >> "$GITHUB_OUTPUT"
           echo "Change scope: product=$product"
