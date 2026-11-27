@@ -371,6 +371,12 @@ ALNILAM_SITE_URL=https://example.com/ALNILAM/ \
   node scripts/compose.mjs --site /absolute/path/to/yoursite --out /absolute/path/to/out-nested
 ```
 
+The deployment base must not end in an enabled locale code. A Site served at
+`https://example.com/en/` while `en` is one of its locales would publish English
+pages under `/en/en/...`, so the build stops with
+`site.url path ... collides with the enabled locale "en"`. Use a base such as
+`/blog/` or `/ALNILAM/`, or drop that locale from `locales`.
+
 The output directory must not overlap the Site directory. The build:
 
 1. Hashes the Site inputs (rejecting symlinks and non-regular files),

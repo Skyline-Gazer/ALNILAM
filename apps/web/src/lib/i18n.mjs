@@ -114,7 +114,14 @@ export function localeRoutePath(locale, defaultLocale, segment = "") {
  */
 export function postLocalSlug(post, defaultLocale) {
   const lang = postLang(post, defaultLocale);
-  return post.id.startsWith(lang + "/") ? post.id.slice(lang.length + 1) : post.id;
+  const prefix = lang + "/";
+  // Astro lowercases content ids, so a regional locale such as "zh-CN" arrives
+  // as "zh-cn/<slug>". Compare case-insensitively to keep the documented short
+  // slug instead of publishing the locale directory inside the article URL.
+  const head = post.id.slice(0, prefix.length);
+  return head.toLowerCase() === prefix.toLowerCase()
+    ? post.id.slice(prefix.length)
+    : post.id;
 }
 
 /**

@@ -259,18 +259,17 @@ test("nested-base output keeps canonical and internal links inside /ALNILAM/", (
   assert.equal(fs.existsSync(path.join(out, "site", decodeURIComponent(relativeSrc).replace(/^\/ALNILAM\//, "").replace(/^\//, ""))), true);
 });
 
-test("RSS links retain the base when it matches a secondary locale", (t) => {
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-rss-base-"));
+test("a deployment base equal to a locale is rejected with guidance", (t) => {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-base-collision-"));
   t.after(() => fs.rmSync(out, { recursive: true, force: true }));
   const result = spawnSync(process.execPath, ["scripts/compose.mjs", "--site", DEMO, "--out", out], {
     env: { ...process.env, ALNILAM_SITE_URL: "https://example.com/en/", SOURCE_DATE_EPOCH: "1700000000" },
   });
-  assert.equal(result.status, 0, "feed compose failed: " + result.stderr);
-  const primary = fs.readFileSync(path.join(out, "rss.xml"), "utf8");
-  const secondary = fs.readFileSync(path.join(out, "en", "rss.xml"), "utf8");
-  assert.match(primary, /<atom:link href="https:\/\/example\.com\/en\/rss\.xml" rel="self"/);
-  assert.match(secondary, /<atom:link href="https:\/\/example\.com\/en\/en\/rss\.xml" rel="self"/);
-  assert.match(secondary, /<link>https:\/\/example\.com\/en\/en\/posts\/hello-alnilam\/<\/link>/);
+  const stderr = result.stderr.toString();
+  assert.notEqual(result.status, 0, "a locale-matching base must fail closed");
+  assert.match(stderr, /collides with the enabled locale "en"/);
+  assert.match(stderr, /base that is not a locale/);
+  assert.equal(fs.existsSync(path.join(out, "index.html")), false, "no partial output");
 });
 
 test("compose rejects a post slug that collides with a pagination route without changing the Site", (t) => {

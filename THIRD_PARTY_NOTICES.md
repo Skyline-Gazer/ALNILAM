@@ -113,6 +113,12 @@ contains no font or external image. No remote image bytes are present in
 the artifact and no Unsplash source is referenced from generated HTML. Sites may
 still configure remote HTTPS media at their own licensing responsibility.
 
+`docs/evidence/` holds browser captures used as review evidence. Each directory
+records the source URL and capture settings; those pages belong to the projects
+they show (Astro Starlight, Mizuki, Shirone) and stay under their own licenses.
+The captures are not copied into composed Sites or release archives and carry no
+license claim over the depicted sites.
+
 ## Outstanding release evidence (#75)
 
 | Risk | Disposition and evidence |

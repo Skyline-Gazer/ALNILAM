@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync } from "node:fs";
-import { normalizeSiteConfig, parseSiteConfigDocument, RETIRED_SITE_FEATURES, SITE_CONFIG_FILENAME } from "@alnilam/core";
+import { assertDeploymentBaseNotLocale, normalizeSiteConfig, parseSiteConfigDocument, RETIRED_SITE_FEATURES, SITE_CONFIG_FILENAME } from "@alnilam/core";
 
 // A composed build loads the Site contract in several processes. The first loader records the
 // keys it warned about in this variable and child builds inherit it, so one build logs one notice.
@@ -45,6 +45,9 @@ export function loadSite() {
       throw new Error("ALNILAM_SITE_URL must be an absolute http(s) URL");
     }
     config = { ...config, site: { ...config.site, url: u.toString() } };
+    // The override is applied after normalisation; validate it here so a base
+    // that shadows a locale fails the build instead of publishing "/en/en/...".
+    assertDeploymentBaseNotLocale(config.site.url, config.locales);
   }
   return { root, config };
 }
