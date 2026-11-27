@@ -1,11 +1,23 @@
 # ALNILAM — Current Agent Handoff
 
-## Release acceptance sprint
+## Current state — authoritative
 
-- Starting GitHub `dev` and public Demo Core were `8c5c1d3a89b03c14470fafbf428cb99f4cb09b92`. Required [Verify](https://github.com/Skyline-Gazer/ALNILAM/actions/runs/45641363179) passed with 274 browser passes and one intentional skip. Production release authority remains with the Owner.
-- The four implementation pulls are [#223](https://github.com/Skyline-Gazer/ALNILAM/pull/223) for Archive headings, [#224](https://github.com/Skyline-Gazer/ALNILAM/pull/224) for public Demo fixture isolation and mobile article controls, [#225](https://github.com/Skyline-Gazer/ALNILAM/pull/225) for compiler cache identity, and [#226](https://github.com/Skyline-Gazer/ALNILAM/pull/226) for the canonical Home Feed. Their GitHub checks and merge receipts record the current integration state.
-- A pinned [Test-Site](https://github.com/Skyline-Gazer/Test-Site/tree/46b086cc2d64ea3f6d5f3db44ac68704d0f5436b) build passed artifact and SEO checks at both deployment bases with identical Site file hashes before and after. A separate upgrade exercise composed the same fixture with Foundation `v0.2.0` and the baseline Core. Real-user review remains open in [#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81).
-- Vercel denied field p75 access because the team lacks Speed Insights Plus. PageSpeed returned HTTP 429. Chromium covered the Linux browser matrix. The [manual checklist](P6-74-MANUAL-SCREEN-READER-CHECKLIST.md) covers the remaining macOS Safari and VoiceOver checks. The Owner’s product sign-off remains open in [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35).
+- Live integration, Demo provenance and remaining conditions are in the newest
+  *Live-state update* directly below. Entries further down are historical records,
+  not current status; the linked Issues and Git history hold the rest.
+- Product authority and acceptance live in [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35)
+  and the release gate is [#42](https://github.com/Skyline-Gazer/ALNILAM/issues/42). Deployment
+  topology is tracked in [#138](https://github.com/Skyline-Gazer/ALNILAM/issues/138).
+- Accessibility **audit and signoff** are not project requirements: the Owner rejected
+  axe scoring, manual screen-reader/VoiceOver acceptance and contrast audits on
+  2026-11-27, and [#240](https://github.com/Skyline-Gazer/ALNILAM/issues/240) tracks removal
+  of their remaining dependencies. Ordinary product behaviour stays expected: semantic
+  HTML and native controls, keyboard operation and focus handling, and reduced-motion
+  support remain part of normal quality. Historical a11y evidence stays as a record and
+  is not a build gate.
+- Documentation map: [Site onboarding](SITE_ONBOARDING.md), [architecture](ARCHITECTURE.md),
+  [contributing](../CONTRIBUTING.md), [maintainers](MAINTAINERS.md),
+  [roadmap](ROADMAP.md), [changelog](../CHANGELOG.md).
 
 ## Live-state update — 2026-11-27 · Release candidate reconciliation
 

@@ -910,3 +910,126 @@ for (const theme of ["dark", "light"] as Theme[]) {
 		await context.close();
 	});
 }
+type ZoomFrame = { t: number; w: number; placeholders: { src: string; w: number }[] };
+type ZoomWindow = Window & { __zoom?: { frames: ZoomFrame[]; done: boolean } };
+
+async function startZoomSampler(page: Page, durationMs = 900) {
+	await page.evaluate((duration) => {
+		const state: { frames: ZoomFrame[]; done: boolean } = { frames: [], done: false };
+		(window as ZoomWindow).__zoom = state;
+		const started = performance.now();
+		const tick = () => {
+			const active = document.querySelector<HTMLElement>(
+				'.pswp__item[aria-hidden="false"]',
+			);
+			const img =
+				active?.querySelector<HTMLImageElement>(
+					".pswp__img:not(.pswp__img--placeholder)",
+				) ??
+				document.querySelector<HTMLImageElement>(
+					".pswp__img:not(.pswp__img--placeholder)",
+				);
+			const placeholders = [
+				...document.querySelectorAll<HTMLImageElement>(".pswp__img--placeholder"),
+			]
+				.map((el) => el.currentSrc || el.getAttribute("src") || "")
+				.filter(Boolean)
+				.map((src, index) => ({
+					src: new URL(src).pathname,
+					w: Math.round(
+						document.querySelectorAll<HTMLImageElement>(".pswp__img--placeholder")[index]!
+							.getBoundingClientRect().width,
+					),
+				}));
+			state.frames.push({
+				t: Math.round(performance.now() - started),
+				w: img ? Math.round(img.getBoundingClientRect().width) : 0,
+				placeholders,
+			});
+			if (performance.now() - started < duration) requestAnimationFrame(tick);
+			else state.done = true;
+		};
+		requestAnimationFrame(tick);
+	}, durationMs);
+}
+
+async function readZoomSampler(page: Page) {
+	await page.waitForFunction(() => (window as ZoomWindow).__zoom?.done === true);
+	return page.evaluate(() => (window as ZoomWindow).__zoom!.frames);
+}
+
+for (const [name, origin] of deployments) {
+	test(`article image zooms from its own thumbnail ${name}`, async ({ browser }) => {
+		const context = await browser.newContext({
+			viewport: { width: 1440, height: 1000 },
+			reducedMotion: "no-preference",
+		});
+		const page = await context.newPage();
+		await page.goto(`${origin}${ARTICLE}`, { waitUntil: "networkidle" });
+		await waitForLightboxReady(page);
+		const image = page.locator('.custom-md img:not([src$=".svg"])').first();
+		await image.scrollIntoViewIfNeeded();
+		await expect
+			.poll(() => image.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0))
+			.toBe(true);
+		const thumbPath = await image.evaluate(
+			(el: HTMLImageElement) => new URL(el.currentSrc || el.src).pathname,
+		);
+
+		await startZoomSampler(page);
+		await image.click();
+		const container = page.locator(".pswp");
+		await expect(container).toBeVisible({ timeout: 10_000 });
+		const frames = await readZoomSampler(page);
+		const placeholders = frames.flatMap((frame) => frame.placeholders);
+		const thumbFrames = placeholders.filter((entry) => entry.src === thumbPath);
+
+		// The decoded thumbnail must be the opening placeholder, not a blank box.
+		expect(
+			[...new Set(placeholders.map((entry) => entry.src))],
+			JSON.stringify(frames),
+		).toContain(thumbPath);
+
+		// A zoom grows the thumbnail placeholder to the settled image; a fade
+		// shows the full-size image from the first painted frame instead.
+		const settled = Math.max(...frames.map((frame) => frame.w));
+		expect(settled).toBeGreaterThan(0);
+		expect(thumbFrames.length, JSON.stringify(frames)).toBeGreaterThan(0);
+		expect(
+			Math.min(...thumbFrames.map((entry) => entry.w)),
+			JSON.stringify(frames),
+		).toBeLessThan(settled * 0.9);
+
+		await closeWithEscape(page, container);
+		await context.close();
+	});
+}
+
+test("author full-resolution link keeps the thumbnail as its placeholder", async ({ browser }) => {
+	test.skip(!fixturesReady, "lightbox fixture build missing; run pnpm browser:local first");
+	const context = await browser.newContext({
+		viewport: { width: 1440, height: 1000 },
+		reducedMotion: "no-preference",
+	});
+	const page = await context.newPage();
+	const responses = await installFixtureRoutes(page);
+	await page.goto(`${ROOT_FIXTURE}${FIXTURES}`, { waitUntil: "networkidle" });
+	await waitForLightboxReady(page);
+	const thumb = page.locator('.custom-md img[src*="thumb/160/90"]').first();
+	await thumb.scrollIntoViewIfNeeded();
+	await startZoomSampler(page);
+	await thumb.click();
+	const container = page.locator(".pswp");
+	await expect(container).toBeVisible({ timeout: 10_000 });
+	const frames = await readZoomSampler(page);
+	const placeholders = [
+		...new Set(frames.flatMap((frame) => frame.placeholders.map((entry) => entry.src))),
+	];
+	expect(placeholders).toContain("/thumb/160/90.png");
+	// Unknown destination geometry keeps the fade (no zoom origin), which the
+	// opening-geometry gate covers; the placeholder contract is asserted above.
+	const loaded = await assertSlideLoaded(page, responses);
+	expect(new URL(loaded.currentSrc!).pathname).toBe("/full/1280/720.png");
+	await closeWithEscape(page, container);
+	await context.close();
+});
