@@ -54,6 +54,11 @@ current ALNILAM validation.
 
 ## Build Core with your own Site
 
+Starting a blog? Copy the [independent Site starter](templates/site/). It pins
+the released Core and builds locally or through your static host's Git integration.
+Follow [Start a deployable Git Site](docs/SITE_ONBOARDING.md#start-a-deployable-git-site)
+for Cloudflare, Vercel, Netlify and GitHub Pages setup.
+
 ```bash
 node scripts/compose.mjs --site /absolute/path/to/my-site --out /absolute/path/to/dist
 ```
@@ -90,19 +95,19 @@ Local search is powered by [Pagefind](https://pagefind.app/) (MIT). The index is
 3. Compare `alnilam-provenance.json`'s `site.digest` with the previous build — must match.
 4. Swap the served directory. Rollback = rebuild with the previous Core revision.
 
-Automated acceptance: `node scripts/upgrade-check.mjs --old <historical-core-sha> [--site /absolute/path]`. CI runs this on every PR (two Core revisions, one unchanged external Site). Site digest identity is the hard contract; output bytes may differ when Core rendering changed. See [Site onboarding](docs/SITE_ONBOARDING.md).
+Automated acceptance: `node scripts/upgrade-check.mjs --old <historical-core-sha> [--site /absolute/path]`. Product CI exercises the unchanged-Site contract. The Site digest must match, though rendered output may differ across versions. See [Site onboarding](docs/SITE_ONBOARDING.md).
 
-## Development and governance
+## Development
 
 - Primary development: GitHub `dev` through Issue-linked PRs; GitHub Issues and Project #17 remain the task tracker; `main` is release-only. The active `alnilam-dev` / `alnilam-main` rulesets require PRs and the `verify` check, with no bypass or force pushes.
 - CNB `dev` is frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; new product work and current validation do not run through CNB.
 - Vercel: the existing public Demo project remains on GitHub `dev`; separate `alnilam-production-next` tracks `main` with SSO protection. Its deployment URL is gated; first formal Production release and custom-domain activation remain Owner decisions.
 - Tagging: `vX.Y.Z` on `main` only, annotated, created by the release PR merge. See [CHANGELOG.md](CHANGELOG.md) for SemVer rules; the content-frontmatter fields `lang` and `translationKey` were added compatibly in schema v1 and remain supported under v2.
-- ALNILAM follows no external engineering standard. Development guidance is [AGENTS.md](AGENTS.md) plus the installed Ponytail skills; the historical ADS adoption remains in Git history only.
+- See [AGENTS.md](AGENTS.md) for the development workflow and project constraints.
 - Docs: [Contributing](CONTRIBUTING.md) · [Architecture](docs/ARCHITECTURE.md) · [Site onboarding](docs/SITE_ONBOARDING.md) · [Roadmap](docs/ROADMAP.md) · [Security policy](SECURITY.md)
 - Repository attribution: [CREDITS.md](CREDITS.md) records design references. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), [NOTICE](NOTICE) and [LICENSES](LICENSES/) record attribution for repository and distributed materials.
 - GitHub Project #17: https://github.com/orgs/Skyline-Gazer/projects/17/
-- Release line: Foundation v0.2.0 ships the Shirone-derived frontend adopted after G0-F, the YAML schema v2 Site contract, optional Site modules and the release artifact hygiene gate. Post-release fixes and the next roadmap follow [#136](https://github.com/Skyline-Gazer/ALNILAM/issues/136); experimental Astro build acceleration stays out of scope until its official stable release is validated.
+- Foundation v0.2.0 ships the Shirone-derived frontend, YAML schema v2, optional Site modules and artifact hygiene checks. See [#136](https://github.com/Skyline-Gazer/ALNILAM/issues/136) for next-version candidates.
 
 ## License
 

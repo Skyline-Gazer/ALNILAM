@@ -42,33 +42,39 @@ rebuild after product changes.
 
 ## Contracts that must not regress
 
-- Composition emits `alnilam-provenance.json` binding the Core revision, the
-  Site ref and the Site input digest; repeated builds are byte-identical with
-  `SOURCE_DATE_EPOCH` pinned.
+- Composition records the Core revision, Site ref and input digest in
+  `alnilam-provenance.json`. Preserve deterministic builds under fixed release
+  inputs, including `SOURCE_DATE_EPOCH` and the toolchain.
 - A Core upgrade or rollback rebuilds an unchanged Site:
   `node scripts/upgrade-check.mjs --old <core-sha>`.
 - Secrets never enter the repository, logs, URLs or Site config.
-- Three-language Usage Guide articles accompany each implemented feature.
+- Maintain the three-language Demo and Usage Guide. Update affected guide
+  articles in all three languages when user-facing behavior changes. Routine
+  fixes, refactors and dependency updates need no new articles.
 
 ## Development workflow
 
 - Authority: GitHub `https://github.com/Skyline-Gazer/ALNILAM`. `dev` is the
   feature-development branch; `main` is release-only. CNB is a frozen source
   snapshot — do not push development work there or mirror it back.
-- Ordinary development is Issue-linked PRs to `dev`. The required check is
-  GitHub Actions `verify` (CI workflow, scope-aware: documentation-only
-  changes run the documentation tests, everything else runs the full
-  functional suite). Address material findings; independent approval is not
-  mandatory. CodeRabbit is advisory — reply in its threads with disposition
-  and evidence. Keep Auto-merge disabled; no force pushes.
-- GitHub Issues and Project #17 are the only task-tracking state. Do not
-  maintain a duplicate task database in Markdown.
-- Development methodology is the installed Ponytail skill set: smallest
-  complete change, reuse before new code, deletion before addition, no new
-  frameworks or governance layers.
+- Group related changes, tests and docs into focused PRs to `dev`. Link
+  relevant Issues. GitHub Issues and Project #17 own task status.
+- Small tasks go straight to implementation. For complex tasks, make only the
+  plan needed to execute. Within the Owner's scope, carry the work through
+  verification, review, merge to `dev` and Issue closure without step approvals.
+- GitHub Actions `verify` is required. CodeRabbit is advisory. Fix material
+  findings or explain the disposition in the relevant thread. Once the actual
+  checks and merge requirements pass, merge ordinary authorized PRs. Keep
+  auto-merge off and never force-push or bypass a required check.
+- Update affected docs with the change. Use the existing worktree unless
+  isolation is useful. Remove temporary resources you created when finished.
+  Preserve user files, dirty or active worktrees and unique commits.
+- Use installed Ponytail for the smallest complete change. Prefer reuse and
+  deletion. Use `ponytail-audit` for real complexity or redundancy problems.
 
 ## Owner authorization boundaries
 
-Production deployment, `main` promotion, release tags, repository ruleset or
-protection changes, and credential scope changes require explicit Owner
-authorization. Do not start recurring CNB mirroring or modify ADS upstream.
+Major product scope changes, irreversible operations, release tagging, `main`
+promotion, Production deployment, repository protection and permission changes
+require explicit Owner authorization. Escalate blockers you cannot resolve.
+CNB is frozen. Do not modify ADS upstream.
