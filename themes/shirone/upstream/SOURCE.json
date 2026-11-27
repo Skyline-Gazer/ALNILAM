@@ -738,7 +738,7 @@
     },
     {
       "path": "src/plugins/remark-directive-rehype.js",
-      "sha256": "2b60f2e112b81576439e22ae93770c240018329e60cc489189e23dbc2cfdcf54"
+      "sha256": "a86569ddc719628fb79aa9ae68931ad8c7eb379a7ff1ea2578f718ce950f13aa"
     },
     {
       "path": "src/plugins/rehype-responsive-tables.mjs",

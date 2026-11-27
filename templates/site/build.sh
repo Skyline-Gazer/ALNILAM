@@ -23,10 +23,14 @@ fi
 [[ ! -L dist ]] || fail 'dist/ is reserved for generated output. Move the symlink out of it.'
 [[ ! -e dist || -f dist/alnilam-provenance.json ]] || fail 'Move existing dist/ aside before building.'
 
+publish_lock="$root/.alnilam-publish.lock"
+mkdir -- "$publish_lock" 2>/dev/null || fail 'Cannot acquire .alnilam-publish.lock. Remove it only after confirming no build is running.'
+scratch=''
+artifact=''
+trap 'rmdir -- "$publish_lock"; rm -rf -- "${scratch:-}" "${artifact:-}"' EXIT
 scratch=$(mktemp -d /tmp/alnilam-core.XXXXXX)
 artifact=$(mktemp -d "$root/.alnilam-build.XXXXXX")
-# Some systems expose TMPDIR through a symlink. Compose requires a physical cache path.
-trap 'rm -rf -- "$scratch" "$artifact"' EXIT
+# Compose requires a physical cache path, including on systems where /tmp is a symlink.
 core=$(cd -- "$scratch" && pwd -P)
 git -C "$core" init -q
 git -C "$core" fetch -q --depth=1 https://github.com/Skyline-Gazer/ALNILAM.git "$revision" || fail 'Could not fetch this Core SHA from the public ALNILAM repository.'
@@ -50,8 +54,9 @@ fi
 if [[ -e $root/dist ]]; then mv -- "$root/dist" "$artifact/previous"; fi
 if ! mv -- "$artifact/dist" "$root/dist"; then
   if [[ -d $artifact/previous ]] && ! mv -- "$artifact/previous" "$root/dist"; then
-    trap 'rm -rf -- "$scratch"' EXIT
-    fail "Could not restore the previous build. It remains in $artifact/previous."
+    printf 'Previous build retained at %s\n' "$artifact/previous" >&2
+    artifact=''
+    fail 'Could not restore the previous build.'
   fi
   fail 'Could not move the checked artifact into dist/.'
 fi

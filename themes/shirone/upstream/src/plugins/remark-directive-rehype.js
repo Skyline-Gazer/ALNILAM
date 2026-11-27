@@ -4,8 +4,9 @@ import { visit } from "unist-util-visit";
 export function parseDirectiveNode() {
 	return (tree, { _data }) => {
 		visit(tree, (node, index, parent) => {
-			// remark-directive parses plain text such as a:b as an empty inline directive.
-			if (node.type === "textDirective" && node.children.length === 0 && Object.keys(node.attributes ?? {}).length === 0) {
+			// Bare :name spans exactly the colon and name, unlike :name[] or :name{}.
+			if (node.type === "textDirective" &&
+				node.position?.end.offset - node.position?.start.offset === node.name.length + 1) {
 				parent.children[index] = { type: "text", value: `:${node.name}`, position: node.position };
 				return;
 			}
