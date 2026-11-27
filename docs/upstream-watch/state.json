@@ -3,13 +3,23 @@
   "sources": {
     "shirone": {
       "last_seen": {
-        "fingerprint": "428aa719a7fffd8e9e984486f54398c20d7b636ecf1a04dc44b2ab7c0666bed6",
-        "observedAt": "2026-11-14T08:32:47.926Z",
+        "fingerprint": "89b437f26e44fe47f9936bedc86f3da8666e73f35b1d53024fc84e9f565b5e0c",
+        "observedAt": "2026-11-27T09:55:27.545Z",
         "observation": {
           "headSha": "ab978f122de0d552f7302f6ccf88489402263c6a",
           "releaseTag": null,
           "tags": [],
           "issues": [
+            [
+              191,
+              "open",
+              "2026-11-27T09:20:08Z"
+            ],
+            [
+              189,
+              "open",
+              "2026-11-26T10:02:44Z"
+            ],
             [
               183,
               "closed",
@@ -34,46 +44,154 @@
               177,
               "closed",
               "2026-11-12T14:50:34Z"
+            ],
+            [
+              171,
+              "closed",
+              "2026-11-04T12:06:47Z"
+            ],
+            [
+              168,
+              "closed",
+              "2026-11-04T11:38:05Z"
+            ],
+            [
+              167,
+              "closed",
+              "2026-11-04T11:37:55Z"
             ]
           ],
           "license": "MIT",
           "archived": false
         }
       },
-      "last_analyzed": null,
+      "last_analyzed": {
+        "through": "ab978f122de0d552f7302f6ccf88489402263c6a",
+        "outcome": "selective",
+        "reason": "Full 36-commit review; whole-base upgrade rejected, two fixes adapted."
+      },
       "last_integrated": {
         "revision": "55a84b2322bdfb634a59ca6383bb242e5ce646bf",
         "reference": "themes/shirone/upstream/SOURCE.json"
       },
-      "decisions": []
+      "decisions": [
+        {
+          "candidate": "ab978f122de0d552f7302f6ccf88489402263c6a",
+          "action": "REJECT",
+          "reason": "Unreleased 2.0.0 snapshot: no tag or release. A whole-tree merge over 101 ALNILAM patches still failed to build after two mechanical repairs, and the engine requires Node >=26.13.0 while the Site Starter and CI run Node 24."
+        },
+        {
+          "candidate": "f124c3bf837fb99bd6c219b1ddc7f37e48338bb2",
+          "action": "ADAPT",
+          "reason": "Parse Mermaid output as HTML so a <br> label renders; vendored src/utils/mermaid.ts keeps strict rendering. Verified root and nested base."
+        },
+        {
+          "candidate": "5ff7fe6eca87c07361708c29a79991a85503a033",
+          "action": "ADAPT",
+          "reason": "Image bytes, not headers, choose the stored cover type; implemented in apps/web/src/lib/bangumi.mjs with a mislabeled Content-Type regression."
+        },
+        {
+          "candidate": "961f522e545c65c7b19faa38c836c9ba0714d14a",
+          "action": "ADOPTED",
+          "reason": "Bare-colon Markdown fix adapted in the previous round and preserved."
+        },
+        {
+          "candidate": "5cc22b21c4f43abe0d05a4f3058ff9f3f7b62f61",
+          "action": "DEFER",
+          "reason": "Image captions for own-line images inside mixed paragraphs; no Site report yet and the local rehype enhancer is already diverged."
+        }
+      ]
     },
     "firefly": {
       "last_seen": {
-        "fingerprint": "b7e82b5d821f5edd0bc7a81d746786cbb7b9b156782c51a8b57cfffc2e379812",
-        "observedAt": "2026-11-14T08:32:47.926Z",
+        "fingerprint": "26706e40321daf680f90ab2299cc07bc168026dbf92ee0d5c115735db2ec9847",
+        "observedAt": "2026-11-27T09:55:27.545Z",
         "observation": {
-          "headSha": "994c0b8da0cb63f7a6190b4da88ecb08446575c4",
+          "headSha": "5de25c40cf3778451107dd2508e869536dac27ad",
           "releaseTag": null,
           "tags": [],
           "issues": [
             [
-              715,
+              733,
               "open",
-              "2026-11-11T12:07:35Z"
+              "2026-11-26T14:18:45Z"
+            ],
+            [
+              731,
+              "open",
+              "2026-11-26T13:38:23Z"
+            ],
+            [
+              728,
+              "closed",
+              "2026-11-26T13:14:09Z"
+            ],
+            [
+              703,
+              "closed",
+              "2026-11-25T19:23:36Z"
+            ],
+            [
+              719,
+              "closed",
+              "2026-11-25T11:35:49Z"
             ],
             [
               711,
-              "open",
-              "2026-11-08T09:37:38Z"
+              "closed",
+              "2026-11-25T10:28:24Z"
+            ],
+            [
+              715,
+              "closed",
+              "2026-11-25T10:22:53Z"
+            ],
+            [
+              633,
+              "closed",
+              "2026-11-15T14:11:55Z"
+            ],
+            [
+              701,
+              "closed",
+              "2026-11-15T14:11:00Z"
+            ],
+            [
+              514,
+              "closed",
+              "2026-11-05T18:12:07Z"
             ]
           ],
           "license": "MIT",
           "archived": false
         }
       },
-      "last_analyzed": null,
-      "last_integrated": null,
-      "decisions": []
+      "last_analyzed": {
+        "through": "5de25c40cf3778451107dd2508e869536dac27ad",
+        "outcome": "deferred",
+        "reason": "26 commits reviewed; no reproduced ALNILAM defect."
+      },
+      "last_integrated": {
+        "revision": "994c0b8da0cb63f7a6190b4da88ecb08446575c4",
+        "reference": "themes/shirone/upstream/src/styles/markdown/generic.styl"
+      },
+      "decisions": [
+        {
+          "candidate": "5de25c40cf3778451107dd2508e869536dac27ad",
+          "action": "DEFER",
+          "reason": "Build-time GitHub card snapshot adds a build-time api.github.com dependency and rate limit for a capability no Site requested. The real defect (server link unusable without JavaScript) was fixed directly in the vendored card CSS."
+        },
+        {
+          "candidate": "53a4bd8981c7f3cd41f835a61a1f8b095057e6ea",
+          "action": "REJECT",
+          "reason": "External code-group client duplicates the existing option-group tabs."
+        },
+        {
+          "candidate": "72f6edc60338d6955c46834549af06d4b2763c5d",
+          "action": "REJECT",
+          "reason": "Build-time Mermaid renderer would replace the client renderer without a measured need."
+        }
+      ]
     },
     "mizuki": {
       "last_seen": {
@@ -88,14 +206,29 @@
           "archived": false
         }
       },
-      "last_analyzed": null,
+      "last_analyzed": {
+        "through": "14da4262d8aa1d93dc8cff11705f14918ed7369f",
+        "outcome": "archived",
+        "reason": "No copied code; repository archived and succeeded by Shirone."
+      },
       "last_integrated": null,
-      "decisions": []
+      "decisions": [
+        {
+          "candidate": "14da4262d8aa1d93dc8cff11705f14918ed7369f",
+          "action": "DEFER",
+          "reason": "The ultrawide reading rail is a visual layout change that no Site requested and nothing measured; keep it as a #136 candidate."
+        },
+        {
+          "candidate": "dbdd3eb039e5e92f9375f5f8f79c3589cdf6ca16",
+          "action": "DEFER",
+          "reason": "Archive head, 13 commits past the audited snapshot; development moved to Shirone, which ALNILAM already vendors."
+        }
+      ]
     },
     "kirari": {
       "last_seen": {
-        "fingerprint": "0bb650c9d0a8a092666cfd01d7807eec7593c9e573d4f97cc6dd74d70438db36",
-        "observedAt": "2026-11-14T08:32:47.926Z",
+        "fingerprint": "ca42de7b0666c231bae8f50e94ea0d8ccf4f1483c742d5464ec163f972c31f16",
+        "observedAt": "2026-11-27T09:55:27.545Z",
         "observation": {
           "headSha": "5700bcdeb965de87a1818d5d9aec6bf8e227523d",
           "releaseTag": null,
@@ -133,7 +266,301 @@
               "46e7879080187b5166f92f31d88f9240c67cac0b"
             ]
           ],
-          "issues": [],
+          "issues": [
+            [
+              122,
+              "open",
+              "2026-10-22T08:10:22Z"
+            ],
+            [
+              107,
+              "closed",
+              "2026-10-21T08:28:36Z"
+            ],
+            [
+              106,
+              "closed",
+              "2026-10-21T08:28:34Z"
+            ],
+            [
+              100,
+              "closed",
+              "2026-10-19T07:07:28Z"
+            ],
+            [
+              101,
+              "closed",
+              "2026-10-17T16:27:18Z"
+            ],
+            [
+              112,
+              "closed",
+              "2026-10-17T16:21:56Z"
+            ],
+            [
+              111,
+              "closed",
+              "2026-10-17T05:06:56Z"
+            ],
+            [
+              110,
+              "closed",
+              "2026-10-17T04:56:47Z"
+            ],
+            [
+              102,
+              "closed",
+              "2026-10-16T02:51:24Z"
+            ],
+            [
+              104,
+              "closed",
+              "2026-10-15T08:45:19Z"
+            ]
+          ],
+          "license": "MIT",
+          "archived": false
+        }
+      },
+      "last_analyzed": {
+        "through": "5700bcdeb965de87a1818d5d9aec6bf8e227523d",
+        "outcome": "reviewed",
+        "reason": "Default branch equals the recorded reference; released tag v0.5.1 is its ancestor."
+      },
+      "last_integrated": null,
+      "decisions": [
+        {
+          "candidate": "12a95a12023eac707cb2e6211e121459cc9df4eb",
+          "action": "REJECT",
+          "reason": "Footer build metadata and an edge cache adapter sit outside the static product; no reproduced gap."
+        }
+      ]
+    },
+    "shirones-npm": {
+      "last_seen": {
+        "fingerprint": "da5cc196d580903a0057f66839ad1d218098da6da58539931890229bba49b537",
+        "observedAt": "2026-11-27T09:55:27.545Z",
+        "observation": {
+          "headSha": "cec44b96605932bdde40320fc7cfecd557fceb4c",
+          "releaseTag": null,
+          "tags": [],
+          "issues": [
+            [
+              6,
+              "closed",
+              "2026-09-25T02:26:35Z"
+            ],
+            [
+              3,
+              "closed",
+              "2026-09-18T11:50:25Z"
+            ]
+          ],
+          "license": null,
+          "archived": false
+        }
+      },
+      "last_analyzed": null,
+      "last_integrated": null,
+      "decisions": []
+    },
+    "airingcal": {
+      "last_seen": {
+        "fingerprint": "6d94e6b81e70cff9b93cfade37e07266c2e144e86826f2299e6e74a374821c0e",
+        "observedAt": "2026-11-27T09:55:27.545Z",
+        "observation": {
+          "headSha": "7cbe6706755cb88232b9a32fdd01c90c146ed491",
+          "releaseTag": "v3.0.0",
+          "tags": [
+            [
+              "v3.0.0",
+              "42f497cab180cd57eb1d2dc773d6b9979d9428bc"
+            ],
+            [
+              "archive/pr-144-cloud-agent-env",
+              "98d73a100a8f723c15cbe81c81f36cca7de5c458"
+            ],
+            [
+              "archive/development-freeze-20260903",
+              "97e6a28211989af4bdccfcd29f10c656506cdad9"
+            ],
+            [
+              "archive/cnb-sync-pilot-20261026",
+              "0672f85633b828e4f49a47de45ca960c1d747dae"
+            ]
+          ],
+          "issues": [
+            [
+              220,
+              "open",
+              "2026-11-27T09:47:37Z"
+            ],
+            [
+              219,
+              "open",
+              "2026-11-27T09:47:35Z"
+            ],
+            [
+              218,
+              "open",
+              "2026-11-27T09:47:33Z"
+            ],
+            [
+              221,
+              "open",
+              "2026-11-27T08:24:41Z"
+            ],
+            [
+              183,
+              "closed",
+              "2026-11-27T07:24:30Z"
+            ],
+            [
+              215,
+              "open",
+              "2026-11-27T07:24:28Z"
+            ],
+            [
+              72,
+              "closed",
+              "2026-11-27T02:04:19Z"
+            ],
+            [
+              73,
+              "closed",
+              "2026-11-27T02:03:58Z"
+            ],
+            [
+              196,
+              "open",
+              "2026-11-27T02:01:48Z"
+            ],
+            [
+              212,
+              "open",
+              "2026-11-27T02:01:46Z"
+            ]
+          ],
+          "license": "MIT",
+          "archived": false
+        }
+      },
+      "last_analyzed": {
+        "through": "42f497cab180cd57eb1d2dc773d6b9979d9428bc",
+        "outcome": "selective",
+        "reason": "v3.0.0 reviewed; the cover-byte fix was adapted, retry and conditional requests deferred."
+      },
+      "last_integrated": null,
+      "decisions": [
+        {
+          "candidate": "42f497cab180cd57eb1d2dc773d6b9979d9428bc",
+          "action": "DEFER",
+          "reason": "Bounded retry with Retry-After and conditional requests wait for a reproduced transient provider failure; ALNILAM already keeps one build-time snapshot, local covers and a last-good fallback."
+        }
+      ]
+    },
+    "fuwari": {
+      "last_seen": {
+        "fingerprint": "dffba4a1465d60c933b3d6b7fb316001053fa0a4a5616ba776ff8438b61a0d4a",
+        "observedAt": "2026-11-27T09:55:27.545Z",
+        "observation": {
+          "headSha": "6d39b0dec41282e7852e23e032998a5789abee28",
+          "releaseTag": null,
+          "tags": [],
+          "issues": [
+            [
+              671,
+              "closed",
+              "2026-11-09T10:55:12Z"
+            ],
+            [
+              301,
+              "closed",
+              "2026-10-10T23:12:50Z"
+            ],
+            [
+              772,
+              "open",
+              "2026-09-17T06:06:48Z"
+            ],
+            [
+              766,
+              "open",
+              "2026-08-04T08:56:41Z"
+            ],
+            [
+              777,
+              "open",
+              "2026-08-02T10:40:10Z"
+            ],
+            [
+              775,
+              "open",
+              "2026-07-30T05:59:31Z"
+            ],
+            [
+              774,
+              "open",
+              "2026-07-23T07:51:04Z"
+            ],
+            [
+              696,
+              "closed",
+              "2026-07-08T04:46:43Z"
+            ],
+            [
+              769,
+              "open",
+              "2026-07-01T08:56:49Z"
+            ],
+            [
+              697,
+              "closed",
+              "2026-05-28T05:28:10Z"
+            ]
+          ],
+          "license": "MIT",
+          "archived": false
+        }
+      },
+      "last_analyzed": null,
+      "last_integrated": null,
+      "decisions": []
+    },
+    "shblog-next": {
+      "last_seen": {
+        "fingerprint": "aff2c316b659af66f21f083b0cecce4e962456bbf72a4b67922ea9af36db49ea",
+        "observedAt": "2026-11-27T09:55:27.545Z",
+        "observation": {
+          "headSha": "7fe783a57529ff004326ccc1c34ce3b3be3b75ed",
+          "releaseTag": "2026/7/16-astro_v6",
+          "tags": [
+            [
+              "20251213-release",
+              "e7c92aab341244e8dd49220aed86029d7fbc4b11"
+            ],
+            [
+              "2026/7/16-astro_v6",
+              "7fd52829004b090ee2a35247097a1da62be36678"
+            ]
+          ],
+          "issues": [
+            [
+              2,
+              "closed",
+              "2026-01-17T14:16:33Z"
+            ],
+            [
+              10,
+              "closed",
+              "2026-01-17T14:16:10Z"
+            ],
+            [
+              9,
+              "closed",
+              "2026-01-17T14:15:53Z"
+            ]
+          ],
           "license": "MIT",
           "archived": false
         }
@@ -145,833 +572,1005 @@
   },
   "dependencies": {
     "last_seen": {
-      "fingerprint": "207c4351887cb8d214a03f2a6c585dddca8cccf863d95d225374a28e1ab73b53",
-      "observedAt": "2026-11-14T08:38:23.551Z",
+      "fingerprint": "37e1d0abca4fbc48e14504c5c9df8dd96165f5225a3208ed311c8c7e51e06627",
+      "observedAt": "2026-11-27T09:55:27.545Z",
       "observation": {
-        "lockfileSha256": "83e718e4b32c8e71b69e3b824a4a48d3a6a22779b6af711f9e7a4de1923b16d6",
+        "lockfileSha256": "bc7ccd3ef1fb40e1c84a6b5afb2b65a8801416bbfce2658dee6a8615083aca05",
         "packages": [
           [
             "apps/web",
             "@alnilam/core",
+            "dependencies",
+            "workspace:*",
+            "workspace:*",
             "link:../../packages/core",
+            true,
+            null,
             null,
             "current",
-            null,
             null,
             false
           ],
           [
             "apps/web",
             "@alnilam/theme-shirone",
+            "dependencies",
+            "workspace:*",
+            "workspace:*",
             "link:../../themes/shirone",
+            true,
+            null,
             null,
             "current",
-            null,
             null,
             false
           ],
           [
             "apps/web",
             "@alnilam/ui",
+            "dependencies",
+            "workspace:*",
+            "workspace:*",
             "link:../../packages/ui",
+            true,
+            null,
             null,
             "current",
-            null,
             null,
             false
           ],
           [
             "themes/editorial",
             "@alnilam/ui",
+            "dependencies",
+            "workspace:*",
+            "workspace:*",
             "link:../../packages/ui",
+            true,
+            null,
             null,
             "current",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "@alnilam/ui",
+            "dependencies",
+            "workspace:*",
+            "workspace:*",
             "link:../../packages/ui",
+            true,
+            null,
             null,
             "current",
-            null,
             null,
             false
           ],
           [
             "apps/web",
             "@astrojs/check",
+            "devDependencies",
+            "^0.9.10",
+            "^0.9.10",
             "0.9.12",
+            false,
+            null,
             "0.9.12",
             "current",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "@astrojs/markdown-remark",
+            "dependencies",
             "7.3.3",
-            "7.3.9",
-            "patch",
+            "7.3.3",
+            "7.3.3",
+            false,
             null,
+            "7.3.10",
+            "patch",
             null,
             false
           ],
           [
             "apps/web",
             "@astrojs/mdx",
+            "dependencies",
+            "^8.0.2",
+            "^8.0.2",
             "8.1.1",
+            false,
+            null,
             "8.1.6",
             "patch",
-            null,
             null,
             false
           ],
           [
             "apps/web",
             "@astrojs/rss",
+            "dependencies",
+            "^4.0.19",
+            "^4.0.19",
             "4.0.19",
+            false,
+            null,
             "4.0.19",
             "current",
-            null,
             null,
             false
           ],
           [
             "apps/web",
             "@astrojs/sitemap",
+            "dependencies",
+            "^3.7.4",
+            "^3.7.4",
             "3.7.4",
-            "3.7.5",
-            "patch",
+            false,
             null,
+            "3.7.6",
+            "patch",
             null,
             false
           ],
           [
             ".",
             "@astrojs/svelte",
+            "devDependencies",
             "9.1.1",
+            "9.1.1",
+            "9.1.1",
+            false,
+            null,
             "9.1.6",
             "patch",
-            null,
             null,
             false
           ],
           [
             "apps/web",
             "@astrojs/svelte",
+            "dependencies",
+            "^9.0.1",
+            "^9.0.1",
             "9.1.1",
+            false,
+            null,
             "9.1.6",
             "patch",
-            null,
-            null,
-            false
-          ],
-          [
-            ".",
-            "@axe-core/playwright",
-            "4.10.1",
-            "4.14.0",
-            "minor",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "@expressive-code/core",
+            "dependencies",
             "0.44.2",
-            "0.44.3",
-            "patch",
+            "0.44.2",
+            "0.44.2",
+            false,
             null,
+            "0.44.4",
+            "patch",
             null,
             false
           ],
           [
             "themes/shirone",
             "@expressive-code/plugin-collapsible-sections",
+            "dependencies",
             "0.44.2",
-            "0.44.3",
-            "patch",
+            "0.44.2",
+            "0.44.2",
+            false,
             null,
+            "0.44.4",
+            "patch",
             null,
             false
           ],
           [
             "themes/shirone",
             "@expressive-code/plugin-line-numbers",
+            "dependencies",
             "0.44.2",
-            "0.44.3",
-            "patch",
+            "0.44.2",
+            "0.44.2",
+            false,
             null,
+            "0.44.4",
+            "patch",
             null,
             false
           ],
           [
             "themes/shirone",
             "@iconify-json/fa7-brands",
+            "dependencies",
             "1.2.4",
+            "1.2.4",
+            "1.2.4",
+            false,
+            null,
             "1.2.4",
             "current",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "@iconify-json/fa7-solid",
+            "dependencies",
             "1.2.5",
+            "1.2.5",
+            "1.2.5",
+            false,
+            null,
             "1.2.5",
             "current",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "@iconify-json/material-symbols",
+            "dependencies",
             "1.2.95",
-            "1.2.99",
-            "patch",
+            "1.2.95",
+            "1.2.95",
+            false,
             null,
+            "1.2.101",
+            "patch",
             null,
             false
           ],
           [
             "themes/shirone",
             "@iconify-json/simple-icons",
+            "dependencies",
             "1.2.100",
-            "1.2.102",
-            "patch",
+            "1.2.100",
+            "1.2.100",
+            false,
             null,
+            "1.2.104",
+            "patch",
             null,
             false
           ],
           [
             "themes/shirone",
             "@iconify/svelte",
+            "dependencies",
             "5.2.2",
+            "5.2.2",
+            "5.2.2",
+            false,
+            null,
             "5.2.4",
             "patch",
-            null,
             null,
             false
           ],
           [
             ".",
             "@lhci/cli",
+            "devDependencies",
             "0.15.1",
+            "0.15.1",
+            "0.15.1",
+            false,
+            null,
             "0.16.1",
             "minor",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "@material/material-color-utilities",
+            "dependencies",
             "0.4.0",
+            "0.4.0",
+            "0.4.0",
+            false,
+            null,
             "0.4.0",
             "current",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "@panzoom/panzoom",
+            "dependencies",
             "4.6.2",
+            "4.6.2",
+            "4.6.2",
+            false,
+            null,
             "4.6.2",
             "current",
-            null,
             null,
             false
           ],
           [
             ".",
             "@playwright/test",
+            "devDependencies",
             "1.64.1",
+            "1.64.1",
+            "1.64.1",
+            false,
+            null,
             "1.65.1",
             "minor",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "@tailwindcss/typography",
+            "dependencies",
             "0.5.20",
+            "0.5.20",
+            "0.5.20",
+            false,
+            null,
             "0.5.20",
             "current",
-            null,
             null,
             false
           ],
           [
             "apps/web",
             "@tailwindcss/vite",
+            "dependencies",
+            "^4.3.1",
+            "^4.3.1",
             "4.3.3",
+            false,
+            null,
             "4.3.5",
             "patch",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "@tailwindcss/vite",
+            "dependencies",
             "4.3.3",
+            "4.3.3",
+            "4.3.3",
+            false,
+            null,
             "4.3.5",
             "patch",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "astro-expressive-code",
+            "dependencies",
             "0.44.2",
-            "0.44.3",
-            "patch",
+            "0.44.2",
+            "0.44.2",
+            false,
             null,
+            "0.44.4",
+            "patch",
             null,
             false
           ],
           [
             "apps/web",
             "astro",
+            "dependencies",
+            "^7.3.5",
+            "^7.3.5",
             "7.4.2",
-            "7.4.12",
-            "patch",
+            false,
             null,
+            "7.4.13",
+            "patch",
             null,
             false
           ],
           [
             "themes/shirone",
             "esbuild",
+            "dependencies",
             "0.28.2",
+            "0.28.2",
+            "0.28.2",
+            false,
+            null,
             "0.28.2",
             "current",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "hast-util-from-html",
+            "dependencies",
             "2.0.3",
+            "2.0.3",
+            "2.0.3",
+            false,
+            null,
             "2.1.0",
             "minor",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "hastscript",
+            "dependencies",
             "9.0.1",
+            "9.0.1",
+            "9.0.1",
+            false,
+            null,
             "9.0.3",
             "patch",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "katex",
+            "dependencies",
             "0.16.47",
+            "0.16.47",
+            "0.16.47",
+            false,
+            null,
             "0.19.1",
             "minor",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "markdown-it",
+            "dependencies",
             "15.0.3",
+            "15.0.3",
+            "15.0.3",
+            false,
+            null,
             "15.0.3",
             "current",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "mdast-util-to-string",
+            "dependencies",
             "4.0.0",
+            "4.0.0",
+            "4.0.0",
+            false,
+            null,
             "4.0.0",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "themes/shirone",
             "mermaid",
+            "dependencies",
             "11.17.2",
+            "11.17.2",
+            "11.17.2",
+            false,
+            null,
             "12.3.0",
             "major",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "oddmisc",
+            "dependencies",
             "1.2.11",
+            "1.2.11",
+            "1.2.11",
+            false,
+            null,
             "1.2.11",
             "current",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "overlayscrollbars",
+            "dependencies",
             "2.16.0",
-            "2.17.0",
-            "minor",
+            "2.16.0",
+            "2.16.0",
+            false,
             null,
+            "2.17.1",
+            "minor",
             null,
             false
           ],
           [
             "apps/web",
             "pagefind",
-            "1.5.2",
+            "dependencies",
             "1.6.0",
-            "minor",
+            "1.6.0",
+            "1.6.0",
+            false,
             null,
+            "1.6.0",
+            "current",
             null,
             false
           ],
           [
             "themes/shirone",
             "pagefind",
-            "1.5.2",
+            "dependencies",
             "1.6.0",
-            "minor",
+            "1.6.0",
+            "1.6.0",
+            false,
             null,
+            "1.6.0",
+            "current",
             null,
             false
           ],
           [
             "themes/shirone",
             "photoswipe",
+            "dependencies",
             "5.4.4",
+            "5.4.4",
+            "5.4.4",
+            false,
+            null,
             "5.4.4",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "themes/shirone",
             "qrcode",
+            "dependencies",
             "1.5.4",
+            "1.5.4",
+            "1.5.4",
+            false,
+            null,
             "1.5.4",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "themes/shirone",
             "reading-time",
+            "dependencies",
             "1.5.0",
+            "1.5.0",
+            "1.5.0",
+            false,
+            null,
             "1.5.0",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "themes/shirone",
             "rehype-autolink-headings",
+            "dependencies",
             "7.1.0",
+            "7.1.0",
+            "7.1.0",
+            false,
+            null,
             "7.1.0",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "themes/shirone",
             "rehype-components",
+            "dependencies",
             "0.3.0",
+            "0.3.0",
+            "0.3.0",
+            false,
+            null,
             "0.3.0",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "themes/shirone",
             "rehype-katex",
+            "dependencies",
             "7.0.1",
+            "7.0.1",
+            "7.0.1",
+            false,
+            null,
             "7.0.1",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "themes/shirone",
             "rehype-slug",
+            "dependencies",
             "6.0.0",
+            "6.0.0",
+            "6.0.0",
+            false,
+            null,
             "6.0.0",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "themes/shirone",
             "remark-directive-rehype",
+            "dependencies",
             "1.0.0",
+            "1.0.0",
+            "1.0.0",
+            false,
+            null,
             "1.0.0",
             "current",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "remark-directive",
+            "dependencies",
             "4.0.0",
+            "4.0.0",
+            "4.0.0",
+            false,
+            null,
             "4.0.0",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "themes/shirone",
             "remark-github-admonitions-to-directives",
+            "dependencies",
             "2.1.0",
+            "2.1.0",
+            "2.1.0",
+            false,
+            null,
             "2.1.0",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "apps/web",
             "remark-math",
+            "dependencies",
             "6.0.0",
+            "6.0.0",
+            "6.0.0",
+            false,
+            null,
             "6.0.0",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "themes/shirone",
             "remark-math",
+            "dependencies",
             "6.0.0",
+            "6.0.0",
+            "6.0.0",
+            false,
+            null,
             "6.0.0",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "apps/web",
             "remark-mdx",
+            "dependencies",
             "3.1.1",
+            "3.1.1",
+            "3.1.1",
+            false,
+            null,
             "3.1.1",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "apps/web",
             "remark-parse",
+            "dependencies",
             "11.0.0",
+            "11.0.0",
+            "11.0.0",
+            false,
+            null,
             "11.0.0",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "themes/shirone",
             "remark-parse",
+            "dependencies",
             "11.0.0",
+            "11.0.0",
+            "11.0.0",
+            false,
+            null,
             "11.0.0",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "themes/shirone",
             "remark-sectionize",
+            "dependencies",
             "2.1.0",
+            "2.1.0",
+            "2.1.0",
+            false,
+            null,
             "2.1.0",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "themes/shirone",
             "sanitize-html",
+            "dependencies",
             "2.18.1",
+            "2.18.1",
+            "2.18.1",
+            false,
+            null,
             "2.18.2",
             "patch",
             null,
-            null,
             false
           ],
           [
             "apps/web",
             "sharp",
+            "dependencies",
             "0.35.5",
+            "0.35.5",
+            "0.35.5",
+            false,
+            null,
             "0.35.5",
             "current",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "sharp",
+            "dependencies",
             "0.35.5",
+            "0.35.5",
+            "0.35.5",
+            false,
+            null,
             "0.35.5",
             "current",
-            null,
             null,
             false
           ],
           [
             "apps/web",
             "stylus",
+            "dependencies",
             "0.64.0",
+            "0.64.0",
+            "0.64.0",
+            false,
+            null,
             "0.64.0",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "themes/shirone",
             "stylus",
+            "dependencies",
             "0.64.0",
+            "0.64.0",
+            "0.64.0",
+            false,
+            null,
             "0.64.0",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "apps/web",
             "svelte",
+            "dependencies",
+            "^5.56.3",
+            "^5.56.3",
             "5.57.2",
-            "5.57.3",
-            "patch",
+            false,
             null,
+            "5.59.2",
+            "minor",
             null,
             false
           ],
           [
             "packages/ui",
             "svelte",
+            "devDependencies",
+            "^5.57.2",
+            "^5.57.2",
             "5.57.2",
-            "5.57.3",
-            "patch",
+            false,
             null,
+            "5.59.2",
+            "minor",
             null,
             false
           ],
           [
             "apps/web",
             "tailwindcss",
+            "dependencies",
+            "^4.3.1",
+            "^4.3.1",
             "4.3.3",
+            false,
+            null,
             "4.3.5",
             "patch",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "tailwindcss",
+            "dependencies",
             "4.3.3",
+            "4.3.3",
+            "4.3.3",
+            false,
+            null,
             "4.3.5",
             "patch",
-            null,
             null,
             false
           ],
           [
             "apps/web",
             "typescript",
+            "devDependencies",
+            "^5.9.3",
+            "^5.9.3",
             "5.9.3",
+            false,
+            null,
             "7.0.2",
             "major",
-            null,
             null,
             false
           ],
           [
             "apps/web",
             "unified",
+            "dependencies",
             "11.0.5",
+            "11.0.5",
+            "11.0.5",
+            false,
+            null,
             "11.0.5",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "themes/shirone",
             "unified",
+            "dependencies",
             "11.0.5",
+            "11.0.5",
+            "11.0.5",
+            false,
+            null,
             "11.0.5",
             "current",
             null,
-            null,
-            false
+            true
           ],
           [
             "themes/shirone",
             "unist-util-visit",
+            "dependencies",
             "5.1.0",
+            "5.1.0",
+            "5.1.0",
+            false,
+            null,
             "5.2.0",
             "minor",
-            null,
             null,
             false
           ],
           [
             "packages/core",
             "yaml",
+            "dependencies",
+            "^2.9.1",
+            "^2.9.1",
             "2.9.1",
+            false,
+            null,
             "2.9.1",
             "current",
-            null,
             null,
             false
           ],
           [
             "themes/shirone",
             "yaml",
+            "dependencies",
             "2.9.1",
+            "2.9.1",
+            "2.9.1",
+            false,
+            null,
             "2.9.1",
             "current",
             null,
-            null,
             false
           ]
-        ],
-        "advisories": [
-          "findings",
-          [
-            [
-              "@astrojs/svelte",
-              "GHSA-f4j9-crrj-867q",
-              "low"
-            ],
-            [
-              "astro",
-              "GHSA-mh32-jxcr-mh9f",
-              "low"
-            ],
-            [
-              "astro",
-              "GHSA-r3h5-4585-7x3w",
-              "moderate"
-            ],
-            [
-              "basic-ftp",
-              "GHSA-5pm8-86m8-9m6r",
-              "moderate"
-            ],
-            [
-              "basic-ftp",
-              "GHSA-c475-qrg2-pj4r",
-              "high"
-            ],
-            [
-              "basic-ftp",
-              "GHSA-r4jh-29pc-gfqr",
-              "moderate"
-            ],
-            [
-              "deepmerge",
-              "GHSA-gcqx-w48m-w2h4",
-              "low"
-            ],
-            [
-              "extract-zip",
-              "GHSA-7pqw-9j4j-h8q3",
-              "high"
-            ],
-            [
-              "extract-zip",
-              "GHSA-jmr9-qjv8-65gv",
-              "high"
-            ],
-            [
-              "glob",
-              "GHSA-3g3m-2fjr-6pw4",
-              "moderate"
-            ],
-            [
-              "glob",
-              "GHSA-5j98-mcp5-4vw2",
-              "high"
-            ],
-            [
-              "katex",
-              "GHSA-238p-pmpm-9mq7",
-              "low"
-            ],
-            [
-              "minimatch",
-              "GHSA-g3hv-75wg-m249",
-              "moderate"
-            ],
-            [
-              "postcss-selector-parser",
-              "GHSA-rj75-hqrm-r3gf",
-              "moderate"
-            ],
-            [
-              "tmp",
-              "GHSA-52f5-9888-hmc6",
-              "low"
-            ],
-            [
-              "tmp",
-              "GHSA-ph9p-34f9-6g65",
-              "high"
-            ],
-            [
-              "uuid",
-              "GHSA-w5hq-g745-h8pq",
-              "moderate"
-            ],
-            [
-              "zod",
-              "GHSA-mrhx-c7xc-m3w5",
-              "high"
-            ]
-          ],
-          {
-            "info": 0,
-            "low": 6,
-            "moderate": 7,
-            "high": 7,
-            "critical": 0
-          }
         ]
       }
     },

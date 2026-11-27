@@ -94,7 +94,7 @@ snapshotTest('provider errors and malformed data do not replace the last valid s
 
 snapshotTest('covers are downloaded, cached and materialized, and failed downloads preserve the snapshot', async root => {
   const coverUrl = 'https://lain.bgm.tv/pic/cover/example.png';
-  const bytes = Buffer.from('trusted-cover-bytes');
+  const bytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/aZkAAAAASUVORK5CYII=', 'base64');
   const calls = [];
   const result = await product.loadBangumiCollections(config, {fetch: async url => {
     calls.push(String(url));
@@ -120,6 +120,12 @@ snapshotTest('covers are downloaded, cached and materialized, and failed downloa
   assert.deepEqual(failed.collections, result.collections);
   fs.rmSync(path.join(root, 'cache', 'covers', files[0]));
   assert.equal(product.readBangumiSnapshot(config)[0].cover, '');
+  const jpeg = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(8)]);
+  const mislabeled = await product.loadBangumiCollections(config, {fetch: async url => {
+    if (String(url).startsWith('https://api.bgm.tv/')) return response([entry(coverUrl)]);
+    return new Response(jpeg, {headers: {'content-type': 'image/png'}});
+  }});
+  assert.match(mislabeled.collections[0].cover, /\.jpg$/, 'the bytes decide the stored type');
 });
 
 snapshotTest('untrusted cover URLs are rejected without requesting them', async () => {

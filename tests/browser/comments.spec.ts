@@ -181,6 +181,19 @@ if (fixtureReady) {
       expect(requests).toHaveLength(1);
     });
 
+    test(`GitHub card link works without JavaScript ${prefix || "/"}`, async ({ browser }) => {
+      const context = await browser.newContext({ javaScriptEnabled: false });
+      const page = await context.newPage();
+      try {
+        await page.goto(`${origin}/posts/comment-fixture/`, { waitUntil: "domcontentloaded" });
+        const card = page.locator('[data-github-card][data-github-repo="example/comments-fixture"]');
+        await expect(card).toHaveCSS("pointer-events", "auto");
+        await expect(card).toHaveAttribute("href", "https://github.com/example/comments-fixture");
+      } finally {
+        await context.close();
+      }
+    });
+
     test(`Giscus follows data-theme without a dark class ${prefix || "/"}`, async ({ page }) => {
       const state = { calls: [] as string[], offline: false };
       await mockGiscus(page, state);

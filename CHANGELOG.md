@@ -32,6 +32,9 @@ Tagging rules: annotated `vX.Y.Z` tags are created on `main` only, by the mainta
 
 
 - Preserve bare colons in Markdown prose such as `a:b`. Inline directives with content or attributes still render. Adapted from [Shirone's Markdown fix](https://github.com/LyraVoid/Shirone/commit/961f522e545c65c7b19faa38c836c9ba0714d14a).
+- Render Mermaid labels containing HTML line breaks. Adapted from [Shirone](https://github.com/LyraVoid/Shirone/commit/f124c3bf837fb99bd6c219b1ddc7f37e48338bb2).
+- A GitHub card keeps its server-rendered repository link usable before the client data arrives and when JavaScript never runs; the waiting skeleton no longer blocks the press ([#137](https://github.com/Skyline-Gazer/ALNILAM/issues/137)).
+- A Bangumi cover is stored under the type its bytes declare, so a mislabeled `Content-Type` or an error page can no longer be cached and served as an image ([#137](https://github.com/Skyline-Gazer/ALNILAM/issues/137)). The unused legacy collection fetcher and its tests are removed.
 - Preserve configured locale casing in RSS self links and keep the deployment base on feed and article links, including when the base matches a locale ([#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81)).
 - Reject a `site.url` whose deployment base ends in an enabled locale instead of publishing duplicated `/en/en/...` addresses, with an actionable build error ([#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81)).
 - Keep regional-locale article slugs short: a lower-cased content id such as `de-de/regional-note` no longer repeats the locale directory in the published URL, so `/de-DE/posts/regional-note/` matches the documented shape. A Site that published the duplicated form needs a redirect from `/<locale>/posts/<lowercased-locale>/<slug>/` ([#81](https://github.com/Skyline-Gazer/ALNILAM/issues/81)).
