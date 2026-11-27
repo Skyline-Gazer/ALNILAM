@@ -7,12 +7,20 @@ fail() { printf 'ALNILAM build: %s\n' "$1" >&2; exit 1; }
 revision=$(<core.sha) || fail 'Missing core.sha with the pinned Core commit.'
 [[ $revision =~ ^[0-9a-f]{40}$ ]] || fail 'core.sha must contain one full lowercase Core commit SHA.'
 [[ -d site && ! -L site ]] || fail 'Expected a site/ directory containing your YAML v2 configuration and posts.'
-[[ $(git rev-parse --show-toplevel) == "$root" ]] || fail 'Copy the starter into the root of your own Git repository.'
-site_ref=$(git rev-parse --verify HEAD) || fail 'Create the initial Site commit before building.'
-site_status=$(git status --porcelain --untracked-files=all --ignored -- site/)
-[[ -z $site_status ]] || fail 'Commit the Site inputs in site/ before building. Remove any ignored files there.'
-tracked_output=$(git ls-files -- dist)
-[[ -z $tracked_output && ! -L dist ]] || fail 'dist/ is reserved for generated output. Move tracked files or symlinks out of it.'
+git_root=$(git rev-parse --show-toplevel 2>/dev/null || true)
+if [[ -n $git_root ]]; then
+  [[ $git_root == "$root" ]] || fail 'Copy the starter into the root of your own Git repository.'
+  site_ref=$(git rev-parse --verify HEAD) || fail 'Create the initial Site commit before building.'
+  site_status=$(git status --porcelain --untracked-files=all --ignored -- site/)
+  [[ -z $site_status ]] || fail 'Commit the Site inputs in site/ before building. Remove any ignored files there.'
+  tracked_output=$(git ls-files -- dist)
+  [[ -z $tracked_output ]] || fail 'dist/ is reserved for generated output. Move tracked files out of it.'
+else
+  # Some Git integrations provide source files and a commit SHA without .git.
+  site_ref=${CF_PAGES_COMMIT_SHA:-${WORKERS_CI_COMMIT_SHA:-${VERCEL_GIT_COMMIT_SHA:-${COMMIT_REF:-}}}}
+  [[ $site_ref =~ ^[0-9a-f]{40}$ ]] || fail 'Build from your Site Git repository or enable the host Git commit metadata.'
+fi
+[[ ! -L dist ]] || fail 'dist/ is reserved for generated output. Move the symlink out of it.'
 [[ ! -e dist || -f dist/alnilam-provenance.json ]] || fail 'Move existing dist/ aside before building.'
 
 scratch=$(mktemp -d /tmp/alnilam-core.XXXXXX)
@@ -35,8 +43,10 @@ npm exec --yes --package="$pm" -- pnpm install --frozen-lockfile --prod=false
 npm exec --yes --package="$pm" -- node scripts/compose.mjs --site "$root/site" --out "$artifact/dist"
 node scripts/artifact-check.mjs "$artifact/dist"
 node scripts/seo-check.mjs "$artifact/dist"
-site_status=$(git -C "$root" status --porcelain --untracked-files=all --ignored -- site/)
-[[ -z $site_status && $(git -C "$root" rev-parse HEAD) == "$site_ref" ]] || fail 'The Site Git state changed during the build.'
+if [[ -n $git_root ]]; then
+  site_status=$(git -C "$root" status --porcelain --untracked-files=all --ignored -- site/)
+  [[ -z $site_status && $(git -C "$root" rev-parse HEAD) == "$site_ref" ]] || fail 'The Site Git state changed during the build.'
+fi
 if [[ -e $root/dist ]]; then mv -- "$root/dist" "$artifact/previous"; fi
 if ! mv -- "$artifact/dist" "$root/dist"; then
   if [[ -d $artifact/previous ]] && ! mv -- "$artifact/previous" "$root/dist"; then

@@ -27,6 +27,9 @@ in `core.sha`, installs its frozen lockfile in a temporary directory, and writes
 `dist/` outside `site/`. It checks the generated artifact and SEO before the
 hosting build can succeed. Add your repository to your host and publish only
 `dist/`. The configured URL is also used for canonicals in preview builds.
+If the host provides a source snapshot without Git metadata, the build uses
+its Git commit SHA environment variable. On Vercel, leave access to system
+environment variables enabled.
 
 | Host | Settings for the Site repo |
 | --- | --- |
