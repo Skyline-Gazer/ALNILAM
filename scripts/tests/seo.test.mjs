@@ -57,6 +57,10 @@ test("post URLs use locale-first paths and locale feeds are one per enabled loca
   assert.equal(withBase(postPath(post("en/guides/deep/topic", "en"), "zh-CN"), "/ALNILAM"), "/ALNILAM/en/posts/guides/deep/topic");
   assert.equal(feedPath("zh-CN", "zh-CN"), "/rss.xml");
   assert.equal(feedPath("en", "zh-CN"), "/en/rss.xml");
+  // Astro lowercases the content id, but the published slug stays short.
+  assert.equal(postLocalSlug(post("de-de/regional-note", "de-DE"), "zh-CN"), "regional-note");
+  assert.equal(postPath(post("de-de/regional-note", "de-DE"), "zh-CN"), "/de-DE/posts/regional-note");
+  assert.equal(postLocalSlug(post("regional/coastal-note", "zh-CN"), "zh-CN"), "regional/coastal-note");
 });
 
 test("hreflang groups include only enabled locales and a real x-default", () => {

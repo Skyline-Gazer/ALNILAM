@@ -39,7 +39,10 @@ export async function getStaticPaths() {
   return allPosts.flatMap((post) => {
     const lang = postLang(post, config.site.locale);
     const localSlug = postLocalSlug(post, config.site.locale);
-    const oldSlug = lang === config.site.locale || post.id.startsWith(lang + "/") ? post.id : `${lang}/${post.id}`;
+    // Non-default locales keep one legacy `/posts/<lang>/<slug>/` page that
+    // links to the canonical article; build it from the short slug so a
+    // regional id such as `de-de/…` cannot repeat the locale directory.
+    const oldSlug = lang === config.site.locale ? post.id : `${lang}/${localSlug}`;
     const slugs = lang === config.site.locale && oldSlug !== localSlug ? [localSlug, oldSlug] : [oldSlug];
     return slugs.map((slug) => {
       if (seenRoutes.has(slug)) throw new Error(`ALNILAM: duplicate post route "/posts/${slug}/"`);
