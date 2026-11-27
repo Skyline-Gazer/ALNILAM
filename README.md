@@ -4,7 +4,7 @@
 
 Apache-2.0 licensed, static-first Astro 7 / Svelte 5 / Tailwind CSS 4 blogging platform, with a strict Core/Site ownership boundary. Released v0.2.0 uses the Shirone-derived frontend; the Editorial theme remains the v0.1.x rollback package.
 
-> **Status:** v0.2.0 is the Foundation release. GitHub `main` is release-only at that version; `dev` carries post-release development. GitHub Actions `verify` is the required check on both branches. CNB `dev` remains frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`. See [Handoff](docs/HANDOFF.md) and live Issues for current state and remaining acceptance.
+> **Status:** v0.2.0 is the Foundation release. GitHub `main` is release-only at that version; `dev` carries post-release development described in [CHANGELOG.md](CHANGELOG.md). GitHub Actions `verify` is the required check on both branches. CNB `dev` remains frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`. See live Issues and [Project #17](https://github.com/orgs/Skyline-Gazer/projects/17/) for current state.
 
 ## Quickstart
 
@@ -49,9 +49,8 @@ Playwright writes `browser-results/`; Lighthouse writes `artifacts/lighthouse/`
 and `artifacts/lighthouse-regression/`, replacing the selected form factor's
 previous reports. Lighthouse uses the CI routes, budgets, run count and expected-red
 CLS regression check. Local results are developer evidence; GitHub Actions `verify`
-is the required pull request validation. The CNB browser/CLS pilot is frozen and
-is not part of current ALNILAM validation. Its historical artifact procedure remains
-in the [pilot record](docs/pilots/CNB-BROWSER-PLUGINS.md).
+is the required pull request validation. CNB is a frozen snapshot and is not part of
+current ALNILAM validation.
 
 ## Build Core with your own Site
 
@@ -97,10 +96,10 @@ Automated acceptance: `node scripts/upgrade-check.mjs --old <historical-core-sha
 
 - Primary development: GitHub `dev` through Issue-linked PRs; GitHub Issues and Project #17 remain the task tracker; `main` is release-only. The active `alnilam-dev` / `alnilam-main` rulesets require PRs and the `verify` check, with no bypass or force pushes.
 - CNB `dev` is frozen at `9916a0c4984f8e9d762f59247cf923f0fd7f0071`; new product work and current validation do not run through CNB.
-- Vercel: the existing public Demo project remains on GitHub `dev`; separate `alnilam-production-next` tracks `main` with SSO protection. Its deployment URL is gated; first formal Production release and custom-domain activation remain Owner decisions. See [Handoff](docs/HANDOFF.md).
+- Vercel: the existing public Demo project remains on GitHub `dev`; separate `alnilam-production-next` tracks `main` with SSO protection. Its deployment URL is gated; first formal Production release and custom-domain activation remain Owner decisions.
 - Tagging: `vX.Y.Z` on `main` only, annotated, created by the release PR merge. See [CHANGELOG.md](CHANGELOG.md) for SemVer rules; the content-frontmatter fields `lang` and `translationKey` were added compatibly in schema v1 and remain supported under v2.
-- ADS Lite uses the v0.8.0 release commit recorded in [`ads-pin.txt`](ads-pin.txt). The private `.ads` submodule is optional for public contributors. CI checks the gitlink without fetching the submodule. See [AGENTS.md](AGENTS.md).
-- Docs: [Contributing](CONTRIBUTING.md) · [Architecture](docs/ARCHITECTURE.md) · [Site onboarding](docs/SITE_ONBOARDING.md) · [Roadmap](docs/ROADMAP.md) · [Handoff](docs/HANDOFF.md) · [Document ownership](docs/next/06-REUSE-DOC-GOVERNANCE.md) · [Security policy](SECURITY.md)
+- ALNILAM follows no external engineering standard. Development guidance is [AGENTS.md](AGENTS.md) plus the installed Ponytail skills; the historical ADS adoption remains in Git history only.
+- Docs: [Contributing](CONTRIBUTING.md) · [Architecture](docs/ARCHITECTURE.md) · [Site onboarding](docs/SITE_ONBOARDING.md) · [Roadmap](docs/ROADMAP.md) · [Security policy](SECURITY.md)
 - Repository attribution: [CREDITS.md](CREDITS.md) records design references. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), [NOTICE](NOTICE) and [LICENSES](LICENSES/) record attribution for repository and distributed materials.
 - GitHub Project #17: https://github.com/orgs/Skyline-Gazer/projects/17/
 - Release line: Foundation v0.2.0 ships the Shirone-derived frontend adopted after G0-F, the YAML schema v2 Site contract, optional Site modules and the release artifact hygiene gate. Post-release fixes and the next roadmap follow [#136](https://github.com/Skyline-Gazer/ALNILAM/issues/136); experimental Astro build acceleration stays out of scope until its official stable release is validated.

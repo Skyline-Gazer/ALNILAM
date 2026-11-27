@@ -1,6 +1,6 @@
 # ADR 0001 — Shirone frontend on retained ALNILAM platform
 
-> **Historical P1 decision:** the Site v1, Swup and migration statements below record the 2026-10-26 proposal, not the current contract. See [Site onboarding](../SITE_ONBOARDING.md), the later [native MPA proposal](0002-native-mpa-and-pagefind-lifecycle.md), and [HANDOFF](../HANDOFF.md) for later decisions and observed state.
+> **Historical P1 decision:** the Site v1, Swup and migration statements below record the 2026-10-26 proposal, not the current contract. See [Site onboarding](../SITE_ONBOARDING.md) and the later [native MPA proposal](0002-native-mpa-and-pagefind-lifecycle.md) for subsequent decisions.
 
 **Status: ACCEPTED for bounded P1 by G0-F on 2026-10-26.** Related #36/#44/#46/#80; normative Plan/Spec was frozen in [PR #77](https://github.com/Skyline-Gazer/ALNILAM/pull/77). P1 authorization does not authorize a production release or P2.
 
@@ -12,4 +12,4 @@ Alternatives rejected for this proposal: greenfield repository/history reset; mu
 
 Consequences: preserve existing fixtures and URL compatibility; a schema v2 requires an opt-in versioned migration proposal; isolate framework upgrade from frontend migration; preserve blocking Pagefind failures. Draft locale/taxonomy/SEO/LLMs contracts need real-content translation mapping and privacy negatives beyond official helpers. Review every imported file/license/media grant.
 
-Rollback selects the old Core commit against the unchanged Site. Reconsider this decision only if a measured incompatibility prevents the retained controller from safely composing Shirone; attach failed equivalence tests, the smallest alternative and a new Owner decision. See [reuse decisions](../p0/REUSE-DECISIONS.md) and [acceptance report](../p0/P0-ACCEPTANCE.md).
+Rollback selects the old Core commit against the unchanged Site. Reconsider this decision only if a measured incompatibility prevents the retained controller from safely composing Shirone; attach failed equivalence tests, the smallest alternative and a new Owner decision.

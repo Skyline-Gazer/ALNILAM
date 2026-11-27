@@ -71,8 +71,6 @@ test("every workflow declares exactly its allowed permissions", () => {
   const allowed = {
     "ci.yml": { contents: "read" },
     "deploy.yml": { contents: "read", pages: "write", "id-token": "write" },
-    "p0-evidence.yml": { contents: "read" },
-    "p1-astro-compatibility.yml": { contents: "read" },
     "site-ci.yml": { contents: "read" },
     "release-status.yml": { contents: "read" },
   };

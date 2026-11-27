@@ -48,7 +48,7 @@ For any future code migration:
 Upstream license summaries (not substitutes for their actual license texts):
 - KIRARI, Firefly, SHBlog Next, Fuwari: MIT.
 - Mizuki: Apache-2.0 with separate original MIT/third-party notices.
-- ADS is pinned as a Git submodule. Earlier history included copied ADS production-boundary code and fixtures from [ADS commit `2af17d9e1d816844c49835ae91b784405765ad46`](https://github.com/Skyline-Gazer/ADS/tree/2af17d9e1d816844c49835ae91b784405765ad46); the historical mapping is in ALNILAM commit `8e6ce58402fdf4feda888fe8f4fe13687338e504`. The retained MIT text is [LICENSES/ADS-MIT.txt](LICENSES/ADS-MIT.txt). This history is not evidence of a complete current-file provenance audit.
+- ADS (a former pinned development-guidance submodule, retired 2026-11): earlier history included copied ADS production-boundary code and fixtures from [ADS commit `2af17d9e1d816844c49835ae91b784405765ad46`](https://github.com/Skyline-Gazer/ADS/tree/2af17d9e1d816844c49835ae91b784405765ad46); the historical mapping is in ALNILAM commit `8e6ce58402fdf4feda888fe8f4fe13687338e504`. The retained MIT text is [LICENSES/ADS-MIT.txt](LICENSES/ADS-MIT.txt) while any ADS-derived tooling remains in the tree.
 
 ## Runtime and build dependencies (npm)
 

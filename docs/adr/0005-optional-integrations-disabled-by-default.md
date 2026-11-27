@@ -12,7 +12,7 @@ Comments, Gallery, analytics, advertising, consent, Bangumi, and LLM discovery c
 2. A disabled module emits no module route, navigation entry, provider script, identifier, or related network request, as applicable to that module.
 3. CI uses deterministic local fixtures and mock endpoints. It does not require real publisher, analytics, consent-provider, or comments credentials.
 4. Live third-party activation, account approval, Production publication, and custom-domain activation remain separate Owner decisions. Mock/browser PASS is not evidence of those approvals.
-5. Keep the detailed feature contract in [Site onboarding](../SITE_ONBOARDING.md), [08-G0-F-DECISION](../next/08-G0-F-DECISION.md), and Issues #67 and #90–#93; this ADR records the shared boundary without duplicating per-module schema.
+5. Keep the detailed feature contract in [Site onboarding](../SITE_ONBOARDING.md) and Issues #67 and #90–#93; this ADR records the shared boundary without duplicating per-module schema.
 
 ## Consequences
 

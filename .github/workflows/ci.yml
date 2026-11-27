@@ -1,13 +1,15 @@
 name: CI
 on:
   push:
-    branches: [dev, main, "chore/**", "feat/**", "fix/**"]
+    # PRs already run CI via pull_request; pushing a task branch twice would
+    # duplicate the same expensive run. dev/main pushes keep post-merge checks.
+    branches: [dev, main]
   pull_request:
     branches: [dev, main]
   workflow_dispatch:
     inputs:
       performance_audit:
-        description: Run the full Playwright, CLS, accessibility, and mobile/desktop Lighthouse audit
+        description: Run the full Playwright, CLS and mobile/desktop Lighthouse audit
         required: false
         type: boolean
         default: false
@@ -26,23 +28,71 @@ jobs:
           fetch-depth: 0
           submodules: false
           persist-credentials: false
+      # The required check always runs; change scope decides whether the
+      # expensive build and browser matrix executes. Only documentation in the
+      # docs tree, root Markdown, LICENSES and the license files may skip the
+      # product checks — anything unknown stays in product scope.
+      - name: Detect change scope
+        id: scope
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            base="${{ github.event.before }}"
+          else
+            base=""
+          fi
+          product=true
+          if [ -n "$base" ] && [ "$base" != "0000000000000000000000000000000000000000" ]; then
+            if ! changes="$(git diff --name-only --no-renames "$base" HEAD)"; then
+              echo "::error::Cannot resolve the base commit $base; refusing to skip product checks"
+              exit 1
+            fi
+            product=false
+            while IFS= read -r file; do
+              [ -z "$file" ] && continue
+              case "$file" in
+                */*)
+                  case "$file" in
+                    docs/*|LICENSES/*) ;;
+                    *) product=true; break ;;
+                  esac ;;
+                *.md|LICENSE|NOTICE) ;;
+                *) product=true; break ;;
+              esac
+            done <<< "$changes"
+          fi
+          echo "product=$product" >> "$GITHUB_OUTPUT"
+          echo "Change scope: product=$product"
+      - name: Set up documentation tests
+        if: steps.scope.outputs.product != 'true'
+        run: python3 -m unittest discover -s scripts/tests -p 'docs*_test.py'
       - uses: pnpm/action-setup@v4
+        if: steps.scope.outputs.product == 'true'
         with:
           version: 10.19.0
       - uses: actions/setup-node@v4
+        if: steps.scope.outputs.product == 'true'
         with:
           node-version: "24"
       - name: Install workspace dependencies
+        if: steps.scope.outputs.product == 'true'
         run: pnpm install --frozen-lockfile
       - name: Contract tests
+        if: steps.scope.outputs.product == 'true'
         run: pnpm test
-      - name: ADS pin fixtures and offline two-round release DAG
+      - name: Python contract, artifact and release tests
+        if: steps.scope.outputs.product == 'true'
         run: python3 -m unittest discover -s scripts/tests -p '*_test.py'
       - name: Astro type and content checks
+        if: steps.scope.outputs.product == 'true'
         run: pnpm check
       - name: Compose demo Site
+        if: steps.scope.outputs.product == 'true'
         run: pnpm build
       - name: Compose nested-base candidate
+        if: steps.scope.outputs.product == 'true'
         env:
           ALNILAM_SITE_URL: https://example.com/ALNILAM/
           SOURCE_DATE_EPOCH: "1700000000"
@@ -54,6 +104,7 @@ jobs:
           test ! -e dist/site/bangumi
           test ! -e dist/nested-base/bangumi
       - name: Verify generated internal URLs stay inside the deploy base
+        if: steps.scope.outputs.product == 'true'
         run: |
           node --input-type=module <<'EOF'
           import fs from "node:fs";
@@ -80,17 +131,20 @@ jobs:
           console.log("nested-base internal URLs OK");
           EOF
       - name: Compose the isolated PhotoSwipe test Site at both bases
+        if: steps.scope.outputs.product == 'true'
         env:
           SOURCE_DATE_EPOCH: "1700000000"
         run: |
           ALNILAM_SITE_URL=https://example.com/ node scripts/compose.mjs --site tests/fixtures/lightbox-site --out dist/lightbox-root
           ALNILAM_SITE_URL=https://example.com/ALNILAM/ node scripts/compose.mjs --site tests/fixtures/lightbox-site --out dist/lightbox-nested
       - name: Install Playwright Chromium
+        if: steps.scope.outputs.product == 'true'
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser acceptance (root and /ALNILAM/)
+        if: steps.scope.outputs.product == 'true'
         run: pnpm browser
       - name: Upload browser evidence
-        if: always()
+        if: always() && steps.scope.outputs.product == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: browser-evidence
@@ -99,11 +153,13 @@ jobs:
             test-results/
           if-no-files-found: ignore
       - name: Verify generated output
+        if: steps.scope.outputs.product == 'true'
         run: |
           test -s dist/site/index.html
           test -s dist/site/posts/hello-alnilam/index.html
           test -s dist/site/site-assets/orion.svg
       - name: Verify external Site composition and isolation
+        if: steps.scope.outputs.product == 'true'
         run: |
           cp -a sites/demo "$RUNNER_TEMP/alnilam-site"
           site_before="$(find "$RUNNER_TEMP/alnilam-site" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)"
@@ -115,6 +171,7 @@ jobs:
           test "$site_before" = "$site_after"
           test -s dist/external-site/posts/hello-alnilam/index.html
       - name: Two-version Core upgrade / rollback against unchanged Site
+        if: steps.scope.outputs.product == 'true'
         run: |
           # "Old Core" = previous release (ALNILAM_OLD_CORE_SHA repo variable).
           # Fallback chain: variable SHA → v0.1.0 tag → ee97d1f1 (last buildable
@@ -133,15 +190,10 @@ jobs:
           fi
           echo "old Core revision: $old"
           node scripts/upgrade-check.mjs --old "$old"
-      - name: Confirm ADS version pin
-        env:
-          PR_BASE: ${{ github.base_ref }}
-          REF_NAME: ${{ github.ref_name }}
-        run: sh scripts/check-ads-pin.sh "${PR_BASE:-$REF_NAME}"
 
 
   performance:
-    name: P6 browser and Lighthouse acceptance
+    name: Browser and Lighthouse acceptance
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.performance_audit }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -161,13 +213,13 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
-      - name: Run browser, CLS, accessibility, and Lighthouse audit
+      - name: Run browser, CLS, and Lighthouse audit
         run: pnpm audit:local
-      - name: Upload P6 performance evidence
+      - name: Upload performance evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: p6-performance-audit-${{ github.sha }}
+          name: performance-audit-${{ github.sha }}
           path: |
             artifacts/lighthouse/
             artifacts/lighthouse-regression/
