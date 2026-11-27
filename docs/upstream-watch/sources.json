@@ -15,10 +15,10 @@
       "id": "shirones-npm",
       "repository": "https://github.com/yCENzh/shirones",
       "defaultBranch": "main",
-      "role": "published package channel of the frontend base",
+      "role": "publisher repository of the npm package channel",
       "baselineRevision": null,
       "license": "MIT",
-      "maintenance": "Inspect only; ALNILAM vendors source. The archive names no source SHA and needs a newer Node than the Site Starter, so it is not an adoption path until both change."
+      "maintenance": "Inspect only; ALNILAM vendors source. This entry tracks the publisher repository, not npm release versions. The archive names no source SHA and needs a newer Node than the Site Starter, so it is not an adoption path until both change."
     },
     {
       "id": "firefly",

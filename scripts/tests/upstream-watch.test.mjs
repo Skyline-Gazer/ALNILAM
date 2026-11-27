@@ -180,3 +180,17 @@ test("pnpm audit summaries handle modern and legacy advisory formats without hid
   assert.equal(unavailable.status, "unavailable");
   assert.match(unavailable.error, /registry unavailable/);
 });
+
+test("a source without a recorded baseline reports no drift instead of drift", () => {
+  const { report } = reconcileWatch({
+    registry: { sources: [{ id: "alpha", repository: "https://github.com/example/alpha", role: "reference" }] },
+    snapshots: { alpha: snapshot() },
+    dependencyScan: scan,
+    dependencies: [dependency],
+    audit,
+    state: { schemaVersion: 1, sources: {}, dependencies: {} },
+    now: "2026-11-14T01:00:00.000Z",
+  });
+  assert.equal(report.sources[0].differsFromBaseline, null);
+  assert.equal(report.sources[0].status, "first-observation");
+});

@@ -126,6 +126,12 @@ snapshotTest('covers are downloaded, cached and materialized, and failed downloa
     return new Response(jpeg, {headers: {'content-type': 'image/png'}});
   }});
   assert.match(mislabeled.collections[0].cover, /\.jpg$/, 'the bytes decide the stored type');
+  const avif = Buffer.concat([Buffer.from([0, 0, 0, 28]), Buffer.from('ftyp'), Buffer.from('mif1'), Buffer.from([0, 0, 0, 0]), Buffer.from('avif')]);
+  const compatible = await product.loadBangumiCollections(config, {fetch: async url => {
+    if (String(url).startsWith('https://api.bgm.tv/')) return response([entry(coverUrl)]);
+    return new Response(avif, {headers: {'content-type': 'image/avif'}});
+  }});
+  assert.match(compatible.collections[0].cover, /\.avif$/, 'a compatible brand identifies AVIF');
 });
 
 snapshotTest('untrusted cover URLs are rejected without requesting them', async () => {

@@ -375,7 +375,12 @@ function sniffImageExtension(bytes) {
   if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "jpg";
   if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "webp";
   if (ascii(0, 4) === "GIF8") return "gif";
-  if (ascii(4, 8) === "ftyp" && ["avif", "avis"].includes(ascii(8, 12))) return "avif";
+  if (ascii(4, 8) === "ftyp") {
+    // AVIF is identified by its major or any compatible brand, not only the first.
+    const brands = [];
+    for (let offset = 8; offset + 4 <= bytes.length && offset < 64; offset += 4) brands.push(ascii(offset, offset + 4));
+    if (brands.includes("avif") || brands.includes("avis")) return "avif";
+  }
   return null;
 }
 
