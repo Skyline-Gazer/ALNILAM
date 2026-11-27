@@ -2,7 +2,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
@@ -65,6 +67,70 @@ test("deploy publishing is dispatch-only and owner-gated", () => {
   const guard = workflow.jobs.deploy.steps.find((step) => /Guard the caller-supplied inputs/.test(step.name ?? ""));
   assert.ok(guard, "deploy must guard its inputs");
   assert.match(guard.run, /PAGES_ROOT_URL/);
+});
+
+test("CI runs the product checks and browser matrix in parallel under one required gate", () => {
+  const workflow = loadWorkflow("ci.yml");
+  assert.deepEqual(Object.keys(workflow.jobs).sort(), ["browser", "checks", "performance", "scope", "verify"]);
+  const gate = workflow.jobs.verify;
+  // The rulesets require the check context `verify`; a job name would change it.
+  assert.ok(!gate.name, "the aggregated job must keep the job id as its check name");
+  assert.deepEqual([...gate.needs].sort(), ["browser", "checks", "scope"]);
+  // GitHub treats a *skipped* required check as satisfied, so the gate job must
+  // run unconditionally and reject invalid results inside its own step; any
+  // job-level filtering of `needs.*.result` would green-light a failed branch.
+  assert.equal(gate.if.trim(), "always()");
+  assert.doesNotMatch(gate.if, /needs\./, "the gate condition may not filter dependency results");
+
+  const browser = workflow.jobs.browser;
+  assert.equal(browser.if, "needs.scope.outputs.product == 'true'");
+  const browserSteps = browser.steps.map((step) => step.name ?? step.uses);
+  assert.ok(browserSteps.includes("Browser acceptance (root and /ALNILAM/)"));
+  assert.ok(browserSteps.includes("Compose demo Site"), "the browser job builds the output it serves");
+  assert.ok(browserSteps.includes("Compose the isolated PhotoSwipe test Site at both bases"));
+
+  const checkSteps = workflow.jobs.checks.steps.map((step) => step.name ?? step.uses);
+  for (const required of [
+    "Contract tests",
+    "Python contract, artifact and release tests",
+    "Astro type and content checks",
+    "Compose nested-base candidate",
+    "Verify generated output",
+    "Verify external Site composition and isolation",
+    "Two-version Core upgrade / rollback against unchanged Site",
+    "Verify documentation changes",
+  ]) {
+    assert.ok(checkSteps.includes(required), `${required} must stay in the product checks job`);
+  }
+  assert.ok(!checkSteps.some((name) => String(name).startsWith("Browser acceptance")), "browser must not run twice");
+});
+
+test("the verify step fails closed for every invalid branch result", () => {
+  const workflow = loadWorkflow("ci.yml");
+  const step = workflow.jobs.verify.steps.find(
+    (candidate) => candidate.name === "Confirm the verified branches",
+  );
+  assert.ok(step?.run, "the gate step must validate results itself");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-verify-gate-"));
+  const script = path.join(dir, "gate.sh");
+  fs.writeFileSync(script, step.run);
+  const run = (env) => spawnSync("bash", [script], { env: { ...process.env, ...env }, encoding: "utf8" });
+  const passing = [
+    { SCOPE_RESULT: "success", CHECKS_RESULT: "success", BROWSER_RESULT: "success", PRODUCT_SCOPE: "true" },
+    // Documentation-only scope legitimately skips the browser matrix.
+    { SCOPE_RESULT: "success", CHECKS_RESULT: "success", BROWSER_RESULT: "skipped", PRODUCT_SCOPE: "false" },
+  ];
+  const failing = [
+    { ...passing[0], CHECKS_RESULT: "failure" },
+    { ...passing[0], CHECKS_RESULT: "cancelled" },
+    { ...passing[0], BROWSER_RESULT: "failure" },
+    { ...passing[0], BROWSER_RESULT: "cancelled" },
+    { ...passing[0], BROWSER_RESULT: "skipped" },
+    { ...passing[0], SCOPE_RESULT: "failure" },
+    { ...passing[0], SCOPE_RESULT: "cancelled" },
+  ];
+  for (const env of passing) assert.equal(run(env).status, 0, `must pass: ${JSON.stringify(env)}`);
+  for (const env of failing) assert.notEqual(run(env).status, 0, `must fail: ${JSON.stringify(env)}`);
 });
 
 test("every workflow declares exactly its allowed permissions", () => {
