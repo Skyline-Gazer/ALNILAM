@@ -394,9 +394,8 @@ export function normalizeSiteConfig(input) {
   if (!localeSet.has(siteLocale)) {
     throw new Error("ALNILAM: site.locale must appear in locales");
   }
-
-  assertDeploymentBaseNotLocale(siteUrl, [...localeSet]);
-
+  // The deployment base check runs on the effective URL in the Site loader, so a
+  // valid ALNILAM_SITE_URL override can replace a stored URL that would collide.
   const categories = normalizeTaxonomy(input.categories, "categories");
   const tags = normalizeTaxonomy(input.tags, "tags");
   assertPlainObject(input.bangumi ?? {}, "bangumi");

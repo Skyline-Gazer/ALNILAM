@@ -272,6 +272,32 @@ test("a deployment base equal to a locale is rejected with guidance", (t) => {
   assert.equal(fs.existsSync(path.join(out, "index.html")), false, "no partial output");
 });
 
+test("the base check applies to the effective URL, so a valid override replaces a bad stored URL", async (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-effective-url-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.writeFileSync(
+    path.join(root, YAML_CONFIG),
+    'schemaVersion: 2\nsite:\n  title: t\n  url: "https://example.com/en/"\n  locale: zh-CN\nlocales:\n  - zh-CN\n  - en\n',
+  );
+  const { loadSite } = await import("../../apps/web/src/lib/site-source.mjs");
+  const previousDir = process.env.ALNILAM_SITE_DIR;
+  const previousUrl = process.env.ALNILAM_SITE_URL;
+  try {
+    process.env.ALNILAM_SITE_DIR = root;
+    delete process.env.ALNILAM_SITE_URL;
+    assert.throws(() => loadSite(), /collides with the enabled locale "en"/);
+    process.env.ALNILAM_SITE_URL = "https://example.com/blog/";
+    assert.equal(loadSite().config.site.url, "https://example.com/blog/");
+    process.env.ALNILAM_SITE_URL = "https://example.com/en/";
+    assert.throws(() => loadSite(), /collides with the enabled locale "en"/);
+  } finally {
+    if (previousDir === undefined) delete process.env.ALNILAM_SITE_DIR;
+    else process.env.ALNILAM_SITE_DIR = previousDir;
+    if (previousUrl === undefined) delete process.env.ALNILAM_SITE_URL;
+    else process.env.ALNILAM_SITE_URL = previousUrl;
+  }
+});
+
 test("compose rejects a post slug that collides with a pagination route without changing the Site", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "alnilam-post-route-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));

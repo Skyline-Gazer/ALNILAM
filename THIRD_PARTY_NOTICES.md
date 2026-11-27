@@ -116,8 +116,9 @@ still configure remote HTTPS media at their own licensing responsibility.
 `docs/evidence/` holds browser captures used as review evidence. Each directory
 records the source URL and capture settings; those pages belong to the projects
 they show (Astro Starlight, Mizuki, Shirone) and stay under their own licenses.
-The captures are not copied into composed Sites or release archives and carry no
-license claim over the depicted sites.
+The captures are not copied into composed Sites or the Demo release archive; they
+are part of the repository source, so a GitHub source archive contains them under
+the depicted projects' licenses, with no license claim over those sites.
 
 ## Outstanding release evidence (#75)
 

@@ -45,9 +45,9 @@ export function loadSite() {
       throw new Error("ALNILAM_SITE_URL must be an absolute http(s) URL");
     }
     config = { ...config, site: { ...config.site, url: u.toString() } };
-    // The override is applied after normalisation; validate it here so a base
-    // that shadows a locale fails the build instead of publishing "/en/en/...".
-    assertDeploymentBaseNotLocale(config.site.url, config.locales);
   }
+  // The effective URL (stored or overridden) must not shadow a locale; checking
+  // it after the override keeps a valid override able to replace a bad stored URL.
+  assertDeploymentBaseNotLocale(config.site.url, config.locales);
   return { root, config };
 }
