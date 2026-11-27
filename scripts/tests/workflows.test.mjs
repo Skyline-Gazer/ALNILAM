@@ -67,6 +67,43 @@ test("deploy publishing is dispatch-only and owner-gated", () => {
   assert.match(guard.run, /PAGES_ROOT_URL/);
 });
 
+test("CI runs the product checks and browser matrix in parallel under one required gate", () => {
+  const workflow = loadWorkflow("ci.yml");
+  assert.deepEqual(Object.keys(workflow.jobs).sort(), ["browser", "checks", "performance", "scope", "verify"]);
+  const gate = workflow.jobs.verify;
+  // The rulesets require the check context `verify`; a job name would change it.
+  assert.ok(!gate.name, "the aggregated job must keep the job id as its check name");
+  assert.deepEqual([...gate.needs].sort(), ["browser", "checks", "scope"]);
+  assert.match(gate.if, /always\(\)/, "the gate must still run when a branch is skipped");
+  for (const branch of ["checks", "browser"]) {
+    assert.match(gate.if, new RegExp(`needs\\.${branch}.result == 'success'`), `${branch} must pass`);
+    assert.match(gate.if, new RegExp(`needs\\.${branch}.result == 'skipped'`), `${branch} may skip only for docs scope`);
+  }
+  assert.doesNotMatch(gate.if, /= 'failure'|= 'cancelled'/, "failure or cancellation may never satisfy the gate");
+
+  const browser = workflow.jobs.browser;
+  assert.equal(browser.if, "needs.scope.outputs.product == 'true'");
+  const browserSteps = browser.steps.map((step) => step.name ?? step.uses);
+  assert.ok(browserSteps.includes("Browser acceptance (root and /ALNILAM/)"));
+  assert.ok(browserSteps.includes("Compose demo Site"), "the browser job builds the output it serves");
+  assert.ok(browserSteps.includes("Compose the isolated PhotoSwipe test Site at both bases"));
+
+  const checkSteps = workflow.jobs.checks.steps.map((step) => step.name ?? step.uses);
+  for (const required of [
+    "Contract tests",
+    "Python contract, artifact and release tests",
+    "Astro type and content checks",
+    "Compose nested-base candidate",
+    "Verify generated output",
+    "Verify external Site composition and isolation",
+    "Two-version Core upgrade / rollback against unchanged Site",
+    "Verify documentation changes",
+  ]) {
+    assert.ok(checkSteps.includes(required), `${required} must stay in the product checks job`);
+  }
+  assert.ok(!checkSteps.some((name) => String(name).startsWith("Browser acceptance")), "browser must not run twice");
+});
+
 test("every workflow declares exactly its allowed permissions", () => {
   const allowed = {
     "ci.yml": { contents: "read" },

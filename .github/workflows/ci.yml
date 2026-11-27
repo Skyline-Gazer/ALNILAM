@@ -19,19 +19,24 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  verify:
+  # Scope detection first, then two independent jobs on separate runners: the
+  # product checks and the browser matrix share no output (each composes what
+  # it needs), so serializing them only doubles the wall clock. `verify` stays
+  # the single required check and only reports green when both branches pass.
+  scope:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 5
+    outputs:
+      product: ${{ steps.scope.outputs.product }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: false
           persist-credentials: false
-      # The required check always runs; change scope decides whether the
-      # expensive build and browser matrix executes. Only documentation in the
-      # docs tree, root Markdown, LICENSES and the license files may skip the
-      # product checks — anything unknown stays in product scope.
+      # Only documentation in the docs tree, root Markdown, LICENSES and the
+      # license files may skip the product checks — anything unknown stays in
+      # product scope.
       - name: Detect change scope
         id: scope
         run: |
@@ -66,6 +71,18 @@ jobs:
           fi
           echo "product=$product" >> "$GITHUB_OUTPUT"
           echo "Change scope: product=$product"
+
+  checks:
+    name: Product checks
+    needs: scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+          persist-credentials: false
       - uses: pnpm/action-setup@v4
         with:
           version: 10.19.0
@@ -73,27 +90,27 @@ jobs:
         with:
           node-version: "24"
       - name: Verify documentation changes
-        if: steps.scope.outputs.product != 'true'
+        if: needs.scope.outputs.product != 'true'
         run: |
           pnpm --filter @alnilam/core install --frozen-lockfile
           python3 -m unittest discover -s scripts/tests -p 'docs*_test.py'
       - name: Install workspace dependencies
-        if: steps.scope.outputs.product == 'true'
+        if: needs.scope.outputs.product == 'true'
         run: pnpm install --frozen-lockfile
       - name: Contract tests
-        if: steps.scope.outputs.product == 'true'
+        if: needs.scope.outputs.product == 'true'
         run: pnpm test
       - name: Python contract, artifact and release tests
-        if: steps.scope.outputs.product == 'true'
+        if: needs.scope.outputs.product == 'true'
         run: python3 -m unittest discover -s scripts/tests -p '*_test.py'
       - name: Astro type and content checks
-        if: steps.scope.outputs.product == 'true'
+        if: needs.scope.outputs.product == 'true'
         run: pnpm check
       - name: Compose demo Site
-        if: steps.scope.outputs.product == 'true'
+        if: needs.scope.outputs.product == 'true'
         run: pnpm build
       - name: Compose nested-base candidate
-        if: steps.scope.outputs.product == 'true'
+        if: needs.scope.outputs.product == 'true'
         env:
           ALNILAM_SITE_URL: https://example.com/ALNILAM/
           SOURCE_DATE_EPOCH: "1700000000"
@@ -105,7 +122,7 @@ jobs:
           test ! -e dist/site/bangumi
           test ! -e dist/nested-base/bangumi
       - name: Verify generated internal URLs stay inside the deploy base
-        if: steps.scope.outputs.product == 'true'
+        if: needs.scope.outputs.product == 'true'
         run: |
           node --input-type=module <<'EOF'
           import fs from "node:fs";
@@ -131,36 +148,14 @@ jobs:
           }
           console.log("nested-base internal URLs OK");
           EOF
-      - name: Compose the isolated PhotoSwipe test Site at both bases
-        if: steps.scope.outputs.product == 'true'
-        env:
-          SOURCE_DATE_EPOCH: "1700000000"
-        run: |
-          ALNILAM_SITE_URL=https://example.com/ node scripts/compose.mjs --site tests/fixtures/lightbox-site --out dist/lightbox-root
-          ALNILAM_SITE_URL=https://example.com/ALNILAM/ node scripts/compose.mjs --site tests/fixtures/lightbox-site --out dist/lightbox-nested
-      - name: Install Playwright Chromium
-        if: steps.scope.outputs.product == 'true'
-        run: pnpm exec playwright install --with-deps chromium
-      - name: Browser acceptance (root and /ALNILAM/)
-        if: steps.scope.outputs.product == 'true'
-        run: pnpm browser
-      - name: Upload browser evidence
-        if: always() && steps.scope.outputs.product == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: browser-evidence
-          path: |
-            browser-results/
-            test-results/
-          if-no-files-found: ignore
       - name: Verify generated output
-        if: steps.scope.outputs.product == 'true'
+        if: needs.scope.outputs.product == 'true'
         run: |
           test -s dist/site/index.html
           test -s dist/site/posts/hello-alnilam/index.html
           test -s dist/site/site-assets/orion.svg
       - name: Verify external Site composition and isolation
-        if: steps.scope.outputs.product == 'true'
+        if: needs.scope.outputs.product == 'true'
         run: |
           cp -a sites/demo "$RUNNER_TEMP/alnilam-site"
           site_before="$(find "$RUNNER_TEMP/alnilam-site" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)"
@@ -172,7 +167,7 @@ jobs:
           test "$site_before" = "$site_after"
           test -s dist/external-site/posts/hello-alnilam/index.html
       - name: Two-version Core upgrade / rollback against unchanged Site
-        if: steps.scope.outputs.product == 'true'
+        if: needs.scope.outputs.product == 'true'
         run: |
           # "Old Core" = previous release (ALNILAM_OLD_CORE_SHA repo variable).
           # Fallback chain: variable SHA → v0.1.0 tag → ee97d1f1 (last buildable
@@ -192,6 +187,68 @@ jobs:
           echo "old Core revision: $old"
           node scripts/upgrade-check.mjs --old "$old"
 
+  browser:
+    name: Browser acceptance
+    needs: scope
+    if: needs.scope.outputs.product == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Compose demo Site
+        run: pnpm build
+      - name: Compose nested-base candidate
+        env:
+          ALNILAM_SITE_URL: https://example.com/ALNILAM/
+          SOURCE_DATE_EPOCH: "1700000000"
+        run: node scripts/compose.mjs --site sites/demo --out dist/nested-base
+      - name: Compose the isolated PhotoSwipe test Site at both bases
+        env:
+          SOURCE_DATE_EPOCH: "1700000000"
+        run: |
+          ALNILAM_SITE_URL=https://example.com/ node scripts/compose.mjs --site tests/fixtures/lightbox-site --out dist/lightbox-root
+          ALNILAM_SITE_URL=https://example.com/ALNILAM/ node scripts/compose.mjs --site tests/fixtures/lightbox-site --out dist/lightbox-nested
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Browser acceptance (root and /ALNILAM/)
+        run: pnpm browser
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-evidence
+          path: |
+            browser-results/
+            test-results/
+          if-no-files-found: ignore
+
+  # Required check. Skipped branches are allowed (docs-only changes skip the
+  # product jobs); a failed or cancelled branch leaves this job skipped, which
+  # keeps the required check from reporting success.
+  verify:
+    needs: [scope, checks, browser]
+    if: >-
+      always() &&
+      needs.scope.result == 'success' &&
+      (needs.checks.result == 'success' || needs.checks.result == 'skipped') &&
+      (needs.browser.result == 'success' || needs.browser.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Confirm the verified branches
+        run: |
+          echo "scope=${{ needs.scope.result }} checks=${{ needs.checks.result }} browser=${{ needs.browser.result }}"
 
   performance:
     name: Browser and Lighthouse acceptance

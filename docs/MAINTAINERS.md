@@ -75,23 +75,28 @@ notices with the repository copies. Upload the three verified files from
 checksum and Verify URL with the release. GitHub Release assets are separate
 from protected Vercel staging and the Owner-authorized public promotion.
 
-## CI acceptance inventory (workflow: CI, job: verify)
+## CI acceptance inventory (workflow: CI)
 
-The required `verify` check runs on PRs to `dev` and `main` and on pushes to
-those branches. Documentation and contributor forms use the docs checks with
-the Core YAML parser installed. Product changes and unknown scope run the full
-checks below.
+`verify` remains the single required check. It now aggregates two jobs that run
+on separate runners because they share no output: `checks` (contract, Python,
+Astro, compose, external-Site and upgrade/rollback) and `browser` (the Playwright
+matrix over the Demo, nested-base and PhotoSwipe outputs it composes itself).
+A `scope` job classifies the change first, and `verify` reports green only when
+every branch succeeded or was legitimately skipped for documentation-only scope.
+The check runs on PRs to `dev` and `main` and on pushes to those branches.
+Documentation and contributor forms use the docs tests with the Core YAML parser
+installed. Product changes and unknown scope run the full checks below.
 
-1. `pnpm install --frozen-lockfile` (Node 24, pnpm 10.19)
-2. Contract tests (`pnpm test`): config normalization, schema fail-closed, Site digest stability, output-overlap rejection, symlink rejection, provenance binding, hashTree addressing, upgrade-check argument handling.
-3. Python contract, artifact and release tests (`scripts/tests/*_test.py`), including the offline release DAG.
-4. `astro check`
-5. Demo compose + output assertions (`index.html`, first post, `site-assets/orion.svg`), nested-base compose and internal-URL containment.
-6. PhotoSwipe fixture compose at both bases, then the complete Playwright browser acceptance (root and `/ALNILAM/`).
-7. External-Site composition + isolation (byte-compare of the Site before/after).
-8. Two-version Core upgrade/rollback against an unchanged external Site.
-9. Artifact budget check (wired into `pnpm build`): external script-tag scan on posts pages, ≤2 islands/page, explicit img dimensions and provenance shape.
-10. Documentation tests: Markdown link checks, documented commands, full Site-config examples, rejection of active CNB provider claims, release-version and target-status checks, unique ADR identifiers, production-boundary negative fixtures. Built artifacts are also scanned in verify.
+1. `pnpm install --frozen-lockfile` (Node 24, pnpm 10.19) — `checks` and `browser`.
+2. Contract tests (`pnpm test`): config normalization, schema fail-closed, Site digest stability, output-overlap rejection, symlink rejection, provenance binding, hashTree addressing, upgrade-check argument handling. — `checks`.
+3. Python contract, artifact and release tests (`scripts/tests/*_test.py`), including the offline release DAG. — `checks`.
+4. `astro check` — `checks`.
+5. Demo compose + output assertions (`index.html`, first post, `site-assets/orion.svg`), nested-base compose and internal-URL containment. — `checks`.
+6. PhotoSwipe fixture compose at both bases, then the complete Playwright browser acceptance (root and `/ALNILAM/`). — `browser`.
+7. External-Site composition + isolation (byte-compare of the Site before/after). — `checks`.
+8. Two-version Core upgrade/rollback against an unchanged external Site. — `checks`.
+9. Artifact budget check (wired into `pnpm build`): external script-tag scan on posts pages, ≤2 islands/page, explicit img dimensions and provenance shape. — both jobs build their own output.
+10. Documentation tests: Markdown link checks, documented commands, full Site-config examples, rejection of active CNB provider claims, release-version and target-status checks, unique ADR identifiers, production-boundary negative fixtures. Built artifacts are also scanned in `checks`.
 
 ## Known operational notes
 
