@@ -45,6 +45,10 @@ jobs:
           fi
           product=true
           if [ -n "$base" ] && [ "$base" != "0000000000000000000000000000000000000000" ]; then
+            if ! changes="$(git diff --name-only --no-renames "$base" HEAD)"; then
+              echo "::error::Cannot resolve the base commit $base; refusing to skip product checks"
+              exit 1
+            fi
             product=false
             while IFS= read -r file; do
               [ -z "$file" ] && continue
@@ -57,7 +61,7 @@ jobs:
                 *.md|LICENSE|NOTICE) ;;
                 *) product=true; break ;;
               esac
-            done <<< "$(git diff --name-only --no-renames "$base" HEAD)"
+            done <<< "$changes"
           fi
           echo "product=$product" >> "$GITHUB_OUTPUT"
           echo "Change scope: product=$product"
