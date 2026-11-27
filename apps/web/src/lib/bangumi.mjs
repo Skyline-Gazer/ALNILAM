@@ -28,15 +28,6 @@ const SUBJECT_CATEGORIES = Object.freeze({ 1: "book", 2: "anime", 3: "music", 4:
 const COLLECTION_STATUSES = Object.freeze({ 1: "wish", 2: "collected", 3: "doing", 4: "onHold", 5: "dropped" });
 const KNOWN_CATEGORIES = new Set(Object.values(SUBJECT_CATEGORIES));
 const COVER_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp", "gif", "avif"]);
-const COVER_MIME_TYPES = Object.freeze({
-  "image/png": "png",
-  "image/jpeg": "jpg",
-  "image/jpg": "jpg",
-  "image/pjpeg": "jpg",
-  "image/webp": "webp",
-  "image/gif": "gif",
-  "image/avif": "avif",
-});
 const COVER_CONTENT_TYPES = Object.freeze({
   png: "image/png",
   jpg: "image/jpeg",
@@ -214,22 +205,6 @@ function trustedCoverUrl(value) {
   return url;
 }
 
-function extensionFromUrl(url) {
-  const match = /\.([a-z]+)$/i.exec(url.pathname);
-  const extension = match ? match[1].toLowerCase() : "";
-  return COVER_EXTENSIONS.has(extension) ? extension : null;
-}
-
-function imageExtension(response, url) {
-  const contentType = (response.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
-  if (contentType) {
-    const known = COVER_MIME_TYPES[contentType];
-    if (known) return known;
-    // Some mirrors omit a precise image type; a URL extension is still safe.
-    if (contentType !== "application/octet-stream" && contentType !== "binary/octet-stream") return null;
-  }
-  return extensionFromUrl(url);
-}
 
 async function downloadCover(value, fetchImpl) {
   const url = trustedCoverUrl(value);
@@ -252,8 +227,6 @@ async function downloadCover(value, fetchImpl) {
   if (Number.isFinite(declared) && declared > MAX_COVER_BYTES) {
     throw new BangumiError("cover", "Bangumi cover is too large");
   }
-  const extension = imageExtension(response, url);
-  if (!extension) throw new BangumiError("cover", "Bangumi cover is not a supported image");
   let bytes;
   try {
     bytes = Buffer.from(await response.arrayBuffer());
@@ -263,6 +236,8 @@ async function downloadCover(value, fetchImpl) {
   if (!bytes.length || bytes.length > MAX_COVER_BYTES) {
     throw new BangumiError("cover", "Bangumi cover is empty or too large");
   }
+  const extension = sniffImageExtension(bytes);
+  if (!extension) throw new BangumiError("cover", "Bangumi cover is not a supported image");
   const hash = crypto.createHash("sha256").update(bytes).digest("hex").slice(0, 32);
   const name = `${hash}.${extension}`;
   const file = coverFile(name);
@@ -393,27 +368,22 @@ async function requestCollectionPage(scope, fetchImpl) {
   }
   return body.data;
 }
-
-/** Fetch the original remote collection format without snapshot processing. */
-export async function fetchBangumiCollections({ userId, subjectType = "anime", limit = 10 }) {
-  const type = SUBJECT_TYPE_CODES[subjectType] ?? 2;
-  const url = `https://api.bgm.tv/v0/users/${encodeURIComponent(userId)}/collections?type=${type}&limit=${limit}&offset=0`;
-  const res = await fetch(url, {
-    headers: { "User-Agent": "alnilam-static-build (https://github.com/Skyline-Gazer/ALNILAM)", Accept: "application/json" },
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-  });
-  if (!res.ok) throw new Error(`Bangumi API ${res.status} for user ${userId}`);
-  const body = await res.json();
-  return (body.data ?? []).map((entry) => ({
-    name: entry.subject?.name ?? "",
-    nameCn: entry.subject?.name_cn || entry.subject?.name || "",
-    cover: entry.subject?.images?.common ?? entry.subject?.images?.large ?? "",
-    href: entry.subject?.id ? `https://bgm.tv/subject/${entry.subject.id}` : "",
-    summary: (entry.subject?.short_summary ?? "").slice(0, 140),
-    comment: entry.comment ?? "",
-    updatedAt: entry.updated_at ?? "",
-  }));
+// Content-Type and URL extensions are attacker-visible hints; the bytes decide.
+function sniffImageExtension(bytes) {
+  const ascii = (start, end) => bytes.subarray(start, end).toString("latin1");
+  if (bytes[0] === 0x89 && ascii(1, 4) === "PNG") return "png";
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "jpg";
+  if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "webp";
+  if (ascii(0, 4) === "GIF8") return "gif";
+  if (ascii(4, 8) === "ftyp") {
+    // AVIF is identified by its major or any compatible brand, not only the first.
+    const brands = [];
+    for (let offset = 8; offset + 4 <= bytes.length && offset < 64; offset += 4) brands.push(ascii(offset, offset + 4));
+    if (brands.includes("avif") || brands.includes("avis")) return "avif";
+  }
+  return null;
 }
+
 
 /**
  * Build-time entry point. Never throws for provider problems: returns the

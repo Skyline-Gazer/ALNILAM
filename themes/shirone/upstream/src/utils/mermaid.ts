@@ -376,13 +376,11 @@ function createThemeVariables(values: Record<string, string>, isDark: boolean) {
 }
 
 function parseSvg(svg: string): SVGElement {
-	const documentNode = new DOMParser().parseFromString(svg, "image/svg+xml");
-	if (documentNode.querySelector("parsererror")) {
-		throw new Error("Mermaid returned invalid SVG markup");
-	}
-
-	const svgElement = documentNode.documentElement;
-	if (svgElement.tagName.toLowerCase() !== "svg") {
+	// Mermaid can emit HTML void elements inside SVG labels.
+	const template = document.createElement("template");
+	template.innerHTML = svg;
+	const svgElement = template.content.firstElementChild;
+	if (!(svgElement instanceof SVGSVGElement)) {
 		throw new Error("Mermaid did not return an SVG element");
 	}
 
@@ -394,7 +392,7 @@ function parseSvg(svg: string): SVGElement {
 	}
 	svgElement.setAttribute("data-mermaid-svg", "");
 
-	return document.importNode(svgElement, true) as unknown as SVGElement;
+	return svgElement;
 }
 
 function readDiagramSource(diagram: HTMLElement): string {

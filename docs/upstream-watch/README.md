@@ -10,7 +10,22 @@ From an installed workspace checkout:
 pnpm upstream:watch --report /tmp/alnilam-upstream-watch.json
 ```
 
-The command reads the four public GitHub repositories in `sources.json`, the workspace manifests and `pnpm-lock.yaml`, npm registry metadata for direct locked dependencies, and `pnpm audit --json --registry=https://registry.npmjs.org`. It prints or writes a JSON evidence report and updates only the local tracker `state.json`. It does not fetch source code, change an upstream, write to a Site, create Issues/PRs, update the Roadmap, integrate code, or deploy. `GITHUB_TOKEN` or `GH_TOKEN` may be supplied for GitHub API rate capacity; credentials are never written to output or state. The explicit registry flag bypasses a mirror that does not expose the audit endpoint and changes no project configuration.
+The command reads the public repositories in `sources.json`, the workspace manifests and `pnpm-lock.yaml`, npm registry metadata for direct locked dependencies, and `pnpm audit --json --registry=https://registry.npmjs.org`. It prints or writes a JSON evidence report and updates only the local tracker `state.json`. It does not fetch source code, change an upstream, write to a Site, create Issues/PRs, update the Roadmap, integrate code, or deploy. `GITHUB_TOKEN` or `GH_TOKEN` may be supplied for GitHub API rate capacity; credentials are never written to output or state. The explicit registry flag bypasses a mirror that does not expose the audit endpoint and changes no project configuration.
+
+## Maintenance policy by role
+
+The registry states its own `role` and `maintenance` per source; the tracker
+does not apply one blanket rule.
+
+| Source | Role | Policy |
+| --- | --- | --- |
+| Shirone | sole frontend base | Evaluate a tagged upstream release for the whole base; port contract-safe fixes from an untagged branch only with build evidence. No upstream tag existed at the 2026-11-27 review. |
+| shirones (npm) | published package channel | Inspect only. The archive carries no source SHA and needs a newer Node than the Site Starter. |
+| Firefly | feature and UX reference | Adapt a fix only for a reproduced defect or measured benefit. |
+| Mizuki | feature reference | Same, with compatibility first; no visual port. |
+| KIRARI | architecture and cache reference | Reuse only a reproduced gap; no edge runtime or extra service by default. |
+| AiringCal | Bangumi reference | Reuse provider handling for a reproduced gap; one snapshot path. |
+| Fuwari, SHBlog Next | design references | Read direction only; no code or asset copying. |
 
 `--state <path>` selects an alternate tracker, useful for disposable/repeatability checks. `--registry <path>` selects another source registry. `--report <path>` writes an evidence report; without it the report is written to stdout. Failed upstream or npm metadata requests abort before tracker state is saved. An unavailable `pnpm audit` is reported as `unavailable`, never as a clear result or a gate failure.
 
@@ -29,5 +44,9 @@ The command reads the four public GitHub repositories in `sources.json`, the wor
 - **Monthly, manual:** classify only new source/package deltas as `bugfix`, `chore`, `performance`, `compatibility`, `feature`, `breaking`, or `license/asset`; record exact paths, affected ALNILAM paths, reproducible value, tests, and KEEP/ADAPT/PORT/DEFER/REJECT decision.
 - **Triggered:** investigate a reproducible ALNILAM defect as a separate atomic fix and PR. Never auto-merge source. Breaking, UI, and feature changes remain Owner decisions.
 - **Quarterly:** summarize drift, long-skipped fixes, and maintenance costs for the later #136 audit.
+
+`last_integrated` records the adopted source revision, not the latest inspected
+one. A ported fix from a later commit is recorded in `decisions` with its own
+SHA and the ALNILAM commit that carries it.
 
 A schedule may be proposed only through separate Owner authorization for a least-privilege read-only runner. GitHub Actions `schedule` runs from default `main`; this manual foundation does not add or alter a workflow, `main`, ADS, release/tag, Site, or production configuration.

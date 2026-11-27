@@ -112,6 +112,7 @@ for (const [name, origin] of deployments) {
 			const mermaidSvg = page.locator('.markdown-content [data-mermaid][data-mermaid-state="ready"] .markdown-mermaid__diagram svg');
 			await expect(mermaidSvg).toHaveCount(1);
 			await expect(mermaidSvg).toBeVisible();
+			await expect(mermaidSvg.locator("foreignObject br")).toHaveCount(1);
 			await expectUniqueFeatureStyles(page);
 
 			// Record the actual font payload without imposing an arbitrary budget.
