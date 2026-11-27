@@ -8,10 +8,13 @@
 - Product authority and acceptance live in [#35](https://github.com/Skyline-Gazer/ALNILAM/issues/35)
   and the release gate is [#42](https://github.com/Skyline-Gazer/ALNILAM/issues/42). Deployment
   topology is tracked in [#138](https://github.com/Skyline-Gazer/ALNILAM/issues/138).
-- Accessibility and VoiceOver acceptance are **not** project requirements: the Owner
-  rejected that scope on 2026-11-27 and [#240](https://github.com/Skyline-Gazer/ALNILAM/issues/240)
-  tracks removal of its remaining dependencies. Historical a11y evidence stays as
-  a record and is not a build gate.
+- Accessibility **audit and signoff** are not project requirements: the Owner rejected
+  axe scoring, manual screen-reader/VoiceOver acceptance and contrast audits on
+  2026-11-27, and [#240](https://github.com/Skyline-Gazer/ALNILAM/issues/240) tracks removal
+  of their remaining dependencies. Ordinary product behaviour stays expected: semantic
+  HTML and native controls, keyboard operation and focus handling, and reduced-motion
+  support remain part of normal quality. Historical a11y evidence stays as a record and
+  is not a build gate.
 - Documentation map: [Site onboarding](SITE_ONBOARDING.md), [architecture](ARCHITECTURE.md),
   [contributing](../CONTRIBUTING.md), [maintainers](MAINTAINERS.md),
   [roadmap](ROADMAP.md), [changelog](../CHANGELOG.md).
