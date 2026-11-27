@@ -83,6 +83,9 @@ Astro, compose, external-Site and upgrade/rollback) and `browser` (the Playwrigh
 matrix over the Demo, nested-base and PhotoSwipe outputs it composes itself).
 A `scope` job classifies the change first, and `verify` reports green only when
 every branch succeeded or was legitimately skipped for documentation-only scope.
+That gate is a step inside an unconditional job: GitHub counts a *skipped*
+required check as satisfied, so filtering the `verify` job itself would let a
+failed branch through.
 The check runs on PRs to `dev` and `main` and on pushes to those branches.
 Documentation and contributor forms use the docs tests with the Core YAML parser
 installed. Product changes and unknown scope run the full checks below.

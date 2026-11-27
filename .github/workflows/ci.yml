@@ -233,22 +233,30 @@ jobs:
             test-results/
           if-no-files-found: ignore
 
-  # Required check. Skipped branches are allowed (docs-only changes skip the
-  # product jobs); a failed or cancelled branch leaves this job skipped, which
-  # keeps the required check from reporting success.
+  # Required check. GitHub treats a *skipped* required check as satisfied, so
+  # this job must always run and fail on its own terms: gating on the job
+  # condition would silently green-light a failed or cancelled branch. Only a
+  # documentation-only scope may leave the browser branch skipped.
   verify:
     needs: [scope, checks, browser]
-    if: >-
-      always() &&
-      needs.scope.result == 'success' &&
-      (needs.checks.result == 'success' || needs.checks.result == 'skipped') &&
-      (needs.browser.result == 'success' || needs.browser.result == 'skipped')
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Confirm the verified branches
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          CHECKS_RESULT: ${{ needs.checks.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
+          PRODUCT_SCOPE: ${{ needs.scope.outputs.product }}
         run: |
-          echo "scope=${{ needs.scope.result }} checks=${{ needs.checks.result }} browser=${{ needs.browser.result }}"
+          set -eu
+          reject() { echo "::error::verify: $1"; exit 1; }
+          [ "$SCOPE_RESULT" = success ] || reject "scope detection result is $SCOPE_RESULT"
+          [ "$CHECKS_RESULT" = success ] || reject "product checks result is $CHECKS_RESULT"
+          [ "$BROWSER_RESULT" = success ] || [ "$BROWSER_RESULT" = skipped ] || reject "browser acceptance result is $BROWSER_RESULT"
+          [ "$BROWSER_RESULT" = success ] || [ "$PRODUCT_SCOPE" != true ] || reject "browser acceptance was skipped for a product change"
+          echo "verify green: scope=$SCOPE_RESULT checks=$CHECKS_RESULT browser=$BROWSER_RESULT product=$PRODUCT_SCOPE"
 
   performance:
     name: Browser and Lighthouse acceptance
