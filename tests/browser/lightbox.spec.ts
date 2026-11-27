@@ -1026,6 +1026,8 @@ test("author full-resolution link keeps the thumbnail as its placeholder", async
 		...new Set(frames.flatMap((frame) => frame.placeholders.map((entry) => entry.src))),
 	];
 	expect(placeholders).toContain("/thumb/160/90.png");
+	// Unknown destination geometry keeps the fade (no zoom origin), which the
+	// opening-geometry gate covers; the placeholder contract is asserted above.
 	const loaded = await assertSlideLoaded(page, responses);
 	expect(new URL(loaded.currentSrc!).pathname).toBe("/full/1280/720.png");
 	await closeWithEscape(page, container);

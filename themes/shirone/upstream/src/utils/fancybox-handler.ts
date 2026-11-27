@@ -233,8 +233,11 @@ function resolveSlideFromTrigger(el: HTMLElement): ResolvedSlide | null {
 	const caption = captionFromElement(el, img);
 	// The rendered thumbnail is already decoded; PhotoSwipe uses msrc as the
 	// placeholder so the zoom starts from a real image instead of a blank box.
+	const thumbnailSrc = img?.currentSrc || display;
 	const thumbnail =
-		img && display && isSafeImageUrl(display) ? canonicalizeSrc(display) : null;
+		img && thumbnailSrc && isSafeImageUrl(thumbnailSrc)
+			? canonicalizeSrc(thumbnailSrc)
+			: null;
 
 	return {
 		src,
@@ -593,11 +596,21 @@ export class FancyboxHandler {
 
 		this.closeOpenInstance();
 
+		const target = dataSource[index] as SlideExtras | undefined;
+		const targetWidth = Number(target?.width);
+		const targetHeight = Number(target?.height);
+		const hasKnownGeometry =
+			Boolean(target?.element) && targetWidth > 1 && targetHeight > 1;
+
 		const lightbox = new PhotoSwipeLightbox({
 			dataSource: dataSource as DataSource,
 			index,
-			bgOpacity: LIGHTBOX_DEFAULTS.bgOpacity,
-			showHideAnimationType: LIGHTBOX_DEFAULTS.showHideAnimationType,
+			// A zoom needs the destination geometry: without known dimensions the
+			// provisional 1x1 slide would animate toward a one-pixel image, so those
+			// slides keep the fade until probeSlide learns the real size.
+			showHideAnimationType: hasKnownGeometry
+				? LIGHTBOX_DEFAULTS.showHideAnimationType
+				: "fade",
 			padding: LIGHTBOX_DEFAULTS.padding,
 			pswpModule: this.pswpCtor,
 		});
